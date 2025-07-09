@@ -8,7 +8,8 @@
 set -euo pipefail
 
 # 🎨 Colors
-[ -e "$HOME"/.tkg/.config/colors/colors ] && source "$HOME"/.tkg/.config/colors/colors
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
+[ -e "$SCRIPT_DIR/.config/colors/colors" ] && source "$SCRIPT_DIR/.config/colors/colors"
 
 # 📌 Paths and Lockfile
 LOCKFILE="/tmp/tkg_installer.lock"
@@ -153,14 +154,15 @@ _menu() {
                   --with-nth="2" \
                   --preview='bash -c "
                              key=$(echo {} | cut -d"|" -f1 | xargs)
+                             SCRIPT_DIR=\"$(dirname \"$(realpath \"$0\")\")\"
                              case \$key in
-                             Wine)              cat \"$HOME/.tkg/.config/preview/wine.txt\" ;;
-                             Proton)            cat \"$HOME/.tkg/.config/preview/proton.txt\" ;;
-                             Mesa)              cat \"$HOME/.tkg/.config/preview/mesa.txt\" ;;
-                             Nvidia)            cat \"$HOME/.tkg/.config/preview/nvidia.txt\" ;;
-                             Linux)             cat \"$HOME/.tkg/.config/preview/kernel.txt\" ;;
-                             Linux+Nvidia)      cat \"$HOME/.tkg/.config/preview/linux.txt\" ;;
-                             Clean)             cat \"$HOME/.tkg/.config/preview/clean.txt\" ;;
+                             Wine)              cat \"\$SCRIPT_DIR/.config/preview/wine.txt\" ;;
+                             Proton)            cat \"\$SCRIPT_DIR/.config/preview/proton.txt\" ;;
+                             Mesa)              cat \"\$SCRIPT_DIR/.config/preview/mesa.txt\" ;;
+                             Nvidia)            cat \"\$SCRIPT_DIR/.config/preview/nvidia.txt\" ;;
+                             Linux)             cat \"\$SCRIPT_DIR/.config/preview/kernel.txt\" ;;
+                             Linux+Nvidia)      cat \"\$SCRIPT_DIR/.config/preview/linux.txt\" ;;
+                             Clean)             cat \"\$SCRIPT_DIR/.config/preview/clean.txt\" ;;
                              Exit)              echo \"👋 Goodbye!\" ;;
                              esac
                             "' \
@@ -195,7 +197,7 @@ _main() {
         Mesa)          _mesa_promt ;;
         Wine)          _wine_promt ;;
         Proton)        _proton_promt ;;
-        Clean)         _pre; sleep 1; echo -e "${BLUE} 🔁 Restarting 🐸 TKG Installer ...${RESET}"; sleep 1; rm -f "$LOCKFILE"; exec sudo -u damachine sh -c "$SCRIPT_PATH" ;;
+        Clean)         _pre; sleep 1; echo -e "${BLUE} 🔁 Restarting 🐸 TKG Installer ...${RESET}"; sleep 1; rm -f "$LOCKFILE"; exec "$SCRIPT_PATH" ;;
         Exit)          echo -e "${BLUE} 👋 Goodbye!${RESET}"; exit 0 ;;
         *)             echo -e "${GREEN}${BOLD} ❌ Invalid option: $choice${RESET}" ;;
     esac
