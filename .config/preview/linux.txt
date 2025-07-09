@@ -5,8 +5,8 @@
 💻 Latest Linux kernel. Customized for Arch Linux
 
 ⚙️ Individual configuration and selection possible 💥💥💥
-🔧 Configuration file: 📝 file:///home/damachine/.config/frogminer/linux-tkg.cfg
-                       📝 file:///home/damachine/.config/frogminer/nvidia-all.cfg
+🔧 Configuration file: 📝 ~/.config/frogminer/linux-tkg.cfg
+                       📝 ~/.config/frogminer/nvidia-all.cfg
 
 🌐 GitHub: 📝 https://github.com/Frogging-Family/linux-tkg
            📝 https://github.com/Frogging-Family/nvidia-all

@@ -5,7 +5,7 @@
 💻 Latest Linux kernel. Customized for Arch Linux
 
 ⚙️ Individual configuration and selection possible 💥💥💥
-🔧 Configuration file: 📝 file:///home/damachine/.config/frogminer/linux-tkg.cfg
+🔧 Configuration file: 📝 ~/.config/frogminer/linux-tkg.cfg
 
 🌐 GitHub: 📝 https://github.com/Frogging-Family/linux-tkg
 

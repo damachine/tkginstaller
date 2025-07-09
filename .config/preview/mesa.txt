@@ -5,7 +5,7 @@
 💻 Latest graphics drivers. Provides current development versions of Mesa (OpenGL, Vulkan)
 
 ⚙️ Individual configuration and selection possible 💥💥💥
-🔧 File: 📝 file:///home/damachine/.config/frogminer/mesa-git.cfg
+🔧 File: 📝 ~/.config/frogminer/mesa-git.cfg
 
 🛠️ GitHub: Description 🌐 https://github.com/Frogging-Family/mesa-git
 

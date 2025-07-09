@@ -5,7 +5,7 @@
 💻 Latest graphics drivers. Customized for kernel with or without DKMS support
 
 ⚙️ Individual configuration and selection possible 💥💥💥
-🔧 File: 📝 file:///home/damachine/.config/frogminer/nvidia-all.cfg
+🔧 File: 📝 ~/.config/frogminer/nvidia-all.cfg
 
 🛠️ GitHub: 🌐 https://github.com/Frogging-Family/nvidia-all
 

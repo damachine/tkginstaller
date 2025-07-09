@@ -5,7 +5,7 @@
 🎯 Goal: Performance-optimized Wine build for Linux
 
 ⚙️ Individual configuration and selection possible 💥💥💥
-🔧 File: 📝 file:///home/damachine/.config/frogminer/wine-tkg.cfg
+🔧 File: 📝 ~/.config/frogminer/wine-tkg.cfg
 
 🛠️ GitHub: 🌐 https://github.com/Frogging-Family/wine-tkg-git
 

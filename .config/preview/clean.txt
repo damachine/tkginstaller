@@ -4,7 +4,7 @@
 💡 Fresh start possible 💡
 
 📁 Removes:
-   • file:///home/damachine/.tkg/temp
-   • file:///tmp/linux-tkg
-   • file:///tmp/makepkg
+   • ~/.tkg/temp
+   • /tmp/linux-tkg
+   • /tmp/makepkg
    • ccache
