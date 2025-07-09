@@ -1,10 +1,10 @@
-🧹 Reset - Removes temporary files and folders
+🧹 Reset - Entfernt temporäre Dateien und Ordner
 
-💡 Helpful for troubleshooting or reinstallation 💡
-💡 Fresh start possible 💡
+💡 Hilfreich zur Fehlerbehebung oder Neuinstallation 💡
+💡 Frischer Start möglich 💡
 
-📁 Removes:
-   • ~/.tkg/temp
-   • /tmp/linux-tkg
-   • /tmp/makepkg
+📁 Entfernt:
+   • file:///home/damachine/.tkg/temp
+   • file:///tmp/linux-tkg
+   • file:///tmp/makepkg
    • ccache

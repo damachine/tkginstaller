@@ -1,12 +1,12 @@
-🧩 Install Mesa graphics driver
-📦 Mesa Open-Source graphics driver for AMD & Intel GPUs
+🧩 Installiert Mesa Grafiktreiber
+📦 Mesa Open-Source Grafiktreiber für AMD & Intel GPUs
 
 💥 Features: Tweaks, Custom Patches
-💻 Latest graphics drivers. Provides current development versions of Mesa (OpenGL, Vulkan)
+💻 Neueste Grafiktreiber. Liefert aktuelle Entwicklungsversionen von Mesa (OpenGL, Vulkan)
 
-⚙️ Individual configuration and selection possible 💥💥💥
-🔧 File: 📝 ~/.config/frogminer/mesa-git.cfg
+⚙️ Individuelle Konfiguration und auswahl möglich 💥💥💥
+🔧 Datei: 📝 file:///home/damachine/.config/frogminer/mesa-git.cfg
 
-🛠️ GitHub: Description 🌐 https://github.com/Frogging-Family/mesa-git
+🛠️ GitHub: Beschreibung 🌐 https://github.com/Frogging-Family/mesa-git
 
-⚠️ Ensure compatibility
+⚠️ Kompatibilität sicherstellen

@@ -1,12 +1,12 @@
-🧠 Install Linux kernel
-📦 Linux-tkg - Customizable kernel for performance tweaks
+🧠 Installiert den Linux Kernel
+📦 Linux-tkg - Anpassbarer Kernel für Performance-Tweaks
 
 💥 Features: CPU Scheduler Tweaks, Custom Patches
-💻 Latest Linux kernel. Customized for Arch Linux
+💻 Neueste Linux Kernel. Angepasst für Arch Linux
 
-⚙️ Individual configuration and selection possible 💥💥💥
-🔧 Configuration file: 📝 ~/.config/frogminer/linux-tkg.cfg
+⚙️ Individuelle Konfiguration und auswahl möglich 💥💥💥
+🔧 Konfigurationdatei: 📝 file:///home/damachine/.config/frogminer/linux-tkg.cfg
 
 🌐 GitHub: 📝 https://github.com/Frogging-Family/linux-tkg
 
-⚠️ Ensure compatibility
+⚠️ Kompatibilität sicherstellen
