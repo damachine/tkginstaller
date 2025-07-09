@@ -1,0 +1,36 @@
+# Temporäre Dateien
+*.tmp
+*.log
+*.bak
+*~
+
+# Build-Artefakte
+*.o
+*.so
+*.a
+pkg/
+src/
+
+# Wine/Proton spezifische temporäre Dateien
+*.reg
+*.msi
+wine-*/.git/
+
+# Komprimierte Archive
+*.tar.xz
+*.tar.gz
+*.zip
+
+# Cache und temporäre Verzeichnisse
+.cache/
+temp_build/
+
+# IDE/Editor Dateien
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS spezifische Dateien
+.DS_Store
+Thumbs.db

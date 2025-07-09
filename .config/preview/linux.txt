@@ -1,0 +1,14 @@
+🧠 Installiert die Auswahl Kernel & Nvidia zusammen
+📦 Linux-tkg - Anpassbarer Kernel für Performance-Tweaks
+
+💥 Features: CPU Scheduler Tweaks, Custom Patches
+💻 Neueste Linux Kernel. Angepasst für Arch Linux
+
+⚙️ Individuelle Konfiguration und auswahl möglich 💥💥💥
+🔧 Konfigurationdatei: 📝 file:///home/damachine/.config/frogminer/linux-tkg.cfg
+                       📝 file:///home/damachine/.config/frogminer/nvidia-all.cfg
+
+🌐 GitHub: 📝 https://github.com/Frogging-Family/linux-tkg
+           📝 https://github.com/Frogging-Family/nvidia-all
+
+⚠️ Kompatibilität sicherstellen

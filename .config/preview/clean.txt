@@ -1,0 +1,10 @@
+🧹 Reset - Entfernt temporäre Dateien und Ordner
+
+💡 Hilfreich zur Fehlerbehebung oder Neuinstallation 💡
+💡 Frischer Start möglich 💡
+
+📁 Entfernt:
+   • file:///home/damachine/.tkg/temp
+   • file:///tmp/linux-tkg
+   • file:///tmp/makepkg
+   • ccache

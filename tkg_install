@@ -1,0 +1,206 @@
+#!/usr/bin/env bash
+
+#
+# 🐸 TKG Installer – Optimiert
+#
+#
+
+set -euo pipefail
+
+# 🎨 Farben
+[ -e "$HOME"/.tkg/.config/colors/colors ] && source "$HOME"/.tkg/.config/colors/colors
+
+# 📌 Pfade und Lockfile
+LOCKFILE="/tmp/tkg_installer.lock"
+SCRIPT_PATH="$(realpath "$0")"
+
+# 🔒 Doppelte Ausführung verhindern
+if [[ -f $LOCKFILE ]]; then
+    echo -e "${RED}${BOLD}❌ Skript läuft bereits. Beende...${RESET}"
+    exit 1
+fi
+touch "$LOCKFILE"
+
+# 🧹 Aufräumen bei Abbruch oder Beenden
+_on_exit() {
+    local code=$?
+    rm -f "$LOCKFILE"
+    [[ $code -ne 0 ]] && echo -e "${BREAK}${RED}${BOLD} 🎯 Skript abgebrochen 🎯${RESET}"
+    #if pacman -Qq ccache &>/dev/null; then
+    #    yay -Rns ccache --noconfirm
+    #fi
+    rm -rf /tmp/check_tkg "$HOME/.tkg/temp" /tmp/linux-tkg /tmp/makepkg 2>/dev/null || true
+    echo -e "${GREEN} 🧹 Aufräumen abgeschlossen.${RESET}"
+    exit $code
+}
+trap _on_exit INT TERM EXIT HUP
+
+# 🧹 Temp-Verzeichnisse löschen
+_clean_tmp() {
+    echo -e "${GREEN} 🧹 Bereinige temporäre Dateien ...${RESET}"
+    #if pacman -Qq ccache &>/dev/null; then
+    #    yay -Rns ccache --noconfirm
+    #fi
+    sudo rm -rf /tmp/linux-tkg /tmp/makepkg 2>/dev/null || true
+}
+
+# 🧼 Vorbereitung
+_pre() {
+    for cmd in fzf yay paccache bleachbit fastfetch gcc git onefetch; do
+        if ! command -v "$cmd" >/dev/null; then
+            echo -e "${RED}${BOLD} ❌ $cmd ist nicht installiert! Bitte installiere es zuerst.${RESET}"
+            return 1
+        fi
+    done
+
+    fastfetch
+    echo -e "${BLUE} 🔁 Starte 🐸 TKG Installer...${RESET}"
+    echo -e "${BLUE} 🔍 Aktualisiere zuerst Arch Linux...${RESET}"
+    yay -Syu
+    sudo paccache -rk0
+    sudo bleachbit --clean system.localizations || true
+    rm -rf "$HOME/.tkg/temp" 2>/dev/null || true
+    mkdir -p "$HOME/.tkg/temp"
+}
+
+# 📦 Installationsfunktionen
+_linux_install() {
+    cd "$HOME/.tkg/temp"
+    git clone https://github.com/Frogging-Family/linux-tkg.git || { echo "${RED}${BOLD} ❌ Fehler beim Klonen von: linux-tkg${RESET}"; return 1; }
+    cd linux-tkg
+    onefetch --no-color-palette --no-art || true
+    makepkg -si
+}
+
+_nvidia_install() {
+    cd "$HOME/.tkg/temp"
+    git clone https://github.com/Frogging-Family/nvidia-all.git || { echo "${RED}${BOLD} ❌ Fehler beim Klonen von: nvidia-all${RESET}"; return 1; }
+    cd nvidia-all
+    onefetch --no-color-palette --no-art || true
+    makepkg -si
+}
+
+_mesa_install() {
+    cd "$HOME/.tkg/temp"
+    git clone https://github.com/Frogging-Family/mesa-git.git || { echo "${RED}${BOLD} ❌ Fehler beim Klonen von: mesa-git${RESET}"; return 1; }
+    cd mesa-git
+    onefetch --no-color-palette --no-art || true
+    makepkg -si
+}
+
+_wine_install() {
+    cd "$HOME/.tkg/temp"
+    git clone https://github.com/Frogging-Family/wine-tkg-git.git || { echo "${RED}${BOLD} ❌ Fehler beim Klonen von: wine-tkg-git${RESET}"; return 1; }
+    cd wine-tkg-git/wine-tkg-git
+    onefetch --no-color-palette --no-art || true
+    makepkg -si
+    sudo setcap cap_sys_nice+ep /opt/wine-tkg-git-opt/bin/wineserver
+}
+
+_proton_install() {
+    yay -S ccache --noconfirm
+    cd "$HOME/.tkg/temp"
+    git clone https://github.com/Frogging-Family/wine-tkg-git.git || { echo "${RED}${BOLD} ❌ Fehler beim Klonen von: wine-tkg-git${RESET}"; return 1; }
+    cd wine-tkg-git/proton-tkg
+    onefetch --no-color-palette --no-art || true
+    ./proton-tkg.sh
+    ./proton-tkg.sh clean
+    if pacman -Qq ccache &>/dev/null; then
+        yay -Rns ccache --noconfirm
+    fi
+}
+
+# 📋 Aktionen pro Auswahl
+_linux_promt()         { echo -e "${GREEN}${BREAKOPT} 🧠 Installiere Linux-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _linux_install; }
+_nvidia_promt()        { echo -e "${GREEN}${BREAKOPT} 🎮 Installiere Nvidia-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _nvidia_install; }
+_linuxnvidia_promt()   { _linux_promt; _nvidia_promt; }
+_mesa_promt()          { echo -e "${GREEN}${BREAKOPT} 🧩 Installiere Mesa-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _mesa_install; }
+_wine_promt()          { echo -e "${GREEN}${BREAKOPT} 🍷 Installiere Wine-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _wine_install; }
+_proton_promt()        { echo -e "${GREEN}${BREAKOPT} 🧪 Installiere Proton-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _proton_install; }
+
+# ✅ Abschlussanzeige
+_show_done() {
+    local status=$?
+    echo -e "${BREAKOPT}"
+    echo -e "${BOLD} 📝 Aktion abgeschlossen: $(date '+%Y-%m-%d %H:%M:%S')${RESET}"
+    if [ $status -eq 0 ]; then
+        echo -e "${GREEN} ✅ Status: Erfolgreich${RESET}"
+    else
+        echo -e "${RED}${BOLD} ❌ Status: Fehler (Code: $status)${RESET}"
+    fi
+    echo -e "${BREAKOPT}"
+}
+
+# 🎛️ Menü mit Vorschau
+_menu() {
+    local auswahl
+    auswahl=$(
+        printf "%b\n" \
+            "Linux          |🧠 Linux-TKG        – Linux Kernel TKG-Konfiguration" \
+            "Nvidia         |🎮 Nvidia-TKG       – Nvidia Open-Source oder proprietären Grafiktreiber" \
+            "Linux+Nvidia   |💻 Linux+Nvidia     - Kombipaket: Linux-TKG + Nvidia-TKG" \
+            "Mesa           |🧩 Mesa-TKG         – Mesa Open-Source Grafiktreiber für AMD und Intel" \
+            "Wine           |🍷 Wine-TKG         – Windows-Kompatibilitätsschicht" \
+            "Proton         |🧪 Proton-TKG       – Windows-Kompatibilitätsschicht für Steam / Gaming" \
+            "Clean          |🧹 Reset" \
+            "Exit           |❌ Beenden" \
+            | fzf --prompt="❯ Wähle eine Option: " \
+                  --header="🎛️ TKG Frogminer Installation – Wähle ein Paket ..." \
+                  --height="30" \
+                  --border \
+                  --ansi \
+                  --delimiter="|" \
+                  --with-nth="2" \
+                  --preview='bash -c "
+                             key=$(echo {} | cut -d"|" -f1 | xargs)
+                             case \$key in
+                             Wine)              cat \"$HOME/.tkg/.config/preview/wine.txt\" ;;
+                             Proton)            cat \"$HOME/.tkg/.config/preview/proton.txt\" ;;
+                             Mesa)              cat \"$HOME/.tkg/.config/preview/mesa.txt\" ;;
+                             Nvidia)            cat \"$HOME/.tkg/.config/preview/nvidia.txt\" ;;
+                             Linux)             cat \"$HOME/.tkg/.config/preview/kernel.txt\" ;;
+                             Linux+Nvidia)      cat \"$HOME/.tkg/.config/preview/linux.txt\" ;;
+                             Clean)             cat \"$HOME/.tkg/.config/preview/clean.txt\" ;;
+                             Exit)              echo \"👋 Auf Wiedersehen!\" ;;
+                             esac
+                            "' \
+                  --preview-window="down:wrap:15" \
+                  --color="header:italic:underline,prompt:italic:green,pointer:green,marker:red" \
+                  --pointer="➤ "
+    )
+
+    # Bei ESC oder Abbruch
+    if [[ -z "$auswahl" ]]; then
+        echo -e " ${RED}${BOLD}❌ Auswahl abgebrochen.${RESET}"
+        _on_exit
+    fi
+
+    # Auswahl speichern
+    echo "$auswahl" | cut -d"|" -f1 | xargs > /tmp/check_tkg
+}
+
+# ▶️ Hauptfunktion
+_main() {
+    _pre
+    clear
+    _menu
+
+    choice=$(< /tmp/check_tkg)
+    rm -f /tmp/check_tkg
+
+    case $choice in
+        Linux+Nvidia)  _linuxnvidia_promt ;;
+        Linux)         _linux_promt ;;
+        Nvidia)        _nvidia_promt ;;
+        Mesa)          _mesa_promt ;;
+        Wine)          _wine_promt ;;
+        Proton)        _proton_promt ;;
+        Clean)         _pre; sleep 1; echo -e "${BLUE} 🔁 Starte 🐸 TKG Installer neu ...${RESET}"; sleep 1; rm -f "$LOCKFILE"; exec sudo -u damachine sh -c "$SCRIPT_PATH" ;;
+        Exit)          echo -e "${BLUE} 👋 Tschüss!${RESET}"; exit 0 ;;
+        *)             echo -e "${GREEN}${BOLD} ❌ Ungültige Option: $choice${RESET}" ;;
+    esac
+
+    _show_done
+}
+
+_main

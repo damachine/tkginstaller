@@ -1,0 +1,12 @@
+🍷 Installiert Wine-TKG
+📦 Kompatibilitätsschicht für Windows Anwendungen unter Linux.
+
+🎮 Kompatibilität für Windows Spiele und Software
+🎯 Ziel: Performanceoptimierter Wine-Build für Linux
+
+⚙️ Individuelle Konfiguration und auswahl möglich 💥💥💥
+🔧 Datei: 📝 file:///home/damachine/.config/frogminer/wine-tkg.cfg
+
+🛠️ GitHub: 🌐 https://github.com/Frogging-Family/wine-tkg-git
+
+⚠️ Kompatibilität sicherstellen
