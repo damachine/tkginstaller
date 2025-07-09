@@ -57,7 +57,7 @@ The script automatically checks for the following dependencies:
 
 1. Clone repository:
    ```bash
-   git clone <repository-url> tkginstaller
+   git clone https://github.com/damachine/tkginstaller.git
    cd tkginstaller
    ```
 
