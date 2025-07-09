@@ -16,6 +16,10 @@ src/
 *.msi
 wine-*/.git/
 
+# Wine-TKG Dateien ignorieren (unwichtig)
+wine-tkg-git/
+*wine-tkg*
+
 # Komprimierte Archive
 *.tar.xz
 *.tar.gz
