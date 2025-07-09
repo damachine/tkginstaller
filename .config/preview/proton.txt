@@ -1,12 +1,12 @@
-🧪 Proton - Steam-kompatibler Wine-Build für Windows-Spiele
-🎮 Erlaubt das Spielen von Windows-Spielen via Steam Play
+🧪 Proton - Steam-compatible Wine build for Windows games
+🎮 Allows playing Windows games via Steam Play
 
-📦 Integriert automatisch in Steam-Ordner (z. B. ~/.steam/root/compatibilitytools.d/)
-🎮 Steam kompatible Wine Variante für Windows Spiele
+📦 Automatically integrates into Steam folder (e.g. ~/.steam/root/compatibilitytools.d/)
+🎮 Steam compatible Wine variant for Windows games
 
-⚙️ Individuelle Konfiguration und auswahl möglich 💥💥💥
-🔧 Datei: 📝 file:///home/damachine/.config/frogminer/proton-tkg.cfg
+⚙️ Individual configuration and selection possible 💥💥💥
+🔧 File: 📝 file:///home/damachine/.config/frogminer/proton-tkg.cfg
 
 🛠️ GitHub: 🌐 https://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg
 
-⚠️ Kompatibilität sicherstellen
+⚠️ Ensure compatibility

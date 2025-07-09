@@ -1,40 +1,40 @@
-# Temporäre Dateien
+# Temporary files
 *.tmp
 *.log
 *.bak
 *~
 
-# Build-Artefakte
+# Build artifacts
 *.o
 *.so
 *.a
 pkg/
 src/
 
-# Wine/Proton spezifische temporäre Dateien
+# Wine/Proton specific temporary files
 *.reg
 *.msi
 wine-*/.git/
 
-# Wine-TKG Dateien ignorieren (unwichtig)
+# Wine-TKG files ignore (unimportant)
 wine-tkg-git/
 *wine-tkg*
 
-# Komprimierte Archive
+# Compressed archives
 *.tar.xz
 *.tar.gz
 *.zip
 
-# Cache und temporäre Verzeichnisse
+# Cache and temporary directories
 .cache/
 temp_build/
 
-# IDE/Editor Dateien
+# IDE/Editor files
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# OS spezifische Dateien
+# OS specific files
 .DS_Store
 Thumbs.db
