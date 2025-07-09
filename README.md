@@ -4,7 +4,7 @@ A comprehensive installer script for all TKG packages from the Frogging-Family.
 
 ## Description
 
-This repository contains an interactive installer script for various TKG (The Kegel Group) packages:
+This repository contains an interactive installer script for various TKG packages:
 
 ### 🧠 **Linux-TKG**
 - Custom Linux kernels with gaming optimizations
