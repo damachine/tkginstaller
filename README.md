@@ -109,4 +109,7 @@ Based on the Frogging-Family project: https://github.com/Frogging-Family
 
 ## License
 
-See the respective license files of the Frogging-Family projects.
+This installer script is released under the **MIT License**.
+
+Individual TKG packages have their own licenses:
+- See respective repositories at https://github.com/Frogging-Family
