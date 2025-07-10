@@ -95,7 +95,8 @@ _wine_install() {
     cd wine-tkg-git/wine-tkg-git
     onefetch --no-color-palette --no-art || true
     makepkg -si
-    sudo setcap cap_sys_nice+ep /opt/wine-tkg-git-opt/bin/wineserver
+    # https://claude.ai/chat/72c16a09-64b5-45ed-93e5-2021ddf88d93
+    #sudo setcap cap_sys_nice+ep /opt/wine-tkg-git-opt/bin/wineserver
 }
 
 _proton_install() {
