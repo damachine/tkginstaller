@@ -1,6 +1,6 @@
-# TKG Installer
+# TKG Installer 
 
-A comprehensive installer script for all TKG packages from the Frogging-Family.
+A comprehensive installer script for all TKG packages from the Frogging-Family. 🐸
 
 ## Description
 
