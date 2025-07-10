@@ -28,7 +28,7 @@ _on_exit() {
     rm -f "$LOCKFILE"
     [[ $code -ne 0 ]] && echo -e "${BREAK}${RED}${BOLD} 🎯 Script aborted 🎯${RESET}"
     #if pacman -Qq ccache &>/dev/null; then
-    #    yay -Rns ccache --noconfirm
+    #    yay -Rns ccache --noconfirm || true
     #fi
     rm -rf /tmp/check_tkg "$TEMP_DIR" /tmp/linux-tkg /tmp/makepkg 2>/dev/null || true
     echo -e "${GREEN} 🧹 Cleanup completed.${RESET}"
@@ -47,18 +47,18 @@ _clean_tmp() {
 
 # 🧼 Preparation
 _pre() {
-    for cmd in fzf yay gcc git nano paccache bleachbit fastfetch onefetch; do
+    for cmd in fzf gcc git nano; do
         if ! command -v "$cmd" >/dev/null; then
             echo -e "${RED}${BOLD} ❌ $cmd is not installed! Please install it first.${RESET}"
             return 1
         fi
     done
 
-    fastfetch
+    fastfetch || true
     echo -e "${BLUE} 🔁 Starting 🐸 TKG Installer...${RESET}"
     echo -e "${BLUE} 🔍 Updating Arch Linux first...${RESET}"
-    yay -Syu
-    sudo paccache -rk0
+    pacman -Syu || true
+    sudo paccache -rk0 || true
     sudo bleachbit --clean system.localizations || true
     rm -rf "$TEMP_DIR" 2>/dev/null || true
     mkdir -p "$TEMP_DIR"

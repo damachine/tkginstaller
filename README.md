@@ -36,22 +36,24 @@ This script makes it easy to install packages from the [Frogging-Family](https:/
 
 - 🎛️ **Interactive Menu** with fzf-based selection
 - 📋 **Live Preview** of available packages
+- ⚙️ **Configuration Editor** with interactive TKG config file editing
 - 🔒 **Safe Execution** with lockfile system
 - 🧹 **Automatic Cleanup** of temporary files
 - ✅ **Dependency Check** for required tools
 - 🎨 **Colorized Output** for better readability
+- 🌐 **Portable Design** - works from any directory
 
 ## Prerequisites
 
-The script automatically checks for the following dependencies:
+The script automatically checks for the following core dependencies:
 - `fzf` - Fuzzy finder for the interactive menu
-- `yay` - AUR helper for Arch Linux
-- `paccache` - Package cache management
-- `bleachbit` - System cleanup
-- `fastfetch` - System information
 - `gcc` - Compiler for building packages
-- `git` - Version control
-- `onefetch` - Git repository information
+- `git` - Version control system
+- `nano` - Text editor for configuration files
+
+Optional tools (used if available):
+- `fastfetch` - System information display (optional)
+- `onefetch` - Git repository information display (optional)
 
 ## Installation
 
@@ -81,8 +83,18 @@ The script provides an interactive menu with the following options:
 - **Mesa**: Installs Mesa-TKG for AMD/Intel graphics
 - **Wine**: Installs Wine-TKG for Windows applications
 - **Proton**: Installs Proton-TKG for Steam gaming
+- **Config**: Opens configuration editor for TKG packages
 - **Clean**: Cleans temporary files and restarts
 - **Exit**: Exits the script
+
+### Configuration Editor
+
+The **Config** option provides an interactive editor for TKG configuration files:
+- Edit Linux-TKG kernel configuration
+- Modify Nvidia-TKG driver settings
+- Adjust Mesa-TKG graphics options
+- Customize Wine-TKG compatibility settings
+- Uses `nano` editor with user-friendly interface
 
 ## Source
 
