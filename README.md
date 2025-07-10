@@ -9,27 +9,27 @@ This wrapper script makes it easy to install packages from the [Frogging-Family]
 ### 🧠 **Linux-TKG**
 - Custom Linux kernels with gaming optimizations
 - Various schedulers and performance patches
-- [Frogging-Family](https://github.com/Frogging-Family/linux-tkg)
+- [https://github.com/Frogging-Family/linux-tkg](https://github.com/Frogging-Family/linux-tkg)
 
 ### 🎮 **Nvidia-TKG** 
 - Nvidia graphics drivers (open-source or proprietary)
 - Optimized for gaming and performance
-- [Frogging-Family](https://github.com/Frogging-Family/nvidia-all)
+- [https://github.com/Frogging-Family/nvidia-all](https://github.com/Frogging-Family/nvidia-all)
 
 ### 🧩 **Mesa-TKG**
 - Open-source graphics drivers for AMD and Intel
 - Advanced gaming features and performance optimizations
-- [Frogging-Family](https://github.com/Frogging-Family/mesa-git)
+- [https://github.com/Frogging-Family/mesa-git](https://github.com/Frogging-Family/mesa-git)
 
 ### 🍷 **Wine-TKG**
 - Windows compatibility layer with additional patches
 - Optimized for gaming and application compatibility
-- [Frogging-Family](https://github.com/Frogging-Family/wine-tkg-git)
+- [https://github.com/Frogging-Family/wine-tkg-git](https://github.com/Frogging-Family/wine-tkg-git)
 
 ### 🧪 **Proton-TKG**
 - Steam-compatible Windows compatibility layer
 - Advanced gaming features and Valve patches
-- [Frogging-Family](https://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg)
+- [https://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg](https://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg)
 
 ## Contents
 
