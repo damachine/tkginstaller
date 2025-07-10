@@ -1,12 +1,12 @@
-🎮 Installiert Nvidia Grafiktreiber
-📦 Proprietärer oder Open-Source Grafiktreiber mit Kernel-Modul
+🎮 Install Nvidia graphics driver
+📦 Proprietary or Open-Source graphics driver with kernel module
 
 💥 Features: Tweaks, Custom Patches
-💻 Neueste Grafiktreiber. Angepasst für Kernel ohne oder mit DKMS unterstüzung
+💻 Latest graphics drivers. Customized for kernel with or without DKMS support
 
-⚙️ Individuelle Konfiguration und auswahl möglich 💥💥💥
-🔧 Datei: 📝 file:///home/damachine/.config/frogminer/nvidia-all.cfg
+⚙️ Individual configuration and selection possible 💥💥💥
+🔧 File: 📝 ~/.config/frogminer/nvidia-all.cfg
 
 🛠️ GitHub: 🌐 https://github.com/Frogging-Family/nvidia-all
 
-⚠️ Kompatibilität sicherstellen
+⚠️ Ensure compatibility
