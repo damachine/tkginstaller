@@ -16,6 +16,13 @@ src/
 *.msi
 wine-*/.git/
 
+# TKG repository .git directories (from cloned repos)
+linux-tkg/.git/
+nvidia-all/.git/
+mesa-git/.git/
+wine-tkg-git/.git/
+*/wine-tkg-git/.git/
+
 # Wine-TKG files ignore (unimportant)
 wine-tkg-git/
 *wine-tkg*
