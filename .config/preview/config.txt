@@ -1,0 +1,20 @@
+⚙️ Configuration Editor for TKG Packages
+📝 Edit configuration files for all TKG packages
+
+🔧 Available Configuration Files:
+   • Linux-TKG:  ~/.config/frogminer/linux-tkg.cfg
+   • Nvidia-TKG: ~/.config/frogminer/nvidia-all.cfg
+   • Mesa-TKG:   ~/.config/frogminer/mesa-git.cfg
+   • Wine-TKG:   ~/.config/frogminer/wine-tkg.cfg
+
+💡 Features:
+   • Interactive file selection
+   • Automatic file creation if missing
+   • Nano editor for easy editing
+   • Syntax highlighting and validation
+
+🚀 Usage:
+   Select this option to choose which configuration file to edit.
+   Files will be created with default settings if they don't exist.
+
+⚠️ Note: Configuration changes take effect on next installation.

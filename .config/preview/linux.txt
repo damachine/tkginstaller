@@ -7,6 +7,8 @@
 ⚙️ Individual configuration and selection possible 💥💥💥
 🔧 Configuration file: 📝 ~/.config/frogminer/linux-tkg.cfg
                        📝 ~/.config/frogminer/nvidia-all.cfg
+                       
+💡 Tip: Edit config with: nano ~/.config/frogminer/linux-tkg.cfg
 
 🌐 GitHub: 📝 https://github.com/Frogging-Family/linux-tkg
            📝 https://github.com/Frogging-Family/nvidia-all

@@ -47,7 +47,7 @@ _clean_tmp() {
 
 # 🧼 Preparation
 _pre() {
-    for cmd in fzf yay paccache bleachbit fastfetch gcc git onefetch; do
+    for cmd in fzf yay gcc git nano paccache bleachbit fastfetch onefetch; do
         if ! command -v "$cmd" >/dev/null; then
             echo -e "${RED}${BOLD} ❌ $cmd is not installed! Please install it first.${RESET}"
             return 1
@@ -111,6 +111,70 @@ _proton_install() {
     fi
 }
 
+# 🔧 Configuration editor
+_config_edit() {
+    while true; do
+        local config_choice
+        mkdir -p ~/.config/frogminer
+        
+        config_choice=$(
+            printf "%b\n" \
+                "linux-tkg      |🧠 Linux-TKG Configuration" \
+                "nvidia-all     |🎮 Nvidia-TKG Configuration" \
+                "mesa-git       |🧩 Mesa-TKG Configuration" \
+                "wine-tkg       |🍷 Wine-TKG Configuration" \
+                "back           |⬅️ Back to Main Menu" \
+                | fzf --prompt="❯ Select config file: " \
+                      --header="⚙️ TKG Configuration Editor" \
+                      --height="15" \
+                      --border \
+                      --ansi \
+                      --delimiter="|" \
+                      --with-nth="2"
+        )
+        
+        if [[ -z "$config_choice" ]]; then
+            echo -e "${RED}${BOLD}❌ Selection cancelled.${RESET}"
+            return 1
+        fi
+        
+        local config_file=$(echo "$config_choice" | cut -d"|" -f1 | xargs)
+        
+        case $config_file in
+            linux-tkg)  
+                echo -e "${BLUE}🔧 Opening Linux-TKG configuration...${RESET}"
+                nano ~/.config/frogminer/linux-tkg.cfg
+                echo -e "${GREEN}✅ Configuration saved!${RESET}"
+                sleep 1
+                ;;
+            nvidia-all) 
+                echo -e "${BLUE}🔧 Opening Nvidia-TKG configuration...${RESET}"
+                nano ~/.config/frogminer/nvidia-all.cfg
+                echo -e "${GREEN}✅ Configuration saved!${RESET}"
+                sleep 1
+                ;;
+            mesa-git)   
+                echo -e "${BLUE}🔧 Opening Mesa-TKG configuration...${RESET}"
+                nano ~/.config/frogminer/mesa-git.cfg
+                echo -e "${GREEN}✅ Configuration saved!${RESET}"
+                sleep 1
+                ;;
+            wine-tkg)   
+                echo -e "${BLUE}🔧 Opening Wine-TKG configuration...${RESET}"
+                nano ~/.config/frogminer/wine-tkg.cfg
+                echo -e "${GREEN}✅ Configuration saved!${RESET}"
+                sleep 1
+                ;;
+            back)       
+                return 0
+                ;;
+            *)          
+                echo -e "${RED}${BOLD}❌ Invalid option: $config_file${RESET}"
+                ;;
+        esac
+    done
+}
+
 # 📋 Actions per selection
 _linux_promt()         { echo -e "${GREEN}${BREAKOPT} 🧠 Installing Linux-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _linux_install; }
 _nvidia_promt()        { echo -e "${GREEN}${BREAKOPT} 🎮 Installing Nvidia-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _nvidia_install; }
@@ -118,6 +182,7 @@ _linuxnvidia_promt()   { _linux_promt; _nvidia_promt; }
 _mesa_promt()          { echo -e "${GREEN}${BREAKOPT} 🧩 Installing Mesa-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _mesa_install; }
 _wine_promt()          { echo -e "${GREEN}${BREAKOPT} 🍷 Installing Wine-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _wine_install; }
 _proton_promt()        { echo -e "${GREEN}${BREAKOPT} 🧪 Installing Proton-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _proton_install; }
+_config_promt()        { echo -e "${GREEN}${BREAKOPT} ⚙️ Opening Configuration Editor${BREAKOPT}${RESET}"; _config_edit; if [ $? -eq 0 ]; then return 0; fi; }
 
 # ✅ Completion display
 _show_done() {
@@ -143,11 +208,12 @@ _menu() {
             "Mesa           |🧩 Mesa-TKG         – Mesa Open-Source graphics driver for AMD and Intel" \
             "Wine           |🍷 Wine-TKG         – Windows compatibility layer" \
             "Proton         |🧪 Proton-TKG       – Windows compatibility layer for Steam / Gaming" \
+            "Config         |⚙️ Config-TKG       – Edit TKG configuration files" \
             "Clean          |🧹 Reset" \
             "Exit           |❌ Exit" \
             | fzf --prompt="❯ Choose an option: " \
                   --header="🎛️ TKG Frogminer Installation – Select a package ..." \
-                  --height="30" \
+                  --height="31" \
                   --border \
                   --ansi \
                   --delimiter="|" \
@@ -162,6 +228,7 @@ _menu() {
                              Nvidia)            cat \\\"\\\$SCRIPT_DIR/.config/preview/nvidia.txt\\\" ;;
                              Linux)             cat \\\"\\\$SCRIPT_DIR/.config/preview/kernel.txt\\\" ;;
                              Linux+Nvidia)      cat \\\"\\\$SCRIPT_DIR/.config/preview/linux.txt\\\" ;;
+                             Config)            cat \\\"\\\$SCRIPT_DIR/.config/preview/config.txt\\\" ;;
                              Clean)             cat \\\"\\\$SCRIPT_DIR/.config/preview/clean.txt\\\" ;;
                              Exit)              echo \\\"👋 Goodbye!\\\" ;;
                              esac
@@ -197,6 +264,7 @@ _main() {
         Mesa)          _mesa_promt ;;
         Wine)          _wine_promt ;;
         Proton)        _proton_promt ;;
+        Config)        _config_promt; if [ $? -eq 0 ]; then rm -f "$LOCKFILE"; exec "$0"; fi ;;
         Clean)         _pre; sleep 1; echo -e "${BLUE} 🔁 Restarting 🐸 TKG Installer ...${RESET}"; sleep 1; rm -f "$LOCKFILE"; exec "$0" ;;
         Exit)          echo -e "${BLUE} 👋 Goodbye!${RESET}"; exit 0 ;;
         *)             echo -e "${GREEN}${BOLD} ❌ Invalid option: $choice${RESET}" ;;
