@@ -152,20 +152,20 @@ _menu() {
                   --ansi \
                   --delimiter="|" \
                   --with-nth="2" \
-                  --preview='bash -c "
-                             key=$(echo {} | cut -d"|" -f1 | xargs)
-                             SCRIPT_DIR=\"$(dirname \"$(realpath \"$0\")\")\"
-                             case \$key in
-                             Wine)              cat \"\$SCRIPT_DIR/.config/preview/wine.txt\" ;;
-                             Proton)            cat \"\$SCRIPT_DIR/.config/preview/proton.txt\" ;;
-                             Mesa)              cat \"\$SCRIPT_DIR/.config/preview/mesa.txt\" ;;
-                             Nvidia)            cat \"\$SCRIPT_DIR/.config/preview/nvidia.txt\" ;;
-                             Linux)             cat \"\$SCRIPT_DIR/.config/preview/kernel.txt\" ;;
-                             Linux+Nvidia)      cat \"\$SCRIPT_DIR/.config/preview/linux.txt\" ;;
-                             Clean)             cat \"\$SCRIPT_DIR/.config/preview/clean.txt\" ;;
-                             Exit)              echo \"👋 Goodbye!\" ;;
+                  --preview="bash -c \"
+                             key=\$(echo {} | cut -d'|' -f1 | xargs)
+                             SCRIPT_DIR='$SCRIPT_DIR'
+                             case \\\$key in
+                             Wine)              cat \\\"\\\$SCRIPT_DIR/.config/preview/wine.txt\\\" ;;
+                             Proton)            cat \\\"\\\$SCRIPT_DIR/.config/preview/proton.txt\\\" ;;
+                             Mesa)              cat \\\"\\\$SCRIPT_DIR/.config/preview/mesa.txt\\\" ;;
+                             Nvidia)            cat \\\"\\\$SCRIPT_DIR/.config/preview/nvidia.txt\\\" ;;
+                             Linux)             cat \\\"\\\$SCRIPT_DIR/.config/preview/kernel.txt\\\" ;;
+                             Linux+Nvidia)      cat \\\"\\\$SCRIPT_DIR/.config/preview/linux.txt\\\" ;;
+                             Clean)             cat \\\"\\\$SCRIPT_DIR/.config/preview/clean.txt\\\" ;;
+                             Exit)              echo \\\"👋 Goodbye!\\\" ;;
                              esac
-                            "' \
+                            \"" \
                   --preview-window="down:wrap:15" \
                   --color="header:italic:underline,prompt:italic:green,pointer:green,marker:red" \
                   --pointer="➤ "
