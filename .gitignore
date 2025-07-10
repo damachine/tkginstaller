@@ -4,9 +4,6 @@
 *.bak
 *~
 
-# Screenshots and images (optional)
-screenshot.png
-
 # Build artifacts
 *.o
 *.so
