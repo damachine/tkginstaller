@@ -1,10 +1,10 @@
 # TKG Installer 
 
-A comprehensive installer script for all TKG packages from the Frogging-Family. 🐸
+A user-friendly wrapper script for all TKG packages from the Frogging-Family. 🐸
 
 ## Description
 
-This script makes it easy to install packages from the [Frogging-Family](https://github.com/Frogging-Family) repository. It provides an interactive installer with a user-friendly menu system for various TKG packages:
+This wrapper script makes it easy to install packages from the [Frogging-Family](https://github.com/Frogging-Family) repository. It provides an interactive menu system for building and installing various TKG packages:
 
 ### 🧠 **Linux-TKG**
 - Custom Linux kernels with gaming optimizations
@@ -28,7 +28,7 @@ This script makes it easy to install packages from the [Frogging-Family](https:/
 
 ## Contents
 
-- `tkg_install`: Main installer script with interactive menu
+- `tkg_install`: Main wrapper script with interactive menu
 - `.config/`: Configuration files for colors and preview texts
 - Automatic dependency checking and system updates
 
