@@ -77,6 +77,8 @@ Optional tools (used if available):
 
 The script provides an interactive menu with the following options:
 
+![TKG Installer Screenshot](screenshot.png)
+
 - **Linux**: Installs Linux-TKG kernel
 - **Nvidia**: Installs Nvidia-TKG drivers
 - **Linux+Nvidia**: Combined installation of kernel and Nvidia drivers
