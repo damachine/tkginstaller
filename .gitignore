@@ -27,6 +27,7 @@ wine-tkg-git/
 
 # Cache and temporary directories
 .cache/
+temp/
 temp_build/
 
 # IDE/Editor files

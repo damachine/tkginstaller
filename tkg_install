@@ -14,6 +14,7 @@ SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 # 📌 Paths and Lockfile
 LOCKFILE="/tmp/tkg_installer.lock"
 SCRIPT_PATH="$(realpath "$0")"
+TEMP_DIR="$SCRIPT_DIR/temp"
 
 # 🔒 Prevent double execution
 if [[ -f $LOCKFILE ]]; then
@@ -30,7 +31,7 @@ _on_exit() {
     #if pacman -Qq ccache &>/dev/null; then
     #    yay -Rns ccache --noconfirm
     #fi
-    rm -rf /tmp/check_tkg "$HOME/.tkg/temp" /tmp/linux-tkg /tmp/makepkg 2>/dev/null || true
+    rm -rf /tmp/check_tkg "$TEMP_DIR" /tmp/linux-tkg /tmp/makepkg 2>/dev/null || true
     echo -e "${GREEN} 🧹 Cleanup completed.${RESET}"
     exit $code
 }
@@ -60,13 +61,13 @@ _pre() {
     yay -Syu
     sudo paccache -rk0
     sudo bleachbit --clean system.localizations || true
-    rm -rf "$HOME/.tkg/temp" 2>/dev/null || true
-    mkdir -p "$HOME/.tkg/temp"
+    rm -rf "$TEMP_DIR" 2>/dev/null || true
+    mkdir -p "$TEMP_DIR"
 }
 
 # 📦 Installation functions
 _linux_install() {
-    cd "$HOME/.tkg/temp"
+    cd "$TEMP_DIR"
     git clone https://github.com/Frogging-Family/linux-tkg.git || { echo "${RED}${BOLD} ❌ Error cloning: linux-tkg${RESET}"; return 1; }
     cd linux-tkg
     onefetch --no-color-palette --no-art || true
@@ -74,7 +75,7 @@ _linux_install() {
 }
 
 _nvidia_install() {
-    cd "$HOME/.tkg/temp"
+    cd "$TEMP_DIR"
     git clone https://github.com/Frogging-Family/nvidia-all.git || { echo "${RED}${BOLD} ❌ Error cloning: nvidia-all${RESET}"; return 1; }
     cd nvidia-all
     onefetch --no-color-palette --no-art || true
@@ -82,7 +83,7 @@ _nvidia_install() {
 }
 
 _mesa_install() {
-    cd "$HOME/.tkg/temp"
+    cd "$TEMP_DIR"
     git clone https://github.com/Frogging-Family/mesa-git.git || { echo "${RED}${BOLD} ❌ Error cloning: mesa-git${RESET}"; return 1; }
     cd mesa-git
     onefetch --no-color-palette --no-art || true
@@ -90,7 +91,7 @@ _mesa_install() {
 }
 
 _wine_install() {
-    cd "$HOME/.tkg/temp"
+    cd "$TEMP_DIR"
     git clone https://github.com/Frogging-Family/wine-tkg-git.git || { echo "${RED}${BOLD} ❌ Error cloning: wine-tkg-git${RESET}"; return 1; }
     cd wine-tkg-git/wine-tkg-git
     onefetch --no-color-palette --no-art || true
@@ -100,7 +101,7 @@ _wine_install() {
 
 _proton_install() {
     yay -S ccache --noconfirm
-    cd "$HOME/.tkg/temp"
+    cd "$TEMP_DIR"
     git clone https://github.com/Frogging-Family/wine-tkg-git.git || { echo "${RED}${BOLD} ❌ Error cloning: wine-tkg-git${RESET}"; return 1; }
     cd wine-tkg-git/proton-tkg
     onefetch --no-color-palette --no-art || true
