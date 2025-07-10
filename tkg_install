@@ -7,14 +7,13 @@
 
 set -euo pipefail
 
-# 🎨 Colors
-SCRIPT_DIR="$(dirname "$(realpath "$0")")"
-[ -e "$SCRIPT_DIR/.config/colors/colors" ] && source "$SCRIPT_DIR/.config/colors/colors"
-
 # 📌 Paths and Lockfile
 LOCKFILE="/tmp/tkg_installer.lock"
-SCRIPT_PATH="$(realpath "$0")"
+SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 TEMP_DIR="$SCRIPT_DIR/temp"
+
+# 🎨 Colors
+[ -e "$SCRIPT_DIR/.config/colors/colors" ] && source "$SCRIPT_DIR/.config/colors/colors"
 
 # 🔒 Prevent double execution
 if [[ -f $LOCKFILE ]]; then
@@ -198,7 +197,7 @@ _main() {
         Mesa)          _mesa_promt ;;
         Wine)          _wine_promt ;;
         Proton)        _proton_promt ;;
-        Clean)         _pre; sleep 1; echo -e "${BLUE} 🔁 Restarting 🐸 TKG Installer ...${RESET}"; sleep 1; rm -f "$LOCKFILE"; exec "$SCRIPT_PATH" ;;
+        Clean)         _pre; sleep 1; echo -e "${BLUE} 🔁 Restarting 🐸 TKG Installer ...${RESET}"; sleep 1; rm -f "$LOCKFILE"; exec "$0" ;;
         Exit)          echo -e "${BLUE} 👋 Goodbye!${RESET}"; exit 0 ;;
         *)             echo -e "${GREEN}${BOLD} ❌ Invalid option: $choice${RESET}" ;;
     esac
