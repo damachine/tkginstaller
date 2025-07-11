@@ -55,6 +55,7 @@ The script automatically checks for the following core dependencies:
 - `gcc` - Compiler for building packages
 - `git` - Version control system
 - `nano` - Text editor for configuration files
+- `bat` - Alternative for "cat" with more syntax highlight
 
 Optional tools (used if available):
 - `fastfetch` - System information display (optional)

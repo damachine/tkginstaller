@@ -47,14 +47,14 @@ _clean_tmp() {
 
 # 🧼 Preparation
 _pre() {
-    for cmd in fzf gcc git nano; do
+    for cmd in fzf gcc git nano bat; do
         if ! command -v "$cmd" >/dev/null; then
             echo -e "${RED}${BOLD} ❌ $cmd is not installed! Please install it first.${RESET}"
             return 1
         fi
     done
 
-    fastfetch || true
+    #fastfetch || true
     echo -e "${BLUE} 🔁 Starting 🐸 TKG Installer...${RESET}"
     echo -e "${BLUE} 🔍 Updating Arch Linux first...${RESET}"
     sudo pacman -Syu || true
@@ -100,7 +100,7 @@ _wine_install() {
 }
 
 _proton_install() {
-    yay -S ccache --noconfirm
+    #yay -S ccache --noconfirm
     cd "$TEMP_DIR"
     git clone https://github.com/Frogging-Family/wine-tkg-git.git || { echo "${RED}${BOLD} ❌ Error cloning: wine-tkg-git${RESET}"; return 1; }
     cd wine-tkg-git/proton-tkg
@@ -124,14 +124,29 @@ _config_edit() {
                 "nvidia-all     |🎮 Nvidia-TKG Configuration" \
                 "mesa-git       |🧩 Mesa-TKG Configuration" \
                 "wine-tkg       |🍷 Wine-TKG Configuration" \
+                "proton-tkg     |🧪 Proton-TKG Configuration" \
                 "back           |⬅️ Back to Main Menu" \
                 | fzf --prompt="❯ Select config file: " \
                       --header="⚙️ TKG Configuration Editor" \
-                      --height="15" \
+                      --height="100%" \
                       --border \
                       --ansi \
                       --delimiter="|" \
-                      --with-nth="2"
+                      --with-nth="2" \
+                      --preview="bash -c \"
+                             key=\$(echo {} | cut -d'|' -f1 | xargs)
+                             case \\\$key in
+                             linux-tkg)         command -v bat &>/dev/null && bat --style=plain --color=always \\\"\\\$HOME/.config/frogminer/linux-tkg.cfg\\\" ;;
+                             nvidia-all)        command -v bat &>/dev/null && bat --style=plain --color=always \\\"\\\$HOME/.config/frogminer/nvidia-all.cfg\\\" ;;
+                             mesa-git)          command -v bat &>/dev/null && bat --style=plain --color=always \\\"\\\$HOME/.config/frogminer/mesa-git.cfg\\\" ;;
+                             wine-tkg)          command -v bat &>/dev/null && bat --style=plain --color=always \\\"\\\$HOME/.config/frogminer/wine-tkg.cfg\\\" ;;
+                             proton-tkg)        command -v bat &>/dev/null && bat --style=plain --color=always \\\"\\\$HOME/.config/frogminer/proton-tkg.cfg\\\" ;;
+                             back)              echo \\\"👋 Back to Mainmenu!\\\" ;;
+                             esac
+                            \"" \
+                  --preview-window="down:wrap:85%" \
+                  --color="header:italic:underline,prompt:italic:green,pointer:green,marker:red" \
+                  --pointer="➤ "
         )
         
         if [[ -z "$config_choice" ]]; then
@@ -166,6 +181,12 @@ _config_edit() {
                 echo -e "${GREEN}✅ Configuration saved!${RESET}"
                 sleep 1
                 ;;
+            proton-tkg)   
+                echo -e "${BLUE}🔧 Opening Proton-TKG configuration...${RESET}"
+                nano ~/.config/frogminer/proton-tkg.cfg
+                echo -e "${GREEN}✅ Configuration saved!${RESET}"
+                sleep 1
+                ;;
             back)       
                 return 0
                 ;;
@@ -183,7 +204,7 @@ _linuxnvidia_promt()   { _linux_promt; _nvidia_promt; }
 _mesa_promt()          { echo -e "${GREEN}${BREAKOPT} 🧩 Installing Mesa-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _mesa_install; }
 _wine_promt()          { echo -e "${GREEN}${BREAKOPT} 🍷 Installing Wine-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _wine_install; }
 _proton_promt()        { echo -e "${GREEN}${BREAKOPT} 🧪 Installing Proton-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _proton_install; }
-_config_promt()        { echo -e "${GREEN}${BREAKOPT} ⚙️ Opening Configuration Editor${BREAKOPT}${RESET}"; _config_edit; if [ $? -eq 0 ]; then return 0; fi; }
+_config_promt()        { _config_edit; if [ $? -eq 0 ]; then return 0; fi; }
 
 # ✅ Completion display
 _show_done() {
@@ -220,8 +241,8 @@ _menu() {
                   --delimiter="|" \
                   --with-nth="2" \
                   --preview="bash -c \"
-                             key=\$(echo {} | cut -d'|' -f1 | xargs)
                              SCRIPT_DIR='$SCRIPT_DIR'
+                             key=\$(echo {} | cut -d'|' -f1 | xargs)
                              case \\\$key in
                              Wine)              cat \\\"\\\$SCRIPT_DIR/.config/preview/wine.txt\\\" ;;
                              Proton)            cat \\\"\\\$SCRIPT_DIR/.config/preview/proton.txt\\\" ;;
