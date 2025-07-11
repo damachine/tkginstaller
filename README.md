@@ -59,6 +59,8 @@ The script automatically checks for the following core dependencies:
 Optional tools (used if available):
 - `fastfetch` - System information display (optional)
 - `onefetch` - Git repository information display (optional)
+- `bleachbit` - System cleaningg for local language files (optional)
+- `paccache` - Pacman cache cleaning (optional)
 
 ## Installation
 

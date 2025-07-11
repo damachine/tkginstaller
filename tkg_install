@@ -57,7 +57,7 @@ _pre() {
     fastfetch || true
     echo -e "${BLUE} 🔁 Starting 🐸 TKG Installer...${RESET}"
     echo -e "${BLUE} 🔍 Updating Arch Linux first...${RESET}"
-    pacman -Syu || true
+    sudo pacman -Syu || true
     sudo paccache -rk0 || true
     sudo bleachbit --clean system.localizations || true
     rm -rf "$TEMP_DIR" 2>/dev/null || true
@@ -107,9 +107,9 @@ _proton_install() {
     onefetch --no-color-palette --no-art || true
     ./proton-tkg.sh
     ./proton-tkg.sh clean
-    if pacman -Qq ccache &>/dev/null; then
-        yay -Rns ccache --noconfirm
-    fi
+    #if pacman -Qq ccache &>/dev/null; then
+    #    yay -Rns ccache --noconfirm
+    #fi
 }
 
 # 🔧 Configuration editor
