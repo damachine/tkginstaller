@@ -1,5 +1,5 @@
 Answer all questions in german.
-Write all Code comments, README, AUR-README CHANGELOG, MAN in english.
+Write all Code comments, README, AUR-README CHANGELOG, MAN and github commit in english.
 This project follows a custom versioning scheme: "0.year.month.day.hourminute", (e.g., 0.2025.07.08.1759 = Year 2025, July 8th, 17:59).
 This project uses C99 standard. All code should be compliant with ISO/IEC 9899:1999 (C99).
 Always check return values of malloc(), calloc(), realloc().
@@ -14,7 +14,7 @@ Use UPPER_CASE for constants and macros: MAX_SIZE, PI.
 Use PascalCase for typedef structs: MyStruct.
 Use forward declarations when possible.
 Use descriptive names, avoid abbreviations.
-Opening braces on the same line for functions and control structures (K&R style)
+Opening braces on the same line for functions and control structures (K&R style).
 Use Doxygen-style comments for functions.
 Include brief description, parameters, return values, and examples.
 Document complex algorithms and data structures.
