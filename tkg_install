@@ -27,23 +27,12 @@ _on_exit() {
     local code=$?
     rm -f "$LOCKFILE"
     [[ $code -ne 0 ]] && echo -e "${BREAK}${RED}${BOLD} 🎯 Script aborted 🎯${RESET}"
-    #if pacman -Qq ccache &>/dev/null; then
-    #    yay -Rns ccache --noconfirm || true
-    #fi
-    rm -rf /tmp/check_tkg "$TEMP_DIR" /tmp/linux-tkg /tmp/makepkg 2>/dev/null || true
+
+    rm -rf /tmp/check_tkg "$TEMP_DIR" 2>/dev/null || true
     echo -e "${GREEN} 🧹 Cleanup completed.${RESET}"
     exit $code
 }
 trap _on_exit INT TERM EXIT HUP
-
-# 🧹 Delete temp directories
-_clean_tmp() {
-    echo -e "${GREEN} 🧹 Cleaning temporary files ...${RESET}"
-    #if pacman -Qq ccache &>/dev/null; then
-    #    yay -Rns ccache --noconfirm
-    #fi
-    sudo rm -rf /tmp/linux-tkg /tmp/makepkg 2>/dev/null || true
-}
 
 # 🧼 Preparation
 _pre() {
@@ -54,12 +43,23 @@ _pre() {
         fi
     done
 
-    #fastfetch || true
     echo -e "${BLUE} 🔁 Starting 🐸 TKG Installer...${RESET}"
-    echo -e "${BLUE} 🔍 Updating Arch Linux first...${RESET}"
-    sudo pacman -Syu || true
-    sudo paccache -rk0 || true
-    sudo bleachbit --clean system.localizations || true
+
+    if command -v pacman &>/dev/null; then
+        echo -e "${BLUE} 🔍 Updating Arch Linux first...${RESET}"
+        sudo pacman -Syu || true
+    fi
+
+    #if command -v paccache &>/dev/null; then
+    #    echo -e "${BLUE} 🔍 Clean Arch Linux cache...${RESET}"
+    #    sudo paccache -rk0 || true
+    #fi
+
+    #if command -v bleachbit &>/dev/null; then
+    #    echo -e "${BLUE} 🔍 Clean unwanted language files...${RESET}"
+    #    sudo bleachbit --clean system.localizations || true
+    #fi
+
     rm -rf "$TEMP_DIR" 2>/dev/null || true
     mkdir -p "$TEMP_DIR"
 }
@@ -100,16 +100,12 @@ _wine_install() {
 }
 
 _proton_install() {
-    #yay -S ccache --noconfirm
     cd "$TEMP_DIR"
     git clone https://github.com/Frogging-Family/wine-tkg-git.git || { echo "${RED}${BOLD} ❌ Error cloning: wine-tkg-git${RESET}"; return 1; }
     cd wine-tkg-git/proton-tkg
     onefetch --no-color-palette --no-art || true
     ./proton-tkg.sh
     ./proton-tkg.sh clean
-    #if pacman -Qq ccache &>/dev/null; then
-    #    yay -Rns ccache --noconfirm
-    #fi
 }
 
 # 🔧 Configuration editor
