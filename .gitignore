@@ -1,49 +1,39 @@
+# Build artifacts
+build/
+bin/
+*.a
+*.o
+*.so
+
 # Temporary files
+pkg/
+temp/
+*~
 *.tmp
 *.log
 *.bak
-*~
+.cache/
+.makepkg/
 
-# Build artifacts
-*.o
-*.so
-*.a
-pkg/
-src/
+# OS files
+.DS_Store
+Thumbs.db
 
-# Wine/Proton specific temporary files
-*.reg
-*.msi
-wine-*/.git/
-
-# TKG repository .git directories (from cloned repos)
-linux-tkg/.git/
-nvidia-all/.git/
-mesa-git/.git/
-wine-tkg-git/.git/
-*/wine-tkg-git/.git/
-
-# Wine-TKG files ignore (unimportant)
-wine-tkg-git/
-*wine-tkg*
+# Editor files
+*.code-workspace
+*.swp
+*.swo
+.vscode/
+.idea/
 
 # Compressed archives
 *.tar.xz
 *.tar.gz
 *.zip
 
-# Cache and temporary directories
-.cache/
-temp/
-temp_build/
+# Release tarballs
+tkginstaller-*.pkg.*
 
-# IDE/Editor files
-.vscode/
-.idea/
-*.code-workspace
-*.swp
-*.swo
-
-# OS specific files
-.DS_Store
-Thumbs.db
+# Local test files
+PKGBUILD-test
+test-*
