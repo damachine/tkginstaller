@@ -74,16 +74,6 @@ _pre() {
         sudo pacman -Syu || true
     fi
 
-    #if command -v paccache &>/dev/null; then
-    #    echo -e "${BLUE} 🔍 Clean Arch Linux cache...${RESET}"
-    #    sudo paccache -rk0 || true
-    #fi
-
-    #if command -v bleachbit &>/dev/null; then
-    #    echo -e "${BLUE} 🔍 Clean unwanted language files...${RESET}"
-    #    sudo bleachbit --clean system.localizations || true
-    #fi
-
     rm -rf "$TEMP_DIR" 2>/dev/null || true
     mkdir -p "$TEMP_DIR"
 }
