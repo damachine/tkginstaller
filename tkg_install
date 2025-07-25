@@ -1,9 +1,32 @@
 #!/usr/bin/env bash
-
 #
-# 🐸 TKG Installer – Optimized
+# -----------------------------------------------------------------------------
+# author: damachine (christkue79@gmail.com)
+# website: https://github.com/damachine
+# copyright: (c) 2025 damachine
+# license: MIT
+# version: 1.0
 #
+# brief:
+# 	🐸 TKG Installer – Optimized
+#	Project coding standards and packaging notes (see README for details)
+# 	Maintainer: DAMACHINE <christkue79@gmail.com>
+# details:
+#   This script handles installation, configuration, cleanup, and service management for TKG/Frogminer.
+#   Edit dependencies, paths, and user as needed for your system.
+#   Do not run as root. Use a dedicated user for security.
+#   Ensure all required dependencies are installed.
+#   It uses color output and Unicode icons for better readability. All paths and dependencies are configurable.
+#   See README.md and AUR-README.md for further details.
+# example:
+#   cd /path/to/tkginstaller
+#   ./tkg_install
+#   tkg_install
 #
+# --- Dependency notes ---
+# - 'fzf', 'gcc', 'git', 'nano', 'bat' are required for running and building this installer.
+# - Please ensure all these tools are installed before using the script.
+# -----------------------------------------------------------------------------
 
 set -euo pipefail
 
@@ -13,6 +36,7 @@ SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 TEMP_DIR="$SCRIPT_DIR/temp"
 
 # 🎨 Colors
+# shellcheck source=.config/colors/colors
 [ -e "$SCRIPT_DIR/.config/colors/colors" ] && source "$SCRIPT_DIR/.config/colors/colors"
 
 # 🔒 Prevent double execution
@@ -150,7 +174,8 @@ _config_edit() {
             return 1
         fi
         
-        local config_file=$(echo "$config_choice" | cut -d"|" -f1 | xargs)
+        local config_file
+        config_file=$(echo "$config_choice" | cut -d"|" -f1 | xargs)
         
         case $config_file in
             linux-tkg)  
@@ -194,13 +219,13 @@ _config_edit() {
 }
 
 # 📋 Actions per selection
+_linuxnvidia_promt()   { _linux_promt; _nvidia_promt; }
 _linux_promt()         { echo -e "${GREEN}${BREAKOPT} 🧠 Installing Linux-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _linux_install; }
 _nvidia_promt()        { echo -e "${GREEN}${BREAKOPT} 🎮 Installing Nvidia-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _nvidia_install; }
-_linuxnvidia_promt()   { _linux_promt; _nvidia_promt; }
 _mesa_promt()          { echo -e "${GREEN}${BREAKOPT} 🧩 Installing Mesa-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _mesa_install; }
 _wine_promt()          { echo -e "${GREEN}${BREAKOPT} 🍷 Installing Wine-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _wine_install; }
 _proton_promt()        { echo -e "${GREEN}${BREAKOPT} 🧪 Installing Proton-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _proton_install; }
-_config_promt()        { _config_edit; if [ $? -eq 0 ]; then return 0; fi; }
+_config_promt()        { if _config_edit; then return 0; fi; }
 
 # ✅ Completion display
 _show_done() {
@@ -217,8 +242,8 @@ _show_done() {
 
 # 🎛️ Menu with preview
 _menu() {
-    local auswahl
-    auswahl=$(
+    local selection
+    selection=$(
         printf "%b\n" \
             "Linux          |🧠 Linux-TKG        – Linux Kernel TKG configuration" \
             "Nvidia         |🎮 Nvidia-TKG       – Nvidia Open-Source or proprietary graphics driver" \
@@ -257,13 +282,13 @@ _menu() {
     )
 
     # On ESC or cancel
-    if [[ -z "$auswahl" ]]; then
+    if [[ -z "$selection" ]]; then
         echo -e " ${RED}${BOLD}❌ Selection cancelled.${RESET}"
         _on_exit
     fi
 
     # Save selection
-    echo "$auswahl" | cut -d"|" -f1 | xargs > /tmp/check_tkg
+    echo "$selection" | cut -d"|" -f1 | xargs > /tmp/check_tkg
 }
 
 # ▶️ Main function
@@ -282,7 +307,7 @@ _main() {
         Mesa)          _mesa_promt ;;
         Wine)          _wine_promt ;;
         Proton)        _proton_promt ;;
-        Config)        _config_promt; if [ $? -eq 0 ]; then rm -f "$LOCKFILE"; exec "$0"; fi ;;
+        Config)        if _config_promt; then rm -f "$LOCKFILE"; exec "$0"; fi ;;
         Clean)         _pre; sleep 1; echo -e "${BLUE} 🔁 Restarting 🐸 TKG Installer ...${RESET}"; sleep 1; rm -f "$LOCKFILE"; exec "$0" ;;
         Exit)          echo -e "${BLUE} 👋 Goodbye!${RESET}"; exit 0 ;;
         *)             echo -e "${GREEN}${BOLD} ❌ Invalid option: $choice${RESET}" ;;

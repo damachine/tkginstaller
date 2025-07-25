@@ -1,6 +1,6 @@
-# TKG Installer 
+# TKG Installer
 
-A user-friendly wrapper script for all TKG packages from the Frogging-Family. 🐸
+A user-friendly script for all TKG packages from the Frogging-Family. 🐸
 
 ## Description
 
@@ -59,8 +59,6 @@ The script automatically checks for the following core dependencies:
 
 Optional tools (used if available):
 - `onefetch` - Git repository information display (optional)
-- `paccache` - Pacman cache cleaning (optional)
-- `bleachbit` - System cleaningg for local language files (optional)
 
 ## Installation
 
