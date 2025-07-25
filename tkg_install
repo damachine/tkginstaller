@@ -8,7 +8,7 @@
 # version: 1.0
 #
 # brief:
-# 	🐸 TKG Installer – Optimized
+# 	🐸 TKG-Installer – Optimized
 #	Project coding standards and packaging notes (see README for details)
 # 	Maintainer: DAMACHINE <christkue79@gmail.com>
 # details:
@@ -33,7 +33,7 @@ set -euo pipefail
 # 📌 Paths and Lockfile
 LOCKFILE="/tmp/tkg_installer.lock"
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
-TEMP_DIR="$SCRIPT_DIR/temp"
+TEMP_DIR="$SCRIPT_DIR/tmp"
 
 # 🎨 Colors
 # shellcheck source=.config/colors/colors
@@ -51,7 +51,6 @@ _on_exit() {
     local code=$?
     rm -f "$LOCKFILE"
     [[ $code -ne 0 ]] && echo -e "${BREAK}${RED}${BOLD} 🎯 Script aborted 🎯${RESET}"
-
     rm -rf /tmp/check_tkg "$TEMP_DIR" 2>/dev/null || true
     echo -e "${GREEN} 🧹 Cleanup completed.${RESET}"
     exit $code
@@ -60,6 +59,11 @@ trap _on_exit INT TERM EXIT HUP
 
 # 🧼 Preparation
 _pre() {
+    if [[ "$(id -u)" -eq 0 ]]; then
+        echo -e "${RED}${BOLD}❌ Do not run as root!${RESET}"
+        exit 1
+    fi
+
     for cmd in fzf gcc git nano bat; do
         if ! command -v "$cmd" >/dev/null; then
             echo -e "${RED}${BOLD} ❌ $cmd is not installed! Please install it first.${RESET}"
@@ -67,15 +71,19 @@ _pre() {
         fi
     done
 
-    echo -e "${BLUE} 🔁 Starting 🐸 TKG Installer...${RESET}"
-
-    if command -v pacman &>/dev/null; then
-        echo -e "${BLUE} 🔍 Updating Arch Linux first...${RESET}"
-        sudo pacman -Syu || true
+    if [[ ! -d "$TEMP_DIR" ]]; then
+        echo -e "${GREEN} 🧹 Cleaning old temporary files...${RESET}"
+        rm -rf /tmp/check_tkg "$TEMP_DIR" 2>/dev/null || true
+        echo -e "${GREEN} ✅ New temporary directory...${RESET}"
+        mkdir -p "$TEMP_DIR"
     fi
 
-    rm -rf "$TEMP_DIR" 2>/dev/null || true
-    mkdir -p "$TEMP_DIR"
+    echo -e "${BLUE}${BOLD} 🔁 Starting 🐸 TKG-Installer...${RESET}"
+
+    if command -v pacman &>/dev/null; then
+        echo -e "${BLUE}${BOLD} 🔍 Updating Arch Linux first...${RESET}"
+        sudo pacman -Syu || { echo -e "${RED}${BOLD} ❌ Error updating Arch Linux!${RESET}"; return 1; }
+    fi
 }
 
 # 📦 Installation functions
@@ -84,7 +92,7 @@ _linux_install() {
     git clone https://github.com/Frogging-Family/linux-tkg.git || { echo "${RED}${BOLD} ❌ Error cloning: linux-tkg${RESET}"; return 1; }
     cd linux-tkg
     onefetch --no-color-palette --no-art || true
-    makepkg -si
+    makepkg -si || { echo "${RED}${BOLD} ❌ Error building: linux-tkg${RESET}"; return 1; }
 }
 
 _nvidia_install() {
@@ -92,7 +100,7 @@ _nvidia_install() {
     git clone https://github.com/Frogging-Family/nvidia-all.git || { echo "${RED}${BOLD} ❌ Error cloning: nvidia-all${RESET}"; return 1; }
     cd nvidia-all
     onefetch --no-color-palette --no-art || true
-    makepkg -si
+    makepkg -si || { echo "${RED}${BOLD} ❌ Error building: nvidia-all${RESET}"; return 1; }
 }
 
 _mesa_install() {
@@ -100,7 +108,7 @@ _mesa_install() {
     git clone https://github.com/Frogging-Family/mesa-git.git || { echo "${RED}${BOLD} ❌ Error cloning: mesa-git${RESET}"; return 1; }
     cd mesa-git
     onefetch --no-color-palette --no-art || true
-    makepkg -si
+    makepkg -si || { echo "${RED}${BOLD} ❌ Error building: mesa-git${RESET}"; return 1; }
 }
 
 _wine_install() {
@@ -108,9 +116,9 @@ _wine_install() {
     git clone https://github.com/Frogging-Family/wine-tkg-git.git || { echo "${RED}${BOLD} ❌ Error cloning: wine-tkg-git${RESET}"; return 1; }
     cd wine-tkg-git/wine-tkg-git
     onefetch --no-color-palette --no-art || true
-    makepkg -si
+    makepkg -si || { echo "${RED}${BOLD} ❌ Error building: wine-tkg-git${RESET}"; return 1; }
     # https://claude.ai/chat/72c16a09-64b5-45ed-93e5-2021ddf88d93
-    #sudo setcap cap_sys_nice+ep /opt/wine-tkg-git-opt/bin/wineserver
+    sudo setcap cap_sys_nice+ep /opt/wine-tkg-git-opt/bin/wineserver
 }
 
 _proton_install() {
@@ -118,15 +126,18 @@ _proton_install() {
     git clone https://github.com/Frogging-Family/wine-tkg-git.git || { echo "${RED}${BOLD} ❌ Error cloning: wine-tkg-git${RESET}"; return 1; }
     cd wine-tkg-git/proton-tkg
     onefetch --no-color-palette --no-art || true
-    ./proton-tkg.sh
-    ./proton-tkg.sh clean
+    ./proton-tkg.sh || { echo "${RED}${BOLD} ❌ Error building: proton-tkg${RESET}"; return 1; }
+    ./proton-tkg.sh clean || { echo "${RED}${BOLD} ❌ Nothing to clean: proton-tkg${RESET}";  return 1; }
 }
 
 # 🔧 Configuration editor
 _config_edit() {
     while true; do
         local config_choice
-        mkdir -p ~/.config/frogminer
+        if [[ ! -d ~/.config/frogminer ]]; then
+            echo -e "${RED}${BOLD} ❌ Configuration directory not found! Creating it...${RESET}"
+            mkdir -p ~/.config/frogminer || { echo -e "${RED}${BOLD} ❌ Error creating configuration directory!${RESET}"; return 1; }
+        fi
         
         config_choice=$(
             printf "%b\n" \
@@ -170,31 +181,31 @@ _config_edit() {
         case $config_file in
             linux-tkg)  
                 echo -e "${BLUE}🔧 Opening Linux-TKG configuration...${RESET}"
-                nano ~/.config/frogminer/linux-tkg.cfg
+                nano ~/.config/frogminer/linux-tkg.cfg || { echo -e "${RED}${BOLD} ❌ Error opening ~/.config/frogminer/linux-tkg.cfg configuration!${RESET}"; return 1; }
                 echo -e "${GREEN}✅ Configuration saved!${RESET}"
                 sleep 1
                 ;;
             nvidia-all) 
                 echo -e "${BLUE}🔧 Opening Nvidia-TKG configuration...${RESET}"
-                nano ~/.config/frogminer/nvidia-all.cfg
+                nano ~/.config/frogminer/nvidia-all.cfg || { echo -e "${RED}${BOLD} ❌ Error opening ~/.config/frogminer/nvidia-all.cfg configuration!${RESET}"; return 1; }
                 echo -e "${GREEN}✅ Configuration saved!${RESET}"
                 sleep 1
                 ;;
             mesa-git)   
                 echo -e "${BLUE}🔧 Opening Mesa-TKG configuration...${RESET}"
-                nano ~/.config/frogminer/mesa-git.cfg
+                nano ~/.config/frogminer/mesa-git.cfg || { echo -e "${RED}${BOLD} ❌ Error opening ~/.config/frogminer/mesa-git.cfg configuration!${RESET}"; return 1; }
                 echo -e "${GREEN}✅ Configuration saved!${RESET}"
                 sleep 1
                 ;;
             wine-tkg)   
                 echo -e "${BLUE}🔧 Opening Wine-TKG configuration...${RESET}"
-                nano ~/.config/frogminer/wine-tkg.cfg
+                nano ~/.config/frogminer/wine-tkg.cfg || { echo -e "${RED}${BOLD} ❌ Error opening ~/.config/frogminer/wine-tkg.cfg configuration!${RESET}"; return 1; }
                 echo -e "${GREEN}✅ Configuration saved!${RESET}"
                 sleep 1
                 ;;
             proton-tkg)   
                 echo -e "${BLUE}🔧 Opening Proton-TKG configuration...${RESET}"
-                nano ~/.config/frogminer/proton-tkg.cfg
+                nano ~/.config/frogminer/proton-tkg.cfg || { echo -e "${RED}${BOLD} ❌ Error opening ~/.config/frogminer/proton-tkg.cfg configuration!${RESET}"; return 1; }
                 echo -e "${GREEN}✅ Configuration saved!${RESET}"
                 sleep 1
                 ;;
