@@ -7,35 +7,19 @@ A user-friendly script for all TKG packages from the Frogging-Family. 🐸
 This wrapper script makes it easy to install packages from the [Frogging-Family](https://github.com/Frogging-Family) repository. It provides an interactive menu system for building and installing various TKG packages:
 
 ### 🧠 **Linux-TKG**
-- Custom Linux kernels with gaming optimizations
-- Various schedulers and performance patches
 - [https://github.com/Frogging-Family/linux-tkg](https://github.com/Frogging-Family/linux-tkg)
 
 ### 🎮 **Nvidia-TKG** 
-- Nvidia graphics drivers (open-source or proprietary)
-- Optimized for gaming and performance
 - [https://github.com/Frogging-Family/nvidia-all](https://github.com/Frogging-Family/nvidia-all)
 
 ### 🧩 **Mesa-TKG**
-- Open-source graphics drivers for AMD and Intel
-- Advanced gaming features and performance optimizations
 - [https://github.com/Frogging-Family/mesa-git](https://github.com/Frogging-Family/mesa-git)
 
 ### 🍷 **Wine-TKG**
-- Windows compatibility layer with additional patches
-- Optimized for gaming and application compatibility
 - [https://github.com/Frogging-Family/wine-tkg-git](https://github.com/Frogging-Family/wine-tkg-git)
 
 ### 🧪 **Proton-TKG**
-- Steam-compatible Windows compatibility layer
-- Advanced gaming features and Valve patches
 - [https://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg](https://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg)
-
-## Contents
-
-- `tkg_install`: Main wrapper script with interactive menu
-- `.config/`: Configuration files for colors and preview texts
-- Automatic dependency checking and system updates
 
 ## Features
 
@@ -54,15 +38,27 @@ The script automatically checks for the following core dependencies:
 - `fzf` - Fuzzy finder for the interactive menu
 - `gcc` - Compiler for building packages
 - `git` - Version control system
-- `nano` - Text editor for configuration files
-- `bat` - Alternative for "cat" with more syntax highlight
 
 Optional tools (used if available):
+- Any text editor for configuration files (the script respects the $EDITOR environment variable and falls back to `nano` if not set) — examples: `nano`, `vim`, `code`.
+- `bat` - Alternative for "cat" with syntax highlighting
 - `onefetch` - Git repository information display (optional)
 
 ## Installation
 
-1. Clone repository:
+1. Download only the script (no git required):
+   ```bash
+   wget https://raw.githubusercontent.com/damachine/tkginstaller/master/tkg_install
+   chmod +x tkg_install
+   ```
+
+   Or with curl:
+   ```bash
+   curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkg_install
+   chmod +x tkg_install
+   ```
+
+1b. (Alternative) Clone repository:
    ```bash
    git clone https://github.com/damachine/tkginstaller.git
    cd tkginstaller
@@ -101,7 +97,7 @@ The **Config** option provides an interactive editor for TKG configuration files
 - Modify Nvidia-TKG driver settings
 - Adjust Mesa-TKG graphics options
 - Customize Wine-TKG compatibility settings
-- Uses `nano` editor with user-friendly interface
+- Uses your preferred editor via `$EDITOR`
 
 ## Source
 

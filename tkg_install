@@ -36,12 +36,57 @@ SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 TEMP_DIR="$SCRIPT_DIR/tmp"
 
 # 🎨 Colors
-# shellcheck source=.config/colors/colors
-[ -e "$SCRIPT_DIR/.config/colors/colors" ] && source "$SCRIPT_DIR/.config/colors/colors"
+BREAK='\n'
+BREAKOPT='\n──────────────────────────────────────────────────────────────────────────────────────────\n'
+RESET='\e[0m'
+BOLD='\e[1m'
+
+BLACK=$'\033[0;30m'
+DGRAY=$'\033[1;30m'
+RED=$'\033[0;31m'
+BRED=$'\033[1;31m'
+GREEN=$'\033[0;32m'
+BGREEN=$'\033[1;32m'
+YELLOW=$'\033[0;33m'
+BYELLOW=$'\033[1;33m'
+BLUE=$'\033[0;34m'
+BBLUE=$'\033[1;34m'
+PURPLE=$'\033[0;35m'
+BPURPLE=$'\033[1;35m'
+CYAN=$'\033[0;36m'
+BCYAN=$'\033[1;36m'
+LGRAY=$'\033[0;37m'
+WHITE=$'\033[1;37m'
+GRAY=$'\033[2;37m'
+
+NOCOLOR=$'\033[0m'
+
+# underline. normal colors reset it!
+ULINE=$'\033[4m'
+
+## Background
+ONBLACK=$'\033[40m'
+ONRED=$'\033[41m'
+ONGREEN=$'\033[42m'
+ONYELLOW=$'\033[43m'
+ONBLUE=$'\033[44m'
+ONPURPLE=$'\033[45m'
+ONCYAN=$'\033[46m'
+ONWHITE=$'\033[47m'
+
+## Bold High Intensty backgrounds
+ONBBLACK=$'\033[1;100m'
+ONBRED=$'\033[1;101m'
+ONBGREEN=$'\033[1;102m'
+ONBYELLOW=$'\033[1;103m'
+ONBBLUE=$'\033[1;104m'
+ONBPURPLE=$'\033[1;105m'
+ONBCYAN=$'\033[1;106m'
+ONBWHITE=$'\033[1;107m'
 
 # 🔒 Prevent double execution
 if [[ -f $LOCKFILE ]]; then
-    echo -e "${RED}${BOLD}❌ Script is already running. Exiting...${RESET}"
+    echo -e "${RED}${BOLD} ❌ Script is already running. Exiting...${RESET}"
     exit 1
 fi
 touch "$LOCKFILE"
@@ -60,11 +105,11 @@ trap _on_exit INT TERM EXIT HUP
 # 🧼 Preparation
 _pre() {
     if [[ "$(id -u)" -eq 0 ]]; then
-        echo -e "${RED}${BOLD}❌ Do not run as root!${RESET}"
+        echo -e "${RED}${BOLD} ❌ Do not run as root!${RESET}"
         exit 1
     fi
 
-    for cmd in fzf gcc git nano bat; do
+    for cmd in fzf gcc git; do
         if ! command -v "$cmd" >/dev/null; then
             echo -e "${RED}${BOLD} ❌ $cmd is not installed! Please install it first.${RESET}"
             return 1
@@ -91,7 +136,10 @@ _linux_install() {
     cd "$TEMP_DIR"
     git clone https://github.com/Frogging-Family/linux-tkg.git || { echo "${RED}${BOLD} ❌ Error cloning: linux-tkg${RESET}"; return 1; }
     cd linux-tkg
-    onefetch --no-color-palette --no-art || true
+    # Display Git repository information
+    if command -v onefetch >/dev/null 2>&1; then
+        onefetch --no-color-palette --no-art
+    fi
     makepkg -si || { echo "${RED}${BOLD} ❌ Error building: linux-tkg${RESET}"; return 1; }
 }
 
@@ -99,7 +147,10 @@ _nvidia_install() {
     cd "$TEMP_DIR"
     git clone https://github.com/Frogging-Family/nvidia-all.git || { echo "${RED}${BOLD} ❌ Error cloning: nvidia-all${RESET}"; return 1; }
     cd nvidia-all
-    onefetch --no-color-palette --no-art || true
+    # Display Git repository information
+    if command -v onefetch >/dev/null 2>&1; then
+        onefetch --no-color-palette --no-art
+    fi
     makepkg -si || { echo "${RED}${BOLD} ❌ Error building: nvidia-all${RESET}"; return 1; }
 }
 
@@ -107,7 +158,10 @@ _mesa_install() {
     cd "$TEMP_DIR"
     git clone https://github.com/Frogging-Family/mesa-git.git || { echo "${RED}${BOLD} ❌ Error cloning: mesa-git${RESET}"; return 1; }
     cd mesa-git
-    onefetch --no-color-palette --no-art || true
+    # Display Git repository information
+    if command -v onefetch >/dev/null 2>&1; then
+        onefetch --no-color-palette --no-art
+    fi
     makepkg -si || { echo "${RED}${BOLD} ❌ Error building: mesa-git${RESET}"; return 1; }
 }
 
@@ -115,7 +169,10 @@ _wine_install() {
     cd "$TEMP_DIR"
     git clone https://github.com/Frogging-Family/wine-tkg-git.git || { echo "${RED}${BOLD} ❌ Error cloning: wine-tkg-git${RESET}"; return 1; }
     cd wine-tkg-git/wine-tkg-git
-    onefetch --no-color-palette --no-art || true
+    # Display Git repository information
+    if command -v onefetch >/dev/null 2>&1; then
+        onefetch --no-color-palette --no-art
+    fi
     makepkg -si || { echo "${RED}${BOLD} ❌ Error building: wine-tkg-git${RESET}"; return 1; }
     # https://claude.ai/chat/72c16a09-64b5-45ed-93e5-2021ddf88d93
     sudo setcap cap_sys_nice+ep /opt/wine-tkg-git-opt/bin/wineserver
@@ -125,12 +182,38 @@ _proton_install() {
     cd "$TEMP_DIR"
     git clone https://github.com/Frogging-Family/wine-tkg-git.git || { echo "${RED}${BOLD} ❌ Error cloning: wine-tkg-git${RESET}"; return 1; }
     cd wine-tkg-git/proton-tkg
-    onefetch --no-color-palette --no-art || true
+    # Display Git repository information
+    if command -v onefetch >/dev/null 2>&1; then
+        onefetch --no-color-palette --no-art
+    fi
     ./proton-tkg.sh || { echo "${RED}${BOLD} ❌ Error building: proton-tkg${RESET}"; return 1; }
     ./proton-tkg.sh clean || { echo "${RED}${BOLD} ❌ Nothing to clean: proton-tkg${RESET}";  return 1; }
 }
 
 # 🔧 Configuration editor
+_editor() {
+    local file="$1"
+
+    # Split $EDITOR into an array to preserve arguments (if any)
+    local _editor_raw
+    _editor_raw="${EDITOR-}"    # may be empty
+    IFS=' ' read -r -a _editor_parts <<< "$(_editor_raw)" || true
+
+    # If no editor configured or first token not executable, fallback to nano
+    if [[ -z "${_editor_parts[0]:-}" ]] || ! command -v "${_editor_parts[0]}" >/dev/null 2>&1; then
+        if command -v nano >/dev/null 2>&1; then
+            _editor_parts=(nano)
+        else
+            # Use a plain message if no editor available
+            echo -e "${YELLOW:-}\u26A0\ufe0f No editor found: please set \$EDITOR or install 'nano'.${RESET:-}"
+            return 1
+        fi
+    fi
+
+    # Execute the editor with the target file
+    "${_editor_parts[@]}" "$file"
+}
+
 _config_edit() {
     while true; do
         local config_choice
@@ -155,23 +238,29 @@ _config_edit() {
                       --delimiter="|" \
                       --with-nth="2" \
                       --preview="bash -c \"
-                             key=\$(echo {} | cut -d'|' -f1 | xargs)
-                             case \\\$key in
-                             linux-tkg)         command -v bat &>/dev/null && bat --style=plain --color=always \\\"\\\$HOME/.config/frogminer/linux-tkg.cfg\\\" ;;
-                             nvidia-all)        command -v bat &>/dev/null && bat --style=plain --color=always \\\"\\\$HOME/.config/frogminer/nvidia-all.cfg\\\" ;;
-                             mesa-git)          command -v bat &>/dev/null && bat --style=plain --color=always \\\"\\\$HOME/.config/frogminer/mesa-git.cfg\\\" ;;
-                             wine-tkg)          command -v bat &>/dev/null && bat --style=plain --color=always \\\"\\\$HOME/.config/frogminer/wine-tkg.cfg\\\" ;;
-                             proton-tkg)        command -v bat &>/dev/null && bat --style=plain --color=always \\\"\\\$HOME/.config/frogminer/proton-tkg.cfg\\\" ;;
-                             back)              echo \\\"👋 Back to Mainmenu!\\\" ;;
-                             esac
+                            key=\$(echo {} | cut -d'|' -f1 | xargs)
+                            case \\\$key in
+                                linux-tkg)
+                                    (command -v bat >/dev/null 2>&1 && bat --style=plain --color=always \"\$HOME/.config/frogminer/linux-tkg.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/linux-tkg.cfg\" 2>/dev/null) || true ;;
+                                nvidia-all)
+                                    (command -v bat >/dev/null 2>&1 && bat --style=plain --color=always \"\$HOME/.config/frogminer/nvidia-all.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/nvidia-all.cfg\" 2>/dev/null) || true ;;
+                                mesa-git)
+                                    (command -v bat >/dev/null 2>&1 && bat --style=plain --color=always \"\$HOME/.config/frogminer/mesa-git.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/mesa-git.cfg\" 2>/dev/null) || true ;;
+                                wine-tkg)
+                                    (command -v bat >/dev/null 2>&1 && bat --style=plain --color=always \"\$HOME/.config/frogminer/wine-tkg.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/wine-tkg.cfg\" 2>/dev/null) || true ;;
+                                proton-tkg)
+                                    (command -v bat >/dev/null 2>&1 && bat --style=plain --color=always \"\$HOME/.config/frogminer/proton-tkg.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/proton-tkg.cfg\" 2>/dev/null) || true ;;
+                                back)
+                                    echo \\\"👋 Back to Mainmenu!\\\" ;;
+                            esac
                             \"" \
-                  --preview-window="down:wrap:85%" \
+                  --preview-window="down:wrap:80%" \
                   --color="header:italic:underline,prompt:italic:green,pointer:green,marker:red" \
                   --pointer="➤ "
         )
         
         if [[ -z "$config_choice" ]]; then
-            echo -e "${RED}${BOLD}❌ Selection cancelled.${RESET}"
+            echo -e "${RED}${BOLD} ❌ Selection cancelled.${RESET}"
             return 1
         fi
         
@@ -179,33 +268,89 @@ _config_edit() {
         config_file=$(echo "$config_choice" | cut -d"|" -f1 | xargs)
         
         case $config_file in
-            linux-tkg)  
+            linux-tkg)
                 echo -e "${BLUE}🔧 Opening Linux-TKG configuration...${RESET}"
-                nano ~/.config/frogminer/linux-tkg.cfg || { echo -e "${RED}${BOLD} ❌ Error opening ~/.config/frogminer/linux-tkg.cfg configuration!${RESET}"; return 1; }
+                linux_tkg_cfg="$HOME/.config/frogminer/linux-tkg.cfg"
+                linux_tkg_cfg_url="https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/customization.cfg"
+
+                if [[ -f "$linux_tkg_cfg" ]]; then
+                    _editor "$linux_tkg_cfg" || { echo -e "${RED}${BOLD} ❌ Error opening $linux_tkg_cfg configuration!${RESET}"; return 1; }
+                else
+                    mkdir -p "$(dirname "$linux_tkg_cfg")"
+                    # try wget, else curl
+                    wget -qO "$linux_tkg_cfg" "$linux_tkg_cfg_url" || curl -fsSL "$linux_tkg_cfg_url" -o "$linux_tkg_cfg"
+                    echo -e "${GREEN}✅ Configuration ready at $linux_tkg_cfg${RESET}"
+                    _editor "$linux_tkg_cfg" || { echo -e "${RED}${BOLD} ❌ Error opening $linux_tkg_cfg configuration!${RESET}"; return 1; }
+                fi
+
                 echo -e "${GREEN}✅ Configuration saved!${RESET}"
                 sleep 1
                 ;;
-            nvidia-all) 
+            nvidia-all)
                 echo -e "${BLUE}🔧 Opening Nvidia-TKG configuration...${RESET}"
-                nano ~/.config/frogminer/nvidia-all.cfg || { echo -e "${RED}${BOLD} ❌ Error opening ~/.config/frogminer/nvidia-all.cfg configuration!${RESET}"; return 1; }
+                nvidia_all_cfg="$HOME/.config/frogminer/nvidia-all.cfg"
+                nvidia_all_cfg_url="https://raw.githubusercontent.com/Frogging-Family/nvidia-all/master/customization.cfg"
+
+                if [[ -f "$nvidia_all_cfg" ]]; then
+                    _editor "$nvidia_all_cfg" || { echo -e "${RED}${BOLD} ❌ Error opening $nvidia_all_cfg configuration!${RESET}"; return 1; }
+                else
+                    mkdir -p "$(dirname "$nvidia_all_cfg")"
+                    wget -qO "$nvidia_all_cfg" "$nvidia_all_cfg_url" || curl -fsSL "$nvidia_all_cfg_url" -o "$nvidia_all_cfg"
+                    echo -e "${GREEN}✅ Configuration ready at $nvidia_all_cfg${RESET}"
+                    _editor "$nvidia_all_cfg" || { echo -e "${RED}${BOLD} ❌ Error opening $nvidia_all_cfg configuration!${RESET}"; return 1; }
+                fi
+
                 echo -e "${GREEN}✅ Configuration saved!${RESET}"
                 sleep 1
                 ;;
-            mesa-git)   
+            mesa-git)
                 echo -e "${BLUE}🔧 Opening Mesa-TKG configuration...${RESET}"
-                nano ~/.config/frogminer/mesa-git.cfg || { echo -e "${RED}${BOLD} ❌ Error opening ~/.config/frogminer/mesa-git.cfg configuration!${RESET}"; return 1; }
+                mesa_git_cfg="$HOME/.config/frogminer/mesa-git.cfg"
+                mesa_git_cfg_url="https://raw.githubusercontent.com/Frogging-Family/mesa-git/master/customization.cfg"
+
+                if [[ -f "$mesa_git_cfg" ]]; then
+                    _editor "$mesa_git_cfg" || { echo -e "${RED}${BOLD} ❌ Error opening $mesa_git_cfg configuration!${RESET}"; return 1; }
+                else
+                    mkdir -p "$(dirname "$mesa_git_cfg")"
+                    wget -qO "$mesa_git_cfg" "$mesa_git_cfg_url" || curl -fsSL "$mesa_git_cfg_url" -o "$mesa_git_cfg"
+                    echo -e "${GREEN}✅ Configuration ready at $mesa_git_cfg${RESET}"
+                    _editor "$tarmesa_git_cfgget" || { echo -e "${RED}${BOLD} ❌ Error opening $mesa_git_cfg configuration!${RESET}"; return 1; }
+                fi
+
                 echo -e "${GREEN}✅ Configuration saved!${RESET}"
                 sleep 1
                 ;;
-            wine-tkg)   
+            wine-tkg)
                 echo -e "${BLUE}🔧 Opening Wine-TKG configuration...${RESET}"
-                nano ~/.config/frogminer/wine-tkg.cfg || { echo -e "${RED}${BOLD} ❌ Error opening ~/.config/frogminer/wine-tkg.cfg configuration!${RESET}"; return 1; }
+                wine_tkg_cfg="$HOME/.config/frogminer/wine-tkg.cfg"
+                wine_tkg_cfg_url="https://github.com/Frogging-Family/wine-tkg-git/tree/master/wine-tkg-git/customization.cfg"
+
+                if [[ -f "$wine_tkg_cfg" ]]; then
+                    _editor "$wine_tkg_cfg" || { echo -e "${RED}${BOLD} ❌ Error opening $wine_tkg_cfg configuration!${RESET}"; return 1; }
+                else
+                    mkdir -p "$(dirname "$wine_tkg_cfg")"
+                    wget -qO "$wine_tkg_cfg" "$wine_tkg_cfg_url" || curl -fsSL "$wine_tkg_cfg_url" -o "$wine_tkg_cfg"
+                    echo -e "${GREEN}✅ Configuration ready at $wine_tkg_cfg${RESET}"
+                    _editor "$wine_tkg_cfg" || { echo -e "${RED}${BOLD} ❌ Error opening $wine_tkg_cfg configuration!${RESET}"; return 1; }
+                fi
+
                 echo -e "${GREEN}✅ Configuration saved!${RESET}"
                 sleep 1
                 ;;
-            proton-tkg)   
+            proton-tkg)
                 echo -e "${BLUE}🔧 Opening Proton-TKG configuration...${RESET}"
-                nano ~/.config/frogminer/proton-tkg.cfg || { echo -e "${RED}${BOLD} ❌ Error opening ~/.config/frogminer/proton-tkg.cfg configuration!${RESET}"; return 1; }
+                proton_tkg_cfg="$HOME/.config/frogminer/proton-tkg.cfg"
+                proton_tkg_cfg_url="https://github.com/Frogging-Family/wine-tkg-git/blob/master/proton-tkg/proton-tkg.cfg"
+
+                if [[ -f "$proton_tkg_cfg" ]]; then
+                    _editor "$proton_tkg_cfg" || { echo -e "${RED}${BOLD} ❌ Error opening $proton_tkg_cfg configuration!${RESET}"; return 1; }
+                else
+                    mkdir -p "$(dirname "$proton_tkg_cfg")"
+                    wget -qO "$proton_tkg_cfg" "$proton_tkg_cfg_url" || curl -fsSL "$proton_tkg_cfg_url" -o "$proton_tkg_cfg"
+                    echo -e "${GREEN}✅ Configuration ready at $proton_tkg_cfg${RESET}"
+                    _editor "$proton_tkg_cfg" || { echo -e "${RED}${BOLD} ❌ Error opening $proton_tkg_cfg configuration!${RESET}"; return 1; }
+                fi
+
                 echo -e "${GREEN}✅ Configuration saved!${RESET}"
                 sleep 1
                 ;;
@@ -213,20 +358,34 @@ _config_edit() {
                 return 0
                 ;;
             *)          
-                echo -e "${RED}${BOLD}❌ Invalid option: $config_file${RESET}"
+                echo -e "${RED}${BOLD} ❌ Invalid option: $config_file${RESET}"
                 ;;
         esac
     done
 }
 
 # 📋 Actions per selection
-_linuxnvidia_promt()   { _linux_promt; _nvidia_promt; }
-_linux_promt()         { echo -e "${GREEN}${BREAKOPT} 🧠 Installing Linux-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _linux_install; }
-_nvidia_promt()        { echo -e "${GREEN}${BREAKOPT} 🎮 Installing Nvidia-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _nvidia_install; }
-_mesa_promt()          { echo -e "${GREEN}${BREAKOPT} 🧩 Installing Mesa-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _mesa_install; }
-_wine_promt()          { echo -e "${GREEN}${BREAKOPT} 🍷 Installing Wine-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _wine_install; }
-_proton_promt()        { echo -e "${GREEN}${BREAKOPT} 🧪 Installing Proton-tkg  🚀 🚀 🚀 ⏳ ⏳ ⏳${BREAKOPT}${RESET}"; _proton_install; }
-_config_promt()        { if _config_edit; then return 0; fi; }
+_linuxnvidia_promt() {
+    _linux_promt; _nvidia_promt; 
+}
+_linux_promt() {
+    echo -e "${GREEN}${BREAKOPT} 🧠 Installing Linux-tkg ⏳${BREAKOPT}${RESET}"; _linux_install;
+}
+_nvidia_promt() {
+    echo -e "${GREEN}${BREAKOPT} 🎮 Installing Nvidia-tkg ⏳${BREAKOPT}${RESET}"; _nvidia_install;
+}
+_mesa_promt() {
+    echo -e "${GREEN}${BREAKOPT} 🧩 Installing Mesa-tkg ⏳${BREAKOPT}${RESET}"; _mesa_install;
+}
+_wine_promt() {
+    echo -e "${GREEN}${BREAKOPT} 🍷 Installing Wine-tkg ⏳${BREAKOPT}${RESET}"; _wine_install;
+}
+_proton_promt() {
+    echo -e "${GREEN}${BREAKOPT} 🧪 Installing Proton-tkg ⏳${BREAKOPT}${RESET}"; _proton_install;
+}
+_config_promt() {
+    if _config_edit; then return 0; fi;
+}
 
 # ✅ Completion display
 _show_done() {
@@ -255,31 +414,28 @@ _menu() {
             "Config         |⚙️ Config-TKG       – Edit TKG configuration files" \
             "Clean          |🧹 Reset" \
             "Exit           |❌ Exit" \
-            | fzf --prompt="❯ Choose an option: " \
-                  --header="🎛️ TKG Frogminer Installation – Select a package ..." \
-                  --height="31" \
-                  --border \
-                  --ansi \
-                  --delimiter="|" \
-                  --with-nth="2" \
-                  --preview="bash -c \"
-                             SCRIPT_DIR='$SCRIPT_DIR'
-                             key=\$(echo {} | cut -d'|' -f1 | xargs)
-                             case \\\$key in
-                             Wine)              cat \\\"\\\$SCRIPT_DIR/.config/preview/wine.txt\\\" ;;
-                             Proton)            cat \\\"\\\$SCRIPT_DIR/.config/preview/proton.txt\\\" ;;
-                             Mesa)              cat \\\"\\\$SCRIPT_DIR/.config/preview/mesa.txt\\\" ;;
-                             Nvidia)            cat \\\"\\\$SCRIPT_DIR/.config/preview/nvidia.txt\\\" ;;
-                             Linux)             cat \\\"\\\$SCRIPT_DIR/.config/preview/kernel.txt\\\" ;;
-                             Linux+Nvidia)      cat \\\"\\\$SCRIPT_DIR/.config/preview/linux.txt\\\" ;;
-                             Config)            cat \\\"\\\$SCRIPT_DIR/.config/preview/config.txt\\\" ;;
-                             Clean)             cat \\\"\\\$SCRIPT_DIR/.config/preview/clean.txt\\\" ;;
-                             Exit)              echo \\\"👋 Goodbye!\\\" ;;
-                             esac
-                            \"" \
-                  --preview-window="down:wrap:15" \
-                  --color="header:italic:underline,prompt:italic:green,pointer:green,marker:red" \
-                  --pointer="➤ "
+        | fzf \
+            --prompt="❯ Choose an option: " \
+            --header="🐸 TKG Frogminer Installation – Select a package ..." \
+            --height="20" \
+            --border \
+            --ansi \
+            --delimiter="|" \
+            --with-nth="2" \
+            --preview='case {} in \
+                        Linux*) echo -e "🧠 Linux-TKG\nhttps://github.com/Frogging-Family/linux-tkg";; \
+                        Nvidia*) echo -e "🎮 Nvidia-TKG\nhttps://github.com/Frogging-Family/nvidia-all";; \
+                        Mesa*) echo -e "🧩 Mesa-TKG\nhttps://github.com/Frogging-Family/mesa-git";; \
+                        Wine*) echo -e "🍷 Wine-TKG\nhttps://github.com/Frogging-Family/wine-tkg-git";; \
+                        Proton*) echo -e "🧪 Proton-TKG\nhttps://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg";; \
+                        Config*) echo -e "⚙️ Config-TKG\nConfigure all TKG packages.";; \
+                        Clean*) echo -e "🧹 Clean\nRemoves temporary files and resets the installer.";; \
+                        Exit*) echo -e "👋 Exit\nExits the program.";; \
+                        *) echo -e "🐸 TKG-Installer\nhttps://github.com/Frogging-Family";; \
+                       esac' \
+            --preview-window="down:wrap:2" \
+            --color="header:italic:underline,prompt:italic:green,pointer:green,marker:red" \
+            --pointer="➤ "
     )
 
     # On ESC or cancel
