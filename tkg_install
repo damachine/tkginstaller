@@ -2,32 +2,40 @@
 #
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
+# Maintainer: DAMACHINE <christkue79@gmail.com>
 # website: https://github.com/damachine
 # copyright: (c) 2025 damachine
 # license: MIT
 # version: 1.0
+#   This software is provided "as is", without warranty of any kind, express or implied.
+#   I do not guarantee that it will work as intended on your system.
 #
 # brief:
 # 	🐸 TKG-Installer – Optimized
-#	Project coding standards and packaging notes (see README for details)
-# 	Maintainer: DAMACHINE <christkue79@gmail.com>
+# 	Install and configure TKG/Frogminer packages with ease.
+# 	Supports Linux-TKG, Nvidia-TKG, Mesa-TKG, Wine-TKG, Proton-TKG.
+# 	Includes configuration editor and cleanup functions.
+# 	Provides a user-friendly menu with previews.
+# 	Designed for Arch Linux but adaptable to other distributions.
 # details:
 #   This script handles installation, configuration, cleanup, and service management for TKG/Frogminer.
 #   Edit dependencies, paths, and user as needed for your system.
 #   Do not run as root. Use a dedicated user for security.
 #   Ensure all required dependencies are installed.
-#   It uses color output and Unicode icons for better readability. All paths and dependencies are configurable.
-#   See README.md and AUR-README.md for further details.
+#   It uses color output and Unicode icons for better readability.
+#   All paths and dependencies are configurable.
+#   See README.md further details.
 # example:
 #   cd /path/to/tkginstaller
 #   ./tkg_install
 #   tkg_install
 #
 # --- Dependency notes ---
-# - 'fzf', 'gcc', 'git', 'nano', 'bat' are required for running and building this installer.
+# - 'fzf', 'gcc', 'git', 'nano/vim etc.', 'bat' are required for running and building this installer.
 # - Please ensure all these tools are installed before using the script.
 # -----------------------------------------------------------------------------
 
+# 🔒 Safety settings
 set -euo pipefail
 
 # 📌 Paths and Lockfile
@@ -38,9 +46,12 @@ TEMP_DIR="$SCRIPT_DIR/tmp"
 # 🎨 Colors
 BREAK='\n'
 BREAKOPT='\n──────────────────────────────────────────────────────────────────────────────────────────\n'
-RESET='\e[0m'
-BOLD='\e[1m'
+RESET=$'\033[0m'
+BOLD=$'\033[1m'
 
+NOCOLOR=$'\033[0m'
+
+# Regular colors
 BLACK=$'\033[0;30m'
 DGRAY=$'\033[1;30m'
 RED=$'\033[0;31m'
@@ -58,8 +69,6 @@ BCYAN=$'\033[1;36m'
 LGRAY=$'\033[0;37m'
 WHITE=$'\033[1;37m'
 GRAY=$'\033[2;37m'
-
-NOCOLOR=$'\033[0m'
 
 # underline. normal colors reset it!
 ULINE=$'\033[4m'
@@ -93,6 +102,7 @@ touch "$LOCKFILE"
 
 # 🧹 Cleanup on abort or exit
 _on_exit() {
+    trap - INT TERM EXIT HUP
     local code=$?
     rm -f "$LOCKFILE"
     [[ $code -ne 0 ]] && echo -e "${BREAK}${RED}${BOLD} 🎯 Script aborted 🎯${RESET}"
@@ -112,7 +122,7 @@ _pre() {
     for cmd in fzf gcc git; do
         if ! command -v "$cmd" >/dev/null; then
             echo -e "${RED}${BOLD} ❌ $cmd is not installed! Please install it first.${RESET}"
-            return 1
+            exit 1
         fi
     done
 
@@ -134,60 +144,60 @@ _pre() {
 # 📦 Installation functions
 _linux_install() {
     cd "$TEMP_DIR"
-    git clone https://github.com/Frogging-Family/linux-tkg.git || { echo "${RED}${BOLD} ❌ Error cloning: linux-tkg${RESET}"; return 1; }
+    git clone https://github.com/Frogging-Family/linux-tkg.git || { echo -e "${RED}${BOLD} ❌ Error cloning: linux-tkg${RESET}"; return 1; }
     cd linux-tkg
     # Display Git repository information
     if command -v onefetch >/dev/null 2>&1; then
         onefetch --no-color-palette --no-art
     fi
-    makepkg -si || { echo "${RED}${BOLD} ❌ Error building: linux-tkg${RESET}"; return 1; }
+    makepkg -si || { echo -e "${RED}${BOLD} ❌ Error building: linux-tkg${RESET}"; return 1; }
 }
 
 _nvidia_install() {
     cd "$TEMP_DIR"
-    git clone https://github.com/Frogging-Family/nvidia-all.git || { echo "${RED}${BOLD} ❌ Error cloning: nvidia-all${RESET}"; return 1; }
+    git clone https://github.com/Frogging-Family/nvidia-all.git || { echo -e "${RED}${BOLD} ❌ Error cloning: nvidia-all${RESET}"; return 1; }
     cd nvidia-all
     # Display Git repository information
     if command -v onefetch >/dev/null 2>&1; then
         onefetch --no-color-palette --no-art
     fi
-    makepkg -si || { echo "${RED}${BOLD} ❌ Error building: nvidia-all${RESET}"; return 1; }
+    makepkg -si || { echo -e "${RED}${BOLD} ❌ Error building: nvidia-all${RESET}"; return 1; }
 }
 
 _mesa_install() {
     cd "$TEMP_DIR"
-    git clone https://github.com/Frogging-Family/mesa-git.git || { echo "${RED}${BOLD} ❌ Error cloning: mesa-git${RESET}"; return 1; }
+    git clone https://github.com/Frogging-Family/mesa-git.git || { echo -e "${RED}${BOLD} ❌ Error cloning: mesa-git${RESET}"; return 1; }
     cd mesa-git
     # Display Git repository information
     if command -v onefetch >/dev/null 2>&1; then
         onefetch --no-color-palette --no-art
     fi
-    makepkg -si || { echo "${RED}${BOLD} ❌ Error building: mesa-git${RESET}"; return 1; }
+    makepkg -si || { echo -e "${RED}${BOLD} ❌ Error building: mesa-git${RESET}"; return 1; }
 }
 
 _wine_install() {
     cd "$TEMP_DIR"
-    git clone https://github.com/Frogging-Family/wine-tkg-git.git || { echo "${RED}${BOLD} ❌ Error cloning: wine-tkg-git${RESET}"; return 1; }
+    git clone https://github.com/Frogging-Family/wine-tkg-git.git || { echo -e "${RED}${BOLD} ❌ Error cloning: wine-tkg-git${RESET}"; return 1; }
     cd wine-tkg-git/wine-tkg-git
     # Display Git repository information
     if command -v onefetch >/dev/null 2>&1; then
         onefetch --no-color-palette --no-art
     fi
-    makepkg -si || { echo "${RED}${BOLD} ❌ Error building: wine-tkg-git${RESET}"; return 1; }
+    makepkg -si || { echo -e "${RED}${BOLD} ❌ Error building: wine-tkg-git${RESET}"; return 1; }
     # https://claude.ai/chat/72c16a09-64b5-45ed-93e5-2021ddf88d93
-    sudo setcap cap_sys_nice+ep /opt/wine-tkg-git-opt/bin/wineserver
+    #sudo setcap cap_sys_nice+ep /opt/wine-tkg-git-opt/bin/wineserver
 }
 
 _proton_install() {
     cd "$TEMP_DIR"
-    git clone https://github.com/Frogging-Family/wine-tkg-git.git || { echo "${RED}${BOLD} ❌ Error cloning: wine-tkg-git${RESET}"; return 1; }
+    git clone https://github.com/Frogging-Family/wine-tkg-git.git || { echo -e "${RED}${BOLD} ❌ Error cloning: wine-tkg-git${RESET}"; return 1; }
     cd wine-tkg-git/proton-tkg
     # Display Git repository information
     if command -v onefetch >/dev/null 2>&1; then
         onefetch --no-color-palette --no-art
     fi
-    ./proton-tkg.sh || { echo "${RED}${BOLD} ❌ Error building: proton-tkg${RESET}"; return 1; }
-    ./proton-tkg.sh clean || { echo "${RED}${BOLD} ❌ Nothing to clean: proton-tkg${RESET}";  return 1; }
+    ./proton-tkg.sh || { echo -e "${RED}${BOLD} ❌ Error building: proton-tkg${RESET}"; return 1; }
+    ./proton-tkg.sh clean || { echo -e "${RED}${BOLD} ❌ Nothing to clean: proton-tkg${RESET}";  return 1; }
 }
 
 # 🔧 Configuration editor
@@ -197,7 +207,8 @@ _editor() {
     # Split $EDITOR into an array to preserve arguments (if any)
     local _editor_raw
     _editor_raw="${EDITOR-}"    # may be empty
-    IFS=' ' read -r -a _editor_parts <<< "$(_editor_raw)" || true
+    IFS=' ' 
+    read -r -a _editor_parts <<< "$_editor_raw" || true
 
     # If no editor configured or first token not executable, fallback to nano
     if [[ -z "${_editor_parts[0]:-}" ]] || ! command -v "${_editor_parts[0]}" >/dev/null 2>&1; then
@@ -205,7 +216,7 @@ _editor() {
             _editor_parts=(nano)
         else
             # Use a plain message if no editor available
-            echo -e "${YELLOW:-}\u26A0\ufe0f No editor found: please set \$EDITOR or install 'nano'.${RESET:-}"
+            echo -e "${YELLOW} ⚠️ No editor found: please set \$EDITOR or install 'nano'.${RESET}"
             return 1
         fi
     fi
@@ -314,7 +325,7 @@ _config_edit() {
                     mkdir -p "$(dirname "$mesa_git_cfg")"
                     wget -qO "$mesa_git_cfg" "$mesa_git_cfg_url" || curl -fsSL "$mesa_git_cfg_url" -o "$mesa_git_cfg"
                     echo -e "${GREEN}✅ Configuration ready at $mesa_git_cfg${RESET}"
-                    _editor "$tarmesa_git_cfgget" || { echo -e "${RED}${BOLD} ❌ Error opening $mesa_git_cfg configuration!${RESET}"; return 1; }
+                    _editor "$mesa_git_cfg" || { echo -e "${RED}${BOLD} ❌ Error opening $mesa_git_cfg configuration!${RESET}"; return 1; }
                 fi
 
                 echo -e "${GREEN}✅ Configuration saved!${RESET}"
