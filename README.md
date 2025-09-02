@@ -81,6 +81,7 @@ alias tkg_install='sudo -u $USER sh -c "/home/$USER/.tkg/tkg_install.sh"'
 Then just run:
 ```bash
 tkg_install
+```
 
 ## Usage
 
