@@ -1,6 +1,6 @@
-# TKG Installer
+# TKG Installer - A user-friendly script for all TKG packages from the Frogging-Family. 🐸
 
-A user-friendly script for all TKG packages from the Frogging-Family. 🐸
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21)](https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
 ## Description
 
@@ -48,31 +48,39 @@ Optional tools (used if available):
 
 1. Download only the script (no git required):
    ```bash
-   wget https://raw.githubusercontent.com/damachine/tkginstaller/master/tkg_install
-   chmod +x tkg_install
+   cd /path/to/download   
+   # Example: mkdir -p ~/tkg_installer && cd ~/tkg_installer
+   wget https://raw.githubusercontent.com/damachine/tkginstaller/master/tkg_install.sh
+   chmod +x tkg_install.sh
    ```
 
    Or with curl:
    ```bash
-   curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkg_install
-   chmod +x tkg_install
+   curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkg_install.sh
+   chmod +x tkg_install.sh
    ```
 
 1b. (Alternative) Clone repository:
    ```bash
    git clone https://github.com/damachine/tkginstaller.git
    cd tkginstaller
+   chmod +x tkg_install.sh
    ```
 
-2. Make script executable:
+2. Start installer:
    ```bash
-   chmod +x tkg_install
+   ./tkg_install.sh
    ```
 
-3. Start installer:
-   ```bash
-   ./tkg_install
-   ```
+## Quick Alias
+
+Add this to your `~/.bashrc` or `~/.zshrc` for easy access:
+```bash
+alias tkg_install='sudo -u $USER sh -c "/home/$USER/.tkg/tkg_install.sh"'
+```
+Then just run:
+```bash
+tkg_install
 
 ## Usage
 
@@ -108,6 +116,7 @@ Based on the Frogging-Family project: https://github.com/Frogging-Family
 - The script is specifically designed for Arch Linux
 - Uses `makepkg` to compile packages
 - Automatic system updates before installation
+- The downloaded files are deleted after use!
 - Supports only one concurrent execution (lockfile system)
 
 ## License
