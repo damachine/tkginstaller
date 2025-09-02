@@ -1,7 +1,7 @@
 # TKG Installer - A user-friendly script for all TKG packages from the Frogging-Family. 🐸
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-![Platform](https://img.shields.io/badge/platform-linux-lightgrey?logo=linux)
+![Arch Linux](https://img.shields.io/badge/platform-arch--linux-blue?logo=arch-linux&logoColor=white)
 ![Bash](https://img.shields.io/badge/language-bash-blue?logo=gnu-bash)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21)](https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-blue?logo=github-sponsors)](https://github.com/sponsors/damachine)
