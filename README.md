@@ -76,7 +76,7 @@ Optional tools (used if available):
 
 Add this to your `~/.bashrc` or `~/.zshrc` for easy access:
 ```bash
-alias tkg_install='sudo -u $USER sh -c "/home/$USER/.tkg/tkg_install.sh"'
+alias tkg_install='sudo -u $USER sh -c "/home/$USER/tkg_installer/tkg_install.sh"'
 ```
 Then just run:
 ```bash
