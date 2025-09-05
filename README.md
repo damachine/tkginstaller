@@ -100,10 +100,18 @@ Optional tools (used if available):
 
 ## Quick Alias
 
-Add this to your `~/.bashrc` or `~/.zshrc` for easy access:
+Add this to your alias file or `~/.bashrc` or `~/.zshrc` for easy access:
 ```bash
-# Example
-alias tkg_install='sudo -u $USER sh -c "/opt/tkginstaller/tkg_install.sh"'
+# Examples
+_tkg() {
+    bash -c '/opt/tkginstaller/tkg_install.sh'
+}
+
+tkg_install() {
+    bash -c '/opt/tkginstaller/tkg_install.sh'
+}
+# OR
+alias tkg_install="sh -c '/opt/tkginstaller/tkg_install.sh'"
 ```
 Then just run:
 ```bash
