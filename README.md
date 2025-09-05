@@ -1,7 +1,7 @@
 # TKG Installer - A user-friendly script for all TKG packages from the Frogging-Family. 🐸
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-![Arch Linux](https://img.shields.io/badge/platform-arch--linux-blue?logo=arch-linux&logoColor=white)
+[![Arch Linux](https://img.shields.io/badge/platform-arch--linux-blue?logo=arch-linux&logoColor=white)](https://archlinux.org/)
 ![Bash](https://img.shields.io/badge/language-bash-blue?logo=gnu-bash)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21)](https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-blue?logo=github-sponsors)](https://github.com/sponsors/damachine)
@@ -50,6 +50,28 @@ Optional tools (used if available):
 
 ## Installation
 
+### Install TKG Installer
+
+#### Arch Linux (Recommended)
+
+- **Using an AUR helper (recommended):**
+   ```bash
+   yay -S tkginstaller-git
+   ```
+
+- **Manual AUR install (no AUR helper):**
+   ```bash
+   # STEP 1: Clone repository
+   git clone https://aur.archlinux.org/tkginstaller-git.git
+   cd tkginstaller-git
+   makepkg --printsrcinfo > .SRCINFO
+   makepkg -si
+
+   # STEP 2: Start the installer
+   tkg_install.sh
+   ```
+
+#### Alternative Installation
 1. Download only the script (no git required):
    ```bash
    cd /path/to/download   
@@ -64,7 +86,7 @@ Optional tools (used if available):
    chmod +x tkg_install.sh
    ```
 
-1b. (Alternative) Clone repository:
+1b. Clone repository:
    ```bash
    git clone https://github.com/damachine/tkginstaller.git
    cd tkginstaller
@@ -80,7 +102,8 @@ Optional tools (used if available):
 
 Add this to your `~/.bashrc` or `~/.zshrc` for easy access:
 ```bash
-alias tkg_install='sudo -u $USER sh -c "/home/$USER/tkg_installer/tkg_install.sh"'
+# Example
+alias tkg_install='sudo -u $USER sh -c "/opt/tkginstaller/tkg_install.sh"'
 ```
 Then just run:
 ```bash
@@ -126,7 +149,9 @@ Based on the Frogging-Family project: https://github.com/Frogging-Family
 
 ## License
 
-This installer script is released under the **MIT License**. [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+This installer script is released under the **MIT License**.
+
+[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 Individual TKG packages have their own licenses:
 - See respective repositories at https://github.com/Frogging-Family
