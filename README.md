@@ -68,7 +68,7 @@ Optional tools (used if available):
    makepkg -si
 
    # STEP 2: Start the installer
-   tkg_install.sh
+   tkginstaller.sh
    ```
 
 #### Alternative Installation
@@ -76,46 +76,50 @@ Optional tools (used if available):
    ```bash
    cd /path/to/download   
    # Example: mkdir -p ~/tkg_installer && cd ~/tkg_installer
-   wget https://raw.githubusercontent.com/damachine/tkginstaller/master/tkg_install.sh
-   chmod +x tkg_install.sh
+   wget https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sh
+   chmod +x tkginstaller.sh
    ```
 
    Or with curl:
    ```bash
-   curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkg_install.sh
-   chmod +x tkg_install.sh
+   curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sh
+   chmod +x tkginstaller.sh
    ```
 
 1b. Clone repository:
    ```bash
    git clone https://github.com/damachine/tkginstaller.git
    cd tkginstaller
-   chmod +x tkg_install.sh
+   chmod +x tkginstaller.sh
    ```
 
 2. Start installer:
    ```bash
-   ./tkg_install.sh
+   ./tkginstaller.sh
    ```
 
 ## Quick Alias
 
-Add this to your alias file or `~/.bashrc` or `~/.zshrc` for easy access:
+If you installed manually (not via AUR), add this to your `~/.bashrc` or `~/.zshrc` for easy access:
 ```bash
 # Examples
 _tkg() {
-    bash -c '/opt/tkginstaller/tkg_install.sh'
-}
-
-tkg_install() {
-    bash -c '/opt/tkginstaller/tkg_install.sh'
+    bash -c '$HOME/tkg_installer//tkginstaller.sh'
 }
 # OR
-alias tkg_install="sh -c '/opt/tkginstaller/tkg_install.sh'"
+tkg_install() {
+    bash -c '/opt/tkginstaller/tkginstaller.sh'
+}
+# OR
+tkginstaller() {
+    bash -c '/opt/tkginstaller/tkginstaller.sh'
+}
+# OR
+alias tkg_install="sh -c '/opt/tkginstaller/tkginstaller.sh'"
 ```
 Then just run:
 ```bash
-tkg_install
+your alias name like 'tkginstaller'
 ```
 
 ## Usage

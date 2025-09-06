@@ -25,14 +25,6 @@
 #   It uses color output and Unicode icons for better readability.
 #   All paths and dependencies are configurable.
 #   See README.md further details.
-# example:
-#   cd /path/to/tkginstaller
-#   ./tkg_install
-#   tkg_install
-#
-# --- Dependency notes ---
-# - 'fzf', 'gcc', 'git', 'nano/vim etc.', 'bat' are required for running and building this installer.
-# - Please ensure all these tools are installed before using the script.
 # -----------------------------------------------------------------------------
 
 # 🔒 Safety settings
