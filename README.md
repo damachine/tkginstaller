@@ -110,7 +110,7 @@ If you installed manually (not via AUR), add this to your `~/.bashrc` or `~/.zsh
 ```bash
 # Examples
 _tkg() {
-    bash -c '$HOME/tkg_installer//tkginstaller.sh'
+    bash -c '$HOME/tkg_installer/tkginstaller.sh'
 }
 # OR
 tkg_install() {
