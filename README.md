@@ -14,31 +14,6 @@ This wrapper script makes it easy to install packages from the [Frogging-Family]
 
 ![TKG Installer Screenshot](images/screenshot.png)
 
-### 🧠 **Linux-TKG**
-- [https://github.com/Frogging-Family/linux-tkg](https://github.com/Frogging-Family/linux-tkg)
-
-### 🎮 **Nvidia-TKG** 
-- [https://github.com/Frogging-Family/nvidia-all](https://github.com/Frogging-Family/nvidia-all)
-
-### 🧩 **Mesa-TKG**
-- [https://github.com/Frogging-Family/mesa-git](https://github.com/Frogging-Family/mesa-git)
-
-### 🍷 **Wine-TKG**
-- [https://github.com/Frogging-Family/wine-tkg-git](https://github.com/Frogging-Family/wine-tkg-git)
-
-### 🧪 **Proton-TKG**
-- [https://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg](https://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg)
-
-## Features
-
-- 🎛️ **Interactive Menu** with fzf-based selection
-- 📋 **Live Preview** of available packages
-- ⚙️ **Configuration Editor** with interactive TKG config file editing
-- 🧹 **Automatic Cleanup** of temporary files
-- 🎨 **Colorized Output** for better readability
-- 🔒 **Safe Execution** with lockfile system
-- 🌐 **Portable Design** - works from any directory
-
 ## Prerequisites
 
 The script automatically checks for the following core dependencies:
@@ -94,19 +69,50 @@ Optional tools (used if available):
    chmod +x tkginstaller.sh
    ```
 
-1b. Clone repository:
-   ```bash
-   git clone https://github.com/damachine/tkginstaller.git
-   cd tkginstaller
-   chmod +x tkginstaller.sh
-   ```
+## Usage
 
-2. Start installer:
-   ```bash
-   ./tkginstaller.sh
-   ```
+The script provides an interactive menu with the following options:
 
-## Quick Alias
+You can run the script in two ways:
+
+### Interactive Mode
+```bash
+./tkginstaller.sh
+# or if installed via AUR:
+tkginstaller
+```
+
+### Direct Command Mode
+Skip the menu and run specific actions directly:
+```bash
+tkginstaller linux           # Install Linux-TKG kernel
+tkginstaller nvidia          # Install Nvidia-TKG drivers
+tkginstaller mesa            # Install Mesa-TKG for AMD/Intel graphics
+tkginstaller wine            # Install Wine-TKG for Windows applications
+tkginstaller proton          # Install Proton-TKG for Steam gaming
+
+# or if installed manually:
+./tkginstaller.sh ...
+
+```
+
+### Menu Options
+- **Linux**: Installs Linux-TKG kernel
+- **Nvidia**: Installs Nvidia-TKG drivers
+- **Linux+Nvidia**: Combined installation of kernel and Nvidia drivers
+- **Mesa**: Installs Mesa-TKG for AMD/Intel graphics
+- **Wine**: Installs Wine-TKG for Windows applications
+- **Proton**: Installs Proton-TKG for Steam gaming
+- **Clean**: Cleans temporary files and restarts
+
+### Configuration-Menue
+
+The **Config** option provides an interactive editor for TKG configuration files:
+- Edit all relevant TKG configuration files (e.g. for Linux-TKG, Nvidia-TKG, Mesa-TKG, Wine-TKG, Proton-TKG)
+- Preview the relevant TKG configuration files
+- Uses your preferred editor via `$EDITOR`
+
+### Quick Alias
 
 If you installed manually (not via AUR), add this to your `~/.bashrc` or `~/.zshrc` for easy access:
 ```bash
@@ -129,54 +135,6 @@ Then just run:
 ```bash
 your alias name like 'tkginstaller'
 ```
-
-## Usage
-
-The script provides an interactive menu with the following options:
-
-You can run the script in two ways:
-
-### Interactive Mode
-```bash
-./tkginstaller.sh
-# or if installed via AUR:
-tkginstaller
-```
-
-### Direct Command Mode
-Skip the menu and run specific actions directly:
-```bash
-./tkginstaller.sh linux      # Install Linux-TKG kernel
-./tkginstaller.sh nvidia     # Install Nvidia-TKG drivers
-./tkginstaller.sh mesa       # Install Mesa-TKG for AMD/Intel graphics
-./tkginstaller.sh wine       # Install Wine-TKG for Windows applications
-./tkginstaller.sh proton     # Install Proton-TKG for Steam gaming
-
-# or if installed via AUR:
-tkginstaller linux           # Install Linux-TKG kernel
-tkginstaller nvidia          # Install Nvidia-TKG drivers
-tkginstaller mesa            # Install Mesa-TKG for AMD/Intel graphics
-tkginstaller wine            # Install Wine-TKG for Windows applications
-tkginstaller proton          # Install Proton-TKG for Steam gaming
-```
-
-### Menu Options
-- **Linux**: Installs Linux-TKG kernel
-- **Nvidia**: Installs Nvidia-TKG drivers
-- **Linux+Nvidia**: Combined installation of kernel and Nvidia drivers
-- **Mesa**: Installs Mesa-TKG for AMD/Intel graphics
-- **Wine**: Installs Wine-TKG for Windows applications
-- **Proton**: Installs Proton-TKG for Steam gaming
-- **Config**: Opens configuration editor for TKG packages
-- **Clean**: Cleans temporary files and restarts
-- **Exit**: Exits
-
-### Configuration Editor
-
-The **Config** option provides an interactive editor for TKG configuration files:
-- Edit all relevant TKG configuration files (e.g. for Linux-TKG, Nvidia-TKG, Mesa-TKG, Wine-TKG, Proton-TKG)
-- Preview the relevant TKG configuration files
-- Uses your preferred editor via `$EDITOR`
 
 ## Notes
 
