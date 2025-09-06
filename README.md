@@ -4,12 +4,15 @@
 [![Arch Linux](https://img.shields.io/badge/platform-arch--linux-blue?logo=arch-linux&logoColor=white)](https://archlinux.org/)
 [![AUR](https://img.shields.io/aur/version/tkginstaller-git?color=1793d1&label=AUR&logo=arch-linux)](https://aur.archlinux.org/packages/tkginstaller-git)
 ![Bash](https://img.shields.io/badge/language-bash-blue?logo=gnu-bash)
+[![Issues](https://img.shields.io/github/issues/damachine/tkginstaller)](https://github.com/damachine/tkginstaller/issues)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21)](https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-blue?logo=github-sponsors)](https://github.com/sponsors/damachine)
 
 ## Description
 
 This wrapper script makes it easy to install packages from the [Frogging-Family](https://github.com/Frogging-Family) repository. It provides an interactive menu system for building and installing various TKG packages:
+
+![TKG Installer Screenshot](images/screenshot.png)
 
 ### 🧠 **Linux-TKG**
 - [https://github.com/Frogging-Family/linux-tkg](https://github.com/Frogging-Family/linux-tkg)
@@ -31,10 +34,9 @@ This wrapper script makes it easy to install packages from the [Frogging-Family]
 - 🎛️ **Interactive Menu** with fzf-based selection
 - 📋 **Live Preview** of available packages
 - ⚙️ **Configuration Editor** with interactive TKG config file editing
-- 🔒 **Safe Execution** with lockfile system
 - 🧹 **Automatic Cleanup** of temporary files
-- ✅ **Dependency Check** for required tools
 - 🎨 **Colorized Output** for better readability
+- 🔒 **Safe Execution** with lockfile system
 - 🌐 **Portable Design** - works from any directory
 
 ## Prerequisites
@@ -132,8 +134,6 @@ your alias name like 'tkginstaller'
 
 The script provides an interactive menu with the following options:
 
-![TKG Installer Screenshot](images/screenshot.png)
-
 You can run the script in two ways:
 
 ### Interactive Mode
@@ -174,23 +174,25 @@ tkginstaller proton          # Install Proton-TKG for Steam gaming
 ### Configuration Editor
 
 The **Config** option provides an interactive editor for TKG configuration files:
-- Edit Linux-TKG kernel configuration
-- Modify Nvidia-TKG driver settings
-- Adjust Mesa-TKG graphics options
-- Customize Wine-TKG compatibility settings
+- Edit all relevant TKG configuration files (e.g. for Linux-TKG, Nvidia-TKG, Mesa-TKG, Wine-TKG, Proton-TKG)
+- Preview the relevant TKG configuration files
 - Uses your preferred editor via `$EDITOR`
-
-## Source
-
-Based on the Frogging-Family project: https://github.com/Frogging-Family
 
 ## Notes
 
-- The script is specifically designed for Arch Linux
-- Uses `makepkg` to compile packages
-- Automatic system updates before installation
-- The downloaded files are deleted after use!
-- Supports only one concurrent execution (lockfile system)
+The script:
+
+- is specifically designed for Arch Linux and its derivatives
+- uses `makepkg` to compile packages
+- performs automatic system updates before installation
+- deletes the downloaded files after use
+- supports only one concurrent execution (lockfile system)
+
+If you need help, open an issue at https://github.com/damachine/tkginstaller/issues
+
+## ⚠️ Disclaimer
+This software is provided "as is", without warranty of any kind, express or implied.
+I do not guarantee that it will work as intended on your system.
 
 ## License
 
