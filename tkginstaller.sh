@@ -414,6 +414,26 @@ _menu() {
 
 # ▶️ Main function
 _main() {
+    # Accept direct argument for automation (e.g. tkginstaller linux)
+    if [[ $# -gt 0 ]]; then
+        case "${1:-}" in
+            linux)    _pre; _linux_promt; _show_done; exit ;;
+            nvidia)   _pre; _nvidia_promt; _show_done; exit ;;
+            mesa)     _pre; _mesa_promt; _show_done; exit ;;
+            wine)     _pre; _wine_promt; _show_done; exit ;;
+            proton)   _pre; _proton_promt; _show_done; exit ;;
+            help|-h|--help)
+                echo -e "${BLUE}Usage: $0 [linux|nvidia|mesa|wine|proton]${RESET}"
+                exit 0
+                ;;
+            *)        
+                echo -e "${RED}${BOLD}❌ Unknown argument: ${1:-}${RESET}"
+                echo -e "${BLUE}Usage: $0 [linux|nvidia|mesa|wine|proton]${RESET}"
+                exit 1
+                ;;
+        esac
+    fi
+
     _pre
     clear
     _menu
@@ -437,4 +457,4 @@ _main() {
     _show_done
 }
 
-_main
+_main "$@"

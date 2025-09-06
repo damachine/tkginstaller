@@ -134,6 +134,33 @@ The script provides an interactive menu with the following options:
 
 ![TKG Installer Screenshot](images/screenshot.png)
 
+You can run the script in two ways:
+
+### Interactive Mode
+```bash
+./tkginstaller.sh
+# or if installed via AUR:
+tkginstaller
+```
+
+### Direct Command Mode
+Skip the menu and run specific actions directly:
+```bash
+./tkginstaller.sh linux      # Install Linux-TKG kernel
+./tkginstaller.sh nvidia     # Install Nvidia-TKG drivers
+./tkginstaller.sh mesa       # Install Mesa-TKG for AMD/Intel graphics
+./tkginstaller.sh wine       # Install Wine-TKG for Windows applications
+./tkginstaller.sh proton     # Install Proton-TKG for Steam gaming
+
+# or if installed via AUR:
+tkginstaller linux           # Install Linux-TKG kernel
+tkginstaller nvidia          # Install Nvidia-TKG drivers
+tkginstaller mesa            # Install Mesa-TKG for AMD/Intel graphics
+tkginstaller wine            # Install Wine-TKG for Windows applications
+tkginstaller proton          # Install Proton-TKG for Steam gaming
+```
+
+### Menu Options
 - **Linux**: Installs Linux-TKG kernel
 - **Nvidia**: Installs Nvidia-TKG drivers
 - **Linux+Nvidia**: Combined installation of kernel and Nvidia drivers
@@ -142,7 +169,7 @@ The script provides an interactive menu with the following options:
 - **Proton**: Installs Proton-TKG for Steam gaming
 - **Config**: Opens configuration editor for TKG packages
 - **Clean**: Cleans temporary files and restarts
-- **Exit**: Exits the script
+- **Exit**: Exits
 
 ### Configuration Editor
 
