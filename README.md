@@ -58,6 +58,10 @@ Optional tools (used if available):
    ```bash
    yay -S tkginstaller-git
    ```
+   After installation, you can simply run:
+   ```bash
+   tkginstaller
+   ```
 
 - **Manual AUR install (no AUR helper):**
    ```bash
