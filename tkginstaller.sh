@@ -46,6 +46,14 @@ GREEN=$'\033[0;32m'
 YELLOW=$'\033[0;33m'
 BLUE=$'\033[0;34m'
 
+# 🧑‍💻 Detect Linux Distribution
+if [[ -f /etc/os-release ]]; then
+    . /etc/os-release
+    DISTRO_NAME="$NAME"
+else
+    DISTRO_NAME="Unknown"
+fi
+
 # 🔒 Prevent double execution
 if [[ -f $LOCKFILE ]]; then
     echo -e "${RED}${BOLD} ❌ Script is already running. Exiting...${RESET}"
@@ -89,7 +97,7 @@ _pre() {
     echo -e "${BLUE}${BOLD} 🔁 Starting 🐸 TKG-Installer...${RESET}"
 
     if command -v pacman &>/dev/null; then
-        echo -e "${BLUE}${BOLD} 🔍 Updating Arch Linux first...${RESET}"
+        echo -e "${BLUE}${BOLD} 🔍 Updating $DISTRO_NAME first...${RESET}"
         sudo pacman -Syu || { echo -e "${RED}${BOLD} ❌ Error updating Arch Linux!${RESET}"; return 1; }
     fi
 }
