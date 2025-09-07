@@ -98,7 +98,6 @@ _pre() {
 
     if command -v pacman &>/dev/null; then
         echo -e "${BLUE}${BOLD} 🔍 Updating $DISTRO_NAME first...${RESET}"
-        pacman -Syu || { echo -e "${RED}${BOLD} ❌ Error updating Arch Linux!${RESET}"; return 1; }
         pacman -Syu || { echo -e "${RED}${BOLD} ❌ Error updating $DISTRO_NAME!${RESET}"; return 1; }
     fi
 }
