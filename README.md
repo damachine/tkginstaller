@@ -77,8 +77,6 @@ You can run the script in two ways:
 
 ### Interactive Mode
 ```bash
-./tkginstaller.sh
-# or if installed via AUR:
 tkginstaller
 ```
 
