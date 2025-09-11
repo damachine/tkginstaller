@@ -146,9 +146,13 @@ The script:
 
 If you need help, open an issue at https://github.com/damachine/tkginstaller/issues
 
+---
+
 ## ⚠️ Disclaimer
 This software is provided "as is", without warranty of any kind, express or implied.
 I do not guarantee that it will work as intended on your system.
+
+---
 
 ## License
 
@@ -159,17 +163,19 @@ This installer script is released under the **MIT License**.
 Individual TKG packages have their own licenses:
 - See respective repositories at https://github.com/Frogging-Family
 
+---
+
 ## 💝 Support the Project
 
-If you find TKG Installer useful and want to support its development:
+If you find CoolerDash useful and want to support its development:
 
-- ⭐ Star this repository on GitHub
-- 🐛 Report bugs and suggest improvements
-- 🔄 Share the project with others
-- 📝 Contribute code or documentation
+- ⭐ **Star this repository** on GitHub
+- 🐛 **Report bugs** and suggest improvements
+- 🔄 **Share** the project with others
+- 📝 **Contribute** code or documentation
 - [![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-blue?logo=github-sponsors)](https://github.com/sponsors/damachine)
 
-> All donations help maintain and improve this project. Thank you for your support!
+> *🙏 Your support keeps this project alive and improving — thank you!.*
 
 ---
 
