@@ -142,7 +142,7 @@ The script:
 - uses `makepkg` to compile packages
 - performs automatic system updates before installation
 - deletes the downloaded files after use
-- supports only one concurrent execution (lockfile system)
+- supports only one concurrent execution
 
 If you need help, open an issue at https://github.com/damachine/tkginstaller/issues
 
