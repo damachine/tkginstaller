@@ -102,6 +102,21 @@ _pre() {
     fi
 }
 
+_build_header() {
+    local title="$*"
+    # figlet erzeugt ASCII-Art (install: figlet)
+    if command -v figlet >/dev/null 2>&1; then
+        # -w sorgt für Zeilenumbruch, Font kann angepasst werden (z. B. slant, standard, big)
+        local art
+        art=$(figlet -w 80 -f standard "$title" 2>/dev/null || figlet "$title" 2>/dev/null)
+        # ANSI: italic (3), bold (1), underline (4) — am Ende zurücksetzen
+        printf '\e[3m\e[1m\e[4m%s\e[0m' "$art"
+    else
+        # Fallback: normaler Text mit ANSI-Attribute
+        printf '\e[3m\e[1m\e[4m%s\e[0m' "$title"
+    fi
+}
+
 # 📦 Installation functions
 _linux_install() {
     cd "$TEMP_DIR"
@@ -227,7 +242,7 @@ _config_edit() {
                             esac
                             \"" \
                   --preview-window="down:wrap:80%" \
-                  --color="header:italic:underline,prompt:italic:green,pointer:green,marker:red" \
+                  --color="header:italic:bold:underline,prompt:italic:bold:green,pointer:green,marker:red" \
                   --pointer="➤ "
         )
         
@@ -388,8 +403,8 @@ _menu() {
             "Exit           |❌ Exit" \
         | fzf \
             --prompt="❯ Choose an option: " \
-            --header="🐸 TKG Frogminer Installation – Select a package ..." \
-            --height="20" \
+            --header="🐸 TKG Frogminer Installation – Select a package ...  🐸" \
+            --height="75%" \
             --border \
             --ansi \
             --delimiter="|" \
@@ -406,7 +421,7 @@ _menu() {
                         *) echo -e "🐸 TKG-Installer\nhttps://github.com/Frogging-Family";; \
                        esac' \
             --preview-window="down:wrap:2" \
-            --color="header:italic:underline,prompt:italic:green,pointer:green,marker:red" \
+            --color="header:italic:bold:underline,prompt:italic:bold:green,pointer:green,marker:red" \
             --pointer="➤ "
     )
 
