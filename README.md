@@ -36,22 +36,15 @@ Optional tools (used if available):
 
 - **Using an AUR helper (recommended):**
    ```bash
+   # STEP 1: Install
    yay -S tkginstaller-git
+   #OR any other AUR helper
 
-   # After installation, you can simply run:
+   # STEP 2: After installation, you can simply run:
    tkginstaller
-   ```
 
-- **Manual AUR install (no AUR helper):**
-   ```bash
-   # STEP 1: Clone repository
-   git clone https://aur.archlinux.org/tkginstaller-git.git
-   cd tkginstaller-git
-   makepkg --printsrcinfo > .SRCINFO
-   makepkg -si
-
-   # STEP 2: Start the installer
-   tkginstaller.sh
+   # Show all available commands and shortcuts (very useful!)
+   tkginstaller help
    ```
 
 #### Alternative Installation
@@ -71,16 +64,14 @@ Optional tools (used if available):
 
 ## Usage
 
-The script provides an interactive menu with the following options:
-
 You can run the script in two ways:
 
-### Interactive Mode
+### Interactive Mode (Menu)
 ```bash
 tkginstaller
 ```
 
-### Direct Command Mode
+### Command Mode (Direct)
 Skip the menu and run specific actions directly:
 ```bash
 # Show all available commands and shortcuts (very useful!)
