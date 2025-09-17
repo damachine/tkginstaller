@@ -36,72 +36,47 @@ Optional tools (used if available):
 
 - **Using an AUR helper (recommended):**
    ```bash
+   # STEP 1: Install
    yay -S tkginstaller-git
+   #OR any other AUR helper
 
-   # After installation, you can simply run:
+   # STEP 2: After installation, you can simply run:
    tkginstaller
-   ```
 
-- **Manual AUR install (no AUR helper):**
-   ```bash
-   # STEP 1: Clone repository
-   git clone https://aur.archlinux.org/tkginstaller-git.git
-   cd tkginstaller-git
-   makepkg --printsrcinfo > .SRCINFO
-   makepkg -si
-
-   # STEP 2: Start the installer
-   tkginstaller.sh
+   # Show all available commands and shortcuts (very useful!)
+   tkginstaller help
    ```
 
 #### Alternative Installation
 1. Download only the script (no git required):
    ```bash
-   cd /path/to/download   
-   # Example: mkdir -p ~/tkg_installer && cd ~/tkg_installer
+   # STEP 1: Pre install
+   mkdir -p /patch/to/tkginstaller && cd /patch/to/tkginstaller
+
+   # STEP 2: Download and make script executable
    wget https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sh
    chmod +x tkginstaller.sh
-   ```
 
-   Or with curl:
-   ```bash
+   # OR STEP 2: Download with curl and make script executable
    curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sh
    chmod +x tkginstaller.sh
    ```
 
 ## Usage
 
-The script provides an interactive menu with the following options:
-
 You can run the script in two ways:
 
-### Interactive Mode
+### Interactive Mode (Menu)
 ```bash
 tkginstaller
 ```
 
-### Direct Command Mode
+### Command Mode (Direct)
 Skip the menu and run specific actions directly:
 ```bash
-tkginstaller linux           # Install Linux-TKG kernel
-tkginstaller nvidia          # Install Nvidia-TKG drivers
-tkginstaller mesa            # Install Mesa-TKG for AMD/Intel graphics
-tkginstaller wine            # Install Wine-TKG for Windows applications
-tkginstaller proton          # Install Proton-TKG for Steam gaming
-
-# or if installed manually:
-./tkginstaller.sh ...
-
+# Show all available commands and shortcuts (very useful!)
+tkginstaller help
 ```
-
-### Menu Options
-- **Linux**: Installs Linux-TKG kernel
-- **Nvidia**: Installs Nvidia-TKG drivers
-- **Linux+Nvidia**: Combined installation of kernel and Nvidia drivers
-- **Mesa**: Installs Mesa-TKG for AMD/Intel graphics
-- **Wine**: Installs Wine-TKG for Windows applications
-- **Proton**: Installs Proton-TKG for Steam gaming
-- **Clean**: Cleans temporary files and restarts
 
 ### Configuration-Menue
 
@@ -115,23 +90,18 @@ The **Config** option provides an interactive editor for TKG configuration files
 If you installed manually (not via AUR), add this to your `~/.bashrc` or `~/.zshrc` for easy access:
 ```bash
 # Examples
-_tkg() {
-    bash -c '$HOME/tkg_installer/tkginstaller.sh'
-}
-# OR
-tkg_install() {
-    bash -c '/opt/tkginstaller/tkginstaller.sh'
-}
-# OR
 tkginstaller() {
-    bash -c '/opt/tkginstaller/tkginstaller.sh'
+    bash -c '/path/to/tkginstaller.sh'
 }
 # OR
-alias tkg_install="sh -c '/opt/tkginstaller/tkginstaller.sh'"
-```
-Then just run:
-```bash
-your alias name like 'tkginstaller'
+alias tkginstaller="bash -c '/path/to/tkginstaller.sh'"
+
+# System link (optional)
+# To make the installer available system-wide, create a symlink:
+sudo ln -s /path/to/tkginstaller.sh /usr/bin/tkginstaller
+
+# Now you can run 'tkginstaller' from anywhere.
+
 ```
 
 ## Notes
