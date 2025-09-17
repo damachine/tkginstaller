@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#
+
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
 # Maintainer: DAMACHINE <christkue79@gmail.com>
