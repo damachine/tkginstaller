@@ -47,15 +47,15 @@ YELLOW=$'\033[0;33m'
 BLUE=$'\033[0;34m'
 
 # 📝 Preview texts for fzf menu
-PREVIEW_LINUX="🧠 Linux-TKG\n\nhttps://github.com/Frogging-Family/linux-tkg"
-PREVIEW_NVIDIA="🎮 Nvidia-TKG\n\nhttps://github.com/Frogging-Family/nvidia-all"
-PREVIEW_MESA="🧩 Mesa-TKG\n\nhttps://github.com/Frogging-Family/mesa-git"
-PREVIEW_WINE="🍷 Wine-TKG\n\nhttps://github.com/Frogging-Family/wine-tkg-git"
-PREVIEW_PROTON="🧪 Proton-TKG\n\nhttps://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg"
-PREVIEW_CONFIG="⚙️ Config-TKG\n\nConfigure all TKG packages."
-PREVIEW_CLEAN="🧹 Clean\n\nRemoves temporary files and resets the installer."
-PREVIEW_EXIT="👋 Exit\n\nExits the program."
-PREVIEW_DEFAULT="🐸 TKG-Installer\n\nhttps://github.com/Frogging-Family"
+export PREVIEW_LINUX="🧠 Linux-TKG\n\nhttps://github.com/Frogging-Family/linux-tkg"
+export PREVIEW_NVIDIA="🎮 Nvidia-TKG\n\nhttps://github.com/Frogging-Family/nvidia-all"
+export PREVIEW_MESA="🧩 Mesa-TKG\n\nhttps://github.com/Frogging-Family/mesa-git"
+export PREVIEW_WINE="🍷 Wine-TKG\n\nhttps://github.com/Frogging-Family/wine-tkg-git"
+export PREVIEW_PROTON="🧪 Proton-TKG\n\nhttps://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg"
+export PREVIEW_CONFIG="⚙️ Config-TKG\n\nConfigure all TKG packages."
+export PREVIEW_CLEAN="🧹 Clean\n\nRemoves temporary files and resets the installer."
+export PREVIEW_EXIT="👋 Exit\n\nExits the program."
+export PREVIEW_DEFAULT="🐸 TKG-Installer\n\nhttps://github.com/Frogging-Family"
 
 # 🧑‍💻 Detect Linux Distribution
 if [[ -f /etc/os-release ]]; then
@@ -78,7 +78,13 @@ _on_exit() {
     local code=$?
     rm -f "$LOCKFILE"
     [[ $code -ne 0 ]] && echo -e "${BREAK}${RED}${BOLD} 🎯 Script aborted 🎯${RESET}"
+
+    # Clean temporary files
     rm -rf /tmp/check_tkg "$TEMP_DIR" 2>/dev/null || true
+
+    # Unset exported preview variables
+    unset PREVIEW_LINUX PREVIEW_NVIDIA PREVIEW_MESA PREVIEW_WINE PREVIEW_PROTON PREVIEW_CONFIG PREVIEW_CLEAN PREVIEW_EXIT PREVIEW_DEFAULT
+    
     echo -e "${GREEN} 🧹 Cleanup completed.${RESET}"
     exit $code
 }
@@ -406,15 +412,15 @@ _menu() {
             --delimiter="|" \
             --with-nth="2" \
             --preview='case {} in \
-                        Linux*) echo -e \"$PREVIEW_LINUX\";; \
-                        Nvidia*) echo -e \"$PREVIEW_NVIDIA\";; \
-                        Mesa*) echo -e \"$PREVIEW_MESA\";; \
-                        Wine*) echo -e \"$PREVIEW_WINE\";; \
-                        Proton*) echo -e \"$PREVIEW_PROTON\";; \
-                        Config*) echo -e \"$PREVIEW_CONFIG\";; \
-                        Clean*) echo -e \"$PREVIEW_CLEAN\";; \
-                        Exit*) echo -e \"$PREVIEW_EXIT\";; \
-                        *) echo -e \"$PREVIEW_DEFAULT\";; \
+                        Linux*) echo -e "$PREVIEW_LINUX";; \
+                        Nvidia*) echo -e "$PREVIEW_NVIDIA";; \
+                        Mesa*) echo -e "$PREVIEW_MESA";; \
+                        Wine*) echo -e "$PREVIEW_WINE";; \
+                        Proton*) echo -e "$PREVIEW_PROTON";; \
+                        Config*) echo -e "$PREVIEW_CONFIG";; \
+                        Clean*) echo -e "$PREVIEW_CLEAN";; \
+                        Exit*) echo -e "$PREVIEW_EXIT";; \
+                        *) echo -e "$PREVIEW_DEFAULT";; \
                        esac' \
             --preview-window="right:wrap:50%" \
             --color="header:italic:bold:underline,prompt:italic:bold:green,pointer:green,marker:red" \
