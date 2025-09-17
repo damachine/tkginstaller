@@ -50,14 +50,14 @@ Optional tools (used if available):
 #### Alternative Installation
 1. Download only the script (no git required):
    ```bash
-   cd /path/to/download   
-   # Example: mkdir -p ~/tkg_installer && cd ~/tkg_installer
+   # STEP 1: Pre install
+   mkdir -p /patch/to/tkginstaller && cd /patch/to/tkginstaller
+
+   # STEP 2: Download and make script executable
    wget https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sh
    chmod +x tkginstaller.sh
-   ```
 
-   Or with curl:
-   ```bash
+   # OR STEP 2: Download with curl and make script executable
    curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sh
    chmod +x tkginstaller.sh
    ```
