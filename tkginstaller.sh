@@ -46,6 +46,17 @@ GREEN=$'\033[0;32m'
 YELLOW=$'\033[0;33m'
 BLUE=$'\033[0;34m'
 
+# 📝 Preview texts for fzf menu
+PREVIEW_LINUX="🧠 Linux-TKG\n\nhttps://github.com/Frogging-Family/linux-tkg"
+PREVIEW_NVIDIA="🎮 Nvidia-TKG\n\nhttps://github.com/Frogging-Family/nvidia-all"
+PREVIEW_MESA="🧩 Mesa-TKG\n\nhttps://github.com/Frogging-Family/mesa-git"
+PREVIEW_WINE="🍷 Wine-TKG\n\nhttps://github.com/Frogging-Family/wine-tkg-git"
+PREVIEW_PROTON="🧪 Proton-TKG\n\nhttps://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg"
+PREVIEW_CONFIG="⚙️ Config-TKG\n\nConfigure all TKG packages."
+PREVIEW_CLEAN="🧹 Clean\n\nRemoves temporary files and resets the installer."
+PREVIEW_EXIT="👋 Exit\n\nExits the program."
+PREVIEW_DEFAULT="🐸 TKG-Installer\n\nhttps://github.com/Frogging-Family"
+
 # 🧑‍💻 Detect Linux Distribution
 if [[ -f /etc/os-release ]]; then
     . /etc/os-release
@@ -226,6 +237,7 @@ _config_edit() {
                                     echo \\\"👋 Back to Mainmenu!\\\" ;;
                             esac
                             \"" \
+                  --preview-window="right:wrap:80%" \
                   --color="header:italic:bold:underline,prompt:italic:bold:green,pointer:green,marker:red" \
                   --pointer="➤ "
         )
@@ -394,16 +406,17 @@ _menu() {
             --delimiter="|" \
             --with-nth="2" \
             --preview='case {} in \
-                        Linux*) echo -e "🧠 Linux-TKG\nhttps://github.com/Frogging-Family/linux-tkg";; \
-                        Nvidia*) echo -e "🎮 Nvidia-TKG\nhttps://github.com/Frogging-Family/nvidia-all";; \
-                        Mesa*) echo -e "🧩 Mesa-TKG\nhttps://github.com/Frogging-Family/mesa-git";; \
-                        Wine*) echo -e "🍷 Wine-TKG\nhttps://github.com/Frogging-Family/wine-tkg-git";; \
-                        Proton*) echo -e "🧪 Proton-TKG\nhttps://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg";; \
-                        Config*) echo -e "⚙️ Config-TKG\nConfigure all TKG packages.";; \
-                        Clean*) echo -e "🧹 Clean\nRemoves temporary files and resets the installer.";; \
-                        Exit*) echo -e "👋 Exit\nExits the program.";; \
-                        *) echo -e "🐸 TKG-Installer\nhttps://github.com/Frogging-Family";; \
+                        Linux*) echo -e \"$PREVIEW_LINUX\";; \
+                        Nvidia*) echo -e \"$PREVIEW_NVIDIA\";; \
+                        Mesa*) echo -e \"$PREVIEW_MESA\";; \
+                        Wine*) echo -e \"$PREVIEW_WINE\";; \
+                        Proton*) echo -e \"$PREVIEW_PROTON\";; \
+                        Config*) echo -e \"$PREVIEW_CONFIG\";; \
+                        Clean*) echo -e \"$PREVIEW_CLEAN\";; \
+                        Exit*) echo -e \"$PREVIEW_EXIT\";; \
+                        *) echo -e \"$PREVIEW_DEFAULT\";; \
                        esac' \
+            --preview-window="right:wrap:50%" \
             --color="header:italic:bold:underline,prompt:italic:bold:green,pointer:green,marker:red" \
             --pointer="➤ "
     )
