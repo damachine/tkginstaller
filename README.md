@@ -90,11 +90,19 @@ The **Config** option provides an interactive editor for TKG configuration files
 If you installed manually (not via AUR), add this to your `~/.bashrc` or `~/.zshrc` for easy access:
 ```bash
 # Examples
+<<<<<<< HEAD
 tkginstaller() {
     bash -c '/path/to/tkginstaller.sh'
 }
 # OR
 alias tkginstaller="bash -c '/path/to/tkginstaller.sh'"
+=======
+youralias() {
+    bash -c '/path/to/tkginstaller.sh'
+}
+# OR
+alias youralias="bash -c '/path/to/tkginstaller.sh'"
+>>>>>>> 66c903dcacd4a65e9d971032e0042d0f47706ab1
 
 # System link (optional)
 # To make the installer available system-wide, create a symlink:
