@@ -83,25 +83,9 @@ tkginstaller
 ### Direct Command Mode
 Skip the menu and run specific actions directly:
 ```bash
-tkginstaller linux           # Install Linux-TKG kernel
-tkginstaller nvidia          # Install Nvidia-TKG drivers
-tkginstaller mesa            # Install Mesa-TKG for AMD/Intel graphics
-tkginstaller wine            # Install Wine-TKG for Windows applications
-tkginstaller proton          # Install Proton-TKG for Steam gaming
-
-# or if installed manually:
-./tkginstaller.sh ...
-
+# Show all available commands and shortcuts (very useful!)
+tkginstaller help
 ```
-
-### Menu Options
-- **Linux**: Installs Linux-TKG kernel
-- **Nvidia**: Installs Nvidia-TKG drivers
-- **Linux+Nvidia**: Combined installation of kernel and Nvidia drivers
-- **Mesa**: Installs Mesa-TKG for AMD/Intel graphics
-- **Wine**: Installs Wine-TKG for Windows applications
-- **Proton**: Installs Proton-TKG for Steam gaming
-- **Clean**: Cleans temporary files and restarts
 
 ### Configuration-Menue
 
@@ -115,23 +99,18 @@ The **Config** option provides an interactive editor for TKG configuration files
 If you installed manually (not via AUR), add this to your `~/.bashrc` or `~/.zshrc` for easy access:
 ```bash
 # Examples
-_tkg() {
-    bash -c '$HOME/tkg_installer/tkginstaller.sh'
+youralias() {
+    bash -c '/path/to/tkginstaller.sh'
 }
 # OR
-tkg_install() {
-    bash -c '/opt/tkginstaller/tkginstaller.sh'
-}
-# OR
-tkginstaller() {
-    bash -c '/opt/tkginstaller/tkginstaller.sh'
-}
-# OR
-alias tkg_install="sh -c '/opt/tkginstaller/tkginstaller.sh'"
-```
-Then just run:
-```bash
-your alias name like 'tkginstaller'
+alias youralias="bash -c '/path/to/tkginstaller.sh'"
+
+# System link (optional)
+# To make the installer available system-wide, create a symlink:
+sudo ln -s /path/to/tkginstaller.sh /usr/bin/tkginstaller
+
+# Now you can run 'tkginstaller' from anywhere.
+
 ```
 
 ## Notes
