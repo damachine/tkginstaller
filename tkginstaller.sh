@@ -219,6 +219,7 @@ _config_edit() {
                 "back           |⬅️ Back to Main Menu" \
                 | fzf --prompt="❯ Select config file: " \
                       --header="⚙️ TKG Configuration Editor" \
+                      --layout=reverse \
                       --height="100%" \
                       --border \
                       --ansi \
@@ -241,7 +242,7 @@ _config_edit() {
                                     echo \\\"👋 Back to Mainmenu!\\\" ;;
                             esac
                             \"" \
-                  --preview-window="down:wrap:80%" \
+                  --preview-window="down:wrap:60%" \
                   --color="header:italic:bold:underline,prompt:italic:bold:green,pointer:green,marker:red" \
                   --pointer="➤ "
         )
@@ -404,7 +405,8 @@ _menu() {
         | fzf \
             --prompt="❯ Choose an option: " \
             --header="🐸 TKG Frogminer Installation – Select a package ...  🐸" \
-            --height="75%" \
+            --layout=reverse \
+            --height="100%" \
             --border \
             --ansi \
             --delimiter="|" \
@@ -420,7 +422,7 @@ _menu() {
                         Exit*) echo -e "👋 Exit\nExits the program.";; \
                         *) echo -e "🐸 TKG-Installer\nhttps://github.com/Frogging-Family";; \
                        esac' \
-            --preview-window="down:wrap:2" \
+            --preview-window="down:wrap:40%" \
             --color="header:italic:bold:underline,prompt:italic:bold:green,pointer:green,marker:red" \
             --pointer="➤ "
     )
