@@ -47,15 +47,73 @@ YELLOW=$'\033[0;33m'
 BLUE=$'\033[0;34m'
 
 # 📝 Preview texts for fzf menu
-export PREVIEW_LINUX="🧠 Linux-TKG\n\nhttps://github.com/Frogging-Family/linux-tkg"
-export PREVIEW_NVIDIA="🎮 Nvidia-TKG\n\nhttps://github.com/Frogging-Family/nvidia-all"
-export PREVIEW_MESA="🧩 Mesa-TKG\n\nhttps://github.com/Frogging-Family/mesa-git"
-export PREVIEW_WINE="🍷 Wine-TKG\n\nhttps://github.com/Frogging-Family/wine-tkg-git"
-export PREVIEW_PROTON="🧪 Proton-TKG\n\nhttps://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg"
-export PREVIEW_CONFIG="⚙️ Config-TKG\n\nConfigure all TKG packages."
-export PREVIEW_CLEAN="🧹 Clean\n\nRemoves temporary files and resets the installer."
-export PREVIEW_EXIT="👋 Exit\n\nExits the program."
-export PREVIEW_DEFAULT="🐸 TKG-Installer\n\nhttps://github.com/Frogging-Family"
+export PREVIEW_LINUX="🧠 Linux-TKG\n\n \
+Website:\n \
+https://github.com/Frogging-Family/linux-tkg\n\n \
+Note:\n \
+- Use the configuration editor to customize build options.\n \
+- Ensure you have the necessary build dependencies installed.\n \
+- The installer will clone the repository, build the kernel, and install it.\n \
+- After installation, reboot to use the new kernel.\n\n \
+Tips:\n \
+- Run 'tkginstaller linux' to skip menue\n \
+- Join the Frogging-Family community for support and updates.
+"
+export PREVIEW_NVIDIA="🎮 Nvidia-TKG\n\n \
+Website:\n \
+https://github.com/Frogging-Family/nvidia-all\n\n \
+Note:\n \
+- Supports both open-source and proprietary Nvidia drivers.\n \
+- Use the configuration editor to set driver options and patches.\n \
+- Installer will clone the repo, build and install the driver.\n \
+- Reboot after installation for changes to take effect.\n\n \
+Tips:\n \
+- Run 'tkginstaller nvidia' to skip menu\n \
+- Check compatibility with your GPU model.\n \
+- Join the Frogging-Family community for troubleshooting.
+"
+
+export PREVIEW_MESA="🧩 Mesa-TKG\n\n \
+Website:\n \
+https://github.com/Frogging-Family/mesa-git\n\n \
+Note:\n \
+- Open-source graphics drivers for AMD and Intel GPUs.\n \
+- Use the configuration editor for custom build flags.\n \
+- Installer will clone, build, and install Mesa.\n \
+- Reboot or restart X for changes to apply.\n\n \
+Tips:\n \
+- Run 'tkginstaller mesa' to skip menu\n \
+- Useful for gaming and Vulkan support.\n \
+- Join the Frogging-Family community for updates.
+"
+
+export PREVIEW_WINE="🍷 Wine-TKG\n\n \
+Website:\n \
+https://github.com/Frogging-Family/wine-tkg-git\n\n \
+Note:\n \
+- Custom Wine builds for better compatibility and gaming performance.\n \
+- Use the configuration editor for patches and tweaks.\n \
+- Installer will clone, build, and install Wine-TKG.\n \
+- Configure your prefix after installation.\n\n \
+Tips:\n \
+- Run 'tkginstaller wine' to skip menu\n \
+- Ideal for running Windows games and apps.\n \
+- Join the Frogging-Family community for support.
+"
+
+export PREVIEW_PROTON="🧪 Proton-TKG\n\n \
+Website:\n \
+https://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg\n\n \
+Note:\n \
+- Custom Proton builds for Steam Play and gaming.\n \
+- Use the configuration editor for tweaks and patches.\n \
+- Installer will clone, build, and install Proton-TKG.\n \
+- Select Proton-TKG in Steam after installation.\n\n \
+Tips:\n \
+- Run 'tkginstaller proton' to skip menu\n \
+- Great for running Windows games via Steam.\n \
+- Join the Frogging-Family community for updates.
+"
 
 # 🧑‍💻 Detect Linux Distribution
 if [[ -f /etc/os-release ]]; then
@@ -83,7 +141,7 @@ _on_exit() {
     rm -rf /tmp/check_tkg "$TEMP_DIR" 2>/dev/null || true
 
     # Unset exported preview variables
-    unset PREVIEW_LINUX PREVIEW_NVIDIA PREVIEW_MESA PREVIEW_WINE PREVIEW_PROTON PREVIEW_CONFIG PREVIEW_CLEAN PREVIEW_EXIT PREVIEW_DEFAULT
+    unset PREVIEW_LINUX PREVIEW_NVIDIA PREVIEW_MESA PREVIEW_WINE PREVIEW_PROTON
     
     echo -e "${GREEN} 🧹 Cleanup completed.${RESET}"
     exit $code
@@ -213,14 +271,14 @@ _config_edit() {
         
         config_choice=$(
             printf "%b\n" \
-                "linux-tkg      |🧠 Linux-TKG Configuration" \
-                "nvidia-all     |🎮 Nvidia-TKG Configuration" \
-                "mesa-git       |🧩 Mesa-TKG Configuration" \
-                "wine-tkg       |🍷 Wine-TKG Configuration" \
-                "proton-tkg     |🧪 Proton-TKG Configuration" \
+                "linux-tkg      |🧠 Linux-TKG .cfg" \
+                "nvidia-all     |🎮 Nvidia-TKG .cfg" \
+                "mesa-git       |🧩 Mesa-TKG .cfg" \
+                "wine-tkg       |🍷 Wine-TKG .cfg" \
+                "proton-tkg     |🧪 Proton-TKG .cfg" \
                 "back           |⬅️ Back to Main Menu" \
-                | fzf --prompt="❯ Select config file: " \
-                      --header="⚙️ TKG Configuration Editor" \
+                | fzf --prompt="❯ Select a config file 🛠️: " \
+                      --header="🐸 TKG Configuration Editor – Select a config..." \
                       --layout=reverse \
                       --height="100%" \
                       --ansi \
@@ -243,7 +301,7 @@ _config_edit() {
                                     echo \\\"👋 Back to Mainmenu!\\\" ;;
                             esac
                             \"" \
-                  --preview-window="right:wrap:80%" \
+                  --preview-window="right:wrap:50%" \
                   --color="header:italic:bold:underline,prompt:italic:bold:green,pointer:green,marker:red" \
                   --pointer="➤ "
         )
@@ -375,6 +433,21 @@ _proton_promt() {
 _config_promt() {
     if _config_edit; then return 0; fi;
 }
+_help_promt() {
+    echo -e "${BLUE}Usage: $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|linux+nvidia|config|clean|exit]${RESET}"
+    echo -e "${BLUE}Shortcuts: l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/linux+nvidia=Linux+Nvidia combo${RESET}"
+    echo -e "${BLUE}Examples:${RESET}"
+    echo -e "  $0 linux           # Install Linux-TKG"
+    echo -e "  $0 nvidia          # Install Nvidia-TKG"
+    echo -e "  $0 mesa            # Install Mesa-TKG"
+    echo -e "  $0 wine            # Install Wine-TKG"
+    echo -e "  $0 proton          # Install Proton-TKG"
+    echo -e "  $0 linuxnvidia     # Install Linux-TKG + Nvidia-TKG"
+    echo -e "  $0 ln              # Install Linux-TKG + Nvidia-TKG"
+    echo -e "  $0 linux+nvidia    # Install Linux-TKG + Nvidia-TKG"
+    echo -e "  $0 exit            # Exit the installer"
+    exit 0
+}
 
 # ✅ Completion display
 _show_done() {
@@ -394,18 +467,19 @@ _menu() {
     local selection
     selection=$(
         printf "%b\n" \
-            "Linux          |🧠 Linux-TKG        – Linux Kernel TKG configuration" \
-            "Nvidia         |🎮 Nvidia-TKG       – Nvidia Open-Source or proprietary graphics driver" \
-            "Linux+Nvidia   |💻 Linux+Nvidia     - Combo package: Linux-TKG + Nvidia-TKG" \
-            "Mesa           |🧩 Mesa-TKG         – Mesa Open-Source graphics driver for AMD and Intel" \
-            "Wine           |🍷 Wine-TKG         – Windows compatibility layer" \
-            "Proton         |🧪 Proton-TKG       – Windows compatibility layer for Steam / Gaming" \
-            "Config         |⚙️ Config-TKG       – Edit TKG configuration files" \
-            "Clean          |🧹 Reset" \
+            "Linux          |🧠 Linux-TKG       – Linux Kernel" \
+            "Nvidia         |🎮 Nvidia-TKG      – Nvidia Open-Source or proprietary graphics driver" \
+            "Linux+Nvidia   |💻 Linux+Nvidia    - Combo package: Linux-TKG + Nvidia-TKG" \
+            "Mesa           |🧩 Mesa-TKG        – Mesa Open-Source graphics driver for AMD and Intel" \
+            "Wine           |🍷 Wine-TKG        – Windows compatibility layer" \
+            "Proton         |🧪 Proton-TKG      – Windows compatibility layer for Steam / Gaming" \
+            "Config         |🛠️ Config-TKG      – Edit TKG configuration files" \
+            "Help           |❓ Help" \
+            "Clean          |🧹 Clean/Reset" \
             "Exit           |❌ Exit" \
         | fzf \
             --prompt="❯ Choose an option: " \
-            --header="🐸 TKG Frogminer Installation – Select a package 🐸" \
+            --header="🐸 TKG Frogminer Installation – Select a package..." \
             --layout=reverse \
             --height="100%" \
             --ansi \
@@ -417,10 +491,11 @@ _menu() {
                         Mesa*) echo -e "$PREVIEW_MESA";; \
                         Wine*) echo -e "$PREVIEW_WINE";; \
                         Proton*) echo -e "$PREVIEW_PROTON";; \
-                        Config*) echo -e "$PREVIEW_CONFIG";; \
-                        Clean*) echo -e "$PREVIEW_CLEAN";; \
-                        Exit*) echo -e "$PREVIEW_EXIT";; \
-                        *) echo -e "$PREVIEW_DEFAULT";; \
+                        Config*) echo -e "🛠️ Config-TKG\nConfigure all TKG packages.";; \
+                        Help*) echo -e "❓ TKG-Installer\nShows all Commandline usage.";; \
+                        Clean*) echo -e "🧹 Clean\nRemoves temporary files and resets the installer.";; \
+                        Exit*) echo -e "👋 Exit\nExits the program.";; \
+                        *) echo -e "🐸 TKG-Installer\nhttps://github.com/damachine/tkginstaller";; \
                        esac' \
             --preview-window="right:wrap:50%" \
             --color="header:italic:bold:underline,prompt:italic:bold:green,pointer:green,marker:red" \
@@ -442,13 +517,25 @@ _main() {
     # Accept direct argument for automation (e.g. tkginstaller linux)
     if [[ $# -gt 0 ]]; then
         case "${1:-}" in
-            linux)    _pre; _linux_promt; _show_done; exit ;;
-            nvidia)   _pre; _nvidia_promt; _show_done; exit ;;
-            mesa)     _pre; _mesa_promt; _show_done; exit ;;
-            wine)     _pre; _wine_promt; _show_done; exit ;;
-            proton)   _pre; _proton_promt; _show_done; exit ;;
+            linuxnvidia|ln|linux+nvidia) _pre; _linuxnvidia_promt; _show_done; exit ;;
+            linux|l)                     _pre; _linux_promt; _show_done; exit ;;
+            nvidia|n)                    _pre; _nvidia_promt; _show_done; exit ;;
+            mesa|m)                      _pre; _mesa_promt; _show_done; exit ;;
+            wine|w)                      _pre; _wine_promt; _show_done; exit ;;
+            proton|p)                    _pre; _proton_promt; _show_done; exit ;;
             help|-h|--help)
-                echo -e "${BLUE}Usage: $0 [linux|nvidia|mesa|wine|proton]${RESET}"
+                echo -e "${BLUE}Usage: $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|linux+nvidia|config|clean|exit]${RESET}"
+                echo -e "${BLUE}Shortcuts: l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/linux+nvidia=Linux+Nvidia combo${RESET}"
+                echo -e "${BLUE}Examples:${RESET}"
+                echo -e "  $0 linux           # Install Linux-TKG"
+                echo -e "  $0 nvidia          # Install Nvidia-TKG"
+                echo -e "  $0 mesa            # Install Mesa-TKG"
+                echo -e "  $0 wine            # Install Wine-TKG"
+                echo -e "  $0 proton          # Install Proton-TKG"
+                echo -e "  $0 linuxnvidia     # Install Linux-TKG + Nvidia-TKG"
+                echo -e "  $0 ln              # Install Linux-TKG + Nvidia-TKG"
+                echo -e "  $0 linux+nvidia    # Install Linux-TKG + Nvidia-TKG"
+                echo -e "  $0 exit            # Exit the installer"
                 exit 0
                 ;;
             *)        
@@ -474,6 +561,7 @@ _main() {
         Wine)          _wine_promt ;;
         Proton)        _proton_promt ;;
         Config)        if _config_promt; then rm -f "$LOCKFILE"; exec "$0"; fi ;;
+        Help)          _help_promt ;;
         Clean)         _pre; sleep 1; echo -e "${BLUE} 🔁 Restarting 🐸 TKG Installer ...${RESET}"; sleep 1; rm -f "$LOCKFILE"; exec "$0" ;;
         Exit)          echo -e "${BLUE} 👋 Goodbye!${RESET}"; exit 0 ;;
         *)             echo -e "${GREEN}${BOLD} ❌ Invalid option: $choice${RESET}" ;;
