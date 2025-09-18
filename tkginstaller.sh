@@ -28,7 +28,7 @@
 set -euo pipefail
 
 # 📌 Paths and Lockfile
-LOCKFILE="/tmp/tkg_installer.lock"
+LOCKFILE="/tmp/tkginstaller.lock"
 TEMP_DIR="$HOME/.cache/tkginstaller"
 
 # 🎨 Colors
