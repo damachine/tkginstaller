@@ -290,7 +290,7 @@ _config_edit() {
                                     echo \\\"👋 Back to Mainmenu!\\\" ;;
                             esac
                             \"" \
-                  --preview-window="right:wrap:50%" \
+                  --preview-window="right:wrap:60%" \
                   --color="header:italic:bold:underline,prompt:italic:bold:green,pointer:green,marker:red" \
                   --pointer="➤ "
         )
@@ -486,7 +486,7 @@ _menu() {
                         Exit*) echo -e "👋 Exit\nExits the program.";; \
                         *) echo -e "🐸 TKG-Installer\nhttps://github.com/damachine/tkginstaller";; \
                        esac' \
-            --preview-window="right:wrap:50%" \
+            --preview-window="right:wrap:60%" \
             --color="header:italic:bold:underline,prompt:italic:bold:green,pointer:green,marker:red" \
             --pointer="➤ "
     )
