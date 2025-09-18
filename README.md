@@ -23,6 +23,7 @@ The script automatically checks for the following core dependencies:
 
 Optional tools (used if available):
 - Any text editor for configuration files (the script respects the $EDITOR environment variable and falls back to `nano` if not set) — examples: `nano`, `vim`, `code`.
+- `curl`, `wget` - Fetching preview content
 - `bat` - Alternative for "cat" with syntax highlighting
 - `onefetch` - Git repository information display (optional)
 
