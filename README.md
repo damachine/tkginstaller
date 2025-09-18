@@ -15,7 +15,7 @@ This wrapper script makes it easy to install packages from the [Frogging-Family]
 ![TKG Installer Banner](images/banner.jpg)
 
 ![TKG Installer Screenshot](images/tkginstaller.png)
-[🎬 Demo-Video](images/tkginstaller.webm)
+[🎬 Demo-Video](images/tkginstaller.gif)
 
 ## Prerequisites
 
