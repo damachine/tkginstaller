@@ -43,74 +43,66 @@ GREEN=$'\033[0;32m'
 YELLOW=$'\033[0;33m'
 BLUE=$'\033[0;34m'
 
+# 📝 Dynamic preview function using text browsers
+_get_preview_content() {
+    local repo_type="$1"
+    local repo_url=""
+    local static_preview=""
+    
+    case "$repo_type" in
+        linux)
+            repo_url="https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/README.md"
+            static_preview="🧠 Linux-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/linux-tkg\n\nNote:\n- Use the configuration editor to customize build options.\n- Ensure you have the necessary build dependencies installed.\n- The installer will clone the repository, build the kernel, and install it.\n- After installation, reboot to use the new kernel.\n\nTips:\n- Run 'tkginstaller linux' to skip menu\n- Join the Frogging-Family community for support and updates."
+            ;;
+        nvidia)
+            repo_url="https://raw.githubusercontent.com/Frogging-Family/nvidia-all/master/README.md"
+            static_preview="🎮 Nvidia-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/nvidia-all\n\nNote:\n- Supports both open-source and proprietary Nvidia drivers.\n- Use the configuration editor to set driver options and patches.\n- Installer will clone the repo, build and install the driver.\n- Reboot after installation for changes to take effect.\n\nTips:\n- Run 'tkginstaller nvidia' to skip menu\n- Check compatibility with your GPU model.\n- Join the Frogging-Family community for troubleshooting."
+            ;;
+        mesa)
+            repo_url="https://raw.githubusercontent.com/Frogging-Family/mesa-git/master/README.md"
+            static_preview="🧩 Mesa-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/mesa-git\n\nNote:\n- Open-source graphics drivers for AMD and Intel GPUs.\n- Use the configuration editor for custom build flags.\n- Installer will clone, build, and install Mesa.\n- Reboot or restart X for changes to apply.\n\nTips:\n- Run 'tkginstaller mesa' to skip menu\n- Useful for gaming and Vulkan support.\n- Join the Frogging-Family community for updates."
+            ;;
+        wine)
+            repo_url="https://raw.githubusercontent.com/Frogging-Family/wine-tkg-git/master/README.md"
+            static_preview="🍷 Wine-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/wine-tkg-git\n\nNote:\n- Custom Wine builds for better compatibility and gaming performance.\n- Use the configuration editor for patches and tweaks.\n- Installer will clone, build, and install Wine-TKG.\n- Configure your prefix after installation.\n\nTips:\n- Run 'tkginstaller wine' to skip menu\n- Ideal for running Windows games and apps.\n- Join the Frogging-Family community for support."
+            ;;
+        proton)
+            repo_url="https://raw.githubusercontent.com/Frogging-Family/wine-tkg-git/master/proton-tkg/README.md"
+            static_preview="🧪 Proton-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg\n\nNote:\n- Custom Proton builds for Steam Play and gaming.\n- Use the configuration editor for tweaks and patches.\n- Installer will clone, build, and install Proton-TKG.\n- Select Proton-TKG in Steam after installation.\n\nTips:\n- Run 'tkginstaller proton' to skip menu\n- Great for running Windows games via Steam.\n- Join the Frogging-Family community for updates."
+            ;;
+        *)
+            echo -e "$static_preview"
+            return 1
+            ;;
+    esac
+    
+    # Try curl/wget first for better error handling
+    local content=""
+    if command -v curl >/dev/null 2>&1; then
+        content=$(curl -fsSL --max-time 5 "$repo_url" 2>/dev/null | head -50)
+    elif command -v wget >/dev/null 2>&1; then
+        content=$(wget -qO- --timeout=5 "$repo_url" 2>/dev/null | head -50)
+    fi
+    
+    # If we got content, format it nicely
+    if [[ -n "$content" ]]; then
+        if command -v bat >/dev/null 2>&1; then
+            echo "$content" | bat --style=plain --color=always --language=markdown 2>/dev/null
+        else
+            echo "$content"
+        fi
+    else
+        # Fallback to static content
+        echo -e "$static_preview"
+    fi
+}
+
 # 📝 Preview texts for fzf menu
-export PREVIEW_LINUX="🧠 Linux-TKG\n\n \
-Website:\n \
-https://github.com/Frogging-Family/linux-tkg\n\n \
-Note:\n \
-- Use the configuration editor to customize build options.\n \
-- Ensure you have the necessary build dependencies installed.\n \
-- The installer will clone the repository, build the kernel, and install it.\n \
-- After installation, reboot to use the new kernel.\n\n \
-Tips:\n \
-- Run 'tkginstaller linux' to skip menue\n \
-- Join the Frogging-Family community for support and updates.
-"
-export PREVIEW_NVIDIA="🎮 Nvidia-TKG\n\n \
-Website:\n \
-https://github.com/Frogging-Family/nvidia-all\n\n \
-Note:\n \
-- Supports both open-source and proprietary Nvidia drivers.\n \
-- Use the configuration editor to set driver options and patches.\n \
-- Installer will clone the repo, build and install the driver.\n \
-- Reboot after installation for changes to take effect.\n\n \
-Tips:\n \
-- Run 'tkginstaller nvidia' to skip menu\n \
-- Check compatibility with your GPU model.\n \
-- Join the Frogging-Family community for troubleshooting.
-"
-
-export PREVIEW_MESA="🧩 Mesa-TKG\n\n \
-Website:\n \
-https://github.com/Frogging-Family/mesa-git\n\n \
-Note:\n \
-- Open-source graphics drivers for AMD and Intel GPUs.\n \
-- Use the configuration editor for custom build flags.\n \
-- Installer will clone, build, and install Mesa.\n \
-- Reboot or restart X for changes to apply.\n\n \
-Tips:\n \
-- Run 'tkginstaller mesa' to skip menu\n \
-- Useful for gaming and Vulkan support.\n \
-- Join the Frogging-Family community for updates.
-"
-
-export PREVIEW_WINE="🍷 Wine-TKG\n\n \
-Website:\n \
-https://github.com/Frogging-Family/wine-tkg-git\n\n \
-Note:\n \
-- Custom Wine builds for better compatibility and gaming performance.\n \
-- Use the configuration editor for patches and tweaks.\n \
-- Installer will clone, build, and install Wine-TKG.\n \
-- Configure your prefix after installation.\n\n \
-Tips:\n \
-- Run 'tkginstaller wine' to skip menu\n \
-- Ideal for running Windows games and apps.\n \
-- Join the Frogging-Family community for support.
-"
-
-export PREVIEW_PROTON="🧪 Proton-TKG\n\n \
-Website:\n \
-https://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg\n\n \
-Note:\n \
-- Custom Proton builds for Steam Play and gaming.\n \
-- Use the configuration editor for tweaks and patches.\n \
-- Installer will clone, build, and install Proton-TKG.\n \
-- Select Proton-TKG in Steam after installation.\n\n \
-Tips:\n \
-- Run 'tkginstaller proton' to skip menu\n \
-- Great for running Windows games via Steam.\n \
-- Join the Frogging-Family community for updates.
-"
+export PREVIEW_LINUX="$(_get_preview_content linux)"
+export PREVIEW_NVIDIA="$(_get_preview_content nvidia)"
+export PREVIEW_MESA="$(_get_preview_content mesa)"
+export PREVIEW_WINE="$(_get_preview_content wine)"
+export PREVIEW_PROTON="$(_get_preview_content proton)"
 
 # 🧑‍💻 Detect Linux Distribution
 if [[ -f /etc/os-release ]]; then
