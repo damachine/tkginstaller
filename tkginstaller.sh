@@ -10,14 +10,14 @@
 #   This software is provided "as is", without warranty of any kind, express or implied.
 #   I do not guarantee that it will work as intended on your system.
 #
-# brief:
+# Info:
 # 	🐸 TKG-Installer – Optimized
 # 	Install and configure TKG/Frogminer packages with ease.
 # 	Supports Linux-TKG, Nvidia-TKG, Mesa-TKG, Wine-TKG, Proton-TKG.
 # 	Includes configuration editor and cleanup functions.
 # 	Provides a user-friendly menu with previews.
 # 	Designed for Arch Linux but adaptable to other distributions.
-# details:
+# Details:
 #   This script handles installation, configuration, cleanup, and service management for TKG/Frogminer.
 #   Edit dependencies, paths, and user as needed for your system.
 #   Do not run as root. Use a dedicated user for security.
