@@ -79,9 +79,9 @@ _get_preview_content() {
     # Try curl/wget first for better error handling
     local content=""
     if command -v curl >/dev/null 2>&1; then
-        content=$(curl -fsSL --max-time 5 "$repo_url" 2>/dev/null | head -50)
+        content=$(curl -fsSL --max-time 5 "$repo_url" 2>/dev/null)
     elif command -v wget >/dev/null 2>&1; then
-        content=$(wget -qO- --timeout=5 "$repo_url" 2>/dev/null | head -50)
+        content=$(wget -qO- --timeout=5 "$repo_url" 2>/dev/null)
     fi
     
     # If we got content, format it nicely
@@ -277,20 +277,20 @@ _config_edit() {
                             key=\$(echo {} | cut -d'|' -f1 | xargs)
                             case \\\$key in
                                 linux-tkg)
-                                    (command -v bat >/dev/null 2>&1 && bat --style=plain --color=always \"\$HOME/.config/frogminer/linux-tkg.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/linux-tkg.cfg\" 2>/dev/null) || true ;;
+                                    (command -v bat >/dev/null 2>&1 && bat --style=numbers --color=always \"\$HOME/.config/frogminer/linux-tkg.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/linux-tkg.cfg\" 2>/dev/null) || true ;;
                                 nvidia-all)
-                                    (command -v bat >/dev/null 2>&1 && bat --style=plain --color=always \"\$HOME/.config/frogminer/nvidia-all.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/nvidia-all.cfg\" 2>/dev/null) || true ;;
+                                    (command -v bat >/dev/null 2>&1 && bat --style=numbers --color=always \"\$HOME/.config/frogminer/nvidia-all.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/nvidia-all.cfg\" 2>/dev/null) || true ;;
                                 mesa-git)
-                                    (command -v bat >/dev/null 2>&1 && bat --style=plain --color=always \"\$HOME/.config/frogminer/mesa-git.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/mesa-git.cfg\" 2>/dev/null) || true ;;
+                                    (command -v bat >/dev/null 2>&1 && bat --style=numbers --color=always \"\$HOME/.config/frogminer/mesa-git.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/mesa-git.cfg\" 2>/dev/null) || true ;;
                                 wine-tkg)
-                                    (command -v bat >/dev/null 2>&1 && bat --style=plain --color=always \"\$HOME/.config/frogminer/wine-tkg.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/wine-tkg.cfg\" 2>/dev/null) || true ;;
+                                    (command -v bat >/dev/null 2>&1 && bat --style=numbers --color=always \"\$HOME/.config/frogminer/wine-tkg.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/wine-tkg.cfg\" 2>/dev/null) || true ;;
                                 proton-tkg)
-                                    (command -v bat >/dev/null 2>&1 && bat --style=plain --color=always \"\$HOME/.config/frogminer/proton-tkg.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/proton-tkg.cfg\" 2>/dev/null) || true ;;
+                                    (command -v bat >/dev/null 2>&1 && bat --style=numbers --color=always \"\$HOME/.config/frogminer/proton-tkg.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/proton-tkg.cfg\" 2>/dev/null) || true ;;
                                 back)
                                     echo \\\"👋 Back to Mainmenu!\\\" ;;
                             esac
                             \"" \
-                  --preview-window="right:wrap:60%" \
+                  --preview-window="right:wrap:75%" \
                   --color="header:italic:bold:underline,prompt:italic:bold:green,pointer:green,marker:red" \
                   --pointer="➤ "
         )
@@ -486,8 +486,8 @@ _menu() {
                         Exit*) echo -e "👋 Exit\nExits the program.";; \
                         *) echo -e "🐸 TKG-Installer\nhttps://github.com/damachine/tkginstaller";; \
                        esac' \
-            --preview-window="right:wrap:80%" \
-            --color="header:italic:bold:underline,prompt:italic:bold:green,pointer:green,marker:red" \
+            --preview-window="right:wrap:65%" \
+            --color="header:italic:bold:underline:green,prompt:italic:bold:green,pointer:green,marker:red" \
             --pointer="➤ "
     )
 
