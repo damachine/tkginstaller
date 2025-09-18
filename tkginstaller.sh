@@ -11,7 +11,7 @@
 #   I do not guarantee that it will work as intended on your system.
 #
 # Info:
-# 	🐸 TKG-Installer – Optimized
+# 	TKG-Installer – Optimized 🐸
 # 	Install and configure TKG/Frogminer packages with ease.
 # 	Supports Linux-TKG, Nvidia-TKG, Mesa-TKG, Wine-TKG, Proton-TKG.
 # 	Includes configuration editor and cleanup functions.
