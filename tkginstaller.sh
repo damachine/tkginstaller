@@ -486,7 +486,7 @@ _menu() {
                         Exit*) echo -e "👋 Exit\nExits the program.";; \
                         *) echo -e "🐸 TKG-Installer\nhttps://github.com/damachine/tkginstaller";; \
                        esac' \
-            --preview-window="right:wrap:60%" \
+            --preview-window="right:wrap:80%" \
             --color="header:italic:bold:underline,prompt:italic:bold:green,pointer:green,marker:red" \
             --pointer="➤ "
     )
