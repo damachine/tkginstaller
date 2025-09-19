@@ -41,6 +41,13 @@ GREEN=$'\033[0;32m'
 YELLOW=$'\033[0;33m'
 BLUE=$'\033[0;34m'
 
+# 🔒 Prevent double execution
+if [[ -f $LOCKFILE ]]; then
+    echo -e "${RED}${BOLD} ❌ Script is already running. Exiting...${RESET}"
+    exit 1
+fi
+touch "$LOCKFILE"
+
 # 🧑‍💻 Detect Linux Distribution
 if [[ -f /etc/os-release ]]; then
     . /etc/os-release
@@ -48,13 +55,6 @@ if [[ -f /etc/os-release ]]; then
 else
     DISTRO_NAME="Unknown"
 fi
-
-# 🔒 Prevent double execution
-if [[ -f $LOCKFILE ]]; then
-    echo -e "${RED}${BOLD} ❌ Script is already running. Exiting...${RESET}"
-    exit 1
-fi
-touch "$LOCKFILE"
 
 # 🧹 Cleanup on abort or exit
 _on_exit() {
@@ -472,16 +472,16 @@ _menu() {
             --delimiter="|" \
             --with-nth="2" \
             --preview='case {} in \
-                        Linux*) echo -e "$PREVIEW_LINUX";; \
-                        Nvidia*) echo -e "$PREVIEW_NVIDIA";; \
-                        Mesa*) echo -e "$PREVIEW_MESA";; \
-                        Wine*) echo -e "$PREVIEW_WINE";; \
-                        Proton*) echo -e "$PREVIEW_PROTON";; \
-                        Config*) echo -e "🛠️ Config-TKG\nConfigure all TKG packages.";; \
-                        Help*) echo -e "❓ TKG-Installer\nShows all Commandline usage.";; \
-                        Clean*) echo -e "🧹 Clean\nRemoves temporary files and resets the installer.";; \
-                        Exit*) echo -e "👋 Exit\nExits the program.";; \
-                        *) echo -e "🐸 TKG-Installer\nhttps://github.com/damachine/tkginstaller";; \
+                        Linux*)     echo -e "$PREVIEW_LINUX";; \
+                        Nvidia*)    echo -e "$PREVIEW_NVIDIA";; \
+                        Mesa*)      echo -e "$PREVIEW_MESA";; \
+                        Wine*)      echo -e "$PREVIEW_WINE";; \
+                        Proton*)    echo -e "$PREVIEW_PROTON";; \
+                        Config*)    echo -e "🛠️ Config-TKG\nConfigure all TKG packages.";; \
+                        Help*)      echo -e "❓ TKG-Installer\nShows all Commandline usage.";; \
+                        Clean*)     echo -e "🧹 Clean\nRemoves temporary files and resets the installer.";; \
+                        Exit*)      echo -e "👋 Exit\nExits the program.";; \
+                        *)          echo -e "🐸 TKG-Installer\nhttps://github.com/damachine/tkginstaller";; \
                        esac' \
             --preview-window="right:wrap:65%" \
             --color="header:italic:bold:underline:green,prompt:italic:bold:green,pointer:green,marker:red" \
