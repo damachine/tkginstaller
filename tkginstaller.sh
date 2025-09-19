@@ -138,15 +138,17 @@ _get_preview_content() {
     
     # Try curl/wget first for better error handling
     local content=""
-    if command -v curl >/dev/null 2>&1; then
-        content=$(curl -fsSL --max-time 5 "$repo_url" 2>/dev/null)
-    elif command -v wget >/dev/null 2>&1; then
+    if command -v wget >/dev/null 2>&1; then
         content=$(wget -qO- --timeout=5 "$repo_url" 2>/dev/null)
+    elif command -v curl >/dev/null 2>&1; then
+        content=$(curl -fsSL --max-time 5 "$repo_url" 2>/dev/null)
     fi
     
     # If we got content, format it nicely
     if [[ -n "$content" ]]; then
-        if command -v bat >/dev/null 2>&1; then
+        if command -v glow >/dev/null 2>&1; then
+            echo "$content" | glow 2>/dev/null
+        elif command -v bat >/dev/null 2>&1; then
             echo "$content" | bat --style=plain --color=always --language=markdown 2>/dev/null
         else
             echo "$content"
@@ -287,8 +289,8 @@ _config_edit() {
                                 back)
                                     echo \\\"👋 Back to Mainmenu!\\\" ;;
                             esac
-                            \"" \
-                  --preview-window="right:wrap:75%" \
+                        \"" \
+                  --preview-window="right:wrap:60%" \
                   --color="header:italic:bold:underline,prompt:italic:bold:green,pointer:green,marker:red" \
                   --pointer="➤ "
         )
@@ -472,18 +474,18 @@ _menu() {
             --delimiter="|" \
             --with-nth="2" \
             --preview='case {} in \
-                        Linux*)     echo -e "$PREVIEW_LINUX";; \
-                        Nvidia*)    echo -e "$PREVIEW_NVIDIA";; \
-                        Mesa*)      echo -e "$PREVIEW_MESA";; \
-                        Wine*)      echo -e "$PREVIEW_WINE";; \
-                        Proton*)    echo -e "$PREVIEW_PROTON";; \
-                        Config*)    echo -e "🛠️ Config-TKG\nConfigure all TKG packages.";; \
-                        Help*)      echo -e "❓ TKG-Installer\nShows all Commandline usage.";; \
-                        Clean*)     echo -e "🧹 Clean\nRemoves temporary files and resets the installer.";; \
-                        Exit*)      echo -e "👋 Exit\nExits the program.";; \
-                        *)          echo -e "🐸 TKG-Installer\nhttps://github.com/damachine/tkginstaller";; \
-                       esac' \
-            --preview-window="right:wrap:65%" \
+                Linux*)     echo -e "🧠 Linux-TKG Preview\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/linux-tkg/blob/master/README.md\n\n---\n$PREVIEW_LINUX";; \
+                Nvidia*)    echo -e "🎮 Nvidia-TKG Preview\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/nvidia-all/blob/master/README.md\n\n---\n$PREVIEW_NVIDIA";; \
+                Mesa*)      echo -e "🧩 Mesa-TKG Preview\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/mesa-git/blob/master/README.md\n\n---\n$PREVIEW_MESA";; \
+                Wine*)      echo -e "🍷 Wine-TKG Preview\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/wine-tkg-git/blob/master/README.md\n\n---\n$PREVIEW_WINE";; \
+                Proton*)    echo -e "🧪 Proton-TKG Preview\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg/README.md\n\n---\n$PREVIEW_PROTON";; \
+                Config*)    echo -e "🛠️ Config-TKG\nConfigure all TKG packages.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller#configuration-menue";; \
+                Help*)      echo -e "❓ TKG-Installer\nShows all Commandline usage.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller#usage";; \
+                Clean*)     echo -e "🧹 Clean\nRemoves temporary files and resets the installer.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller#notes";; \
+                Exit*)      echo -e "👋 Exit\nExits the program.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller";; \
+                            *)          echo -e "🐸 TKG-Installer\nhttps://github.com/damachine/tkginstaller";; \
+            esac' \
+            --preview-window="right:nowrap:60%" \
             --color="header:italic:bold:underline:green,prompt:italic:bold:green,pointer:green,marker:red" \
             --pointer="➤ "
     )
