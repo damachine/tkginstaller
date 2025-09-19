@@ -482,7 +482,7 @@ _menu() {
                 Config*)    echo -e "🛠️ Config-TKG\n\nConfigure all TKG packages.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller#configuration-menue";; \
                 Help*)      echo -e "❓ TKG-Installer\n\nShows all Commandline usage.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller#usage";; \
                 Clean*)     echo -e "🧹 Clean\n\nRemoves temporary files and resets the installer.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller#notes";; \
-                Exit*)      echo -e "👋 Exit\n\nExits the program.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller";; \
+                Exit*)      echo -e "👋 Exit\n\nExits the program.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller\n\nIf you like this program and want to support development, ⭐ visit the project on GitHub!";; \
                             *)          echo -e "🐸 TKG-Installer\nhttps://github.com/damachine/tkginstaller";; \
             esac' \
             --preview-window="right:nowrap:60%" \
