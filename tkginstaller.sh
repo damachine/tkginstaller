@@ -64,7 +64,7 @@ _on_exit() {
     [[ $code -ne 0 ]] && echo -e "${BREAK}${RED}${BOLD} 🎯 Script aborted 🎯${RESET}"
 
     # Clean temporary files
-    rm -rf /tmp/check_tkg "$TEMP_DIR" 2>/dev/null || true
+    rm -rf /tmp/tkginstaller_choice "$TEMP_DIR" 2>/dev/null || true
 
     # Unset exported preview variables
     unset PREVIEW_LINUX PREVIEW_NVIDIA PREVIEW_MESA PREVIEW_WINE PREVIEW_PROTON
@@ -90,7 +90,7 @@ _pre() {
 
     if [[ ! -d "$TEMP_DIR" ]]; then
         echo -e "${GREEN} 🧹 Cleaning old temporary files...${RESET}"
-        rm -rf /tmp/check_tkg "$TEMP_DIR" 2>/dev/null || true
+        rm -rf /tmp/tkginstaller_choice "$TEMP_DIR" 2>/dev/null || true
         echo -e "${GREEN} ✅ New temporary directory...${RESET}"
         mkdir -p "$TEMP_DIR"
     fi
@@ -258,12 +258,12 @@ _config_edit() {
         
         config_choice=$(
             printf "%b\n" \
-                "linux-tkg      |🧠 Linux-TKG .cfg" \
-                "nvidia-all     |🎮 Nvidia-TKG .cfg" \
-                "mesa-git       |🧩 Mesa-TKG .cfg" \
-                "wine-tkg       |🍷 Wine-TKG .cfg" \
-                "proton-tkg     |🧪 Proton-TKG .cfg" \
-                "back           |⬅️ Back to Main Menu" \
+                "linux-tkg  |🧠 Linux-TKG .cfg" \
+                "nvidia-all |🎮 Nvidia-TKG .cfg" \
+                "mesa-git   |🧩 Mesa-TKG .cfg" \
+                "wine-tkg   |🍷 Wine-TKG .cfg" \
+                "proton-tkg |🧪 Proton-TKG .cfg" \
+                "back       |⬅️ Back to Main Menu" \
                 | fzf --prompt="❯ Select a config file 🛠️: " \
                       --header="🐸 TKG Configuration Editor – Select a config..." \
                       --layout=reverse \
@@ -397,6 +397,19 @@ _config_edit() {
     done
 }
 
+# ✅ Completion display
+_show_done() {
+    local status=$?
+    echo -e "${BREAKOPT}"
+    echo -e "${BOLD} 📝 Action completed: $(date '+%Y-%m-%d %H:%M:%S')${RESET}"
+    if [ $status -eq 0 ]; then
+        echo -e "${GREEN} ✅ Status: Successful${RESET}"
+    else
+        echo -e "${RED}${BOLD} ❌ Status: Error (Code: $status)${RESET}"
+    fi
+    echo -e "${BREAKOPT}"
+}
+
 # 📋 Actions per selection
 _linuxnvidia_promt() {
     _linux_promt; _nvidia_promt; 
@@ -435,34 +448,21 @@ _help_promt() {
     exit 0
 }
 
-# ✅ Completion display
-_show_done() {
-    local status=$?
-    echo -e "${BREAKOPT}"
-    echo -e "${BOLD} 📝 Action completed: $(date '+%Y-%m-%d %H:%M:%S')${RESET}"
-    if [ $status -eq 0 ]; then
-        echo -e "${GREEN} ✅ Status: Successful${RESET}"
-    else
-        echo -e "${RED}${BOLD} ❌ Status: Error (Code: $status)${RESET}"
-    fi
-    echo -e "${BREAKOPT}"
-}
-
 # 🎛️ Menu with preview
 _menu() {
     local selection
     selection=$(
         printf "%b\n" \
-            "Linux          |🧠 Linux-TKG       – Linux Kernel" \
-            "Nvidia         |🎮 Nvidia-TKG      – Nvidia Open-Source or proprietary graphics driver" \
-            "Linux+Nvidia   |💻 Linux+Nvidia    - Combo package: Linux-TKG + Nvidia-TKG" \
-            "Mesa           |🧩 Mesa-TKG        – Mesa Open-Source graphics driver for AMD and Intel" \
-            "Wine           |🍷 Wine-TKG        – Windows compatibility layer" \
-            "Proton         |🧪 Proton-TKG      – Windows compatibility layer for Steam / Gaming" \
-            "Config         |🛠️ Config-TKG      – Edit TKG configuration files" \
-            "Help           |❓ Help" \
-            "Clean          |🧹 Clean/Reset" \
-            "Exit           |❌ Exit" \
+            "Linux        |🧠 Linux-TKG     – Linux Kernel" \
+            "Nvidia       |🎮 Nvidia-TKG    – Nvidia Open-Source or proprietary graphics driver" \
+            "Linux+Nvidia |💻 Linux+Nvidia  - Combo package: Linux-TKG + Nvidia-TKG" \
+            "Mesa         |🧩 Mesa-TKG      – Mesa Open-Source graphics driver for AMD and Intel" \
+            "Wine         |🍷 Wine-TKG      – Windows compatibility layer" \
+            "Proton       |🧪 Proton-TKG    – Windows compatibility layer for Steam / Gaming" \
+            "Config       |🛠️ Config-TKG    – Edit TKG configuration files" \
+            "Help         |❓ Help" \
+            "Clean        |🧹 Clean/Reset" \
+            "Exit         |❌ Exit" \
         | fzf \
             --prompt="❯ Choose an option: " \
             --header="🐸 TKG Frogminer Installation – Select a package..." \
@@ -495,7 +495,7 @@ _menu() {
     fi
 
     # Save selection
-    echo "$selection" | cut -d"|" -f1 | xargs > /tmp/check_tkg
+    echo "$selection" | cut -d"|" -f1 | xargs > /tmp/tkginstaller_choice
 }
 
 # ▶️ Main function
@@ -536,21 +536,21 @@ _main() {
     clear
     _menu
 
-    choice=$(< /tmp/check_tkg)
-    rm -f /tmp/check_tkg
+    choice=$(< /tmp/tkginstaller_choice)
+    rm -f /tmp/tkginstaller_choice
 
     case $choice in
-        Linux+Nvidia)  _linuxnvidia_promt ;;
-        Linux)         _linux_promt ;;
-        Nvidia)        _nvidia_promt ;;
-        Mesa)          _mesa_promt ;;
-        Wine)          _wine_promt ;;
-        Proton)        _proton_promt ;;
-        Config)        if _config_promt; then rm -f "$LOCKFILE"; exec "$0"; fi ;;
-        Help)          _help_promt ;;
-        Clean)         _pre; sleep 1; echo -e "${BLUE} 🔁 Restarting 🐸 TKG Installer ...${RESET}"; sleep 1; rm -f "$LOCKFILE"; exec "$0" ;;
-        Exit)          echo -e "${BLUE} 👋 Goodbye!${RESET}"; exit 0 ;;
-        *)             echo -e "${GREEN}${BOLD} ❌ Invalid option: $choice${RESET}" ;;
+        Linux+Nvidia) _linuxnvidia_promt ;;
+        Linux)        _linux_promt ;;
+        Nvidia)       _nvidia_promt ;;
+        Mesa)         _mesa_promt ;;
+        Wine)         _wine_promt ;;
+        Proton)       _proton_promt ;;
+        Config)       if _config_promt; then rm -f "$LOCKFILE"; exec "$0"; fi ;;
+        Help)         _help_promt ;;
+        Clean)        _pre; sleep 1; echo -e "${BLUE} 🔁 Restarting 🐸 TKG Installer ...${RESET}"; sleep 1; rm -f "$LOCKFILE"; exec "$0" ;;
+        Exit)         echo -e "${BLUE} 👋 Goodbye!${RESET}"; exit 0 ;;
+        *)            echo -e "${GREEN}${BOLD} ❌ Invalid option: $choice${RESET}" ;;
     esac
 
     _show_done
