@@ -480,9 +480,9 @@ _menu() {
                 Wine*)      echo -e "🍷 Wine-TKG Preview\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/wine-tkg-git/blob/master/README.md\n\n---\n$PREVIEW_WINE";; \
                 Proton*)    echo -e "🧪 Proton-TKG Preview\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg/README.md\n\n---\n$PREVIEW_PROTON";; \
                 Config*)    echo -e "🛠️ Config-TKG\nConfigure all TKG packages.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller#configuration-menue";; \
-                Help*)      echo -e "❓ TKG-Installer\nShows all Commandline usage.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller#usage";; \
-                Clean*)     echo -e "🧹 Clean\nRemoves temporary files and resets the installer.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller#notes";; \
-                Exit*)      echo -e "👋 Exit\nExits the program.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller";; \
+                Help*)      echo -e "❓ TKG-Installer\n\nShows all Commandline usage.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller#usage";; \
+                Clean*)     echo -e "🧹 Clean\n\nRemoves temporary files and resets the installer.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller#notes";; \
+                Exit*)      echo -e "👋 Exit\n\nExits the program.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller";; \
                             *)          echo -e "🐸 TKG-Installer\nhttps://github.com/damachine/tkginstaller";; \
             esac' \
             --preview-window="right:nowrap:60%" \
