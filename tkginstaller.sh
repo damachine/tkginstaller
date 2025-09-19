@@ -31,78 +31,15 @@ set -euo pipefail
 LOCKFILE="/tmp/tkginstaller.lock"
 TEMP_DIR="$HOME/.cache/tkginstaller"
 
-# 🎨 Colors
+# 🎨 Colors and styles
 BREAK='\n'
 BREAKOPT='\n──────────────────────────────────────────────────────────────────────────────────────────\n'
 RESET=$'\033[0m'
 BOLD=$'\033[1m'
-
-# Regular colors (only keeping the ones actually used in the script)
 RED=$'\033[0;31m'
 GREEN=$'\033[0;32m'
 YELLOW=$'\033[0;33m'
 BLUE=$'\033[0;34m'
-
-# 📝 Dynamic preview function using text browsers
-_get_preview_content() {
-    local repo_type="$1"
-    local repo_url=""
-    local static_preview=""
-    
-    case "$repo_type" in
-        linux)
-            repo_url="https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/README.md"
-            static_preview="🧠 Linux-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/linux-tkg\n\nNote:\n- Use the configuration editor to customize build options.\n- Ensure you have the necessary build dependencies installed.\n- The installer will clone the repository, build the kernel, and install it.\n- After installation, reboot to use the new kernel.\n\nTips:\n- Run 'tkginstaller linux' to skip menu\n- Join the Frogging-Family community for support and updates."
-            ;;
-        nvidia)
-            repo_url="https://raw.githubusercontent.com/Frogging-Family/nvidia-all/master/README.md"
-            static_preview="🎮 Nvidia-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/nvidia-all\n\nNote:\n- Supports both open-source and proprietary Nvidia drivers.\n- Use the configuration editor to set driver options and patches.\n- Installer will clone the repo, build and install the driver.\n- Reboot after installation for changes to take effect.\n\nTips:\n- Run 'tkginstaller nvidia' to skip menu\n- Check compatibility with your GPU model.\n- Join the Frogging-Family community for troubleshooting."
-            ;;
-        mesa)
-            repo_url="https://raw.githubusercontent.com/Frogging-Family/mesa-git/master/README.md"
-            static_preview="🧩 Mesa-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/mesa-git\n\nNote:\n- Open-source graphics drivers for AMD and Intel GPUs.\n- Use the configuration editor for custom build flags.\n- Installer will clone, build, and install Mesa.\n- Reboot or restart X for changes to apply.\n\nTips:\n- Run 'tkginstaller mesa' to skip menu\n- Useful for gaming and Vulkan support.\n- Join the Frogging-Family community for updates."
-            ;;
-        wine)
-            repo_url="https://raw.githubusercontent.com/Frogging-Family/wine-tkg-git/master/README.md"
-            static_preview="🍷 Wine-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/wine-tkg-git\n\nNote:\n- Custom Wine builds for better compatibility and gaming performance.\n- Use the configuration editor for patches and tweaks.\n- Installer will clone, build, and install Wine-TKG.\n- Configure your prefix after installation.\n\nTips:\n- Run 'tkginstaller wine' to skip menu\n- Ideal for running Windows games and apps.\n- Join the Frogging-Family community for support."
-            ;;
-        proton)
-            repo_url="https://raw.githubusercontent.com/Frogging-Family/wine-tkg-git/master/proton-tkg/README.md"
-            static_preview="🧪 Proton-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg\n\nNote:\n- Custom Proton builds for Steam Play and gaming.\n- Use the configuration editor for tweaks and patches.\n- Installer will clone, build, and install Proton-TKG.\n- Select Proton-TKG in Steam after installation.\n\nTips:\n- Run 'tkginstaller proton' to skip menu\n- Great for running Windows games via Steam.\n- Join the Frogging-Family community for updates."
-            ;;
-        *)
-            echo -e "$static_preview"
-            return 1
-            ;;
-    esac
-    
-    # Try curl/wget first for better error handling
-    local content=""
-    if command -v curl >/dev/null 2>&1; then
-        content=$(curl -fsSL --max-time 5 "$repo_url" 2>/dev/null)
-    elif command -v wget >/dev/null 2>&1; then
-        content=$(wget -qO- --timeout=5 "$repo_url" 2>/dev/null)
-    fi
-    
-    # If we got content, format it nicely
-    if [[ -n "$content" ]]; then
-        if command -v bat >/dev/null 2>&1; then
-            echo "$content" | bat --style=plain --color=always --language=markdown 2>/dev/null
-        else
-            echo "$content"
-        fi
-    else
-        # Fallback to static content
-        echo -e "$static_preview"
-    fi
-}
-
-# 📝 Preview texts for fzf menu
-export PREVIEW_LINUX="$(_get_preview_content linux)"
-export PREVIEW_NVIDIA="$(_get_preview_content nvidia)"
-export PREVIEW_MESA="$(_get_preview_content mesa)"
-export PREVIEW_WINE="$(_get_preview_content wine)"
-export PREVIEW_PROTON="$(_get_preview_content proton)"
 
 # 🧑‍💻 Detect Linux Distribution
 if [[ -f /etc/os-release ]]; then
@@ -165,6 +102,67 @@ _pre() {
         sudo pacman -Sy || { echo -e "${RED}${BOLD} ❌ Error updating $DISTRO_NAME!${RESET}"; return 1; }
     fi
 }
+
+# 📝 Dynamic preview function using text browsers
+_get_preview_content() {
+    local repo_type="$1"
+    local repo_url=""
+    local static_preview=""
+    
+    case "$repo_type" in
+        linux)
+            repo_url="https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/README.md"
+            static_preview="🧠 Linux-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/linux-tkg\n\nNote:\n- Use the configuration editor to customize build options.\n- Ensure you have the necessary build dependencies installed.\n- The installer will clone the repository, build the kernel, and install it.\n- After installation, reboot to use the new kernel.\n\nTips:\n- Run 'tkginstaller linux' to skip menu\n- Join the Frogging-Family community for support and updates."
+            ;;
+        nvidia)
+            repo_url="https://raw.githubusercontent.com/Frogging-Family/nvidia-all/master/README.md"
+            static_preview="🎮 Nvidia-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/nvidia-all\n\nNote:\n- Supports both open-source and proprietary Nvidia drivers.\n- Use the configuration editor to set driver options and patches.\n- Installer will clone the repo, build and install the driver.\n- Reboot after installation for changes to take effect.\n\nTips:\n- Run 'tkginstaller nvidia' to skip menu\n- Check compatibility with your GPU model.\n- Join the Frogging-Family community for troubleshooting."
+            ;;
+        mesa)
+            repo_url="https://raw.githubusercontent.com/Frogging-Family/mesa-git/master/README.md"
+            static_preview="🧩 Mesa-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/mesa-git\n\nNote:\n- Open-source graphics drivers for AMD and Intel GPUs.\n- Use the configuration editor for custom build flags.\n- Installer will clone, build, and install Mesa.\n- Reboot or restart X for changes to apply.\n\nTips:\n- Run 'tkginstaller mesa' to skip menu\n- Useful for gaming and Vulkan support.\n- Join the Frogging-Family community for updates."
+            ;;
+        wine)
+            repo_url="https://raw.githubusercontent.com/Frogging-Family/wine-tkg-git/master/README.md"
+            static_preview="🍷 Wine-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/wine-tkg-git\n\nNote:\n- Custom Wine builds for better compatibility and gaming performance.\n- Use the configuration editor for patches and tweaks.\n- Installer will clone, build, and install Wine-TKG.\n- Configure your prefix after installation.\n\nTips:\n- Run 'tkginstaller wine' to skip menu\n- Ideal for running Windows games and apps.\n- Join the Frogging-Family community for support."
+            ;;
+        proton)
+            repo_url="https://raw.githubusercontent.com/Frogging-Family/wine-tkg-git/master/proton-tkg/README.md"
+            static_preview="🧪 Proton-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg\n\nNote:\n- Custom Proton builds for Steam Play and gaming.\n- Use the configuration editor for tweaks and patches.\n- Installer will clone, build, and install Proton-TKG.\n- Select Proton-TKG in Steam after installation.\n\nTips:\n- Run 'tkginstaller proton' to skip menu\n- Great for running Windows games via Steam.\n- Join the Frogging-Family community for updates."
+            ;;
+        *)
+            echo -e "$static_preview"
+            return 1
+            ;;
+    esac
+    
+    # Try curl/wget first for better error handling
+    local content=""
+    if command -v curl >/dev/null 2>&1; then
+        content=$(curl -fsSL --max-time 5 "$repo_url" 2>/dev/null)
+    elif command -v wget >/dev/null 2>&1; then
+        content=$(wget -qO- --timeout=5 "$repo_url" 2>/dev/null)
+    fi
+    
+    # If we got content, format it nicely
+    if [[ -n "$content" ]]; then
+        if command -v bat >/dev/null 2>&1; then
+            echo "$content" | bat --style=plain --color=always --language=markdown 2>/dev/null
+        else
+            echo "$content"
+        fi
+    else
+        # Fallback to static content
+        echo -e "$static_preview"
+    fi
+}
+
+# 📝 Preview texts for fzf menu (_on_exit all env are unset)
+export PREVIEW_LINUX="$(_get_preview_content linux)"
+export PREVIEW_NVIDIA="$(_get_preview_content nvidia)"
+export PREVIEW_MESA="$(_get_preview_content mesa)"
+export PREVIEW_WINE="$(_get_preview_content wine)"
+export PREVIEW_PROTON="$(_get_preview_content proton)"
 
 # 📦 Installation functions
 _linux_install() {
@@ -305,7 +303,7 @@ _config_edit() {
         
         case $config_file in
             linux-tkg)
-                echo -e "${BLUE}🔧 Opening Linux-TKG configuration...${RESET}"
+                echo -e "${BLUE} 🔧 Opening Linux-TKG configuration...${RESET}"
                 linux_tkg_cfg="$HOME/.config/frogminer/linux-tkg.cfg"
                 linux_tkg_cfg_url="https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/customization.cfg"
 
@@ -313,17 +311,16 @@ _config_edit() {
                     _editor "$linux_tkg_cfg" || { echo -e "${RED}${BOLD} ❌ Error opening $linux_tkg_cfg configuration!${RESET}"; return 1; }
                 else
                     mkdir -p "$(dirname "$linux_tkg_cfg")"
-                    # try wget, else curl
                     wget -qO "$linux_tkg_cfg" "$linux_tkg_cfg_url" || curl -fsSL "$linux_tkg_cfg_url" -o "$linux_tkg_cfg"
-                    echo -e "${GREEN}✅ Configuration ready at $linux_tkg_cfg${RESET}"
+                    echo -e "${GREEN} ✅ Configuration ready at $linux_tkg_cfg${RESET}"
                     _editor "$linux_tkg_cfg" || { echo -e "${RED}${BOLD} ❌ Error opening $linux_tkg_cfg configuration!${RESET}"; return 1; }
                 fi
 
-                echo -e "${GREEN}✅ Configuration saved!${RESET}"
+                echo -e "${GREEN} ✅ Configuration saved!${RESET}"
                 sleep 1
                 ;;
             nvidia-all)
-                echo -e "${BLUE}🔧 Opening Nvidia-TKG configuration...${RESET}"
+                echo -e "${BLUE} 🔧 Opening Nvidia-TKG configuration...${RESET}"
                 nvidia_all_cfg="$HOME/.config/frogminer/nvidia-all.cfg"
                 nvidia_all_cfg_url="https://raw.githubusercontent.com/Frogging-Family/nvidia-all/master/customization.cfg"
 
@@ -332,15 +329,15 @@ _config_edit() {
                 else
                     mkdir -p "$(dirname "$nvidia_all_cfg")"
                     wget -qO "$nvidia_all_cfg" "$nvidia_all_cfg_url" || curl -fsSL "$nvidia_all_cfg_url" -o "$nvidia_all_cfg"
-                    echo -e "${GREEN}✅ Configuration ready at $nvidia_all_cfg${RESET}"
+                    echo -e "${GREEN} ✅ Configuration ready at $nvidia_all_cfg${RESET}"
                     _editor "$nvidia_all_cfg" || { echo -e "${RED}${BOLD} ❌ Error opening $nvidia_all_cfg configuration!${RESET}"; return 1; }
                 fi
 
-                echo -e "${GREEN}✅ Configuration saved!${RESET}"
+                echo -e "${GREEN} ✅ Configuration saved!${RESET}"
                 sleep 1
                 ;;
             mesa-git)
-                echo -e "${BLUE}🔧 Opening Mesa-TKG configuration...${RESET}"
+                echo -e "${BLUE} 🔧 Opening Mesa-TKG configuration...${RESET}"
                 mesa_git_cfg="$HOME/.config/frogminer/mesa-git.cfg"
                 mesa_git_cfg_url="https://raw.githubusercontent.com/Frogging-Family/mesa-git/master/customization.cfg"
 
@@ -349,15 +346,15 @@ _config_edit() {
                 else
                     mkdir -p "$(dirname "$mesa_git_cfg")"
                     wget -qO "$mesa_git_cfg" "$mesa_git_cfg_url" || curl -fsSL "$mesa_git_cfg_url" -o "$mesa_git_cfg"
-                    echo -e "${GREEN}✅ Configuration ready at $mesa_git_cfg${RESET}"
+                    echo -e "${GREEN} ✅ Configuration ready at $mesa_git_cfg${RESET}"
                     _editor "$mesa_git_cfg" || { echo -e "${RED}${BOLD} ❌ Error opening $mesa_git_cfg configuration!${RESET}"; return 1; }
                 fi
 
-                echo -e "${GREEN}✅ Configuration saved!${RESET}"
+                echo -e "${GREEN} ✅ Configuration saved!${RESET}"
                 sleep 1
                 ;;
             wine-tkg)
-                echo -e "${BLUE}🔧 Opening Wine-TKG configuration...${RESET}"
+                echo -e "${BLUE} 🔧 Opening Wine-TKG configuration...${RESET}"
                 wine_tkg_cfg="$HOME/.config/frogminer/wine-tkg.cfg"
                 wine_tkg_cfg_url="https://github.com/Frogging-Family/wine-tkg-git/tree/master/wine-tkg-git/customization.cfg"
 
@@ -366,15 +363,15 @@ _config_edit() {
                 else
                     mkdir -p "$(dirname "$wine_tkg_cfg")"
                     wget -qO "$wine_tkg_cfg" "$wine_tkg_cfg_url" || curl -fsSL "$wine_tkg_cfg_url" -o "$wine_tkg_cfg"
-                    echo -e "${GREEN}✅ Configuration ready at $wine_tkg_cfg${RESET}"
+                    echo -e "${GREEN} ✅ Configuration ready at $wine_tkg_cfg${RESET}"
                     _editor "$wine_tkg_cfg" || { echo -e "${RED}${BOLD} ❌ Error opening $wine_tkg_cfg configuration!${RESET}"; return 1; }
                 fi
 
-                echo -e "${GREEN}✅ Configuration saved!${RESET}"
+                echo -e "${GREEN} ✅ Configuration saved!${RESET}"
                 sleep 1
                 ;;
             proton-tkg)
-                echo -e "${BLUE}🔧 Opening Proton-TKG configuration...${RESET}"
+                echo -e "${BLUE} 🔧 Opening Proton-TKG configuration...${RESET}"
                 proton_tkg_cfg="$HOME/.config/frogminer/proton-tkg.cfg"
                 proton_tkg_cfg_url="https://github.com/Frogging-Family/wine-tkg-git/blob/master/proton-tkg/proton-tkg.cfg"
 
@@ -383,11 +380,11 @@ _config_edit() {
                 else
                     mkdir -p "$(dirname "$proton_tkg_cfg")"
                     wget -qO "$proton_tkg_cfg" "$proton_tkg_cfg_url" || curl -fsSL "$proton_tkg_cfg_url" -o "$proton_tkg_cfg"
-                    echo -e "${GREEN}✅ Configuration ready at $proton_tkg_cfg${RESET}"
+                    echo -e "${GREEN} ✅ Configuration ready at $proton_tkg_cfg${RESET}"
                     _editor "$proton_tkg_cfg" || { echo -e "${RED}${BOLD} ❌ Error opening $proton_tkg_cfg configuration!${RESET}"; return 1; }
                 fi
 
-                echo -e "${GREEN}✅ Configuration saved!${RESET}"
+                echo -e "${GREEN} ✅ Configuration saved!${RESET}"
                 sleep 1
                 ;;
             back)       
