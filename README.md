@@ -24,12 +24,12 @@ The script automatically checks for the following core dependencies:
 - `gcc` - Compiler for building packages
 - `git` - Version control system
 
-Optional tools (used if available):
+Optional tools (very useful!):
 - Any text editor for configuration files (the script respects the $EDITOR environment variable and falls back to `nano` if not set) — examples: `nano`, `vim`, `code`.
 - `curl`, `wget` - Fetching preview content
 - `glow` - Converts Markdown in terminal
 - `bat` - Alternative for "cat" with syntax highlighting
-- `onefetch` - Git repository information display (optional)
+- `onefetch` - Git repository information display
 
 ## Installation
 
