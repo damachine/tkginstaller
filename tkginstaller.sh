@@ -141,7 +141,7 @@ _get_preview_content() {
        
     # Try to display content directly with glow, then bat, then fallback
     if command -v glow >/dev/null 2>&1; then
-        glow "$repo_url" 2>/dev/null || echo -e "$static_preview"
+        glow "$repo_url" 2>/dev/null
     elif command -v bat >/dev/null 2>&1; then
         # Download content and pipe to bat since bat can't handle URLs directly
         local content=""
