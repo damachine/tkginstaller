@@ -51,7 +51,7 @@
    yay -S tkginstaller-git
    #OR any other AUR helper
 
-   # STEP 2: After installation, you can simply run:
+   # After installation, you can simply run:
    tkginstaller
 
    # Show all available commands and shortcuts (very useful!)
@@ -60,7 +60,7 @@
 
 #### Manual Installation
 
-- Download only the script (no git required):
+- Download only the script:
   
    ```bash
    # STEP 1: Pre install
@@ -70,7 +70,7 @@
    wget https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sh
    chmod +x tkginstaller.sh
 
-   # OR STEP 2: Download with curl and make script executable
+   # OR: Download with curl and make script executable
    curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sh
    chmod +x tkginstaller.sh
    ```
@@ -89,10 +89,19 @@ tkginstaller
 
 #### Commandline (Direct-mode)
 
-Skip the menu and run specific actions directly:
+- Skip the menu and run specific actions directly:
 
 ```bash
-# Show all available commands and shortcuts (very useful!)
+Usage: tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|linux+nvidia|config|clean|exit]
+Shortcuts: l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/linux+nvidia=Linux+Nvidia combo
+Examples:
+  tkginstaller linux    # Install Linux-TKG
+  tkginstaller nvidia   # Install Nvidia-TKG
+  tkginstaller mesa     # Install Mesa-TKG
+  tkginstaller wine     # Install Wine-TKG
+  tkginstaller proton   # Install Proton-TKG
+
+# Show all available commands and shortcuts (useful!)
 tkginstaller help
 ```
 
@@ -100,8 +109,7 @@ tkginstaller help
 
 ### Configuration
 
-The **`Config-TKG`** option provides an interactive editor for TKG configuration files:
-
+- The **`Config-TKG`** option provides an interactive editor for TKG configuration files:
 - Edit all relevant TKG configuration files (e.g. for Linux-TKG, Nvidia-TKG, Mesa-TKG, Wine-TKG, Proton-TKG)
 - Preview the relevant TKG configuration files
 - Uses your preferred editor via `$EDITOR`
@@ -109,8 +117,8 @@ The **`Config-TKG`** option provides an interactive editor for TKG configuration
 ---
 
 > [!TIP]
-> Quick Alias
-> If you installed manually (not via AUR), add this to your `~/.bashrc` or `~/.zshrc` for easy access:
+> Quick access: 
+> - If you installed manually (not via AUR), add this to your `~/.bashrc` or `~/.zshrc` for easy access:
 
    ```bash
    # Examples
@@ -120,8 +128,8 @@ The **`Config-TKG`** option provides an interactive editor for TKG configuration
    # OR
    alias tkginstaller="bash -c '/path/to/tkginstaller.sh'"
 
-   # System link (optional)
-   # To make the installer available system-wide, create a symlink:
+   # System link
+   # To make the installer available system-wide, create a symlink and skip alias:
    sudo ln -s /path/to/tkginstaller.sh /usr/bin/tkginstaller
 
    # Now you can run 'tkginstaller' from anywhere.
