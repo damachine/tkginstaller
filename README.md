@@ -1,4 +1,4 @@
-# TKG Installer - Install the popular TKG builds (Kernel, Nvidia, Mesa, Wine, and Proton) from the Frogging-Family repositories in a simple and user-friendly way. 🐸
+# TKG Installer 🐸
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![Arch Linux](https://img.shields.io/badge/platform-arch--linux-blue?logo=arch-linux&logoColor=white)](https://archlinux.org/)
