@@ -175,8 +175,6 @@ _get_preview_content() {
             else
                 echo "$content"
             fi
-        else
-            echo -e "$static_preview"
         fi
     fi
 }
