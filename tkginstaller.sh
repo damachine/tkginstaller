@@ -157,34 +157,24 @@ _get_preview_content() {
     # Always show static preview first
     echo -e "$static_preview"
        
-    # Try to display remote content with available tools (glow > bat > plain text)
+   # Try to display remote content with available tools (glow > bat > plain text)
     if command -v glow >/dev/null 2>&1; then
         glow "$repo_url" 2>/dev/null
-    elif command -v bat >/dev/null 2>&1; then
-        # Download content and pipe to bat (bat can't handle URLs directly)
-        local content=""
-        if command -v wget >/dev/null 2>&1; then
-            content=$(wget -qO- --timeout=5 "$repo_url" 2>/dev/null)
-        elif command -v curl >/dev/null 2>&1; then
-            content=$(curl -fsSL --max-time 5 "$repo_url" 2>/dev/null)
-        fi
-        
-        if [[ -n "$content" ]]; then
-            echo "$content" | bat --style=plain --color=always --language=markdown 2>/dev/null
-        else
-            echo -e "$static_preview"
-        fi
     else
-        # Fallback: download and display plain text
+        # Download content (wget oder curl)
         local content=""
         if command -v wget >/dev/null 2>&1; then
             content=$(wget -qO- --timeout=5 "$repo_url" 2>/dev/null)
         elif command -v curl >/dev/null 2>&1; then
             content=$(curl -fsSL --max-time 5 "$repo_url" 2>/dev/null)
         fi
-        
+
         if [[ -n "$content" ]]; then
-            echo "$content"
+            if command -v bat >/dev/null 2>&1; then
+                echo "$content" | bat --style=plain --color=always --language=markdown 2>/dev/null
+            else
+                echo "$content"
+            fi
         else
             echo -e "$static_preview"
         fi
