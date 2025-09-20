@@ -10,36 +10,42 @@
 
 ## Description
 
-**This wrapper script makes it easy to manage packages from the Frogging-Family repository. It provides both an interactive mode and a command-line mode for building and installing various TKG packages such as Kernel, Nvidia, Mesa, Wine, Proton. Users also have the option to directly edit the package configuration before building.**
+#### This wrapper script makes it easy to manage packages from the Frogging-Family repository. It provides both an interactive mode and a command-line mode for building and installing various TKG packages such as Kernel, Nvidia, Mesa, Wine, Proton. Users also have the option to directly edit the package configuration before building.
 
 ![TKG Installer Banner](images/banner.jpg)
 
 ![TKG Installer Screenshot](images/tkginstaller.png)
 [🎬 Demo-Video](images/tkginstaller.gif)
 
+---
+
 ## Prerequisites
 
-The script automatically checks for the following core dependencies:
-- `fzf` - Fuzzy finder for the interactive menu
-- `gcc` - Compiler for building packages
-- `git` - Version control system
+#### The script automatically checks for the following core dependencies:
 
-Optional tools (very useful!):
-- Any text editor for configuration files (the script respects the $EDITOR environment variable and falls back to `nano` if not set) — examples: `nano`, `vim`, `code`.
-- `curl`, `wget` - Fetching preview content
-- `glow` - Converts Markdown in terminal
-- `bat` - Alternative for "cat" with syntax highlighting
-- `onefetch` - Git repository information display
+- **`fzf`** - Fuzzy finder for the interactive menu
+- **`gcc`** - Compiler for building packages
+- **`git`** - Version control system
+
+#### Optional tools (very useful!):
+
+- **`bat`** - Alternative for "cat" with syntax highlighting
+- **`curl`, `wget`** - Fetching preview content
+- **`glow`** - Converts Markdown in terminal
+- **`llvm`** - Useful for building and debugging some TKG packages
+- Any text editor for configuration files (the script respects the $EDITOR environment variable and falls back to **`nano`** if not set) — examples: **`nano`, `vim`.**
+- **`onefetch`** - Git repository information display
+
+---
 
 ## Installation
-
-### Install TKG Installer
 
 #### Arch Linux (Recommended)
 
 [![AUR](https://img.shields.io/aur/version/tkginstaller-git?color=1793d1&label=AUR&logo=arch-linux)](https://aur.archlinux.org/packages/tkginstaller-git)
 
-- **Using an AUR helper (recommended):**
+- Using an AUR helper (Recommended):
+  
    ```bash
    # STEP 1: Install
    yay -S tkginstaller-git
@@ -52,8 +58,10 @@ Optional tools (very useful!):
    tkginstaller help
    ```
 
-#### Alternative Installation
-1. Download only the script (no git required):
+#### Manual Installation
+
+- Download only the script (no git required):
+  
    ```bash
    # STEP 1: Pre install
    mkdir -p /patch/to/tkginstaller && cd /patch/to/tkginstaller
@@ -67,57 +75,68 @@ Optional tools (very useful!):
    chmod +x tkginstaller.sh
    ```
 
+---
+
 ## Usage
 
-You can run the script in two ways:
+> [!NOTE]
+> You can run the script in two ways:
 
-### Interactive Mode (Menu)
+#### Interactive (Menu-mode)
 ```bash
 tkginstaller
 ```
 
-### Command Mode (Direct)
+#### Commandline (Direct-mode)
+
 Skip the menu and run specific actions directly:
+
 ```bash
 # Show all available commands and shortcuts (very useful!)
 tkginstaller help
 ```
 
-### Configuration-Menue
+---
 
-The **Config** option provides an interactive editor for TKG configuration files:
+### Configuration
+
+The **`Config-TKG`** option provides an interactive editor for TKG configuration files:
+
 - Edit all relevant TKG configuration files (e.g. for Linux-TKG, Nvidia-TKG, Mesa-TKG, Wine-TKG, Proton-TKG)
 - Preview the relevant TKG configuration files
 - Uses your preferred editor via `$EDITOR`
 
-### Quick Alias
+---
 
-If you installed manually (not via AUR), add this to your `~/.bashrc` or `~/.zshrc` for easy access:
-```bash
-# Examples
-tkginstaller() {
-    bash -c '/path/to/tkginstaller.sh'
-}
-# OR
-alias tkginstaller="bash -c '/path/to/tkginstaller.sh'"
+> [!TIP]
+> Quick Alias
+> If you installed manually (not via AUR), add this to your `~/.bashrc` or `~/.zshrc` for easy access:
 
-# System link (optional)
-# To make the installer available system-wide, create a symlink:
-sudo ln -s /path/to/tkginstaller.sh /usr/bin/tkginstaller
+   ```bash
+   # Examples
+   tkginstaller() {
+      bash -c '/path/to/tkginstaller.sh'
+   }
+   # OR
+   alias tkginstaller="bash -c '/path/to/tkginstaller.sh'"
 
-# Now you can run 'tkginstaller' from anywhere.
+   # System link (optional)
+   # To make the installer available system-wide, create a symlink:
+   sudo ln -s /path/to/tkginstaller.sh /usr/bin/tkginstaller
 
-```
+   # Now you can run 'tkginstaller' from anywhere.
+   ```
 
-## Notes
+---
 
-The script:
-
-- is specifically designed for Arch Linux and its derivatives
-- uses `makepkg` to compile packages
-- performs automatic system updates before installation
-- deletes the downloaded files after use
-- supports only one concurrent execution
+> [!NOTE]
+> The script:
+> - is specifically designed for Arch Linux and its derivatives
+> - uses for now only `makepkg` to compile packages
+> - performs automatic system updates before installation
+> - deletes the downloaded files after use
+> - supports only one concurrent execution
+> - download missing config files
 
 If you need help, open an issue at https://github.com/damachine/tkginstaller/issues
 
