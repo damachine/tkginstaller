@@ -112,50 +112,64 @@ _get_preview_content() {
     case "$repo_type" in
         linux)
             repo_url="https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/README.md"
-            static_preview="🧠 Linux-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/linux-tkg\n\nNote:\n- Use the configuration editor to customize build options.\n- Ensure you have the necessary build dependencies installed.\n- The installer will clone the repository, build the kernel, and install it.\n- After installation, reboot to use the new kernel.\n\nTips:\n- Run 'tkginstaller linux' to skip menu\n- Join the Frogging-Family community for support and updates."
+            static_preview="Note:\n- Use the configuration editor to customize build options.\n- Ensure you have the necessary build dependencies installed.\n- The installer will clone the repository, build the kernel, and install it.\n- After installation, reboot to use the new kernel.\n\nTips:\n- Run 'tkginstaller linux' to skip menu\n- Join the Frogging-Family community for support and updates.\n\n---\n\n🧠 Linux-TKG\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/linux-tkg/blob/master/README.md"
             ;;
         nvidia)
             repo_url="https://raw.githubusercontent.com/Frogging-Family/nvidia-all/master/README.md"
-            static_preview="🎮 Nvidia-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/nvidia-all\n\nNote:\n- Supports both open-source and proprietary Nvidia drivers.\n- Use the configuration editor to set driver options and patches.\n- Installer will clone the repo, build and install the driver.\n- Reboot after installation for changes to take effect.\n\nTips:\n- Run 'tkginstaller nvidia' to skip menu\n- Check compatibility with your GPU model.\n- Join the Frogging-Family community for troubleshooting."
+            static_preview="Note:\n- Supports both open-source and proprietary Nvidia drivers.\n- Use the configuration editor to set driver options and patches.\n- Installer will clone the repo, build and install the driver.\n- Reboot after installation for changes to take effect.\n\nTips:\n- Run 'tkginstaller nvidia' to skip menu\n- Check compatibility with your GPU model.\n- Join the Frogging-Family community for troubleshooting.\n\n---\n\n🎮 Nvidia-TKG\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/nvidia-all/blob/master/README.md"
             ;;
         mesa)
             repo_url="https://raw.githubusercontent.com/Frogging-Family/mesa-git/master/README.md"
-            static_preview="🧩 Mesa-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/mesa-git\n\nNote:\n- Open-source graphics drivers for AMD and Intel GPUs.\n- Use the configuration editor for custom build flags.\n- Installer will clone, build, and install Mesa.\n- Reboot or restart X for changes to apply.\n\nTips:\n- Run 'tkginstaller mesa' to skip menu\n- Useful for gaming and Vulkan support.\n- Join the Frogging-Family community for updates."
+            static_preview="Note:\n- Open-source graphics drivers for AMD and Intel GPUs.\n- Use the configuration editor for custom build flags.\n- Installer will clone, build, and install Mesa.\n- Reboot or restart X for changes to apply.\n\nTips:\n- Run 'tkginstaller mesa' to skip menu\n- Useful for gaming and Vulkan support.\n- Join the Frogging-Family community for updates.\n\n---\n\n🧩 Mesa-TKG\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/mesa-git/blob/master/README.md"
             ;;
         wine)
             repo_url="https://raw.githubusercontent.com/Frogging-Family/wine-tkg-git/master/README.md"
-            static_preview="🍷 Wine-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/wine-tkg-git\n\nNote:\n- Custom Wine builds for better compatibility and gaming performance.\n- Use the configuration editor for patches and tweaks.\n- Installer will clone, build, and install Wine-TKG.\n- Configure your prefix after installation.\n\nTips:\n- Run 'tkginstaller wine' to skip menu\n- Ideal for running Windows games and apps.\n- Join the Frogging-Family community for support."
+            static_preview="Note:\n- Custom Wine builds for better compatibility and gaming performance.\n- Use the configuration editor for patches and tweaks.\n- Installer will clone, build, and install Wine-TKG.\n- Configure your prefix after installation.\n\nTips:\n- Run 'tkginstaller wine' to skip menu\n- Ideal for running Windows games and apps.\n- Join the Frogging-Family community for support.\n\n---\n\n🍷 Wine-TKG\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/wine-tkg-git/blob/master/README.md"
             ;;
         proton)
             repo_url="https://raw.githubusercontent.com/Frogging-Family/wine-tkg-git/master/proton-tkg/README.md"
-            static_preview="🧪 Proton-TKG\n\nWebsite:\nhttps://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg\n\nNote:\n- Custom Proton builds for Steam Play and gaming.\n- Use the configuration editor for tweaks and patches.\n- Installer will clone, build, and install Proton-TKG.\n- Select Proton-TKG in Steam after installation.\n\nTips:\n- Run 'tkginstaller proton' to skip menu\n- Great for running Windows games via Steam.\n- Join the Frogging-Family community for updates."
+            static_preview="Note:\n- Custom Proton builds for Steam Play and gaming.\n- Use the configuration editor for tweaks and patches.\n- Installer will clone, build, and install Proton-TKG.\n- Select Proton-TKG in Steam after installation.\n\nTips:\n- Run 'tkginstaller proton' to skip menu\n- Great for running Windows games via Steam.\n- Join the Frogging-Family community for updates.\n\n---\n\n🧪 Proton-TKG\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/wine-tkg-git/blob/master/proton-tkg/README.md"
             ;;
         *)
             echo -e "$static_preview"
             return 1
             ;;
     esac
-    
-    # Try curl/wget first for better error handling
-    local content=""
-    if command -v wget >/dev/null 2>&1; then
-        content=$(wget -qO- --timeout=5 "$repo_url" 2>/dev/null)
-    elif command -v curl >/dev/null 2>&1; then
-        content=$(curl -fsSL --max-time 5 "$repo_url" 2>/dev/null)
-    fi
-    
-    # If we got content, format it nicely
-    if [[ -n "$content" ]]; then
-        if command -v glow >/dev/null 2>&1; then
-            echo "$content" | glow 2>/dev/null
-        elif command -v bat >/dev/null 2>&1; then
+     
+    # Always show static preview first
+    echo -e "$static_preview"
+       
+    # Try to display content directly with glow, then bat, then fallback
+    if command -v glow >/dev/null 2>&1; then
+        glow "$repo_url" 2>/dev/null || echo -e "$static_preview"
+    elif command -v bat >/dev/null 2>&1; then
+        # Download content and pipe to bat since bat can't handle URLs directly
+        local content=""
+        if command -v wget >/dev/null 2>&1; then
+            content=$(wget -qO- --timeout=5 "$repo_url" 2>/dev/null)
+        elif command -v curl >/dev/null 2>&1; then
+            content=$(curl -fsSL --max-time 5 "$repo_url" 2>/dev/null)
+        fi
+        
+        if [[ -n "$content" ]]; then
             echo "$content" | bat --style=plain --color=always --language=markdown 2>/dev/null
         else
-            echo "$content"
+            echo -e "$static_preview"
         fi
     else
-        # Fallback to static content
-        echo -e "$static_preview"
+        # No fancy tools available, download and display plain text
+        local content=""
+        if command -v wget >/dev/null 2>&1; then
+            content=$(wget -qO- --timeout=5 "$repo_url" 2>/dev/null)
+        elif command -v curl >/dev/null 2>&1; then
+            content=$(curl -fsSL --max-time 5 "$repo_url" 2>/dev/null)
+        fi
+        
+        if [[ -n "$content" ]]; then
+            echo "$content"
+        else
+            echo -e "$static_preview"
+        fi
     fi
 }
 
@@ -474,18 +488,18 @@ _menu() {
             --delimiter="|" \
             --with-nth="2" \
             --preview='case {} in \
-                Linux*)     echo -e "🧠 Linux-TKG Preview\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/linux-tkg/blob/master/README.md\n\n---\n$PREVIEW_LINUX";; \
-                Nvidia*)    echo -e "🎮 Nvidia-TKG Preview\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/nvidia-all/blob/master/README.md\n\n---\n$PREVIEW_NVIDIA";; \
-                Mesa*)      echo -e "🧩 Mesa-TKG Preview\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/mesa-git/blob/master/README.md\n\n---\n$PREVIEW_MESA";; \
-                Wine*)      echo -e "🍷 Wine-TKG Preview\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/wine-tkg-git/blob/master/README.md\n\n---\n$PREVIEW_WINE";; \
-                Proton*)    echo -e "🧪 Proton-TKG Preview\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg/README.md\n\n---\n$PREVIEW_PROTON";; \
+                Linux*)     echo -e "🧠 Linux-TKG Preview\n\n$PREVIEW_LINUX";; \
+                Nvidia*)    echo -e "🎮 Nvidia-TKG Preview\n\n$PREVIEW_NVIDIA";; \
+                Mesa*)      echo -e "🧩 Mesa-TKG Preview\n\n$PREVIEW_MESA";; \
+                Wine*)      echo -e "🍷 Wine-TKG Preview\n\n$PREVIEW_WINE";; \
+                Proton*)    echo -e "🧪 Proton-TKG Preview\n\n$PREVIEW_PROTON";; \
                 Config*)    echo -e "🛠️ Config-TKG\n\nConfigure all TKG packages.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller#configuration-menue";; \
                 Help*)      echo -e "❓ TKG-Installer\n\nShows all Commandline usage.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller#usage";; \
                 Clean*)     echo -e "🧹 Clean\n\nRemoves temporary files and resets the installer.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller#notes";; \
                 Exit*)      echo -e "👋 Exit\n\nExits the program.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller\n\nIf you like this program and want to support development, ⭐ visit the project on GitHub!";; \
                             *)          echo -e "🐸 TKG-Installer\nhttps://github.com/damachine/tkginstaller";; \
             esac' \
-            --preview-window="right:nowrap:60%" \
+            --preview-window="right:wrap:60%" \
             --color="header:italic:bold:underline:green,prompt:italic:bold:green,pointer:green,marker:red" \
             --pointer="➤ "
     )
