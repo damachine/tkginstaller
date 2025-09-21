@@ -164,7 +164,7 @@ This installer script is released under the **MIT License**.
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 Individual TKG packages have their own licenses:
-- See respective repositories at [Frogging-Family](https://github.com/Frogging-Family)
+- See respective repositories at [https://github.com/Frogging-Family](https://github.com/Frogging-Family)
 
 ---
 
