@@ -44,7 +44,7 @@
 
 [![AUR](https://img.shields.io/aur/version/tkginstaller-git?color=1793d1&label=AUR&logo=arch-linux)](https://aur.archlinux.org/packages/tkginstaller-git)
 
-- Using an AUR helper (Recommended):
+- Using an AUR helper:
   
    ```bash
    # STEP 1: Install
@@ -79,7 +79,7 @@
 
 ## Usage
 
-> [!NOTE]
+> [!IMPORTANT]
 > You can run the script in two ways:
 
 #### Interactive (Menu-mode)
