@@ -10,7 +10,7 @@
 
 ---
 
-#### This wrapper script makes it easy to manage packages from the Frogging-Family repository. It provides both an interactive mode and a command-line mode for building and installing various TKG packages such as Kernel, Nvidia, Mesa, Wine, Proton. Users also have the option to directly edit the package configuration before building.
+#### This wrapper script makes it easy to manage packages from the [Frogging-Family](https://github.com/Frogging-Family) repository. It provides both an interactive mode and a command-line mode for building and installing various TKG packages such as Kernel, Nvidia, Mesa, Wine, Proton. Users also have the option to directly edit the package configuration before building.
 
 ![TKG Installer Banner](images/banner.jpg)
 
@@ -164,7 +164,7 @@ This installer script is released under the **MIT License**.
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 Individual TKG packages have their own licenses:
-- See respective repositories at https://github.com/Frogging-Family
+- See respective repositories at [Frogging-Family](https://github.com/Frogging-Family)
 
 ---
 
