@@ -1,54 +1,71 @@
-# TKG Installer - A user-friendly script for all TKG packages from the Frogging-Family. 🐸
 
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Arch Linux](https://img.shields.io/badge/platform-arch--linux-blue?logo=arch-linux&logoColor=white)](https://archlinux.org/)
-[![AUR](https://img.shields.io/aur/version/tkginstaller-git?color=1793d1&label=AUR&logo=arch-linux)](https://aur.archlinux.org/packages/tkginstaller-git)
-![Bash](https://img.shields.io/badge/language-bash-blue?logo=gnu-bash)
-[![Issues](https://img.shields.io/github/issues/damachine/tkginstaller)](https://github.com/damachine/tkginstaller/issues)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21)](https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-blue?logo=github-sponsors)](https://github.com/sponsors/damachine)
+# TKG Installer 🐸
 
-## Description
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg"></a>
+  <img src="https://img.shields.io/badge/language-bash-blue?logo=gnu-bash">
+  <a href="https://archlinux.org/"><img src="https://img.shields.io/badge/platform-arch--linux-blue?logo=arch-linux&logoColor=white"></a>
+  <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?color=1793d1&label=AUR&logo=arch-linux"></a>
+  <a href="https://github.com/damachine/tkginstaller/issues"><img src="https://img.shields.io/github/issues/damachine/tkginstaller"></a>
+  <a href="https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21"></a>
+  <a href="https://github.com/sponsors/damachine"><img src="https://img.shields.io/badge/Sponsor-GitHub-blue?logo=github-sponsors"></a>
+</p>
 
-This wrapper script makes it easy to install packages from the [Frogging-Family](https://github.com/Frogging-Family) repository. It provides an interactive menu system for building and installing various TKG packages:
+---
 
-![TKG Installer Screenshot](images/banner.jpg)
+#### This wrapper script makes it easy to manage packages from the [Frogging-Family](https://github.com/Frogging-Family) repository. It provides both an interactive mode and a command-line mode for building and installing various TKG packages such as Kernel, Nvidia, Mesa, Wine, Proton. Users also have the option to directly edit the package configuration before building.
 
-## Prerequisites
+<div align="center">
+  <img src="images/tkginstaller.png" alt="TKG Installer Screenshot" />
+</div>
 
-The script automatically checks for the following core dependencies:
-- `fzf` - Fuzzy finder for the interactive menu
-- `gcc` - Compiler for building packages
-- `git` - Version control system
+[🎬 Demo-Video](images/tkginstaller.gif)
 
-Optional tools (used if available):
-- Any text editor for configuration files (the script respects the $EDITOR environment variable and falls back to `nano` if not set) — examples: `nano`, `vim`, `code`.
-- `bat` - Alternative for "cat" with syntax highlighting
-- `onefetch` - Git repository information display (optional)
+---
 
-## Installation
+## 📝 Prerequisites
 
-### Install TKG Installer
+#### The script automatically checks for the following core dependencies:
+
+- **`fzf`** - Fuzzy finder for the interactive menu.
+- **`gcc`** - Compiler for building packages.
+- **`git`** - Version control system.
+
+#### ⭐ Optional tools (very useful!):
+
+- **`bat`** - Alternative for "cat" with syntax highlighting.
+- **`curl`, `wget`** - Fetching preview content.
+- **`glow`** - Converts Markdown in terminal.
+- **`llvm`** - Useful for building and debugging some TKG packages.
+- **`nano`, `vim`** - An text editor for configuration files (the script respects the $EDITOR environment variable and falls back to **`nano`** if not set).
+- **`onefetch`** - Git repository information display.
+
+---
+
+## 🛠️ Installation
 
 #### Arch Linux (Recommended)
 
 [![AUR](https://img.shields.io/aur/version/tkginstaller-git?color=1793d1&label=AUR&logo=arch-linux)](https://aur.archlinux.org/packages/tkginstaller-git)
 
-- **Using an AUR helper (recommended):**
+- Using an AUR helper:
+  
    ```bash
    # STEP 1: Install
    yay -S tkginstaller-git
    #OR any other AUR helper
 
-   # STEP 2: After installation, you can simply run:
+   # After installation, you can simply run:
    tkginstaller
 
    # Show all available commands and shortcuts (very useful!)
    tkginstaller help
    ```
 
-#### Alternative Installation
-1. Download only the script (no git required):
+#### Manual Installation
+
+- Download only the script:
+  
    ```bash
    # STEP 1: Pre install
    mkdir -p /patch/to/tkginstaller && cd /patch/to/tkginstaller
@@ -57,64 +74,84 @@ Optional tools (used if available):
    wget https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sh
    chmod +x tkginstaller.sh
 
-   # OR STEP 2: Download with curl and make script executable
+   # OR: Download with curl and make script executable
    curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sh
    chmod +x tkginstaller.sh
    ```
 
-## Usage
+---
 
-You can run the script in two ways:
+## 🚀 Usage
 
-### Interactive Mode (Menu)
+> [!IMPORTANT]
+> You can run the script in two ways:
+
+#### Interactive (Menu-mode)
 ```bash
 tkginstaller
 ```
 
-### Command Mode (Direct)
-Skip the menu and run specific actions directly:
+#### Commandline (Direct-mode)
+
+- Skip the menu and run specific actions directly:
+
 ```bash
-# Show all available commands and shortcuts (very useful!)
+Usage: tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|linux+nvidia|config|clean|exit]
+Shortcuts: l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/linux+nvidia=Linux+Nvidia combo
+Examples:
+  tkginstaller linux    # Install Linux-TKG
+  tkginstaller nvidia   # Install Nvidia-TKG
+  tkginstaller mesa     # Install Mesa-TKG
+  tkginstaller wine     # Install Wine-TKG
+  tkginstaller proton   # Install Proton-TKG
+
+# Show all available commands and shortcuts (useful!)
 tkginstaller help
 ```
 
-### Configuration-Menue
+---
 
-The **Config** option provides an interactive editor for TKG configuration files:
-- Edit all relevant TKG configuration files (e.g. for Linux-TKG, Nvidia-TKG, Mesa-TKG, Wine-TKG, Proton-TKG)
-- Preview the relevant TKG configuration files
-- Uses your preferred editor via `$EDITOR`
+### ⚙️ Configuration
 
-### Quick Alias
+- The **`Config-TKG`** option provides an interactive editor for TKG configuration files.
+- Edit all relevant TKG configuration files (e.g. for Linux-TKG, Nvidia-TKG, Mesa-TKG, Wine-TKG, Proton-TKG).
+- Preview the relevant TKG configuration files.
+- Uses your preferred editor via `$EDITOR`.
 
-If you installed manually (not via AUR), add this to your `~/.bashrc` or `~/.zshrc` for easy access:
-```bash
-# Examples
-tkginstaller() {
-    bash -c '/path/to/tkginstaller.sh'
-}
-# OR
-alias tkginstaller="bash -c '/path/to/tkginstaller.sh'"
+---
 
-# System link (optional)
-# To make the installer available system-wide, create a symlink:
-sudo ln -s /path/to/tkginstaller.sh /usr/bin/tkginstaller
+> [!TIP]
+> Quick access: 
+> - If you installed manually (not via AUR), add this to your `~/.bashrc` or `~/.zshrc` for easy access:
 
-# Now you can run 'tkginstaller' from anywhere.
+   ```bash
+   # Examples
+   tkginstaller() {
+      bash -c '/path/to/tkginstaller.sh'
+   }
+   # OR
+   alias tkginstaller="bash -c '/path/to/tkginstaller.sh'"
 
-```
+   # System link
+   # To make the installer available system-wide, create a symlink and skip alias:
+   sudo ln -s /path/to/tkginstaller.sh /usr/bin/tkginstaller
 
-## Notes
+   # Now you can run 'tkginstaller' from anywhere.
+   ```
 
-The script:
+---
 
-- is specifically designed for Arch Linux and its derivatives
-- uses `makepkg` to compile packages
-- performs automatic system updates before installation
-- deletes the downloaded files after use
-- supports only one concurrent execution
+> [!NOTE]
+> TKG Installer:
+> - is specifically designed for Arch Linux and its derivatives.
+> - uses for now only `makepkg` to compile packages.
+> - performs automatic system updates before installation.
+> - deletes the downloaded files after use.
+> - supports only one concurrent execution.
+> - download missing config files.
 
-If you need help, open an issue at https://github.com/damachine/tkginstaller/issues
+> [!TIP]
+> If you need help, open an issue at https://github.com/damachine/tkginstaller/issues.
 
 ---
 
@@ -124,14 +161,14 @@ I do not guarantee that it will work as intended on your system.
 
 ---
 
-## License
+## 📄 License
 
 This installer script is released under the **MIT License**.
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 Individual TKG packages have their own licenses:
-- See respective repositories at https://github.com/Frogging-Family
+- See respective repositories at [https://github.com/Frogging-Family](https://github.com/Frogging-Family)
 
 ---
 
@@ -139,10 +176,10 @@ Individual TKG packages have their own licenses:
 
 If you find CoolerDash useful and want to support its development:
 
-- ⭐ **Star this repository** on GitHub
-- 🐛 **Report bugs** and suggest improvements
-- 🔄 **Share** the project with others
-- 📝 **Contribute** code or documentation
+- ⭐ **Star this repository** on GitHub.
+- 🐛 **Report bugs** and suggest improvements.
+- 🔄 **Share** the project with others.
+- 📝 **Contribute** code or documentation.
 - [![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-blue?logo=github-sponsors)](https://github.com/sponsors/damachine)
 
 > *🙏 Your support keeps this project alive and improving — thank you!.*
