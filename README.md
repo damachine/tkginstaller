@@ -1,6 +1,5 @@
-<div align="center">
-  <img src="images/banner.jpg" alt="TKG Installer Banner" width="1260" height="180"/> 
-</div>
+
+# TKG Installer 🐸
 
 <p align="center">
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg"></a>
@@ -17,7 +16,7 @@
 #### This wrapper script makes it easy to manage packages from the [Frogging-Family](https://github.com/Frogging-Family) repository. It provides both an interactive mode and a command-line mode for building and installing various TKG packages such as Kernel, Nvidia, Mesa, Wine, Proton. Users also have the option to directly edit the package configuration before building.
 
 <div align="center">
-  <img src="images/tkginstaller.png" alt="TKG Installer Screenshot" width="1260" height="480"/>
+  <img src="images/tkginstaller.png" alt="TKG Installer Screenshot" />
 </div>
 
 [🎬 Demo-Video](images/tkginstaller.gif)
