@@ -2,23 +2,25 @@
   <img src="images/banner.jpg" alt="TKG Installer Banner" width="1260" height="180"/> 
 </div>
 
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Arch Linux](https://img.shields.io/badge/platform-arch--linux-blue?logo=arch-linux&logoColor=white)](https://archlinux.org/)
-[![AUR](https://img.shields.io/aur/version/tkginstaller-git?color=1793d1&label=AUR&logo=arch-linux)](https://aur.archlinux.org/packages/tkginstaller-git)
-![Bash](https://img.shields.io/badge/language-bash-blue?logo=gnu-bash)
-[![Issues](https://img.shields.io/github/issues/damachine/tkginstaller)](https://github.com/damachine/tkginstaller/issues)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21)](https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
-[![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-blue?logo=github-sponsors)](https://github.com/sponsors/damachine)
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg"></a>
+  <a href="https://archlinux.org/"><img src="https://img.shields.io/badge/platform-arch--linux-blue?logo=arch-linux&logoColor=white"></a>
+  <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?color=1793d1&label=AUR&logo=arch-linux"></a>
+  <a href="https://github.com/damachine/tkginstaller/issues"><img src="https://img.shields.io/github/issues/damachine/tkginstaller"></a>
+  <a href="https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21"></a>
+  <a href="https://github.com/sponsors/damachine"><img src="https://img.shields.io/badge/Sponsor-GitHub-blue?logo=github-sponsors"></a>
+  <img src="https://img.shields.io/badge/language-bash-blue?logo=gnu-bash">
+</p>
 
 ---
 
 #### This wrapper script makes it easy to manage packages from the [Frogging-Family](https://github.com/Frogging-Family) repository. It provides both an interactive mode and a command-line mode for building and installing various TKG packages such as Kernel, Nvidia, Mesa, Wine, Proton. Users also have the option to directly edit the package configuration before building.
 
 <div align="center">
-  <img src="images/tkginstaller.png" alt="TKG Installer Screenshot" width="640" height="320"/>
-  <br />
-  [🎬 Demo-Video](images/tkginstaller.gif)
+  <img src="images/tkginstaller.png" alt="TKG Installer Screenshot" width="1260" height="480"/>
 </div>
+
+[🎬 Demo-Video](images/tkginstaller.gif)
 
 ---
 
