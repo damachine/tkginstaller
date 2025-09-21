@@ -23,18 +23,18 @@
 
 #### The script automatically checks for the following core dependencies:
 
-- **`fzf`** - Fuzzy finder for the interactive menu
-- **`gcc`** - Compiler for building packages
-- **`git`** - Version control system
+- **`fzf`** - Fuzzy finder for the interactive menu.
+- **`gcc`** - Compiler for building packages.
+- **`git`** - Version control system.
 
 #### ⭐ Optional tools (very useful!):
 
-- **`bat`** - Alternative for "cat" with syntax highlighting
-- **`curl`, `wget`** - Fetching preview content
-- **`glow`** - Converts Markdown in terminal
-- **`llvm`** - Useful for building and debugging some TKG packages
-- Any text editor for configuration files (the script respects the $EDITOR environment variable and falls back to **`nano`** if not set) — examples: **`nano`, `vim`.**
-- **`onefetch`** - Git repository information display
+- **`bat`** - Alternative for "cat" with syntax highlighting.
+- **`curl`, `wget`** - Fetching preview content.
+- **`glow`** - Converts Markdown in terminal.
+- **`llvm`** - Useful for building and debugging some TKG packages.
+- **`nano`, `vim`** - An text editor for configuration files (the script respects the $EDITOR environment variable and falls back to **`nano`** if not set).
+- **`onefetch`** - Git repository information display.
 
 ---
 
@@ -109,10 +109,10 @@ tkginstaller help
 
 ### ⚙️ Configuration
 
-- The **`Config-TKG`** option provides an interactive editor for TKG configuration files:
-- Edit all relevant TKG configuration files (e.g. for Linux-TKG, Nvidia-TKG, Mesa-TKG, Wine-TKG, Proton-TKG)
-- Preview the relevant TKG configuration files
-- Uses your preferred editor via `$EDITOR`
+- The **`Config-TKG`** option provides an interactive editor for TKG configuration files.
+- Edit all relevant TKG configuration files (e.g. for Linux-TKG, Nvidia-TKG, Mesa-TKG, Wine-TKG, Proton-TKG).
+- Preview the relevant TKG configuration files.
+- Uses your preferred editor via `$EDITOR`.
 
 ---
 
@@ -139,14 +139,15 @@ tkginstaller help
 
 > [!NOTE]
 > The script:
-> - is specifically designed for Arch Linux and its derivatives
-> - uses for now only `makepkg` to compile packages
-> - performs automatic system updates before installation
-> - deletes the downloaded files after use
-> - supports only one concurrent execution
-> - download missing config files
+> - is specifically designed for Arch Linux and its derivatives.
+> - uses for now only `makepkg` to compile packages.
+> - performs automatic system updates before installation.
+> - deletes the downloaded files after use.
+> - supports only one concurrent execution.
+> - download missing config files.
 
-If you need help, open an issue at https://github.com/damachine/tkginstaller/issues
+> [!TIP]
+> If you need help, open an issue at https://github.com/damachine/tkginstaller/issues.
 
 ---
 
@@ -171,10 +172,10 @@ Individual TKG packages have their own licenses:
 
 If you find CoolerDash useful and want to support its development:
 
-- ⭐ **Star this repository** on GitHub
-- 🐛 **Report bugs** and suggest improvements
-- 🔄 **Share** the project with others
-- 📝 **Contribute** code or documentation
+- ⭐ **Star this repository** on GitHub.
+- 🐛 **Report bugs** and suggest improvements.
+- 🔄 **Share** the project with others.
+- 📝 **Contribute** code or documentation.
 - [![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-blue?logo=github-sponsors)](https://github.com/sponsors/damachine)
 
 > *🙏 Your support keeps this project alive and improving — thank you!.*
