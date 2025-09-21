@@ -8,7 +8,7 @@
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21)](https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-blue?logo=github-sponsors)](https://github.com/sponsors/damachine)
 
-## Description
+---
 
 #### This wrapper script makes it easy to manage packages from the Frogging-Family repository. It provides both an interactive mode and a command-line mode for building and installing various TKG packages such as Kernel, Nvidia, Mesa, Wine, Proton. Users also have the option to directly edit the package configuration before building.
 
@@ -19,7 +19,7 @@
 
 ---
 
-## Prerequisites
+## 📝 Prerequisites
 
 #### The script automatically checks for the following core dependencies:
 
@@ -27,7 +27,7 @@
 - **`gcc`** - Compiler for building packages
 - **`git`** - Version control system
 
-#### Optional tools (very useful!):
+#### ⭐ Optional tools (very useful!):
 
 - **`bat`** - Alternative for "cat" with syntax highlighting
 - **`curl`, `wget`** - Fetching preview content
@@ -38,7 +38,7 @@
 
 ---
 
-## Installation
+## 🛠️ Installation
 
 #### Arch Linux (Recommended)
 
@@ -77,7 +77,7 @@
 
 ---
 
-## Usage
+## 🚀 Usage
 
 > [!NOTE]
 > You can run the script in two ways:
@@ -98,7 +98,7 @@ tkginstaller help
 
 ---
 
-### Configuration
+### ⚙️ Configuration
 
 The **`Config-TKG`** option provides an interactive editor for TKG configuration files:
 
@@ -148,7 +148,7 @@ I do not guarantee that it will work as intended on your system.
 
 ---
 
-## License
+## 📄 License
 
 This installer script is released under the **MIT License**.
 
