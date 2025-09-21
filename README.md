@@ -13,7 +13,11 @@
 
 ---
 
-#### This wrapper script makes it easy to manage packages from the [Frogging-Family](https://github.com/Frogging-Family) repository. It provides both an interactive mode and a command-line mode for building and installing various TKG packages such as Kernel, Nvidia, Mesa, Wine, Proton. Users also have the option to directly edit the package configuration before building.
+## ⭐ Futures
+- Manage packages from the **[Frogging-Family](https://github.com/Frogging-Family)** repository. 
+- Easy building and installing various TKG packages such as **Kernel**, **Nvidia**, **Mesa**, **Wine**, **Proton**.
+- Provides an interactive mode and a command-line mode.
+- Edit the TKG package configuration files in `~/.config/frogminer/`.
 
 <div align="center">
   <img src="images/tkginstaller.png" alt="TKG Installer Screenshot" />
@@ -31,7 +35,7 @@
 - **`gcc`** - Compiler for building packages.
 - **`git`** - Version control system.
 
-#### ⭐ Optional tools (very useful!):
+#### Optional tools (Recommended):
 
 - **`bat`** - Alternative for "cat" with syntax highlighting.
 - **`curl`, `wget`** - Fetching preview content.
@@ -105,7 +109,7 @@ Examples:
   tkginstaller wine     # Install Wine-TKG
   tkginstaller proton   # Install Proton-TKG
 
-# Show all available commands and shortcuts (useful!)
+# Show all available commands and shortcuts!
 tkginstaller help
 ```
 
