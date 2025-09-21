@@ -370,16 +370,19 @@ _config_edit() {
                 "proton-tkg |🧪 Proton-TKG .cfg" \
                 "back       |⬅️ Back to Main Menu" \
                 | fzf \
-                    --prompt="❯ Select a config file 🛠️: " \
+                    --style full \
                     --header="🐸 TKG Configuration Editor – Select a config..." \
+                    --header-first \
                     --layout=reverse \
-                    --height="100%" \
+                    --height="-1" \
                     --ansi \
                     --delimiter="|" \
                     --with-nth="2" \
-                    --preview="bash -c \"
+                    --no-input \
+                    --no-multi \
+                    --preview="
                         key=\$(echo {} | cut -d'|' -f1 | xargs)
-                        case \\\$key in
+                        case \$key in
                             linux-tkg)
                                 (command -v bat >/dev/null 2>&1 && bat --style=numbers --color=always \"\$HOME/.config/frogminer/linux-tkg.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/linux-tkg.cfg\" 2>/dev/null) || true ;;
                             nvidia-all)
@@ -391,12 +394,12 @@ _config_edit() {
                             proton-tkg)
                                 (command -v bat >/dev/null 2>&1 && bat --style=numbers --color=always \"\$HOME/.config/frogminer/proton-tkg.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/proton-tkg.cfg\" 2>/dev/null) || true ;;
                             back)
-                                echo \\\"👋 Back to Mainmenu!\\\" ;;
+                                echo \"👋 Back to Mainmenu!\" ;;
                         esac
-                    \"" \
+                    " \
+                    --with-shell="bash -c" \
                     --preview-window="right:wrap:60%" \
-                    --color="header:italic:bold:underline,prompt:italic:bold:green,pointer:green,marker:red" \
-                    --pointer="➤ "
+                    --color='header:green,pointer:green,marker:green'
         )
         
         # Handle cancelled selection
@@ -585,13 +588,18 @@ _menu() {
             "Clean        |🧹 Clean/Reset" \
             "Exit         |❌ Exit" \
         | fzf \
-            --prompt="❯ Choose an option: " \
-            --header="🐸 TKG Frogminer Installation – Select a package..." \
+            --style full \
+            --header="🐸 TKG Installer – Select a package..." \
+            --header-label=v0.4.2 \
+            --header-label-pos=2 \
+            --header-first \
             --layout=reverse \
-            --height="100%" \
+            --height="-1" \
             --ansi \
             --delimiter="|" \
             --with-nth="2" \
+            --no-input \
+            --no-multi \
             --preview='case {} in \
                 Linux*)     echo -e "🧠 Linux-TKG Preview\n\n$PREVIEW_LINUX";; \
                 Nvidia*)    echo -e "🎮 Nvidia-TKG Preview\n\n$PREVIEW_NVIDIA";; \
@@ -604,9 +612,9 @@ _menu() {
                 Exit*)      echo -e "👋 Exit\n\nExits the program.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller\n\nIf you like this program and want to support development, ⭐ visit the project on GitHub!";; \
                 *)          echo -e "🐸 TKG-Installer\nhttps://github.com/damachine/tkginstaller";; \
             esac' \
+            --with-shell="bash -c" \
             --preview-window="right:wrap:60%" \
-            --color="header:italic:bold:underline:green,prompt:italic:bold:green,pointer:green,marker:red" \
-            --pointer="➤ "
+            --color='header:green,pointer:green,marker:green'
     )
 
     # Handle cancelled selection (ESC pressed)
