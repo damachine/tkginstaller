@@ -13,11 +13,11 @@
 
 ---
 
-## ⭐ Futures
-- Manage packages from the **[Frogging-Family](https://github.com/Frogging-Family)** repository. 
-- Easy building and installing various TKG packages such as **Kernel**, **Nvidia**, **Mesa**, **Wine**, **Proton**.
-- Provides an interactive mode and a command-line mode.
-- Edit the TKG package configuration files in `~/.config/frogminer/`.
+## ⭐ Features
+- **Manage packages from the [Frogging-Family](https://github.com/Frogging-Family) repository.** 
+- **Easy building and installing various TKG packages such as `Kernel`, `Nvidia`, `Mesa`, `Wine`, `Proton`.**
+- **Provides an interactive mode and a command-line mode.**
+- **Edit the TKG package configuration files in `~/.config/frogminer/`.**
 
 <div align="center">
   <img src="images/tkginstaller.png" alt="TKG Installer Screenshot" />
