@@ -138,7 +138,7 @@ tkginstaller help
 ---
 
 > [!NOTE]
-> The script:
+> TKG Installer:
 > - is specifically designed for Arch Linux and its derivatives.
 > - uses for now only `makepkg` to compile packages.
 > - performs automatic system updates before installation.
