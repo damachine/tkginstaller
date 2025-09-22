@@ -40,18 +40,18 @@
 - **`bat`** - Alternative for "cat" with syntax highlighting.
 - **`curl`, `wget`** - Fetching preview content.
 - **`glow`** - Converts Markdown in terminal.
-- **`llvm`** - Useful for building and debugging some TKG packages.
+- **`llvm`** - Useful for building some TKG packages.
 - **`nano`, `vim`** - An text editor for configuration files (the script respects the $EDITOR environment variable and falls back to **`nano`** if not set).
 - **`onefetch`** - Git repository information display.
 
 > [!NOTE]
 > TKG Installer:
-> - is specifically designed for Arch Linux and its derivatives.
-> - uses for now only `makepkg` for TKG packages.
+> - for now only designed for Arch Linux and its derivatives.
+> - uses `makepkg` for TKG packages building.
 > - performs automatic system updates before installation.
-> - deletes the downloaded files after use.
+> - optional download config files in `~/.config/frogminer/` folder.
+> - clean the downloaded files in `~/.cache/tkginstaller/` after installation.
 > - supports only one concurrent execution.
-> - download missing config files in `~/.config/frogminer/`.
 
 ---
 
