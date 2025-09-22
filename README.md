@@ -81,12 +81,12 @@
    # STEP 1: Pre install
    mkdir -p /patch/to/tkginstaller && cd /patch/to/tkginstaller
 
-   # STEP 2: Download and make script executable
+   # STEP 2: Download with wget
    wget https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sh
-   chmod +x tkginstaller.sh
-
-   # OR: Download with curl and make script executable
+   # OR: Download with curl
    curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sh
+
+   # STEP 3: Make script executable
    chmod +x tkginstaller.sh
 
    # Quick access: Create a system link 
@@ -95,7 +95,7 @@
 
    # OR
 
-   # Quick access: Create a alias create
+   # Quick access: Create a alias
    # If you installed manually, add this to your `~/.bashrc` or `~/.zshrc` for easy access:
 
    # Examples
