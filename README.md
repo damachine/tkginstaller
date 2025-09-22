@@ -141,6 +141,7 @@
 - Edit all relevant TKG configuration files (e.g. for Linux-TKG, Nvidia-TKG, Mesa-TKG, Wine-TKG, Proton-TKG).
 - Preview the relevant TKG configuration files.
 - Uses your preferred editor via `$EDITOR`.
+- Optional download config files in ~/.config/frogminer/ folder.
 
 ---
 
