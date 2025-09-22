@@ -97,7 +97,7 @@
 
    # OR
 
-   # Quick access: alias create
+   # Quick access: Create a alias create
    # If you installed manually (not via AUR), add this to your `~/.bashrc` or `~/.zshrc` for easy access:
 
    # Examples
