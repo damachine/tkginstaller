@@ -590,7 +590,7 @@ _menu() {
         | fzf \
             --style full \
             --header="🐸 TKG Installer – Select a package..." \
-            --header-label=v0.4.4 \
+            --header-label=v0.4.5 \
             --header-label-pos=2 \
             --header-first \
             --layout=reverse \
