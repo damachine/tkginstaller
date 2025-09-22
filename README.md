@@ -98,7 +98,7 @@
    # OR
 
    # Quick access: Create a alias create
-   # If you installed manually (not via AUR), add this to your `~/.bashrc` or `~/.zshrc` for easy access:
+   # If you installed manually, add this to your `~/.bashrc` or `~/.zshrc` for easy access:
 
    # Examples
    tkginstaller() {
@@ -126,7 +126,7 @@
 
    ```bash
    # Skip the menu and run specific actions directly:
-   Usage: tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|linux+nvidia|config|clean|exit]
+   Usage: tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|linux+nvidia]
    Shortcuts: l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/linux+nvidia=Linux+Nvidia combo
    Examples:
    tkginstaller linux    # Install Linux-TKG
