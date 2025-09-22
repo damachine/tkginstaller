@@ -83,6 +83,25 @@
    chmod +x tkginstaller.sh
    ```
 
+> [!TIP]
+> Quick access: 
+> - If you installed manually (not via AUR), add this to your `~/.bashrc` or `~/.zshrc` for easy access:
+>
+>     ```bash
+>     # Examples
+>     tkginstaller() {
+>        bash -c '/path/to/tkginstaller.sh'
+>     }
+>     # OR
+>     alias tkginstaller="bash -c '/path/to/tkginstaller.sh'"
+>
+>     # System link
+>     # To make the installer available system-wide, create a symlink and skip alias:
+>     sudo ln -s /path/to/tkginstaller.sh /usr/bin/tkginstaller
+>
+>     # Now you can run 'tkginstaller' from anywhere.
+>     ```
+
 ---
 
 ## 🚀 Usage
@@ -90,28 +109,27 @@
 > [!IMPORTANT]
 > You can run the script in two ways:
 
-#### Interactive (Menu-mode)
-```bash
-tkginstaller
-```
+- #### Interactive (Menu-mode)
+   ```bash
+   tkginstaller
+   ```
 
-#### Commandline (Direct-mode)
+- #### Commandline (Direct-mode)
 
-- Skip the menu and run specific actions directly:
+   ```bash
+   # Skip the menu and run specific actions directly:
+   Usage: tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|linux+nvidia|config|clean|exit]
+   Shortcuts: l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/linux+nvidia=Linux+Nvidia combo
+   Examples:
+   tkginstaller linux    # Install Linux-TKG
+   tkginstaller nvidia   # Install Nvidia-TKG
+   tkginstaller mesa     # Install Mesa-TKG
+   tkginstaller wine     # Install Wine-TKG
+   tkginstaller proton   # Install Proton-TKG
 
-```bash
-Usage: tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|linux+nvidia|config|clean|exit]
-Shortcuts: l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/linux+nvidia=Linux+Nvidia combo
-Examples:
-  tkginstaller linux    # Install Linux-TKG
-  tkginstaller nvidia   # Install Nvidia-TKG
-  tkginstaller mesa     # Install Mesa-TKG
-  tkginstaller wine     # Install Wine-TKG
-  tkginstaller proton   # Install Proton-TKG
-
-# Show all available commands and shortcuts!
-tkginstaller help
-```
+   # Show all available commands and shortcuts!
+   tkginstaller help
+   ```
 
 ---
 
@@ -124,35 +142,14 @@ tkginstaller help
 
 ---
 
-> [!TIP]
-> Quick access: 
-> - If you installed manually (not via AUR), add this to your `~/.bashrc` or `~/.zshrc` for easy access:
-
-   ```bash
-   # Examples
-   tkginstaller() {
-      bash -c '/path/to/tkginstaller.sh'
-   }
-   # OR
-   alias tkginstaller="bash -c '/path/to/tkginstaller.sh'"
-
-   # System link
-   # To make the installer available system-wide, create a symlink and skip alias:
-   sudo ln -s /path/to/tkginstaller.sh /usr/bin/tkginstaller
-
-   # Now you can run 'tkginstaller' from anywhere.
-   ```
-
----
-
 > [!NOTE]
 > TKG Installer:
 > - is specifically designed for Arch Linux and its derivatives.
-> - uses for now only `makepkg` to compile packages.
+> - uses for now only `makepkg` for TKG packages.
 > - performs automatic system updates before installation.
 > - deletes the downloaded files after use.
 > - supports only one concurrent execution.
-> - download missing config files.
+> - download missing config files in `~/.config/frogminer/`.
 
 > [!TIP]
 > If you need help, open an issue at https://github.com/damachine/tkginstaller/issues.
