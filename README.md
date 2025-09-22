@@ -146,7 +146,7 @@
 
 > [!TIP]
 > Contribute and suggest improvements. Welcome ⭐ at **[Discussions](https://github.com/damachine/tkginstaller/discussions)**  
-> If you need help, open an issue at **[Issues](https://github.com/damachine/tkginstaller/issues)**
+> If you need help, open an **[Issues](https://github.com/damachine/tkginstaller/issues)**
 
 ---
 
