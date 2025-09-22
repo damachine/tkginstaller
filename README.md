@@ -35,7 +35,7 @@
 - **`gcc`** - Compiler for building packages.
 - **`git`** - Version control system.
 
-#### (Recommended) Optional tools:
+#### Optional tools (Recommended):
 
 - **`bat`** - Alternative for "cat" with syntax highlighting.
 - **`curl`, `wget`** - Fetching preview content.
@@ -78,8 +78,9 @@
 - Manual installation:
 
    ```bash
-   # STEP 1: Pre install
-   mkdir -p /patch/to/tkginstaller && cd /patch/to/tkginstaller
+   # STEP 1: Preparation
+   mkdir -p /patch/to/tkginstaller
+   cd /patch/to/tkginstaller
 
    # STEP 2: Download with wget
    wget https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sh
@@ -89,23 +90,20 @@
    # STEP 3: Make script executable
    chmod +x tkginstaller.sh
 
+   # STEP 4: Optional (Recommended)
    # Quick access: Create a system link 
    # To make the installer available system-wide, create a symlink and skip alias:
    sudo ln -s /path/to/tkginstaller.sh /usr/bin/tkginstaller
-
-   # OR
-
-   # Quick access: Create a alias
+   # OR: Create a alias
    # If you installed manually, add this to your `~/.bashrc` or `~/.zshrc` for easy access:
-
-   # Examples
    tkginstaller() {
       bash -c '/path/to/tkginstaller.sh'
    }
-   # OR
+   # OR:
    alias tkginstaller="bash -c '/path/to/tkginstaller.sh'"
 
-   # Now you can run 'tkginstaller' from anywhere ✨.
+   # Now you can run from anywhere:
+   tkginstaller
    ```
 
 ---
