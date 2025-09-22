@@ -126,7 +126,7 @@
 
    ```bash
    # Skip the menu and run specific actions directly:
-   Usage: tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|linux+nvidia]
+   Usage: tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|linux+nvidia]
    Shortcuts: l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/linux+nvidia=Linux+Nvidia combo
    Examples:
    tkginstaller linux    # Install Linux-TKG
