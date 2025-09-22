@@ -35,7 +35,7 @@
 - **`gcc`** - Compiler for building packages.
 - **`git`** - Version control system.
 
-#### Optional tools (Recommended):
+#### (Recommended) Optional tools:
 
 - **`bat`** - Alternative for "cat" with syntax highlighting.
 - **`curl`, `wget`** - Fetching preview content.
@@ -43,6 +43,15 @@
 - **`llvm`** - Useful for building and debugging some TKG packages.
 - **`nano`, `vim`** - An text editor for configuration files (the script respects the $EDITOR environment variable and falls back to **`nano`** if not set).
 - **`onefetch`** - Git repository information display.
+
+> [!NOTE]
+> TKG Installer:
+> - is specifically designed for Arch Linux and its derivatives.
+> - uses for now only `makepkg` for TKG packages.
+> - performs automatic system updates before installation.
+> - deletes the downloaded files after use.
+> - supports only one concurrent execution.
+> - download missing config files in `~/.config/frogminer/`.
 
 ---
 
@@ -69,7 +78,7 @@
 #### Manual Installation
 
 - Download only the script:
-  
+
    ```bash
    # STEP 1: Pre install
    mkdir -p /patch/to/tkginstaller && cd /patch/to/tkginstaller
@@ -81,26 +90,25 @@
    # OR: Download with curl and make script executable
    curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sh
    chmod +x tkginstaller.sh
-   ```
 
-> [!TIP]
-> Quick access: 
-> - If you installed manually (not via AUR), add this to your `~/.bashrc` or `~/.zshrc` for easy access:
->
->     ```bash
->     # Examples
->     tkginstaller() {
->        bash -c '/path/to/tkginstaller.sh'
->     }
->     # OR
->     alias tkginstaller="bash -c '/path/to/tkginstaller.sh'"
->
->     # System link
->     # To make the installer available system-wide, create a symlink and skip alias:
->     sudo ln -s /path/to/tkginstaller.sh /usr/bin/tkginstaller
->
->     # Now you can run 'tkginstaller' from anywhere.
->     ```
+   # Quick access: Create a system link 
+   # To make the installer available system-wide, create a symlink and skip alias:
+   sudo ln -s /path/to/tkginstaller.sh /usr/bin/tkginstaller
+
+   # OR
+
+   # Quick access: alias create
+   # If you installed manually (not via AUR), add this to your `~/.bashrc` or `~/.zshrc` for easy access:
+
+   # Examples
+   tkginstaller() {
+      bash -c '/path/to/tkginstaller.sh'
+   }
+   # OR
+   alias tkginstaller="bash -c '/path/to/tkginstaller.sh'"
+
+   # Now you can run 'tkginstaller' from anywhere ✨.
+   ```
 
 ---
 
@@ -141,15 +149,6 @@
 - Uses your preferred editor via `$EDITOR`.
 
 ---
-
-> [!NOTE]
-> TKG Installer:
-> - is specifically designed for Arch Linux and its derivatives.
-> - uses for now only `makepkg` for TKG packages.
-> - performs automatic system updates before installation.
-> - deletes the downloaded files after use.
-> - supports only one concurrent execution.
-> - download missing config files in `~/.config/frogminer/`.
 
 > [!TIP]
 > If you need help, open an issue at https://github.com/damachine/tkginstaller/issues.
