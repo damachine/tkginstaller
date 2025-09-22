@@ -75,9 +75,7 @@
    tkginstaller help
    ```
 
-#### Manual Installation
-
-- Download only the script:
+- Manual installation:
 
    ```bash
    # STEP 1: Pre install
