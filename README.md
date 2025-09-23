@@ -11,44 +11,18 @@
 ---
 
 ## ⭐ Features
-- **Manage packages from the [Frogging-Family](https://github.com/Frogging-Family) repository.** 
-- **Easy building and installing various TKG packages such as `Kernel`, `Nvidia`, `Mesa`, `Wine`, `Proton`.**
-- **Provides an interactive mode and a command-line mode.**
+- **Manage the popular TKG packages `Kernel`, `Nvidia`, `Mesa`, `Wine`, `Proton` from the Frogging-Family repositories. 🐸** 
+- **Fuzzy finder `fzf` for the interactive menu.**
+- **Provides an quick command-line mode.**
 - **Edit the TKG package configuration files in `~/.config/frogminer/`.**
+- **Optional download config files in `~/.config/frogminer/` folder.**
+- **Split window with preview.** ***(Beta)***
 
 <div align="center">
   <img src="images/tkginstaller.png" alt="TKG Installer Screenshot" />
 </div>
 
 [🎬 Demo-Video](images/tkginstaller.gif)
-
----
-
-## 📝 Prerequisites
-
-#### The script automatically checks for the following core dependencies:
-
-- **`fzf`** - Fuzzy finder for the interactive menu.
-- **`gcc`** - Compiler for building packages.
-- **`git`** - Version control system.
-
-#### Optional tools (Recommended):
-
-- **`bat`** - Alternative for "cat" with syntax highlighting.
-- **`curl`, `wget`** - Fetching preview content.
-- **`glow`** - Converts Markdown in terminal.
-- **`llvm`** - Useful for building some TKG packages.
-- **`nano`, `vim`** - An text editor for configuration files (the script respects the $EDITOR environment variable and falls back to **`nano`** if not set).
-- **`onefetch`** - Git repository information display.
-
-> [!NOTE]
-> TKG Installer:
-> - for now only designed for Arch Linux and its derivatives.
-> - uses `makepkg` for TKG packages building.
-> - performs automatic system updates before installation.
-> - optional download config files in `~/.config/frogminer/` folder.
-> - clean the downloaded files in `~/.cache/tkginstaller/` after installation.
-> - supports only one concurrent execution.
 
 ---
 
@@ -103,12 +77,17 @@
    tkginstaller
    ```
 
+- Optional tools (Recommended):
+
+> - **`bat`** - Alternative for "cat" with syntax highlighting.
+> - **`curl`, `wget`** - Fetching preview content.
+> - **`glow`** - Converts Markdown in terminal.
+> - **`nano`, `vim`** - An text editor for configuration files.
+> - **`onefetch`** - Git repository information display.
+
 ---
 
 ## 🚀 Usage
-
-> [!IMPORTANT]
-> You can run the script in two ways:
 
 - #### Interactive (Menu-mode)
    ```bash
@@ -132,13 +111,9 @@
 
 ---
 
-### ⚙️ Configuration
+### ⚙️ System Configuration
 
-- The **`Config-TKG`** option provides an interactive editor for TKG configuration files.
-- Edit all relevant TKG configuration files (e.g. for Linux-TKG, Nvidia-TKG, Mesa-TKG, Wine-TKG, Proton-TKG).
-- Preview the relevant TKG configuration files.
-- Uses your preferred editor via `$EDITOR`.
-- Optional download config files in `~/.config/frogminer/` folder.
+- Set your preferred editor via `$EDITOR` environment variable.
 
 ---
 
