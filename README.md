@@ -13,39 +13,17 @@
 ## ⭐ Features
 - **Manage packages from the [Frogging-Family](https://github.com/Frogging-Family) repository.** 
 - **Easy building and installing various TKG packages such as `Kernel`, `Nvidia`, `Mesa`, `Wine`, `Proton`.**
+- **Fuzzy finder `fzf` for the interactive menu.**
 - **Provides an interactive mode and a command-line mode.**
 - **Edit the TKG package configuration files in `~/.config/frogminer/`.**
+- **Optional download config files in `~/.config/frogminer/` folder.**
+- **Split window with preview.**
 
 <div align="center">
   <img src="images/tkginstaller.png" alt="TKG Installer Screenshot" />
 </div>
 
 [🎬 Demo-Video](images/tkginstaller.gif)
-
----
-
-## 📝 Prerequisites
-
-#### The script automatically checks for the following core dependencies:
-
-- **`fzf`** - Fuzzy finder for the interactive menu.
-
-#### Optional tools (Recommended):
-
-- **`bat`** - Alternative for "cat" with syntax highlighting.
-- **`curl`, `wget`** - Fetching preview content.
-- **`glow`** - Converts Markdown in terminal.
-- **`nano`, `vim`** - An text editor for configuration files (the script respects the $EDITOR environment variable and falls back to **`nano`** if not set).
-- **`onefetch`** - Git repository information display.
-
-> [!NOTE]
-> TKG Installer:
-> - for now only designed for Arch Linux and its derivatives.
-> - uses `makepkg` for TKG packages building.
-> - performs automatic system updates before installation.
-> - optional download config files in `~/.config/frogminer/` folder.
-> - clean the downloaded files in `~/.cache/tkginstaller/` after installation.
-> - supports only one concurrent execution.
 
 ---
 
@@ -99,6 +77,15 @@
    # Now you can run from anywhere:
    tkginstaller
    ```
+
+> [!IMPORTANT]
+> #### Optional tools (Recommended):
+> 
+> - **`bat`** - Alternative for "cat" with syntax highlighting.
+> - **`curl`, `wget`** - Fetching preview content.
+> - **`glow`** - Converts Markdown in terminal.
+> - **`nano`, `vim`** - An text editor for configuration files (the script respects the $EDITOR environment variable and falls back to **`nano`** if not set).
+> - **`onefetch`** - Git repository information display.
 
 ---
 
