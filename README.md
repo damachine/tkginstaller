@@ -169,7 +169,7 @@ Individual TKG packages have their own licenses:
 
 ## 💝 Support the Project
 
-If you find CoolerDash useful and want to support its development:
+If you find TKG Installer useful and want to support its development:
 
 - ⭐ **Star this repository** on GitHub.
 - 🐛 **Report bugs** and suggest improvements.
