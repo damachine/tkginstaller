@@ -11,13 +11,12 @@
 ---
 
 ## ⭐ Features
-- **Manage packages from the [Frogging-Family](https://github.com/Frogging-Family) repository.** 
-- **Easy building and installing various TKG packages such as `Kernel`, `Nvidia`, `Mesa`, `Wine`, `Proton`.**
+- **Manage the popular TKG packages `Kernel`, `Nvidia`, `Mesa`, `Wine`, `Proton` from the Frogging-Family repositories. 🐸** 
 - **Fuzzy finder `fzf` for the interactive menu.**
-- **Provides an interactive mode and a command-line mode.**
+- **Provides an quick command-line mode.**
 - **Edit the TKG package configuration files in `~/.config/frogminer/`.**
 - **Optional download config files in `~/.config/frogminer/` folder.**
-- **Split window with preview.**
+- **Split window with preview.** ***(Beta)***
 
 <div align="center">
   <img src="images/tkginstaller.png" alt="TKG Installer Screenshot" />
@@ -78,21 +77,17 @@
    tkginstaller
    ```
 
-> [!IMPORTANT]
-> #### Optional tools (Recommended):
-> 
+- Optional tools (Recommended):
+
 > - **`bat`** - Alternative for "cat" with syntax highlighting.
 > - **`curl`, `wget`** - Fetching preview content.
 > - **`glow`** - Converts Markdown in terminal.
-> - **`nano`, `vim`** - An text editor for configuration files (the script respects the $EDITOR environment variable and falls back to **`nano`** if not set).
+> - **`nano`, `vim`** - An text editor for configuration files.
 > - **`onefetch`** - Git repository information display.
 
 ---
 
 ## 🚀 Usage
-
-> [!IMPORTANT]
-> You can run the script in two ways:
 
 - #### Interactive (Menu-mode)
    ```bash
@@ -116,13 +111,9 @@
 
 ---
 
-### ⚙️ Configuration
+### ⚙️ System Configuration
 
-- The **`Config-TKG`** option provides an interactive editor for TKG configuration files.
-- Edit all relevant TKG configuration files (e.g. for Linux-TKG, Nvidia-TKG, Mesa-TKG, Wine-TKG, Proton-TKG).
-- Preview the relevant TKG configuration files.
-- Uses your preferred editor via `$EDITOR`.
-- Optional download config files in `~/.config/frogminer/` folder.
+- Set your preferred editor via `$EDITOR` environment variable.
 
 ---
 
