@@ -11,7 +11,7 @@
 ---
 
 ## ⭐ Features
-- **Manage the popular TKG packages `Kernel`, `Nvidia`, `Mesa`, `Wine`, `Proton` from the Frogging-Family repositories. 🐸** 
+- **Manage the popular TKG packages `Kernel`, `Nvidia`, `Mesa`, `Wine`, `Proton` from the Frogging-Family repositories.** 
 - **Fuzzy finder `fzf` for the interactive menu.**
 - **Provides an quick command-line mode.**
 - **Edit the TKG package configuration files in `~/.config/frogminer/`.**
