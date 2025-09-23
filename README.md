@@ -129,8 +129,6 @@
 This software is provided "as is", without warranty of any kind, express or implied.
 I do not guarantee that it will work as intended on your system.
 
----
-
 ## 📄 License
 
 This installer script is released under the **MIT License**.
