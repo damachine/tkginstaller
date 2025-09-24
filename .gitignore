@@ -1,19 +1,23 @@
+# Build artifacts
+
 # Temporary files
+.cache/
+.makepkg/
 pkg/
 temp/
 *~
 *.tmp
 *.log
 *.bak
-.cache/
-.makepkg/
 
 # OS files
+.directory
 .DS_Store
 Thumbs.db
 
 # Editor files
 *.code-workspace
+*.kate-swp
 *.swp
 *.swo
 .vscode/
@@ -21,5 +25,20 @@ Thumbs.db
 .qodo/
 .codacy/
 
-#Ignore vscode AI rules
+# Compressed archives
+*.tar.xz
+*.tar.gz
+*.zip
+*.gz
+*.xz
+*.zst
+*.pkg.*
+
+# Release tarballs
+
+# Local test files
+
+# Ignore vscode AI rules
+.github/instructions/best_practices.md
 .github/instructions/codacy.instructions.md
+.github/instructions/copilot.instructions.md
