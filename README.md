@@ -14,9 +14,9 @@
 - **Manage the popular TKG packages `Kernel`, `Nvidia`, `Mesa`, `Wine`, `Proton` from the [Frogging-Family](https://github.com/Frogging-Family) repositories.** 
 - **Fuzzy finder `fzf` for the interactive menu.**
 - **Provides an quick command-line mode.**
-- **Edit the TKG package configuration files in `~/.config/frogminer/`.**
-- **Optional download config files in `~/.config/frogminer/` folder.**
-- **Split window with preview.** ***(Beta)***
+- **Split window for reading markdown `glow` and configuration files.**
+- **Edit the TKG package configuration files with `nano`, `vim` in `~/.config/frogminer/` folder.**
+- **Optional download configuration files with `curl`, `wget` in `~/.config/frogminer/` folder.**
 
 <div align="center">
   <img src="images/tkginstaller.png" alt="TKG Installer Screenshot" />
