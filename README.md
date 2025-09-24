@@ -151,6 +151,9 @@ If you find TKG Installer useful and want to support its development:
 
 > *🙏 Your support keeps this project alive and improving — thank you!.*
 
+#### ⭐ Stargazers over time
+[![Stargazers over time](https://starchart.cc/damachine/tkginstaller.svg?variant=adaptive)](https://starchart.cc/damachine/tkginstaller)
+
 ---
 
 👨‍💻 Developed by **DAMACHINE** 📧 Contact: christkue79@gmail.com 🌐 Repository: [GitHub](https://github.com/damachine/tkginstaller)
