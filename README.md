@@ -113,8 +113,7 @@
 
 ### ⚙️ System Configuration
 
-- Set your preferred editor via `$EDITOR` environment variable.
-
+- Set your preferred editor via `$EDITOR` environment variable. See: [ArchWiki](https://wiki.archlinux.org/title/Environment_variables#)
 ---
 
 > [!TIP]
