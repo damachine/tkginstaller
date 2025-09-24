@@ -92,10 +92,11 @@ _pre() {
     fi
 
     # Check required dependencies
-    local required_commands=(fzf gcc git)
+    local required_commands=(fzf bat curl git glow)
     for cmd in "${required_commands[@]}"; do
         if ! command -v "$cmd" >/dev/null; then
             echo -e "${RED}${BOLD} ❌ $cmd is not installed! Please install it first.${RESET}"
+            echo -e "${YELLOW}${BOLD} 🔁 Run: pacman -S $cmd${RESET}"            
             exit 1
         fi
     done
@@ -159,13 +160,11 @@ _get_preview_content() {
        
    # Try to display remote content with available tools (glow > bat > plain text)
     if command -v glow >/dev/null 2>&1; then
-        glow "$repo_url" 2>/dev/null
+        FORCE_COLOR=1 CLICOLOR_FORCE=1 TERM=xterm-256color glow --style=dark --width=80 "$repo_url" 2>/dev/null
     else
-        # Download content (wget oder curl)
+        # Download content (wget or curl)
         local content=""
-        if command -v wget >/dev/null 2>&1; then
-            content=$(wget -qO- --timeout=5 "$repo_url" 2>/dev/null)
-        elif command -v curl >/dev/null 2>&1; then
+        if command -v curl >/dev/null 2>&1; then
             content=$(curl -fsSL --max-time 5 "$repo_url" 2>/dev/null)
         fi
 
@@ -590,7 +589,7 @@ _menu() {
         | fzf \
             --style full \
             --header="🐸 TKG Installer – Select a package..." \
-            --header-label=v0.4.7 \
+            --header-label=v0.4.8 \
             --header-label-pos=2 \
             --header-first \
             --layout=reverse \
