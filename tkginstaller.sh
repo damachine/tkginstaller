@@ -162,7 +162,7 @@ _get_preview_content() {
     if command -v glow >/dev/null 2>&1; then
         FORCE_COLOR=1 CLICOLOR_FORCE=1 TERM=xterm-256color glow --style=dark --width=80 "$repo_url" 2>/dev/null
     else
-        # Download content (wget or curl)
+        # Download content
         local content=""
         if command -v curl >/dev/null 2>&1; then
             content=$(curl -fsSL --max-time 5 "$repo_url" 2>/dev/null)
@@ -383,15 +383,15 @@ _config_edit() {
                         key=\$(echo {} | cut -d'|' -f1 | xargs)
                         case \$key in
                             linux-tkg)
-                                (command -v bat >/dev/null 2>&1 && bat --style=numbers --color=always \"\$HOME/.config/frogminer/linux-tkg.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/linux-tkg.cfg\" 2>/dev/null) || true ;;
+                                bat --style=numbers --color=always \"\$HOME/.config/frogminer/linux-tkg.cfg\" 2>/dev/null ;;
                             nvidia-all)
-                                (command -v bat >/dev/null 2>&1 && bat --style=numbers --color=always \"\$HOME/.config/frogminer/nvidia-all.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/nvidia-all.cfg\" 2>/dev/null) || true ;;
+                                bat --style=numbers --color=always \"\$HOME/.config/frogminer/nvidia-all.cfg\" 2>/dev/null ;;
                             mesa-git)
-                                (command -v bat >/dev/null 2>&1 && bat --style=numbers --color=always \"\$HOME/.config/frogminer/mesa-git.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/mesa-git.cfg\" 2>/dev/null) || true ;;
+                                bat --style=numbers --color=always \"\$HOME/.config/frogminer/mesa-git.cfg\" 2>/dev/null ;;
                             wine-tkg)
-                                (command -v bat >/dev/null 2>&1 && bat --style=numbers --color=always \"\$HOME/.config/frogminer/wine-tkg.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/wine-tkg.cfg\" 2>/dev/null) || true ;;
+                                bat --style=numbers --color=always \"\$HOME/.config/frogminer/wine-tkg.cfg\" 2>/dev/null ;;
                             proton-tkg)
-                                (command -v bat >/dev/null 2>&1 && bat --style=numbers --color=always \"\$HOME/.config/frogminer/proton-tkg.cfg\" 2>/dev/null) || (cat \"\$HOME/.config/frogminer/proton-tkg.cfg\" 2>/dev/null) || true ;;
+                                bat --style=numbers --color=always \"\$HOME/.config/frogminer/proton-tkg.cfg\" 2>/dev/null ;;
                             back)
                                 echo \"👋 Back to Mainmenu!\" ;;
                         esac
@@ -471,7 +471,7 @@ _handle_config_file() {
         # Download and create new configuration file
         mkdir -p "$(dirname "$config_path")"
         
-        if wget -qO "$config_path" "$config_url" 2>/dev/null || curl -fsSL "$config_url" -o "$config_path" 2>/dev/null; then
+        if curl -fsSL "$config_url" -o "$config_path" 2>/dev/null; then
             echo -e "${GREEN} ✅ Configuration ready at $config_path${RESET}"
             _editor "$config_path" || {
                 echo -e "${RED}${BOLD} ❌ Error opening $config_path configuration!${RESET}"
