@@ -12,11 +12,12 @@
 
 ## ⭐ Features
 - **Manage the popular TKG packages `Kernel`, `Nvidia`, `Mesa`, `Wine`, `Proton` from the [Frogging-Family](https://github.com/Frogging-Family) repositories.** 
-- **Fuzzy finder `fzf` for the interactive menu.**
-- **Provides an quick command-line mode.**
-- **Split window for reading markdown `glow` and configuration files.**
-- **Edit the TKG package configuration files with `nano`, `vim` in `~/.config/frogminer/` folder.**
-- **Optional download configuration files with `curl`, `wget` in `~/.config/frogminer/` folder.**
+- **Interactive Fuzzy finder `fzf` menue mode.**
+- **Quick direct command-line mode.**
+- **Includes preview window.**
+- **Edit configuration files using your preferred editor.  
+    Set the `$EDITOR` environment variable such as `nano`, `vim`.** ***Howto: [ArchWiki](https://wiki.archlinux.org/title/Environment_variables#)***
+- **Optional download configuration files.**
 
 <div align="center">
   <img src="images/tkginstaller.png" alt="TKG Installer Screenshot" />
@@ -79,9 +80,6 @@
 
 - Optional tools (Recommended):
 
-> - **`bat`** - Alternative for "cat" with syntax highlighting.
-> - **`curl`, `wget`** - Fetching preview content.
-> - **`glow`** - Converts Markdown in terminal.
 > - **`nano`, `vim`** - An text editor for configuration files.
 > - **`onefetch`** - Git repository information display.
 
@@ -94,7 +92,7 @@
    tkginstaller
    ```
 
-- #### Commandline (Direct-mode)
+- #### Command-line (Direct-mode)
 
    ```bash
    # Skip the menu and run specific actions directly:
@@ -109,11 +107,6 @@
    tkginstaller help
    ```
 
----
-
-### ⚙️ System Configuration
-
-- Set your preferred editor via `$EDITOR` environment variable. See: [ArchWiki](https://wiki.archlinux.org/title/Environment_variables#)
 ---
 
 > [!TIP]
