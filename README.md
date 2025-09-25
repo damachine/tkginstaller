@@ -80,7 +80,7 @@
 
 - Optional tools (Recommended):
 
-> - **`nano`, `vim`** - An text editor for configuration files.
+> - **`nano`, `micro`, `vim`** - An text editor for configuration files.
 > - **`onefetch`** - Git repository information display.
 
 ---
