@@ -29,11 +29,11 @@
 
 ## 🛠️ Installation
 
-#### Arch Linux (Recommended)
+#### Arch Linux
 
 [![AUR](https://img.shields.io/aur/version/tkginstaller-git?color=1793d1&label=AUR&logo=arch-linux)](https://aur.archlinux.org/packages/tkginstaller-git)
 
-- Using an AUR helper:
+- Using an AUR helper (Recommended):
   
    ```bash
    # STEP 1: Install
