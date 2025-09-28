@@ -29,7 +29,7 @@
 set -euo pipefail
 
 # 📌 Global paths and configuration
-readonly VERSION="v0.5.2"
+readonly VERSION="v0.5.3"
 readonly LOCKFILE="/tmp/tkginstaller.lock"
 readonly TEMP_DIR="$HOME/.cache/tkginstaller"
 
@@ -594,7 +594,7 @@ _menu() {
     
     selection=$(
         printf "%b\n" \
-            "Linux  |🧠 Linux    – Linux-TKG custom kernels" \
+            "Linux  |🧠 Kernel   – Linux-TKG custom kernels" \
             "Nvidia |🖥️ Nvidia   – Nvidia Open-Source or proprietary graphics driver" \
             "Combo  |🧬 Combo➕  - Combo package: 🟦Linux-TKG ✚ 🟩Nvidia-TKG" \
             "Mesa   |🧩 Mesa     – Open-Source graphics driver for AMD and Intel" \
