@@ -22,7 +22,7 @@
   <img src="images/tkginstaller.png" alt="TKG Installer Screenshot" />
 </div>
 
-[🎬 Demo-Video](images/tkginstaller.webm)
+[🎬 Demo-Video](images/tkginstaller.gif)
 
 ---
 
