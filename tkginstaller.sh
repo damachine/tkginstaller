@@ -29,7 +29,7 @@
 set -euo pipefail
 
 # 📌 Global paths and configuration
-readonly VERSION="v0.5.3"
+readonly VERSION="v0.5.4"
 readonly LOCKFILE="/tmp/tkginstaller.lock"
 readonly TEMP_DIR="$HOME/.cache/tkginstaller"
 
@@ -363,11 +363,11 @@ _config_edit() {
         # Interactive configuration file selection with preview
         config_choice=$(
             printf "%b\n" \
-                "linux-tkg  |🧠 Linux   - linux-tkg.cfg" \
-                "nvidia-all |🎮 Nvidia  - nvidia-all.cfg" \
-                "mesa-git   |🧩 Mesa    - mesa-git.cfg" \
-                "wine-tkg   |🍷 Wine    - wine-tkg.cfg" \
-                "proton-tkg |🎮 Proton  - proton-tkg.cfg" \
+                "linux-tkg  |🧠 Linux   ─ linux-tkg.cfg" \
+                "nvidia-all |🎮 Nvidia  ─ nvidia-all.cfg" \
+                "mesa-git   |🧩 Mesa    ─ mesa-git.cfg" \
+                "wine-tkg   |🍷 Wine    ─ wine-tkg.cfg" \
+                "proton-tkg |🎮 Proton  ─ proton-tkg.cfg" \
                 "back       |⏪ Back" \
             | fzf \
                 --with-shell="bash -c" \
@@ -382,10 +382,10 @@ _config_edit() {
                 --no-input \
                 --no-multi \
                 --no-multi-line \
-                --header=$'🐸 TKG Configuration Editor – Select a config file...\n📝 Default directory: ~/.config/frogminer/' \
+                --header=$'🐸 TKG Configuration Editor ── Select a config file\n📝 Default directory: ~/.config/frogminer/' \
                 --header-border=thinblock \
                 --header-first \
-                --footer="📝 Use arrow keys to navigate, Enter to select, ESC to exit" \
+                --footer=$'📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit\nℹ️ Usage: Set the $EDITOR environment\n🌐 See: https://wiki.archlinux.org/title/Environment_variables' \
                 --footer-border=thinblock \
                 --preview="
                     key=\$(echo {} | cut -d'|' -f1 | xargs)
@@ -594,15 +594,15 @@ _menu() {
     
     selection=$(
         printf "%b\n" \
-            "Linux  |🧠 Kernel   – Linux-TKG custom kernels" \
-            "Nvidia |🖥️ Nvidia   – Nvidia Open-Source or proprietary graphics driver" \
-            "Combo  |🧬 Combo➕  - Combo package: 🟦Linux-TKG ✚ 🟩Nvidia-TKG" \
-            "Mesa   |🧩 Mesa     – Open-Source graphics driver for AMD and Intel" \
-            "Wine   |🍷 Wine     – Windows compatibility layer" \
-            "Proton |🎮 Proton   – Windows compatibility layer for Steam / Gaming" \
-            "Config |🛠️ Config   - Sub-menu➡️ edit TKG configuration files" \
-            "Clean  |🧹 Clean    - Clean downloaded files" \
-            "Help   |❓ Help     - Shows all commands" \
+            "Linux  |🧠 Kernel   ─ Linux-TKG custom kernels" \
+            "Nvidia |🖥️ Nvidia   ─ Nvidia Open-Source or proprietary graphics driver" \
+            "Combo  |🧬 Combo➕  ─ Combo package: 🟦Linux-TKG ✚ 🟩Nvidia-TKG" \
+            "Mesa   |🧩 Mesa     ─ Open-Source graphics driver for AMD and Intel" \
+            "Wine   |🍷 Wine     ─ Windows compatibility layer" \
+            "Proton |🎮 Proton   ─ Windows compatibility layer for Steam / Gaming" \
+            "Config |🛠️ Config   ─ Sub-menu➡️ edit TKG configuration files" \
+            "Clean  |🧹 Clean    ─ Clean downloaded files" \
+            "Help   |❓ Help     ─ Shows all commands" \
             "Exit   |❌ Exit" \
         | fzf \
             --with-shell="bash -c" \
@@ -617,12 +617,12 @@ _menu() {
             --no-input \
             --no-multi \
             --no-multi-line \
-            --header="🐸 TKG Installer – Select a package..." \
+            --header=$"🐸 *** TKG Installer ── Select a package *** 🐸" \
             --header-border=thinblock \
             --header-label="$VERSION" \
             --header-label-pos=2 \
             --header-first \
-            --footer="📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit" \
+            --footer=$'📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit\n🐸 Frogging-Family: https://github.com/Frogging-Family\n🌐 About: https://github.com/damachine/tkginstaller' \
             --footer-border=thinblock \
             --preview='case {} in \
                 Linux*)     echo -e "\033[1;32m──────────────────────────────────────────────────────────\n🧠 Linux-TKG Preview\n──────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_LINUX";; \
