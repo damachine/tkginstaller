@@ -29,7 +29,7 @@
 set -euo pipefail
 
 # 📌 Global paths and configuration
-readonly VERSION_LABEL="v0.5.0"
+readonly VERSION="v0.5.1"
 readonly LOCKFILE="/tmp/tkginstaller.lock"
 readonly TEMP_DIR="$HOME/.cache/tkginstaller"
 
@@ -370,9 +370,12 @@ _config_edit() {
                 "proton-tkg |🎮 Proton  - proton-tkg.cfg" \
                 "back       |⏪ Back" \
                 | fzf \
-                    --style full \
+                    --style full:thinblock \
                     --header=$'🐸 TKG Configuration Editor – Select a config file...\n📝 Default directory: "~/.config/frogminer/"' \
+                    --header-border=thinblock \
                     --header-first \
+                    --footer="📝 Use arrow keys to navigate, Enter to select, ESC to exit" \
+                    --footer-border=thinblock \
                     --layout=reverse \
                     --height="-1" \
                     --ansi \
@@ -380,6 +383,7 @@ _config_edit() {
                     --with-nth="2" \
                     --no-input \
                     --no-multi \
+                    --with-shell="bash -c" \
                     --preview="
                         key=\$(echo {} | cut -d'|' -f1 | xargs)
                         case \$key in
@@ -397,8 +401,9 @@ _config_edit() {
                                 echo \"👋 Back to Mainmenu!\" ;;
                         esac
                     " \
-                    --with-shell="bash -c" \
+                    --preview-label="Preview" \
                     --preview-window="right:nowrap:70%" \
+                    --preview-border=thinblock \
                     --color='header:green,pointer:green,marker:green'
         )
         
@@ -597,11 +602,15 @@ _menu() {
             "Help   |❓ Help" \
             "Exit   |❌ Exit" \
         | fzf \
-            --style full \
+            --style full:thinblock \
+            --border=none \
             --header="🐸 TKG Installer – Select a package..." \
-            --header-label="$VERSION_LABEL" \
+            --header-border=thinblock \
+            --header-label="$VERSION" \
             --header-label-pos=2 \
             --header-first \
+            --footer="📝 Use arrow keys to navigate, Enter to select, ESC to exit" \
+            --footer-border=thinblock \
             --layout=reverse \
             --height="-1" \
             --ansi \
@@ -609,6 +618,7 @@ _menu() {
             --with-nth="2" \
             --no-input \
             --no-multi \
+            --with-shell="bash -c" \
             --preview='case {} in \
                 Linux*)     echo -e "\033[1;32m──────────────────────────────────────────────────────────\n🧠 Linux-TKG Preview\n──────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_LINUX";; \
                 Nvidia*)    echo -e "\033[1;32m──────────────────────────────────────────────────────────\n🖥️ Nvidia-TKG Preview\n──────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_NVIDIA";; \
@@ -622,8 +632,9 @@ _menu() {
                 Exit*)      echo -e "\033[1;32m──────────────────────────────────────────────────────────\n👋 Exit\n──────────────────────────────────────────────────────────\033[0m\n\nQuit the program and removes temporary files.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller\n\nIf you like this program and want to support the project on GitHub ⭐ ⭐ ⭐";; \
                 *)          echo -e "\033[1;32m──────────────────────────────────────────────────────────\n🐸 TKG-Installer\n──────────────────────────────────────────────────────────\033[0m\nhttps://github.com/damachine/tkginstaller";; \
             esac' \
-            --with-shell="bash -c" \
+            --preview-label="Preview" \
             --preview-window="right:wrap:60%" \
+            --preview-border=thinblock \
             --color='header:green,pointer:green,marker:green'
     )
 
