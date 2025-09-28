@@ -1,34 +1,35 @@
 #!/usr/bin/env bash
 
-# =============================================================================
-# TKG-Installer 🐸 - Install and configure TKG/Frogminer packages with ease
-# =============================================================================
-# Author:       damachine (christkue79@gmail.com)
-# Maintainer:   DAMACHINE <christkue79@gmail.com>
-# Website:      https://github.com/damachine/tkginstaller
-# Copyright:    (c) 2025 damachine
-# License:      MIT
-# Version:      1.0
+# -----------------------------------------------------------------------------
+# author: damachine (christkue79@gmail.com)
+# Maintainer: DAMACHINE <christkue79@gmail.com>
+# website: https://github.com/damachine
+#          https://github.com/damachine/tkginstaller 
+# copyright: (c) 2025 damachine
+# license: MIT
+# version: 1.0
+#   This software is provided "as is", without warranty of any kind, express or implied.
+#   I do not guarantee that it will work as intended on your system.
 #
-# This software is provided "as is", without warranty of any kind, express or implied.
-# I do not guarantee that it will work as intended on your system.
-#
-# Features:
-#   • Supports Linux-TKG, Nvidia-TKG, Mesa-TKG, Wine-TKG, Proton-TKG
-#   • Configuration editor and cleanup functions
-#   • User-friendly menu with previews
-#   • Designed for Arch Linux but adaptable to other distributions
-#
-# Usage:
-#   • Do not run as root. Use a dedicated user for security.
-#   • Uses color output and Unicode icons for better readability.
-#   • See README.md for further details.
-# =============================================================================
+# Info:
+# 	TKG-Installer 🐸
+# 	Manage TKG/Frogminer packages.
+# 	Supports Linux-TKG, Nvidia-TKG, Mesa-TKG, Wine-TKG, Proton-TKG.
+# 	Provides a user-friendly menu with previews.
+# 	Includes configuration editor functions.
+# 	Designed for Arch Linux but adaptable to other distributions.
+# Details:
+#   This script handles installation, configuration for TKG/Frogminer packages.
+#   It uses color output and Unicode icons for better readability.
+#   Do not run as root. Use a dedicated user for security.
+#   See https://github.com/damachine/tkginstaller further details.
+# -----------------------------------------------------------------------------
 
 # 🔒 Safety settings and strict mode
 set -euo pipefail
 
 # 📌 Global paths and configuration
+readonly VERSION_LABEL="v0.5.0"
 readonly LOCKFILE="/tmp/tkginstaller.lock"
 readonly TEMP_DIR="$HOME/.cache/tkginstaller"
 
@@ -131,23 +132,23 @@ _get_preview_content() {
     case "$repo_type" in
         linux)
             repo_url="https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/README.md"
-            static_preview="Note:\n- Use the configuration editor to customize build options.\n- Ensure you have the necessary build dependencies installed.\n- The installer will clone the repository, build the kernel, and install it.\n- After installation, reboot to use the new kernel.\n\nTips:\n- Run 'tkginstaller linux' to skip menu\n- Join the Frogging-Family community for support and updates.\n\n---\n\n🧠 Linux-TKG\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/linux-tkg/blob/master/README.md"
+            static_preview="Note:\n- Use the configuration editor to customize build options.\n- Ensure you have the necessary build dependencies installed.\n- The installer will clone the repository, build the kernel, and install it.\n- After installation, reboot to use the new kernel.\n\nTips:\n- Run 'tkginstaller linux' to skip menu\n- Join the Frogging-Family community for support and updates.\n\n---\n\n\033[1;32m──────────────────────────────────────────────────────────\n🧠 Online Preview\n\n - See full documentation at:\n - https://github.com/Frogging-Family/linux-tkg/blob/master/README.md\n──────────────────────────────────────────────────────────\033[0m"
             ;;
         nvidia)
             repo_url="https://raw.githubusercontent.com/Frogging-Family/nvidia-all/master/README.md"
-            static_preview="Note:\n- Supports both open-source and proprietary Nvidia drivers.\n- Use the configuration editor to set driver options and patches.\n- Installer will clone the repo, build and install the driver.\n- Reboot after installation for changes to take effect.\n\nTips:\n- Run 'tkginstaller nvidia' to skip menu\n- Check compatibility with your GPU model.\n- Join the Frogging-Family community for troubleshooting.\n\n---\n\n🎮 Nvidia-TKG\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/nvidia-all/blob/master/README.md"
+            static_preview="Note:\n- Supports both open-source and proprietary Nvidia drivers.\n- Use the configuration editor to set driver options and patches.\n- Installer will clone the repo, build and install the driver.\n- Reboot after installation for changes to take effect.\n\nTips:\n- Run 'tkginstaller nvidia' to skip menu\n- Check compatibility with your GPU model.\n- Join the Frogging-Family community for troubleshooting.\n\n---\n\n\033[1;32m──────────────────────────────────────────────────────────\n🎮 Online Preview\n\n - See full documentation at:\n - https://github.com/Frogging-Family/nvidia-all/blob/master/README.md\n──────────────────────────────────────────────────────────\033[0m"
             ;;
         mesa)
             repo_url="https://raw.githubusercontent.com/Frogging-Family/mesa-git/master/README.md"
-            static_preview="Note:\n- Open-source graphics drivers for AMD and Intel GPUs.\n- Use the configuration editor for custom build flags.\n- Installer will clone, build, and install Mesa.\n- Reboot or restart X for changes to apply.\n\nTips:\n- Run 'tkginstaller mesa' to skip menu\n- Useful for gaming and Vulkan support.\n- Join the Frogging-Family community for updates.\n\n---\n\n🧩 Mesa-TKG\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/mesa-git/blob/master/README.md"
+            static_preview="Note:\n- Open-source graphics drivers for AMD and Intel GPUs.\n- Use the configuration editor for custom build flags.\n- Installer will clone, build, and install Mesa.\n- Reboot or restart X for changes to apply.\n\nTips:\n- Run 'tkginstaller mesa' to skip menu\n- Useful for gaming and Vulkan support.\n- Join the Frogging-Family community for updates.\n\n---\n\n\033[1;32m──────────────────────────────────────────────────────────\n🧩 Online Preview\n\n - See full documentation at:\n - https://github.com/Frogging-Family/mesa-git/blob/master/README.md\n──────────────────────────────────────────────────────────\033[0m"
             ;;
         wine)
             repo_url="https://raw.githubusercontent.com/Frogging-Family/wine-tkg-git/master/README.md"
-            static_preview="Note:\n- Custom Wine builds for better compatibility and gaming performance.\n- Use the configuration editor for patches and tweaks.\n- Installer will clone, build, and install Wine-TKG.\n- Configure your prefix after installation.\n\nTips:\n- Run 'tkginstaller wine' to skip menu\n- Ideal for running Windows games and apps.\n- Join the Frogging-Family community for support.\n\n---\n\n🍷 Wine-TKG\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/wine-tkg-git/blob/master/README.md"
+            static_preview="Note:\n- Custom Wine builds for better compatibility and gaming performance.\n- Use the configuration editor for patches and tweaks.\n- Installer will clone, build, and install Wine-TKG.\n- Configure your prefix after installation.\n\nTips:\n- Run 'tkginstaller wine' to skip menu\n- Ideal for running Windows games and apps.\n- Join the Frogging-Family community for support.\n\n---\n\n\033[1;32m──────────────────────────────────────────────────────────\n🍷 Online Preview\n\n - See full documentation at:\n - https://github.com/Frogging-Family/wine-tkg-git/blob/master/README.md\n──────────────────────────────────────────────────────────\033[0m"
             ;;
         proton)
             repo_url="https://raw.githubusercontent.com/Frogging-Family/wine-tkg-git/master/proton-tkg/README.md"
-            static_preview="Note:\n- Custom Proton builds for Steam Play and gaming.\n- Use the configuration editor for tweaks and patches.\n- Installer will clone, build, and install Proton-TKG.\n- Select Proton-TKG in Steam after installation.\n\nTips:\n- Run 'tkginstaller proton' to skip menu\n- Great for running Windows games via Steam.\n- Join the Frogging-Family community for updates.\n\n---\n\n🧪 Proton-TKG\n\nSee full documentation at:\nhttps://github.com/Frogging-Family/wine-tkg-git/blob/master/proton-tkg/README.md"
+            static_preview="Note:\n- Custom Proton builds for Steam Play and gaming.\n- Use the configuration editor for tweaks and patches.\n- Installer will clone, build, and install Proton-TKG.\n- Select Proton-TKG in Steam after installation.\n\nTips:\n- Run 'tkginstaller proton' to skip menu\n- Great for running Windows games via Steam.\n- Join the Frogging-Family community for updates.\n\n---\n\n\033[1;32m──────────────────────────────────────────────────────────\n🎮 Online Preview\n\n - See full documentation at:\n - https://github.com/Frogging-Family/wine-tkg-git/blob/master/proton-tkg/README.md\n──────────────────────────────────────────────────────────\033[0m"
             ;;
         *)
             echo -e "$static_preview"
@@ -362,15 +363,15 @@ _config_edit() {
         # Interactive configuration file selection with preview
         config_choice=$(
             printf "%b\n" \
-                "linux-tkg  |🧠 Linux-TKG .cfg" \
-                "nvidia-all |🎮 Nvidia-TKG .cfg" \
-                "mesa-git   |🧩 Mesa-TKG .cfg" \
-                "wine-tkg   |🍷 Wine-TKG .cfg" \
-                "proton-tkg |🧪 Proton-TKG .cfg" \
-                "back       |⬅️ Back to Main Menu" \
+                "linux-tkg  |🧠 Linux   - linux-tkg.cfg" \
+                "nvidia-all |🎮 Nvidia  - nvidia-all.cfg" \
+                "mesa-git   |🧩 Mesa    - mesa-git.cfg" \
+                "wine-tkg   |🍷 Wine    - wine-tkg.cfg" \
+                "proton-tkg |🎮 Proton  - proton-tkg.cfg" \
+                "back       |⏪ Back" \
                 | fzf \
                     --style full \
-                    --header="🐸 TKG Configuration Editor – Select a config..." \
+                    --header=$'🐸 TKG Configuration Editor – Select a config file...\n📝 Default directory: "~/.config/frogminer/"' \
                     --header-first \
                     --layout=reverse \
                     --height="-1" \
@@ -397,7 +398,7 @@ _config_edit() {
                         esac
                     " \
                     --with-shell="bash -c" \
-                    --preview-window="right:wrap:60%" \
+                    --preview-window="right:nowrap:70%" \
                     --color='header:green,pointer:green,marker:green'
         )
         
@@ -469,18 +470,27 @@ _handle_config_file() {
         }
     else
         # Download and create new configuration file
-        mkdir -p "$(dirname "$config_path")"
-        
-        if curl -fsSL "$config_url" -o "$config_path" 2>/dev/null; then
-            echo -e "${GREEN} ✅ Configuration ready at $config_path${RESET}"
-            _editor "$config_path" || {
-                echo -e "${RED}${BOLD} ❌ Error opening $config_path configuration!${RESET}"
+        echo -e "${YELLOW}${BOLD} ⚠️ $config_path does not exist.${RESET}"
+        read -p "Do you want to download the default configuration from $config_url? [y/N]: " answer
+        case "$answer" in
+            y|Y)
+                mkdir -p "$(dirname "$config_path")"
+                if curl -fsSL "$config_url" -o "$config_path" 2>/dev/null; then
+                    echo -e "${GREEN} ✅ Configuration ready at $config_path${RESET}"
+                    _editor "$config_path" || {
+                        echo -e "${RED}${BOLD} ❌ Error opening $config_path configuration!${RESET}"
+                        return 1
+                    }
+                else
+                    echo -e "${RED}${BOLD} ❌ Error downloading configuration from $config_url${RESET}"
+                    return 1
+                fi
+                ;;
+            *)
+                echo -e "${YELLOW} ⚠️ Download cancelled. No configuration file created.${RESET}"
                 return 1
-            }
-        else
-            echo -e "${RED}${BOLD} ❌ Error downloading configuration from $config_url${RESET}"
-            return 1
-        fi
+                ;;
+        esac
     fi
 
     echo -e "${GREEN} ✅ Configuration saved!${RESET}"
@@ -555,18 +565,18 @@ _config_promt() {
 
 # ❓ Help information display
 _help_promt() {
-    echo -e "${BLUE}Usage: $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|linux+nvidia|config|clean|exit]${RESET}"
-    echo -e "${BLUE}Shortcuts: l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/linux+nvidia=Linux+Nvidia combo${RESET}"
+    echo -e "${BLUE}Usage: $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|combo|config|clean|exit]${RESET}"
+    echo -e "${BLUE}Shortcuts: l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/combo=combo combo${RESET}"
     echo -e "${BLUE}Examples:${RESET}"
-    echo -e "  $0 linux           # Install Linux-TKG"
-    echo -e "  $0 nvidia          # Install Nvidia-TKG"
-    echo -e "  $0 mesa            # Install Mesa-TKG"
-    echo -e "  $0 wine            # Install Wine-TKG"
-    echo -e "  $0 proton          # Install Proton-TKG"
-    echo -e "  $0 linuxnvidia     # Install Linux-TKG + Nvidia-TKG"
-    echo -e "  $0 ln              # Install Linux-TKG + Nvidia-TKG"
-    echo -e "  $0 linux+nvidia    # Install Linux-TKG + Nvidia-TKG"
-    echo -e "  $0 exit            # Exit the installer"
+    echo -e "  $0 linux         # Install Linux-TKG"
+    echo -e "  $0 nvidia        # Install Nvidia-TKG"
+    echo -e "  $0 mesa          # Install Mesa-TKG"
+    echo -e "  $0 wine          # Install Wine-TKG"
+    echo -e "  $0 proton        # Install Proton-TKG"
+    echo -e "  $0 linuxnvidia   # Install Linux-TKG + Nvidia-TKG"
+    echo -e "  $0 ln            # Install Linux-TKG + Nvidia-TKG"
+    echo -e "  $0 combo         # Install Linux-TKG + Nvidia-TKG"
+    echo -e "  $0 exit          # Exit the installer"
     exit 0
 }
 
@@ -576,20 +586,20 @@ _menu() {
     
     selection=$(
         printf "%b\n" \
-            "Linux        |🧠 Linux-TKG     – Linux Kernel" \
-            "Nvidia       |🎮 Nvidia-TKG    – Nvidia Open-Source or proprietary graphics driver" \
-            "Linux+Nvidia |💻 Linux+Nvidia  - Combo package: Linux-TKG + Nvidia-TKG" \
-            "Mesa         |🧩 Mesa-TKG      – Mesa Open-Source graphics driver for AMD and Intel" \
-            "Wine         |🍷 Wine-TKG      – Windows compatibility layer" \
-            "Proton       |🧪 Proton-TKG    – Windows compatibility layer for Steam / Gaming" \
-            "Config       |🛠️ Config-TKG    – Edit TKG configuration files" \
-            "Help         |❓ Help" \
-            "Clean        |🧹 Clean/Reset" \
-            "Exit         |❌ Exit" \
+            "Linux  |🧠 Linux       – Linux Kernel" \
+            "Nvidia |🖥️ Nvidia      – Nvidia Open-Source or proprietary graphics driver" \
+            "Combo  |🧬 Combo ➕    - Combo package: Linux-TKG + Nvidia-TKG" \
+            "Mesa   |🧩 Mesa        – Mesa Open-Source graphics driver for AMD and Intel" \
+            "Wine   |🍷 Wine        – Windows compatibility layer" \
+            "Proton |🎮 Proton      – Windows compatibility layer for Steam / Gaming" \
+            "Config |🛠️ Config      – Sub-menu➡️: Edit TKG configuration files" \
+            "Clean  |🧹 Clean       - Clean downloaded files" \
+            "Help   |❓ Help" \
+            "Exit   |❌ Exit" \
         | fzf \
             --style full \
             --header="🐸 TKG Installer – Select a package..." \
-            --header-label=v0.4.9 \
+            --header-label="$VERSION_LABEL" \
             --header-label-pos=2 \
             --header-first \
             --layout=reverse \
@@ -600,16 +610,17 @@ _menu() {
             --no-input \
             --no-multi \
             --preview='case {} in \
-                Linux*)     echo -e "🧠 Linux-TKG Preview\n\n$PREVIEW_LINUX";; \
-                Nvidia*)    echo -e "🎮 Nvidia-TKG Preview\n\n$PREVIEW_NVIDIA";; \
-                Mesa*)      echo -e "🧩 Mesa-TKG Preview\n\n$PREVIEW_MESA";; \
-                Wine*)      echo -e "🍷 Wine-TKG Preview\n\n$PREVIEW_WINE";; \
-                Proton*)    echo -e "🧪 Proton-TKG Preview\n\n$PREVIEW_PROTON";; \
-                Config*)    echo -e "🛠️ Config-TKG\n\nConfigure all TKG packages.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller#configuration-menue";; \
-                Help*)      echo -e "❓ TKG-Installer\n\nShows all Commandline usage.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller#usage";; \
-                Clean*)     echo -e "🧹 Clean\n\nRemoves temporary files and resets the installer.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller#notes";; \
-                Exit*)      echo -e "👋 Exit\n\nExits the program.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller\n\nIf you like this program and want to support development, ⭐ visit the project on GitHub!";; \
-                *)          echo -e "🐸 TKG-Installer\nhttps://github.com/damachine/tkginstaller";; \
+                Linux*)     echo -e "\033[1;32m──────────────────────────────────────────────────────────\n🧠 Linux-TKG Preview\n──────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_LINUX";; \
+                Nvidia*)    echo -e "\033[1;32m──────────────────────────────────────────────────────────\n🖥️ Nvidia-TKG Preview\n──────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_NVIDIA";; \
+                Combo*)     echo -e "\033[1;32m──────────────────────────────────────────────────────────\n🧬 Combo-TKG Preview\n──────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_LINUX\n\n$PREVIEW_NVIDIA";; \
+                Mesa*)      echo -e "\033[1;32m──────────────────────────────────────────────────────────\n🧩 Mesa-TKG Preview\n──────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_MESA";; \
+                Wine*)      echo -e "\033[1;32m──────────────────────────────────────────────────────────\n🍷 Wine-TKG Preview\n──────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_WINE";; \
+                Proton*)    echo -e "\033[1;32m──────────────────────────────────────────────────────────\n🎮 Proton-TKG Preview\n──────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_PROTON";; \
+                Config*)    echo -e "\033[1;32m──────────────────────────────────────────────────────────\n🛠️ Config-TKG Preview\n──────────────────────────────────────────────────────────\033[0m\n\nConfigure all TKG packages\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller";; \
+                Help*)      echo -e "\033[1;32m──────────────────────────────────────────────────────────\n❓ TKG-Installer Help\n──────────────────────────────────────────────────────────\033[0m\n\nShows all Commandline usage.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller";; \
+                Clean*)     echo -e "\033[1;32m──────────────────────────────────────────────────────────\n🧹 Clean information\n──────────────────────────────────────────────────────────\033[0m\n\nRemoves temporary files in '~/.cache/tkginstaller' and resets the installer.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller";; \
+                Exit*)      echo -e "\033[1;32m──────────────────────────────────────────────────────────\n👋 Exit\n──────────────────────────────────────────────────────────\033[0m\n\nQuit the program and removes temporary files.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller\n\nIf you like this program and want to support the project on GitHub ⭐ ⭐ ⭐";; \
+                *)          echo -e "\033[1;32m──────────────────────────────────────────────────────────\n🐸 TKG-Installer\n──────────────────────────────────────────────────────────\033[0m\nhttps://github.com/damachine/tkginstaller";; \
             esac' \
             --with-shell="bash -c" \
             --preview-window="right:wrap:60%" \
@@ -635,7 +646,7 @@ _main() {
     # Handle direct command line arguments for automation
     if [[ $# -gt 0 ]]; then
         case "${1:-}" in
-            linuxnvidia|ln|linux+nvidia)
+            linuxnvidia|ln|combo)
                 _pre
                 _linuxnvidia_promt
                 _show_done
@@ -672,8 +683,8 @@ _main() {
                 exit
                 ;;
             help|-h|--help)
-                echo -e "${BLUE}Usage: $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|linux+nvidia|config|clean|exit]${RESET}"
-                echo -e "${BLUE}Shortcuts: l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/linux+nvidia=Linux+Nvidia combo${RESET}"
+                echo -e "${BLUE}Usage: $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|combo|config|clean|exit]${RESET}"
+                echo -e "${BLUE}Shortcuts: l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/combo=combo combo${RESET}"
                 echo -e "${BLUE}Examples:${RESET}"
                 echo -e "  $0 linux           # Install Linux-TKG"
                 echo -e "  $0 nvidia          # Install Nvidia-TKG"
@@ -682,7 +693,7 @@ _main() {
                 echo -e "  $0 proton          # Install Proton-TKG"
                 echo -e "  $0 linuxnvidia     # Install Linux-TKG + Nvidia-TKG"
                 echo -e "  $0 ln              # Install Linux-TKG + Nvidia-TKG"
-                echo -e "  $0 linux+nvidia    # Install Linux-TKG + Nvidia-TKG"
+                echo -e "  $0 combo           # Install Linux-TKG + Nvidia-TKG"
                 echo -e "  $0 exit            # Exit the installer"
                 exit 0
                 ;;
@@ -705,7 +716,7 @@ _main() {
     rm -f /tmp/tkginstaller_choice
 
     case $choice in
-        Linux+Nvidia) 
+        Combo) 
             _linuxnvidia_promt 
             ;;
         Linux)        
