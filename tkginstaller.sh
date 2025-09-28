@@ -622,7 +622,7 @@ _menu() {
             --header-label="$VERSION" \
             --header-label-pos=2 \
             --header-first \
-            --footer="📝 Use arrow keys to navigate, Enter to select, ESC to exit" \
+            --footer="📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit" \
             --footer-border=thinblock \
             --preview='case {} in \
                 Linux*)     echo -e "\033[1;32m──────────────────────────────────────────────────────────\n🧠 Linux-TKG Preview\n──────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_LINUX";; \
