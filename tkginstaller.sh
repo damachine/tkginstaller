@@ -29,7 +29,7 @@
 set -euo pipefail
 
 # 📌 Global paths and configuration
-readonly VERSION="v0.5.1"
+readonly VERSION="v0.5.2"
 readonly LOCKFILE="/tmp/tkginstaller.lock"
 readonly TEMP_DIR="$HOME/.cache/tkginstaller"
 
@@ -369,42 +369,45 @@ _config_edit() {
                 "wine-tkg   |🍷 Wine    - wine-tkg.cfg" \
                 "proton-tkg |🎮 Proton  - proton-tkg.cfg" \
                 "back       |⏪ Back" \
-                | fzf \
-                    --style full:thinblock \
-                    --header=$'🐸 TKG Configuration Editor – Select a config file...\n📝 Default directory: "~/.config/frogminer/"' \
-                    --header-border=thinblock \
-                    --header-first \
-                    --footer="📝 Use arrow keys to navigate, Enter to select, ESC to exit" \
-                    --footer-border=thinblock \
-                    --layout=reverse \
-                    --height="-1" \
-                    --ansi \
-                    --delimiter="|" \
-                    --with-nth="2" \
-                    --no-input \
-                    --no-multi \
-                    --with-shell="bash -c" \
-                    --preview="
-                        key=\$(echo {} | cut -d'|' -f1 | xargs)
-                        case \$key in
-                            linux-tkg)
-                                bat --style=numbers --color=always \"\$HOME/.config/frogminer/linux-tkg.cfg\" 2>/dev/null ;;
-                            nvidia-all)
-                                bat --style=numbers --color=always \"\$HOME/.config/frogminer/nvidia-all.cfg\" 2>/dev/null ;;
-                            mesa-git)
-                                bat --style=numbers --color=always \"\$HOME/.config/frogminer/mesa-git.cfg\" 2>/dev/null ;;
-                            wine-tkg)
-                                bat --style=numbers --color=always \"\$HOME/.config/frogminer/wine-tkg.cfg\" 2>/dev/null ;;
-                            proton-tkg)
-                                bat --style=numbers --color=always \"\$HOME/.config/frogminer/proton-tkg.cfg\" 2>/dev/null ;;
-                            back)
-                                echo \"👋 Back to Mainmenu!\" ;;
-                        esac
-                    " \
-                    --preview-label="Preview" \
-                    --preview-window="right:nowrap:70%" \
-                    --preview-border=thinblock \
-                    --color='header:green,pointer:green,marker:green'
+            | fzf \
+                --with-shell="bash -c" \
+                --style full:thinblock \
+                --border=none \
+                --layout=reverse \
+                --highlight-line \
+                --height="-1" \
+                --ansi \
+                --delimiter="|" \
+                --with-nth="2" \
+                --no-input \
+                --no-multi \
+                --no-multi-line \
+                --header=$'🐸 TKG Configuration Editor – Select a config file...\n📝 Default directory: ~/.config/frogminer/' \
+                --header-border=thinblock \
+                --header-first \
+                --footer="📝 Use arrow keys to navigate, Enter to select, ESC to exit" \
+                --footer-border=thinblock \
+                --preview="
+                    key=\$(echo {} | cut -d'|' -f1 | xargs)
+                    case \$key in
+                        linux-tkg)
+                            bat --style=numbers --color=always \"\$HOME/.config/frogminer/linux-tkg.cfg\" 2>/dev/null ;;
+                        nvidia-all)
+                            bat --style=numbers --color=always \"\$HOME/.config/frogminer/nvidia-all.cfg\" 2>/dev/null ;;
+                        mesa-git)
+                            bat --style=numbers --color=always \"\$HOME/.config/frogminer/mesa-git.cfg\" 2>/dev/null ;;
+                        wine-tkg)
+                            bat --style=numbers --color=always \"\$HOME/.config/frogminer/wine-tkg.cfg\" 2>/dev/null ;;
+                        proton-tkg)
+                            bat --style=numbers --color=always \"\$HOME/.config/frogminer/proton-tkg.cfg\" 2>/dev/null ;;
+                        back)
+                            echo \"👋 Back to Mainmenu!\" ;;
+                    esac
+                " \
+                --preview-label="Preview" \
+                --preview-window="right:nowrap:70%" \
+                --preview-border=thinblock \
+                --color='header:green,pointer:green,marker:green'
         )
         
         # Handle cancelled selection
@@ -591,19 +594,29 @@ _menu() {
     
     selection=$(
         printf "%b\n" \
-            "Linux  |🧠 Linux       – Linux Kernel" \
-            "Nvidia |🖥️ Nvidia      – Nvidia Open-Source or proprietary graphics driver" \
-            "Combo  |🧬 Combo ➕    - Combo package: Linux-TKG + Nvidia-TKG" \
-            "Mesa   |🧩 Mesa        – Mesa Open-Source graphics driver for AMD and Intel" \
-            "Wine   |🍷 Wine        – Windows compatibility layer" \
-            "Proton |🎮 Proton      – Windows compatibility layer for Steam / Gaming" \
-            "Config |🛠️ Config      – Sub-menu➡️: Edit TKG configuration files" \
-            "Clean  |🧹 Clean       - Clean downloaded files" \
-            "Help   |❓ Help" \
+            "Linux  |🧠 Linux    – Linux-TKG custom kernels" \
+            "Nvidia |🖥️ Nvidia   – Nvidia Open-Source or proprietary graphics driver" \
+            "Combo  |🧬 Combo➕  - Combo package: 🟦Linux-TKG ✚ 🟩Nvidia-TKG" \
+            "Mesa   |🧩 Mesa     – Open-Source graphics driver for AMD and Intel" \
+            "Wine   |🍷 Wine     – Windows compatibility layer" \
+            "Proton |🎮 Proton   – Windows compatibility layer for Steam / Gaming" \
+            "Config |🛠️ Config   - Sub-menu➡️ edit TKG configuration files" \
+            "Clean  |🧹 Clean    - Clean downloaded files" \
+            "Help   |❓ Help     - Shows all commands" \
             "Exit   |❌ Exit" \
         | fzf \
+            --with-shell="bash -c" \
             --style full:thinblock \
             --border=none \
+            --layout=reverse \
+            --highlight-line \
+            --height="-1" \
+            --ansi \
+            --delimiter="|" \
+            --with-nth="2" \
+            --no-input \
+            --no-multi \
+            --no-multi-line \
             --header="🐸 TKG Installer – Select a package..." \
             --header-border=thinblock \
             --header-label="$VERSION" \
@@ -611,14 +624,6 @@ _menu() {
             --header-first \
             --footer="📝 Use arrow keys to navigate, Enter to select, ESC to exit" \
             --footer-border=thinblock \
-            --layout=reverse \
-            --height="-1" \
-            --ansi \
-            --delimiter="|" \
-            --with-nth="2" \
-            --no-input \
-            --no-multi \
-            --with-shell="bash -c" \
             --preview='case {} in \
                 Linux*)     echo -e "\033[1;32m──────────────────────────────────────────────────────────\n🧠 Linux-TKG Preview\n──────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_LINUX";; \
                 Nvidia*)    echo -e "\033[1;32m──────────────────────────────────────────────────────────\n🖥️ Nvidia-TKG Preview\n──────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_NVIDIA";; \
@@ -630,7 +635,6 @@ _menu() {
                 Help*)      echo -e "\033[1;32m──────────────────────────────────────────────────────────\n❓ TKG-Installer Help\n──────────────────────────────────────────────────────────\033[0m\n\nShows all Commandline usage.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller";; \
                 Clean*)     echo -e "\033[1;32m──────────────────────────────────────────────────────────\n🧹 Clean information\n──────────────────────────────────────────────────────────\033[0m\n\nRemoves temporary files in '~/.cache/tkginstaller' and resets the installer.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller";; \
                 Exit*)      echo -e "\033[1;32m──────────────────────────────────────────────────────────\n👋 Exit\n──────────────────────────────────────────────────────────\033[0m\n\nQuit the program and removes temporary files.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller\n\nIf you like this program and want to support the project on GitHub ⭐ ⭐ ⭐";; \
-                *)          echo -e "\033[1;32m──────────────────────────────────────────────────────────\n🐸 TKG-Installer\n──────────────────────────────────────────────────────────\033[0m\nhttps://github.com/damachine/tkginstaller";; \
             esac' \
             --preview-label="Preview" \
             --preview-window="right:wrap:60%" \
