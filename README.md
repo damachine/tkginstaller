@@ -14,9 +14,8 @@
 - **Manage the popular TKG packages `Kernel`, `Nvidia`, `Mesa`, `Wine`, `Proton` from the [Frogging-Family](https://github.com/Frogging-Family) repositories.** 
 - **Interactive Fuzzy finder `fzf` menue mode.**
 - **Quick direct command-line mode.**
-- **Includes preview window.**
-- **Edit configuration files using your preferred editor.  
-    Set the `$EDITOR` environment variable such as `nano`, `vim`.** ***Howto: [ArchWiki](https://wiki.archlinux.org/title/Environment_variables#)***
+- **Preview readme and configuration.**
+- **Edit configuration files using your preferred editor.**  
 - **Optional download configuration files.**
 
 <div align="center">
@@ -29,11 +28,11 @@
 
 ## 🛠️ Installation
 
-#### Arch Linux (Recommended)
+#### Arch Linux
 
 [![AUR](https://img.shields.io/aur/version/tkginstaller-git?color=1793d1&label=AUR&logo=arch-linux)](https://aur.archlinux.org/packages/tkginstaller-git)
 
-- Using an AUR helper:
+- Using an AUR helper (Recommended):
   
    ```bash
    # STEP 1: Install
@@ -80,7 +79,7 @@
 
 - Optional tools (Recommended):
 
-> - **`nano`, `vim`** - An text editor for configuration files.
+> - **`nano`, `micro`, `vim`** - An text editor for configuration files. ***Usage: Set the `$EDITOR` environment variable. Howto: [ArchWiki](https://wiki.archlinux.org/title/Environment_variables#)***
 > - **`onefetch`** - Git repository information display.
 
 ---
