@@ -43,7 +43,7 @@
 set -euo pipefail
 
 # 📌 Global paths and configuration
-readonly VERSION="v0.5.7"
+readonly VERSION="v0.5.8"
 readonly LOCKFILE="/tmp/tkginstaller.lock"
 readonly TEMP_DIR="$HOME/.cache/tkginstaller"
 
@@ -416,15 +416,9 @@ _config_edit() {
         fi
         
         # Interactive configuration file selection with preview
+        # shellcheck disable=SC2016  # allow fzf to expand variables in its own shell at runtime
         config_choice=$(
-            printf "%b\n" \
-                "linux-tkg  |🧠 Linux   ─ linux-tkg.cfg" \
-                "nvidia-all |🎮 Nvidia  ─ nvidia-all.cfg" \
-                "mesa-git   |🧩 Mesa    ─ mesa-git.cfg" \
-                "wine-tkg   |🍷 Wine    ─ wine-tkg.cfg" \
-                "proton-tkg |🎮 Proton  ─ proton-tkg.cfg" \
-                "back       |⏪ Back" \
-            | fzf \
+            fzf \
                 --with-shell="bash -c" \
                 --style full:thinblock \
                 --border=none \
@@ -462,7 +456,14 @@ _config_edit() {
                 --preview-label="Preview" \
                 --preview-window="right:nowrap:70%" \
                 --preview-border=thinblock \
-                --color='header:green,pointer:green,marker:green'
+                --color='header:green,pointer:green,marker:green'<<'MENU'
+linux-tkg  |🧠 Linux   ─ linux-tkg.cfg
+nvidia-all |🎮 Nvidia  ─ nvidia-all.cfg
+mesa-git   |🧩 Mesa    ─ mesa-git.cfg
+wine-tkg   |🍷 Wine    ─ wine-tkg.cfg
+proton-tkg |🎮 Proton  ─ proton-tkg.cfg
+back       |⏪ Back
+MENU
         )
         
         # Handle cancelled selection
@@ -611,19 +612,9 @@ _config_promt() {
 _menu() {
     local selection
     
+    # shellcheck disable=SC2016  # allow fzf to expand variables in its own shell at runtime
     selection=$(
-        printf "%b\n" \
-            "Linux  |🧠 Kernel   ─ Linux-TKG custom kernels" \
-            "Nvidia |🖥️ Nvidia   ─ Nvidia Open-Source or proprietary graphics driver" \
-            "Combo  |🧬 Combo➕  ─ Combo package: 🟦Linux-TKG ✚ 🟩Nvidia-TKG" \
-            "Mesa   |🧩 Mesa     ─ Open-Source graphics driver for AMD and Intel" \
-            "Wine   |🍷 Wine     ─ Windows compatibility layer" \
-            "Proton |🎮 Proton   ─ Windows compatibility layer for Steam / Gaming" \
-            "Config |🛠️ Config   ─ Sub-menu➡️ edit TKG configuration files" \
-            "Clean  |🧹 Clean    ─ Clean downloaded files" \
-            "Help   |❓ Help     ─ Shows all commands" \
-            "Exit   |❌ Exit" \
-        | fzf \
+        fzf \
             --with-shell="bash -c" \
             --style full:thinblock \
             --border=none \
@@ -636,12 +627,12 @@ _menu() {
             --no-input \
             --no-multi \
             --no-multi-line \
-            --header=$"🐸 *** TKG Installer ── Select a package *** 🐸" \
+            --header=$'🐸 *** TKG Installer ── Select a package *** 🐸' \
             --header-border=thinblock \
             --header-label="$VERSION" \
             --header-label-pos=2 \
             --header-first \
-            --footer=$"📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit\n🐸 Frogging-Family: https://github.com/Frogging-Family\n🌐 About: https://github.com/damachine/tkginstaller" \
+            --footer=$'📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit\n🐸 Frogging-Family: https://github.com/Frogging-Family\n🌐 About: https://github.com/damachine/tkginstaller' \
             --footer-border=thinblock \
             --preview='case {} in \
                 Linux*)     echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🧠 Linux-TKG Preview\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_LINUX";; \
@@ -658,8 +649,19 @@ _menu() {
             --preview-label="Preview" \
             --preview-window="right:nowrap:60%" \
             --preview-border=thinblock \
-            --color='header:green,pointer:green,marker:green'
-    )
+            --color='header:green,pointer:green,marker:green' <<'MENU'
+Linux  |🧠 Kernel   ─ Linux-TKG custom kernels
+Nvidia |🖥️ Nvidia   ─ Nvidia Open-Source or proprietary graphics driver
+Combo  |🧬 Combo➕  ─ Combo package: 🟦Linux-TKG ✚ 🟩Nvidia-TKG
+Mesa   |🧩 Mesa     ─ Open-Source graphics driver for AMD and Intel
+Wine   |🍷 Wine     ─ Windows compatibility layer
+Proton |🎮 Proton   ─ Windows compatibility layer for Steam / Gaming
+Config |🛠️ Config   ─ Sub-menu➡️ edit TKG configuration files
+Clean  |🧹 Clean    ─ Clean downloaded files
+Help   |❓ Help     ─ Shows all commands
+Exit   |❌ Exit
+MENU
+)
 
     # Handle cancelled selection (ESC pressed)
     if [[ -z "$selection" ]]; then
