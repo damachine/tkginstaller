@@ -709,7 +709,6 @@ _main() {
                 echo -e "  $0 linuxnvidia     # Install Linux-TKG + Nvidia-TKG"
                 echo -e "  $0 ln              # Install Linux-TKG + Nvidia-TKG"
                 echo -e "  $0 combo           # Install Linux-TKG + Nvidia-TKG"
-                echo -e "  $0 exit            # Exit the installer"
                 exit 0
                 ;;
             *)        
