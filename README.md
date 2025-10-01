@@ -79,7 +79,7 @@
 
 - Optional tools (Recommended):
 
-> - **`nano`, `micro`, `vim`** - An text editor for configuration files. ***Usage: Set the `$EDITOR` environment variable. Howto: [ArchWiki](https://wiki.archlinux.org/title/Environment_variables#)***
+> - **`nano`, `micro`, `vim`** - An text editor for configuration files. ***Usage: Set the `$EDITOR` environment variable. Howto: [ArchWiki](https://wiki.archlinux.org/title/Environment_variables#) Fallback: `nano` if installed***
 > - **`onefetch`** - Git repository information display.
 
 ---
