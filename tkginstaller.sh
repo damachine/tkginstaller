@@ -50,7 +50,7 @@ export LC_ALL=C LANG=C
 set -euo pipefail
 
 # 📌 Global paths and configuration
-readonly VERSION="v0.5.9"
+readonly VERSION="v0.6.0"
 readonly LOCKFILE="/tmp/tkginstaller.lock"
 readonly TEMP_DIR="$HOME/.cache/tkginstaller"
 readonly CONFIG_DIR="$HOME/.config/frogminer"
@@ -596,31 +596,31 @@ _linuxnvidia_prompt() {
 
 # 🧠 Linux-TKG installation prompt
 _linux_prompt() {
-    echo -e "${GREEN}${BREAKOPT} 🌐 Preparing: Cloning Linux-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${BREAKOPT} 🌐 Fetching Linux-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
     _linux_install
 }
 
 # 🖥️ Nvidia-TKG installation prompt
 _nvidia_prompt() {
-    echo -e "${GREEN}${BREAKOPT} 🖥️ Preparing: Cloning Nvidia-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${BREAKOPT} 🖥️ Fetching Nvidia-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
     _nvidia_install
 }
 
 # 🧩 Mesa-TKG installation prompt
 _mesa_prompt() {
-    echo -e "${GREEN}${BREAKOPT} 🧩 Preparing: Cloning Mesa-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${BREAKOPT} 🧩 Fetching Mesa-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
     _mesa_install
 }
 
 # 🍷 Wine-TKG installation prompt
 _wine_prompt() {
-    echo -e "${GREEN}${BREAKOPT} 🍷 Preparing: Cloning Wine-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${BREAKOPT} 🍷 Fetching Wine-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
     _wine_install
 }
 
 # 🎮 Proton-TKG installation prompt
 _proton_prompt() {
-    echo -e "${GREEN}${BREAKOPT} 🎮 Preparing: Cloning Proton-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${BREAKOPT} 🎮 Fetching Proton-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
     _proton_install
 }
 
@@ -658,15 +658,15 @@ _menu() {
             --footer=$'📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit\n🐸 Frogging-Family: https://github.com/Frogging-Family\n🌐 About: https://github.com/damachine/tkginstaller' \
             --footer-border=thinblock \
             --preview='case {} in \
-                Linux*)     echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🧠 Linux-TKG 📝 Info\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_LINUX";; \
-                Nvidia*)    echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🖥️ Nvidia-TKG 📝 Info\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_NVIDIA";; \
-                Combo*)     echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🧬 Combo-TKG 📝 Info\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_LINUX\n\n$PREVIEW_NVIDIA";; \
-                Mesa*)      echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🧩 Mesa-TKG 📝 Info\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_MESA";; \
-                Wine*)      echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🍷 Wine-TKG 📝 Info\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_WINE";; \
-                Proton*)    echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🎮 Proton-TKG 📝 Info\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_PROTON";; \
-                Config*)    echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🛠️ Config-TKG 📝 Info\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nConfigure all TKG packages\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller";; \
-                Help*)      echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n❓ TKG-Installer 📝 Info\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nShows all Commandline usage.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller";; \
-                Clean*)     echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🧹 Clean information 📝 Info\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nRemoves temporary files in '~/.cache/tkginstaller' and resets the installer.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller";; \
+                Linux*)     echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🧠 Linux-TKG ─ Custom Linux kernels\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_LINUX";; \
+                Nvidia*)    echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🖥️ Nvidia-TKG ─ Open-Source or proprietary graphics driver\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_NVIDIA";; \
+                Combo*)     echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🧬 Combo package: 🟦Linux-TKG ✚ 🟩Nvidia-TKG\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_LINUX\n\n$PREVIEW_NVIDIA";; \
+                Mesa*)      echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🧩 Mesa-TKG ─ Open-Source graphics driver for AMD and Intelnfo\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_MESA";; \
+                Wine*)      echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🍷 Wine-TKG ─ Windows compatibility layer\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_WINE";; \
+                Proton*)    echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🎮 Proton-TKG ─ Windows compatibility layer for Steam / Gaming\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_PROTON";; \
+                Config*)    echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🛠️ TKG configuration files 📝\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nConfigure all TKG packages\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller";; \
+                Clean*)     echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🧹 Cleaning 📝\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nRemoves temporary files in '~/.cache/tkginstaller' and resets the installer.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller";; \
+                Help*)      echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n❓ TKG-Installer - Help\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nShows all Commandline usage.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller";; \
                 Exit*)      echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n👋 Exit\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nQuit the program and removes temporary files.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller\n\nIf you like this program and want to support the project on GitHub ⭐ ⭐ ⭐";; \
             esac' \
             --preview-label="Preview" \
