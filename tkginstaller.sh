@@ -157,7 +157,7 @@ _show_done() {
 }
 
 # ❓ Help information display
-_help_promt() {
+_help_prompt() {
     echo -e "${BLUE}Usage: $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|combo|config|clean|exit]${RESET}"
     echo -e "${BLUE}Shortcuts: l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/combo=combo combo${RESET}"
     echo -e "${BLUE}Examples:${RESET}"
@@ -535,7 +535,7 @@ _handle_config_file() {
     else
         # Download and create new configuration file
         echo -e "${YELLOW}${BOLD} ⚠️ $config_path does not exist.${RESET}"
-        read -p -r "Do you want to download the default configuration from $config_url? [y/N]: " answer
+        read -r -p "Do you want to download the default configuration from $config_url? [y/N]: " answer
         case "$answer" in
             y|Y|yes)
                 mkdir -p "$(dirname "$config_path")"
@@ -566,43 +566,43 @@ _handle_config_file() {
 # =============================================================================
 
 # 📋 Combined Linux + Nvidia installation
-_linuxnvidia_promt() {
-    _linux_promt
-    _nvidia_promt
+_linuxnvidia_prompt() {
+    _linux_prompt
+    _nvidia_prompt
 }
 
 # 🧠 Linux-TKG installation prompt
-_linux_promt() {
+_linux_prompt() {
     echo -e "${GREEN}${BREAKOPT} 🧠 Installing Linux-tkg ⏳${BREAKOPT}${RESET}"
     _linux_install
 }
 
 # 🎮 Nvidia-TKG installation prompt
-_nvidia_promt() {
+_nvidia_prompt() {
     echo -e "${GREEN}${BREAKOPT} 🎮 Installing Nvidia-tkg ⏳${BREAKOPT}${RESET}"
     _nvidia_install
 }
 
 # 🧩 Mesa-TKG installation prompt
-_mesa_promt() {
+_mesa_prompt() {
     echo -e "${GREEN}${BREAKOPT} 🧩 Installing Mesa-tkg ⏳${BREAKOPT}${RESET}"
     _mesa_install
 }
 
 # 🍷 Wine-TKG installation prompt
-_wine_promt() {
+_wine_prompt() {
     echo -e "${GREEN}${BREAKOPT} 🍷 Installing Wine-tkg ⏳${BREAKOPT}${RESET}"
     _wine_install
 }
 
 # 🧪 Proton-TKG installation prompt
-_proton_promt() {
+_proton_prompt() {
     echo -e "${GREEN}${BREAKOPT} 🧪 Installing Proton-tkg ⏳${BREAKOPT}${RESET}"
     _proton_install
 }
 
 # 🛠️ Configuration editor prompt
-_config_promt() {
+_config_prompt() {
     if _config_edit; then 
         return 0
     fi
@@ -684,42 +684,42 @@ _main() {
         case "${1:-}" in
             linuxnvidia|ln|combo)
                 _pre
-                _linuxnvidia_promt
+                _linuxnvidia_prompt
                 _show_done
                 exit 0
                 ;;
             linux|l)
                 _pre
-                _linux_promt
+                _linux_prompt
                 _show_done
                 exit 0
                 ;;
             nvidia|n)
                 _pre
-                _nvidia_promt
+                _nvidia_prompt
                 _show_done
                 exit 0
                 ;;
             mesa|m)
                 _pre
-                _mesa_promt
+                _mesa_prompt
                 _show_done
                 exit 0
                 ;;
             wine|w)
                 _pre
-                _wine_promt
+                _wine_prompt
                 _show_done
                 exit 0
                 ;;
             proton|p)
                 _pre
-                _proton_promt
+                _proton_prompt
                 _show_done
                 exit 0
                 ;;
             help|-h|--help)
-                _help_promt
+                _help_prompt
                 ;;
             *)        
                 echo -e "${RED}${BOLD} ❌ Unknown argument: ${1:-}${RESET}"
@@ -742,31 +742,31 @@ _main() {
 
     case $choice in
         Combo) 
-            _linuxnvidia_promt 
+            _linuxnvidia_prompt 
             ;;
         Linux)        
-            _linux_promt 
+            _linux_prompt 
             ;;
         Nvidia)       
-            _nvidia_promt 
+            _nvidia_prompt 
             ;;
         Mesa)         
-            _mesa_promt 
+            _mesa_prompt 
             ;;
         Wine)         
-            _wine_promt 
+            _wine_prompt 
             ;;
         Proton)       
-            _proton_promt 
+            _proton_prompt 
             ;;
         Config)       
-            if _config_promt; then 
+            if _config_prompt; then 
                 rm -f "$LOCKFILE"
                 exec "$0"
             fi 
             ;;
         Help)         
-            _help_promt 
+            _help_prompt 
             ;;
         Clean)        
             _pre
