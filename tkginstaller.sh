@@ -297,7 +297,7 @@ _linux_install() {
     fi
     
     # Build and install 
-    echo -e "${GREEN}${BREAKOPT} 🏗️ Final: Building and installing Linux-TKG package, this may take a while... ⏳\n${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${BREAKOPT} 🏗️ Building and installing Linux-TKG package, this may take a while... ⏳\n${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${GREEN}${BREAKOPT}${RESET}"
     makepkg -si || {
         echo -e "${RED}${BOLD} ❌ Error building: linux-tkg${RESET}"
         return 1
@@ -322,7 +322,7 @@ _nvidia_install() {
     fi
     
     # Build and install 
-    echo -e "${GREEN}${BREAKOPT} 🏗️ Final: Building and installing Nvidia-TKG package, this may take a while... ⏳\n${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${BREAKOPT} 🏗️ Building and installing Nvidia-TKG package, this may take a while... ⏳\n${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${GREEN}${BREAKOPT}${RESET}"
     makepkg -si || {
         echo -e "${RED}${BOLD} ❌ Error building: nvidia-all${RESET}"
         return 1
@@ -347,7 +347,7 @@ _mesa_install() {
     fi
     
     # Build and install 
-    echo -e "${GREEN}${BREAKOPT} 🏗️ Final: Building and installing Mesa-TKG package, this may take a while... ⏳\n${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${BREAKOPT} 🏗️ Building and installing Mesa-TKG package, this may take a while... ⏳\n${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${GREEN}${BREAKOPT}${RESET}"
     makepkg -si || {
         echo -e "${RED}${BOLD} ❌ Error building: mesa-tkg${RESET}"
         return 1
@@ -372,7 +372,7 @@ _wine_install() {
     fi
     
     # Build and install 
-    echo -e "${GREEN}${BREAKOPT} 🏗️ Final: Building and installing Wine-TKG package, this may take a while... ⏳\n${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${BREAKOPT} 🏗️ Building and installing Wine-TKG package, this may take a while... ⏳\n${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${GREEN}${BREAKOPT}${RESET}"
     makepkg -si || {
         echo -e "${RED}${BOLD} ❌ Error building: wine-tkg${RESET}"
         return 1
@@ -397,7 +397,7 @@ _proton_install() {
     fi
     
     # Build Proton-TKG
-    echo -e "${GREEN}${BREAKOPT} 🏗️ Final: Building and installing Proton-TKG package, this may take a while... ⏳\n${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${BREAKOPT} 🏗️ Building and installing Proton-TKG package, this may take a while... ⏳\n${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${GREEN}${BREAKOPT}${RESET}"
     ./proton-tkg.sh || {
         echo -e "${RED}${BOLD} ❌ Error building: proton-tkg${RESET}"
         return 1
