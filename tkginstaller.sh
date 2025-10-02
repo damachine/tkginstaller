@@ -44,13 +44,13 @@
 # =============================================================================
 
 # 🌐 Force standard locale for consistent behavior (sorting, comparisons, messages)
-export LC_ALL=C LANG=C
+#export LC_ALL=C
 
 # 🔒 Safety settings and strict mode
 set -euo pipefail
 
 # 📌 Global paths and configuration
-readonly VERSION="v0.6.1"
+readonly VERSION="v0.6.2"
 readonly LOCKFILE="/tmp/tkginstaller.lock"
 readonly TEMP_DIR="$HOME/.cache/tkginstaller"
 readonly CONFIG_DIR="$HOME/.config/frogminer"
@@ -112,6 +112,11 @@ trap _on_exit INT TERM EXIT HUP
 
 # 🧼 Pre-installation checks and preparation
 _pre() {
+
+    # Welcome message
+    echo -e "${GREEN}${BREAKOPT} 🐸 TKG-Installer ${VERSION} for $DISTRO_NAME${RESET}${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN} 🔁 Starting 🐸 TKG-Installer...${RESET}"
+
     # Check for root execution
     if [[ "$(id -u)" -eq 0 ]]; then
         echo -e "${RED}${BOLD} ❌ Do not run as root!${RESET}"
@@ -130,22 +135,26 @@ _pre() {
 
     # Setup temporary directory
     if [[ ! -d "$TEMP_DIR" ]]; then
-        echo -e "${GREEN} 🧹 Cleaning old temporary files...${RESET}"
+        echo -e "${YELLOW} 🧹 Cleaning old temporary files...${RESET}"
         rm -rf /tmp/tkginstaller_choice "$TEMP_DIR" 2>/dev/null || true
-        echo -e "${GREEN} ✅ New temporary directory...${RESET}"
+        echo -e "${YELLOW} ✅ New temporary directory...${RESET}"
         mkdir -p "$TEMP_DIR"
     fi
 
-    echo -e "${BLUE}${BOLD} 🔁 Starting 🐸 TKG-Installer...${RESET}"
+    # Message for preview section
+    echo -e "${YELLOW} 📡 Fetching online preview...${RESET}"
 
     # Update system (Arch Linux specific)
     if command -v pacman &>/dev/null; then
-        echo -e "${BLUE}${BOLD} 🔍 Updating $DISTRO_NAME mirrors...${RESET}"
-        sudo pacman -Sy || {
+        echo -e "${BLUE} 🔍 Updating $DISTRO_NAME mirrors...${RESET}"
+        sudo pacman -Syy || {
             echo -e "${RED}${BOLD} ❌ Error updating $DISTRO_NAME mirrors${RESET}"
             return 1
         }
     fi
+
+    # Final message
+    echo -e "${GREEN}${BREAKOPT} ✅ Pre-checks completed.${GREEN}${BREAKOPT}${RESET}"
 }
 
 # =============================================================================
@@ -161,7 +170,7 @@ _show_done() {
 
     echo -e "${GREEN}${BREAKOPT} 📝 Action completed: $(date '+%Y-%m-%d %H:%M:%S')${RESET}"
     
-    if [ $status -eq 0 ]; then
+    if [[ $status -eq 0 ]]; then
         echo -e "${GREEN} ✅ Status: Successful${RESET}"
     else
         echo -e "${RED}${BOLD} ❌ Status: Error (Code: $status)${RESET}"
@@ -219,7 +228,7 @@ _get_preview_content() {
             return 1
             ;;
     esac
-     
+
     # Always show static preview first
     echo -e "$static_preview"
        
@@ -244,15 +253,15 @@ _get_preview_content() {
 }
 
 # 📝 Export preview content for fzf menu (will be unset in _on_exit)
-PREVIEW_LINUX="$(_get_preview_content linux)"
+PREVIEW_LINUX="$(_get_preview_content linux &)"
 export PREVIEW_LINUX
-PREVIEW_NVIDIA="$(_get_preview_content nvidia)"
+PREVIEW_NVIDIA="$(_get_preview_content nvidia &)"
 export PREVIEW_NVIDIA
-PREVIEW_MESA="$(_get_preview_content mesa)"
+PREVIEW_MESA="$(_get_preview_content mesa &)"
 export PREVIEW_MESA
-PREVIEW_WINE="$(_get_preview_content wine)"
+PREVIEW_WINE="$(_get_preview_content wine &)"
 export PREVIEW_WINE
-PREVIEW_PROTON="$(_get_preview_content proton)"
+PREVIEW_PROTON="$(_get_preview_content proton &)"
 export PREVIEW_PROTON
 
 # 📝 Text editor wrapper with fallback support
@@ -592,36 +601,42 @@ _handle_config_file() {
 
 # 📋 Combined Linux + Nvidia installation
 _linuxnvidia_prompt() {
+    SECONDS=0
     _linux_prompt
     _nvidia_prompt
 }
 
 # 🧠 Linux-TKG installation prompt
 _linux_prompt() {
+    SECONDS=0
     echo -e "${GREEN}${BREAKOPT} 🌐 Fetching Linux-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
     _linux_install
 }
 
 # 🖥️ Nvidia-TKG installation prompt
 _nvidia_prompt() {
+    SECONDS=0
     echo -e "${GREEN}${BREAKOPT} 🖥️ Fetching Nvidia-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
     _nvidia_install
 }
 
 # 🧩 Mesa-TKG installation prompt
 _mesa_prompt() {
+    SECONDS=0
     echo -e "${GREEN}${BREAKOPT} 🧩 Fetching Mesa-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
     _mesa_install
 }
 
 # 🍷 Wine-TKG installation prompt
 _wine_prompt() {
+    SECONDS=0
     echo -e "${GREEN}${BREAKOPT} 🍷 Fetching Wine-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
     _wine_install
 }
 
 # 🎮 Proton-TKG installation prompt
 _proton_prompt() {
+    SECONDS=0
     echo -e "${GREEN}${BREAKOPT} 🎮 Fetching Proton-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
     _proton_install
 }
