@@ -17,6 +17,7 @@
 - **Preview readme and configuration.**
 - **Edit configuration files using your preferred editor.**  
 - **Optional download configuration files.**
+- Planned Feature: Multi-Distribution Support
 
 <div align="center">
   <img src="images/tkginstaller.png" alt="TKG Installer Screenshot" />
