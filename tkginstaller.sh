@@ -50,7 +50,7 @@ export LC_ALL=C LANG=C
 set -euo pipefail
 
 # 📌 Global paths and configuration
-readonly VERSION="v0.6.0"
+readonly VERSION="v0.6.1"
 readonly LOCKFILE="/tmp/tkginstaller.lock"
 readonly TEMP_DIR="$HOME/.cache/tkginstaller"
 readonly CONFIG_DIR="$HOME/.config/frogminer"
@@ -66,12 +66,11 @@ readonly RED=$'\033[0;31m'
 readonly GREEN=$'\033[0;32m'
 readonly YELLOW=$'\033[0;33m'
 readonly BLUE=$'\033[0;34m'
-readonly BG_YELLOW=$'\033[43m'
-readonly FG_BLACK=$'\033[30m'
 
 # 🔒 Prevent concurrent execution
 if [[ -f "$LOCKFILE" ]]; then
     echo -e "${RED}${BOLD} ❌ Script is already running. Exiting...${RESET}"
+    echo -e "${YELLOW}${BOLD} 🔁 If the script was unexpectedly terminated, remove the lock file manually: rm $LOCKFILE${RESET}"
     exit 1
 fi
 touch "$LOCKFILE"
@@ -141,9 +140,9 @@ _pre() {
 
     # Update system (Arch Linux specific)
     if command -v pacman &>/dev/null; then
-        echo -e "${BLUE}${BOLD} 🔍 Updating $DISTRO_NAME first...${RESET}"
+        echo -e "${BLUE}${BOLD} 🔍 Updating $DISTRO_NAME mirrors...${RESET}"
         sudo pacman -Sy || {
-            echo -e "${RED}${BOLD} ❌ Error updating $DISTRO_NAME!${RESET}"
+            echo -e "${RED}${BOLD} ❌ Error updating $DISTRO_NAME mirrors${RESET}"
             return 1
         }
     fi
@@ -156,16 +155,19 @@ _pre() {
 # ✅ Display completion status with timestamp
 _show_done() {
     local status=$?
-    echo -e "${BREAKOPT}"
-    echo -e "${BOLD} 📝 Action completed: $(date '+%Y-%m-%d %H:%M:%S')${RESET}"
+    local duration="${SECONDS:-0}"
+    local minutes=$((duration / 60))
+    local seconds=$((duration % 60))
+
+    echo -e "${GREEN}${BREAKOPT} 📝 Action completed: $(date '+%Y-%m-%d %H:%M:%S')${RESET}"
     
     if [ $status -eq 0 ]; then
         echo -e "${GREEN} ✅ Status: Successful${RESET}"
     else
         echo -e "${RED}${BOLD} ❌ Status: Error (Code: $status)${RESET}"
     fi
-    
-    echo -e "${BREAKOPT}"
+
+    echo -e "${YELLOW} ⏱️ Duration: ${minutes} min ${seconds} sec${RESET}${GREEN}${BREAKOPT}${RESET}"
 }
 
 # ❓ Help information display
