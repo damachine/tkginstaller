@@ -50,7 +50,7 @@
 set -euo pipefail
 
 # 📌 Global paths and configuration
-readonly VERSION="v0.6.5"
+readonly VERSION="v0.6.6"
 readonly LOCKFILE="/tmp/tkginstaller.lock"
 readonly TEMP_DIR="$HOME/.cache/tkginstaller"
 readonly CONFIG_DIR="$HOME/.config/frogminer"
@@ -93,9 +93,14 @@ _on_exit() {
     trap - INT TERM EXIT HUP
     local code=$?
     
-    # Show abort message on error FIRST
+    # Message handling
     if [[ $code -ne 0 ]]; then
+        # Show abort message on error FIRST
         echo -e "${RED}${BOLD}${LINE} 🎯 Script aborted: $code 🎯${LINE}${RESET}"
+    else
+        # Final cleanup message
+        echo -e "${GREEN} 🧹 Cleanup completed${RESET}"
+        echo -e "${BLUE} 🐸 TKG Installer closed 👋${RESET}"
     fi
     
     # Remove lockfile
@@ -106,11 +111,9 @@ _on_exit() {
 
     # Unset exported preview variables
     unset PREVIEW_LINUX PREVIEW_NVIDIA PREVIEW_MESA PREVIEW_WINE PREVIEW_PROTON
-    
-    # Final cleanup message
-    echo -e "${GREEN} 🧹 Cleanup completed.${RESET}"
 
     # Exit with original exit code
+    wait
     exit $code
 }
 # Setup exit trap for cleanup on script termination
@@ -803,34 +806,34 @@ _main() {
     rm -f /tmp/tkginstaller_choice
 
     case $choice in
-        Combo) 
-            _linuxnvidia_prompt 
+        Combo)
+            _linuxnvidia_prompt
             ;;
-        Linux)        
-            _linux_prompt 
+        Linux)
+            _linux_prompt
             ;;
-        Nvidia)       
-            _nvidia_prompt 
+        Nvidia)
+            _nvidia_prompt
             ;;
-        Mesa)         
-            _mesa_prompt 
+        Mesa)
+            _mesa_prompt
             ;;
-        Wine)         
-            _wine_prompt 
+        Wine)
+            _wine_prompt
             ;;
-        Proton)       
-            _proton_prompt 
+        Proton)
+            _proton_prompt
             ;;
-        Config)       
-            if _config_prompt; then 
+        Config)
+            if _config_prompt; then
                 rm -f "$LOCKFILE"
                 exec "$0"
             fi 
             ;;
-        Help)         
-            _help_prompt 
+        Help)
+            _help_prompt
             ;;
-        Clean)        
+        Clean)
             _pre
             sleep 1
             echo -e "${YELLOW}${LINE}${BREAK} 🔁 Restarting 🐸 TKG Installer...${BREAK}${LINE}${RESET}"
@@ -839,11 +842,10 @@ _main() {
             clear
             exec "$0" 
             ;;
-        Exit)         
-            echo -e "${BLUE} 👋 TKG Installer closed.${RESET}"
-            exit 0 
+        Exit)
+            _on_exit
             ;;
-        *)            
+        *)
             echo -e "${GREEN}${BOLD} ❌ Invalid option: $choice${RESET}"
             ;;
     esac
