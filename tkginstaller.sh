@@ -50,7 +50,7 @@
 set -euo pipefail
 
 # 📌 Global paths and configuration
-readonly VERSION="v0.6.3"
+readonly VERSION="v0.6.4"
 readonly LOCKFILE="/tmp/tkginstaller.lock"
 readonly TEMP_DIR="$HOME/.cache/tkginstaller"
 readonly CONFIG_DIR="$HOME/.config/frogminer"
@@ -59,7 +59,7 @@ readonly FROGGING_FAMILY_RAW="https://raw.githubusercontent.com/Frogging-Family"
 
 # 🎨 Color definitions and formatting
 readonly BREAK='\n'
-readonly BREAKOPT='\n──────────────────────────────────────────────────────────────────────────────────────────\n'
+readonly LINE='──────────────────────────────────────────────────────────────────────────────────────────'
 readonly RESET=$'\033[0m'
 readonly BOLD=$'\033[1m'
 readonly RED=$'\033[0;31m'
@@ -95,7 +95,7 @@ _on_exit() {
     
     # Show abort message on error FIRST
     if [[ $code -ne 0 ]]; then
-        echo -e "${RED}${BOLD}${BREAKOPT} 🎯 Script aborted 🎯${BREAKOPT}${RESET}"
+        echo -e "${RED}${BOLD}${LINE} 🎯 Script aborted: $code 🎯${LINE}${RESET}"
     fi
     
     # Remove lockfile
@@ -120,7 +120,7 @@ trap _on_exit INT TERM EXIT HUP
 _pre() {
 
     # Welcome message
-    echo -e "${GREEN}${BREAKOPT} 🐸 TKG-Installer ${VERSION} for $DISTRO_NAME${RESET}${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${LINE}${BREAK} 🐸 TKG-Installer ${VERSION} for $DISTRO_NAME${BREAK}${LINE}${RESET}"
     echo -e "${GREEN} 🔁 Starting 🐸 TKG-Installer...${RESET}"
 
     # Check for root execution
@@ -140,15 +140,13 @@ _pre() {
     done
 
     # Setup temporary directory
-    if [[ ! -d "$TEMP_DIR" ]]; then
-        echo -e "${YELLOW} 🧹 Cleaning old temporary files...${RESET}"
-        rm -rf /tmp/tkginstaller_choice 2>/dev/null || true
-        echo -e "${YELLOW} ✅ Create temporary directory...${RESET}"
-        mkdir -p "$TEMP_DIR" 2>/dev/null || {
-            echo -e "${RED}${BOLD} ❌ Error creating temporary directory: $TEMP_DIR${RESET}"
-            return 1
-        }   
-    fi
+    echo -e "${YELLOW} 🧹 Cleaning old temporary files...${RESET}"
+    rm -rf "$TEMP_DIR" /tmp/tkginstaller_choice 2>/dev/null || true
+    echo -e "${GREEN} ✅ Create temporary directory...${RESET}"
+    mkdir -p "$TEMP_DIR" 2>/dev/null || {
+        echo -e "${RED}${BOLD} ❌ Error creating temporary directory: $TEMP_DIR${RESET}"
+        return 1
+    }
 
     # Message for preview section
     echo -e "${YELLOW} 📡 Fetching online preview...${RESET}"
@@ -156,15 +154,25 @@ _pre() {
     # Update system (Arch Linux specific)
     if command -v pacman &>/dev/null; then
         echo -e "${BLUE} 🔍 Updating $DISTRO_NAME mirrors...${RESET}"
-        echo -e "${YELLOW} ⚠️ Root privileges required to update mirrors.${RESET}"
-        sudo pacman -Syy || {
-            echo -e "${RED}${BOLD} ❌ Error updating $DISTRO_NAME mirrors${RESET}"
-            return 1
-        }
+        if ! sudo -n pacman -Syy >/dev/null 2>&1; then
+            echo -e "${YELLOW} ⚠️ Password required for mirror update. You can skip this step.${RESET}"
+            read -r -p "Do you want to update mirrors now? [y/N]: " update_mirrors
+            case "$update_mirrors" in
+                y|Y|yes)
+                    sudo pacman -Syy >/dev/null 2>&1 || {
+                        echo -e "${YELLOW} ⚠️ Mirror update failed or cancelled. Continuing without update...${RESET}"
+                    }
+                    ;;
+                *)
+                    echo -e "${YELLOW} ⚠️ Mirror update skipped. Continuing...${RESET}"
+                    ;;
+            esac
+        fi
     fi
 
     # Final message
-    echo -e "${GREEN}${BREAKOPT} ✅ Pre-checks completed.${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${LINE}${BREAK} ✅ Pre-checks completed${BREAK}${LINE}${RESET}"
+    sleep 1
 }
 
 # =============================================================================
@@ -178,7 +186,7 @@ _show_done() {
     local minutes=$((duration / 60))
     local seconds=$((duration % 60))
 
-    echo -e "${GREEN}${BREAKOPT} 📝 Action completed: $(date '+%Y-%m-%d %H:%M:%S')${RESET}"
+    echo -e "${GREEN}${LINE}${BREAK} 📝 Action completed: $(date '+%Y-%m-%d %H:%M:%S')${RESET}"
     
     if [[ $status -eq 0 ]]; then
         echo -e "${GREEN} ✅ Status: Successful${RESET}"
@@ -186,12 +194,12 @@ _show_done() {
         echo -e "${RED}${BOLD} ❌ Status: Error (Code: $status)${RESET}"
     fi
 
-    echo -e "${YELLOW} ⏱️ Duration: ${minutes} min ${seconds} sec${RESET}${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${YELLOW} ⏱️ Duration: ${minutes} min ${seconds} sec${RESET}${GREEN}${BREAK}${LINE}${RESET}"
 }
 
 # ❓ Help information display
 _help_prompt() {
-    echo -e "${BLUE}Usage: $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|combo|config|clean|exit]${RESET}"
+    echo -e "${BLUE}Usage: $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|combo]${RESET}"
     echo -e "${BLUE}Shortcuts: l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/combo=combo combo${RESET}"
     echo -e "${BLUE}Examples:${RESET}"
     echo -e "  $0 linux         # Install Linux-TKG"
@@ -263,15 +271,15 @@ _get_preview_content() {
 }
 
 # 📝 Export preview content for fzf menu (will be unset in _on_exit)
-PREVIEW_LINUX="$(_get_preview_content linux &)"
+PREVIEW_LINUX="$(_get_preview_content linux)"
 export PREVIEW_LINUX
-PREVIEW_NVIDIA="$(_get_preview_content nvidia &)"
+PREVIEW_NVIDIA="$(_get_preview_content nvidia)"
 export PREVIEW_NVIDIA
-PREVIEW_MESA="$(_get_preview_content mesa &)"
+PREVIEW_MESA="$(_get_preview_content mesa)"
 export PREVIEW_MESA
-PREVIEW_WINE="$(_get_preview_content wine &)"
+PREVIEW_WINE="$(_get_preview_content wine)"
 export PREVIEW_WINE
-PREVIEW_PROTON="$(_get_preview_content proton &)"
+PREVIEW_PROTON="$(_get_preview_content proton)"
 export PREVIEW_PROTON
 
 # 📝 Text editor wrapper with fallback support
@@ -318,7 +326,7 @@ _linux_install() {
     fi
     
     # Build and install 
-    echo -e "${GREEN}${BREAKOPT} 🏗️ Building and installing Linux-TKG package, this may take a while... ⏳\n${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${LINE}${BREAK} 🏗️ Building and installing Linux-TKG package, this may take a while... ⏳${BREAK}${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${BREAK}${GREEN}${LINE}${RESET}"
     makepkg -si || {
         echo -e "${RED}${BOLD} ❌ Error building: linux-tkg${RESET}"
         return 1
@@ -343,7 +351,7 @@ _nvidia_install() {
     fi
     
     # Build and install 
-    echo -e "${GREEN}${BREAKOPT} 🏗️ Building and installing Nvidia-TKG package, this may take a while... ⏳\n${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${LINE}${BREAK} 🏗️ Building and installing Nvidia-TKG package, this may take a while... ⏳${BREAK}${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${BREAK}${GREEN}${LINE}${RESET}"
     makepkg -si || {
         echo -e "${RED}${BOLD} ❌ Error building: nvidia-all${RESET}"
         return 1
@@ -368,7 +376,7 @@ _mesa_install() {
     fi
     
     # Build and install 
-    echo -e "${GREEN}${BREAKOPT} 🏗️ Building and installing Mesa-TKG package, this may take a while... ⏳\n${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${LINE}${BREAK} 🏗️ Building and installing Mesa-TKG package, this may take a while... ⏳${BREAK}${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${BREAK}${GREEN}${LINE}${RESET}"
     makepkg -si || {
         echo -e "${RED}${BOLD} ❌ Error building: mesa-tkg${RESET}"
         return 1
@@ -393,7 +401,7 @@ _wine_install() {
     fi
     
     # Build and install 
-    echo -e "${GREEN}${BREAKOPT} 🏗️ Building and installing Wine-TKG package, this may take a while... ⏳\n${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${LINE}${BREAK} 🏗️ Building and installing Wine-TKG package, this may take a while... ⏳${BREAK}${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${BREAK}${GREEN}${LINE}${RESET}"
     makepkg -si || {
         echo -e "${RED}${BOLD} ❌ Error building: wine-tkg${RESET}"
         return 1
@@ -418,14 +426,14 @@ _proton_install() {
     fi
     
     # Build Proton-TKG
-    echo -e "${GREEN}${BREAKOPT} 🏗️ Building and installing Proton-TKG package, this may take a while... ⏳\n${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${LINE}${BREAK} 🏗️ Building and installing Proton-TKG package, this may take a while... ⏳${BREAK}${YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${BREAK}${GREEN}${LINE}${RESET}"
     ./proton-tkg.sh || {
         echo -e "${RED}${BOLD} ❌ Error building: proton-tkg${RESET}"
         return 1
     }
     
     # Clean up build artifacts
-    echo -e "${GREEN}${BREAKOPT} 🏗️ Clean up build artifacts...${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${LINE}${BREAK} 🏗️ Clean up build artifacts...${BREAK}${LINE}${RESET}"
     ./proton-tkg.sh clean || {
         echo -e "${RED}${BOLD} ❌ Nothing to clean: proton-tkg${RESET}"
         return 1
@@ -444,7 +452,7 @@ _config_edit() {
         # Ensure configuration directory exists
         if [[ ! -d "${CONFIG_DIR}" ]]; then
             echo -e "${RED}${BOLD} ❌ Configuration directory not found: ${CONFIG_DIR}${RESET}"
-            read -r -p "Do you want to create the configuration directory? [y/N]: " create_dir
+            read -r -p "Do you want to create the configuration directory? [y/N]:" create_dir
             case "$create_dir" in
                 y|Y|yes)
                     mkdir -p "${CONFIG_DIR}" || {
@@ -452,9 +460,13 @@ _config_edit() {
                         return 1
                     }
                     ;;
+                n|N|no)
+                    echo -e "${YELLOW} ⚠️ Directory creation cancelled. Returning to menu.${RESET}"
+                    return 0
+                    ;;
                 *)
-                    echo -e "${YELLOW} ⚠️ Directory creation cancelled. Cannot continue.${RESET}"
-                    return 1
+                    echo -e "${YELLOW} ⚠️ Invalid input. Returning to menu.${RESET}"
+                    return 0
                     ;;
             esac
         fi
@@ -619,35 +631,35 @@ _linuxnvidia_prompt() {
 # 🧠 Linux-TKG installation prompt
 _linux_prompt() {
     SECONDS=0
-    echo -e "${GREEN}${BREAKOPT} 🧠 Fetching Linux-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${LINE}${BREAK} 🧠 Fetching Linux-TKG from Frogging-Family repository... ⏳${BREAK}${LINE}${RESET}"
     _linux_install
 }
 
 # 🖥️ Nvidia-TKG installation prompt
 _nvidia_prompt() {
     SECONDS=0
-    echo -e "${GREEN}${BREAKOPT} 🖥️ Fetching Nvidia-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${LINE}${BREAK} 🖥️ Fetching Nvidia-TKG from Frogging-Family repository... ⏳${BREAK}${LINE}${RESET}"
     _nvidia_install
 }
 
 # 🧩 Mesa-TKG installation prompt
 _mesa_prompt() {
     SECONDS=0
-    echo -e "${GREEN}${BREAKOPT} 🧩 Fetching Mesa-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${LINE}${BREAK} 🧩 Fetching Mesa-TKG from Frogging-Family repository... ⏳${BREAK}${LINE}${RESET}"
     _mesa_install
 }
 
 # 🍷 Wine-TKG installation prompt
 _wine_prompt() {
     SECONDS=0
-    echo -e "${GREEN}${BREAKOPT} 🍷 Fetching Wine-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${LINE}${BREAK} 🍷 Fetching Wine-TKG from Frogging-Family repository... ⏳${BREAK}${LINE}${RESET}"
     _wine_install
 }
 
 # 🎮 Proton-TKG installation prompt
 _proton_prompt() {
     SECONDS=0
-    echo -e "${GREEN}${BREAKOPT} 🎮 Fetching Proton-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${LINE}${BREAK} 🎮 Fetching Proton-TKG from Frogging-Family repository... ⏳${BREAK}${LINE}${RESET}"
     _proton_install
 }
 
@@ -692,9 +704,9 @@ _menu() {
                 Wine*)      echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🍷 Wine-TKG ─ Windows compatibility layer\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_WINE";; \
                 Proton*)    echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🎮 Proton-TKG ─ Windows compatibility layer for Steam / Gaming\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_PROTON";; \
                 Config*)    echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🛠️ TKG configuration files 📝\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nConfigure all TKG packages\n\nSee documentation at:\n🌐 https://github.com/damachine/tkginstaller";; \
-                Clean*)     echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🧹 TKG-Installer - Cleaning\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nRemoves temporary files in '~/.cache/tkginstaller' and resets the installer.\n\nSee documentation at:\n🌐 https://github.com/damachine/tkginstaller";; \
+                Clean*)     echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🧹 TKG-Installer - Cleaning\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nRemoves temporary files in ~/.cache/tkginstaller and resets the installer.\n\nSee documentation at:\n🌐 https://github.com/damachine/tkginstaller";; \
                 Help*)      echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n❓ TKG-Installer - Help\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nShows all Commandline usage.\n\nSee documentation at:\n🌐 https://github.com/damachine/tkginstaller";; \
-                Exit*)      echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n👋 Exit\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nQuit the program and removes temporary files.\n\nSee documentation at:\n🌐 https://github.com/damachine/tkginstaller\n\nIf you like this program and want to support the project on GitHub ⭐ ⭐ ⭐\n\n🐸 Frogging-Family: https://github.com/Frogging-Family\n🌐 About: https://github.com/damachine/tkginstaller";; \
+                Exit*)      echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n👋 Exit the program and removes temporary files\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nIf you like this program and want to support the project ⭐ ⭐ ⭐\n\n🐸 Frogging-Family: https://github.com/Frogging-Family\n\n🌐 About: https://github.com/damachine/tkginstaller";; \
             esac' \
             --preview-label="Preview" \
             --preview-window="right:nowrap:60%" \
@@ -821,7 +833,7 @@ _main() {
         Clean)        
             _pre
             sleep 1
-            echo -e "${YELLOW}${BREAKOPT} 🔁 Restarting 🐸 TKG Installer ...${BREAKOPT}${RESET}"
+            echo -e "${YELLOW}${LINE}${BREAK} 🔁 Restarting 🐸 TKG Installer...${BREAK}${LINE}${RESET}"
             sleep 1
             rm -f "$LOCKFILE"
             exec "$0" 
