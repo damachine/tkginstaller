@@ -172,7 +172,7 @@ _pre() {
 
     # Final message
     echo -e "${GREEN}${LINE}${BREAK} ✅ Pre-checks completed${BREAK}${LINE}${RESET}"
-    sleep 1
+    sleep 2
 }
 
 # =============================================================================
@@ -834,8 +834,9 @@ _main() {
             _pre
             sleep 1
             echo -e "${YELLOW}${LINE}${BREAK} 🔁 Restarting 🐸 TKG Installer...${BREAK}${LINE}${RESET}"
-            sleep 1
             rm -f "$LOCKFILE"
+            sleep 2
+            clear
             exec "$0" 
             ;;
         Exit)         
