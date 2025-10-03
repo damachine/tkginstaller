@@ -50,7 +50,7 @@
 set -euo pipefail
 
 # 📌 Global paths and configuration
-readonly VERSION="v0.6.7"
+readonly VERSION="v0.6.8"
 readonly LOCKFILE="/tmp/tkginstaller.lock"
 readonly TEMP_DIR="$HOME/.cache/tkginstaller"
 readonly CONFIG_DIR="$HOME/.config/frogminer"
@@ -102,6 +102,7 @@ _on_exit() {
         echo -e "${GREEN} 💖 Thank you for using TKG-Installer 🌐 https://github.com/damachine/tkginstaller 🐸 Frogging-Family: https://github.com/Frogging-Family${RESET}"
         echo -e "${GREEN} 🧹 Cleanup completed${RESET}"
         echo -e "${GREEN} 🐸 TKG-Installer closed 👋${RESET}"
+        echo -e "${GREEN}${LINE}${BREAK}${RESET}"
     fi
     
     # Remove lockfile
