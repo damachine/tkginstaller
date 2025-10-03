@@ -50,7 +50,7 @@
 set -euo pipefail
 
 # 📌 Global paths and configuration
-readonly VERSION="v0.6.2"
+readonly VERSION="v0.6.3"
 readonly LOCKFILE="/tmp/tkginstaller.lock"
 readonly TEMP_DIR="$HOME/.cache/tkginstaller"
 readonly CONFIG_DIR="$HOME/.config/frogminer"
@@ -93,11 +93,13 @@ _on_exit() {
     trap - INT TERM EXIT HUP
     local code=$?
     
-    # Remove lockfile
-    rm -f "$LOCKFILE"
+    # Show abort message on error FIRST
+    if [[ $code -ne 0 ]]; then
+        echo -e "${RED}${BOLD}${BREAKOPT} 🎯 Script aborted 🎯${BREAKOPT}${RESET}"
+    fi
     
-    # Show abort message on error
-    [[ $code -ne 0 ]] && echo -e "${BREAK}${RED}${BOLD} 🎯 Script aborted 🎯${RESET}"
+    # Remove lockfile
+    rm -f "$LOCKFILE" 2>/dev/null || true
 
     # Clean temporary files
     rm -rf /tmp/tkginstaller_choice "$TEMP_DIR" 2>/dev/null || true
@@ -105,9 +107,13 @@ _on_exit() {
     # Unset exported preview variables
     unset PREVIEW_LINUX PREVIEW_NVIDIA PREVIEW_MESA PREVIEW_WINE PREVIEW_PROTON
     
+    # Final cleanup message
     echo -e "${GREEN} 🧹 Cleanup completed.${RESET}"
+
+    # Exit with original exit code
     exit $code
 }
+# Setup exit trap for cleanup on script termination
 trap _on_exit INT TERM EXIT HUP
 
 # 🧼 Pre-installation checks and preparation
@@ -136,9 +142,12 @@ _pre() {
     # Setup temporary directory
     if [[ ! -d "$TEMP_DIR" ]]; then
         echo -e "${YELLOW} 🧹 Cleaning old temporary files...${RESET}"
-        rm -rf /tmp/tkginstaller_choice "$TEMP_DIR" 2>/dev/null || true
-        echo -e "${YELLOW} ✅ New temporary directory...${RESET}"
-        mkdir -p "$TEMP_DIR"
+        rm -rf /tmp/tkginstaller_choice 2>/dev/null || true
+        echo -e "${YELLOW} ✅ Create temporary directory...${RESET}"
+        mkdir -p "$TEMP_DIR" 2>/dev/null || {
+            echo -e "${RED}${BOLD} ❌ Error creating temporary directory: $TEMP_DIR${RESET}"
+            return 1
+        }   
     fi
 
     # Message for preview section
@@ -147,6 +156,7 @@ _pre() {
     # Update system (Arch Linux specific)
     if command -v pacman &>/dev/null; then
         echo -e "${BLUE} 🔍 Updating $DISTRO_NAME mirrors...${RESET}"
+        echo -e "${YELLOW} ⚠️ Root privileges required to update mirrors.${RESET}"
         sudo pacman -Syy || {
             echo -e "${RED}${BOLD} ❌ Error updating $DISTRO_NAME mirrors${RESET}"
             return 1
@@ -205,23 +215,23 @@ _get_preview_content() {
     case "$repo_type" in
         linux)
             repo_url="${FROGGING_FAMILY_RAW}/linux-tkg/master/README.md"
-            static_preview="Note:\n- Use the configuration editor to customize build options.\n- Ensure you have the necessary build dependencies installed.\n- The installer will clone the repository, build the kernel, and install it.\n- After installation, reboot to use the new kernel.\n\nTips:\n- Run 'tkginstaller linux' to skip menu\n- Join the Frogging-Family community for support and updates.\n\n---\n\n\033[1;32m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🧠 Online Preview\n\n - See full documentation at:\n - ${FROGGING_FAMILY_REPO}/linux-tkg/blob/master/README.md\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m"
+            static_preview="Note:\n- Use the configuration editor to customize build options.\n- Ensure you have the necessary build dependencies installed.\n- The installer will clone the repository, build the kernel, and install it.\n- After installation, reboot to use the new kernel.\n\nTips:\n- Run 'tkginstaller linux' to skip menu\n- Join the Frogging-Family community for support and updates.\n\n\033[1;32m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🧠 Online Preview\n\n - See full documentation at:\n - ${FROGGING_FAMILY_REPO}/linux-tkg/blob/master/README.md\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m"
             ;;
         nvidia)
             repo_url="${FROGGING_FAMILY_RAW}/nvidia-all/master/README.md"
-            static_preview="Note:\n- Supports both open-source and proprietary Nvidia drivers.\n- Use the configuration editor to set driver options and patches.\n- Installer will clone the repo, build and install the driver.\n- Reboot after installation for changes to take effect.\n\nTips:\n- Run 'tkginstaller nvidia' to skip menu\n- Check compatibility with your GPU model.\n- Join the Frogging-Family community for troubleshooting.\n\n---\n\n\033[1;32m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🖥️ Online Preview\n\n - See full documentation at:\n - ${FROGGING_FAMILY_REPO}/nvidia-all/blob/master/README.md\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m"
+            static_preview="Note:\n- Supports both open-source and proprietary Nvidia drivers.\n- Use the configuration editor to set driver options and patches.\n- Installer will clone the repo, build and install the driver.\n- Reboot after installation for changes to take effect.\n\nTips:\n- Run 'tkginstaller nvidia' to skip menu\n- Check compatibility with your GPU model.\n- Join the Frogging-Family community for troubleshooting.\n\n\033[1;32m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🖥️ Online Preview\n\n - See full documentation at:\n - ${FROGGING_FAMILY_REPO}/nvidia-all/blob/master/README.md\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m"
             ;;
         mesa)
             repo_url="${FROGGING_FAMILY_RAW}/mesa-git/master/README.md"
-            static_preview="Note:\n- Open-source graphics drivers for AMD and Intel GPUs.\n- Use the configuration editor for custom build flags.\n- Installer will clone, build, and install Mesa.\n- Reboot or restart X for changes to apply.\n\nTips:\n- Run 'tkginstaller mesa' to skip menu\n- Useful for gaming and Vulkan support.\n- Join the Frogging-Family community for updates.\n\n---\n\n\033[1;32m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🧩 Online Preview\n\n - See full documentation at:\n - ${FROGGING_FAMILY_REPO}/mesa-git/blob/master/README.md\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m"
+            static_preview="Note:\n- Open-source graphics drivers for AMD and Intel GPUs.\n- Use the configuration editor for custom build flags.\n- Installer will clone, build, and install Mesa.\n- Reboot or restart X for changes to apply.\n\nTips:\n- Run 'tkginstaller mesa' to skip menu\n- Useful for gaming and Vulkan support.\n- Join the Frogging-Family community for updates.\n\n\033[1;32m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🧩 Online Preview\n\n - See full documentation at:\n - ${FROGGING_FAMILY_REPO}/mesa-git/blob/master/README.md\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m"
             ;;
         wine)
             repo_url="${FROGGING_FAMILY_RAW}/wine-tkg-git/master/README.md"
-            static_preview="Note:\n- Custom Wine builds for better compatibility and gaming performance.\n- Use the configuration editor for patches and tweaks.\n- Installer will clone, build, and install Wine-TKG.\n- Configure your prefix after installation.\n\nTips:\n- Run 'tkginstaller wine' to skip menu\n- Ideal for running Windows games and apps.\n- Join the Frogging-Family community for support.\n\n---\n\n\033[1;32m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🍷 Online Preview\n\n - See full documentation at:\n - ${FROGGING_FAMILY_REPO}/wine-tkg-git/blob/master/README.md\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m"
+            static_preview="Note:\n- Custom Wine builds for better compatibility and gaming performance.\n- Use the configuration editor for patches and tweaks.\n- Installer will clone, build, and install Wine-TKG.\n- Configure your prefix after installation.\n\nTips:\n- Run 'tkginstaller wine' to skip menu\n- Ideal for running Windows games and apps.\n- Join the Frogging-Family community for support.\n\n\033[1;32m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🍷 Online Preview\n\n - See full documentation at:\n - ${FROGGING_FAMILY_REPO}/wine-tkg-git/blob/master/README.md\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m"
             ;;
         proton)
             repo_url="${FROGGING_FAMILY_RAW}/wine-tkg-git/master/proton-tkg/README.md"
-            static_preview="Note:\n- Custom Proton builds for Steam Play and gaming.\n- Use the configuration editor for tweaks and patches.\n- Installer will clone, build, and install Proton-TKG.\n- Select Proton-TKG in Steam after installation.\n\nTips:\n- Run 'tkginstaller proton' to skip menu\n- Great for running Windows games via Steam.\n- Join the Frogging-Family community for updates.\n\n---\n\n\033[1;32m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🎮 Online Preview\n\n - See full documentation at:\n - ${FROGGING_FAMILY_REPO}/wine-tkg-git/blob/master/proton-tkg/README.md\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m"
+            static_preview="Note:\n- Custom Proton builds for Steam Play and gaming.\n- Use the configuration editor for tweaks and patches.\n- Installer will clone, build, and install Proton-TKG.\n- Select Proton-TKG in Steam after installation.\n\nTips:\n- Run 'tkginstaller proton' to skip menu\n- Great for running Windows games via Steam.\n- Join the Frogging-Family community for updates.\n\n\033[1;32m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🎮 Online Preview\n\n - See full documentation at:\n - ${FROGGING_FAMILY_REPO}/wine-tkg-git/blob/master/proton-tkg/README.md\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m"
             ;;
         *)
             echo -e "$static_preview"
@@ -609,7 +619,7 @@ _linuxnvidia_prompt() {
 # 🧠 Linux-TKG installation prompt
 _linux_prompt() {
     SECONDS=0
-    echo -e "${GREEN}${BREAKOPT} 🌐 Fetching Linux-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
+    echo -e "${GREEN}${BREAKOPT} 🧠 Fetching Linux-TKG from Frogging-Family repository... ⏳${GREEN}${BREAKOPT}${RESET}"
     _linux_install
 }
 
@@ -667,7 +677,7 @@ _menu() {
             --no-input \
             --no-multi \
             --no-multi-line \
-            --header=$'🐸 *** TKG Installer ── Select a package *** 🐸' \
+            --header=$'🐸 🐸 🐸 TKG Installer ── Select a package 🐸 🐸 🐸' \
             --header-border=thinblock \
             --header-label="$VERSION" \
             --header-label-pos=2 \
@@ -681,10 +691,10 @@ _menu() {
                 Mesa*)      echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🧩 Mesa-TKG ─ Open-Source graphics driver for AMD and Intelnfo\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_MESA";; \
                 Wine*)      echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🍷 Wine-TKG ─ Windows compatibility layer\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_WINE";; \
                 Proton*)    echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🎮 Proton-TKG ─ Windows compatibility layer for Steam / Gaming\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\n$PREVIEW_PROTON";; \
-                Config*)    echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🛠️ TKG configuration files 📝\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nConfigure all TKG packages\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller";; \
-                Clean*)     echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🧹 Cleaning 📝\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nRemoves temporary files in '~/.cache/tkginstaller' and resets the installer.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller";; \
-                Help*)      echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n❓ TKG-Installer - Help\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nShows all Commandline usage.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller";; \
-                Exit*)      echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n👋 Exit\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nQuit the program and removes temporary files.\n\nSee documentation at:\nhttps://github.com/damachine/tkginstaller\n\nIf you like this program and want to support the project on GitHub ⭐ ⭐ ⭐";; \
+                Config*)    echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🛠️ TKG configuration files 📝\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nConfigure all TKG packages\n\nSee documentation at:\n🌐 https://github.com/damachine/tkginstaller";; \
+                Clean*)     echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n🧹 TKG-Installer - Cleaning\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nRemoves temporary files in '~/.cache/tkginstaller' and resets the installer.\n\nSee documentation at:\n🌐 https://github.com/damachine/tkginstaller";; \
+                Help*)      echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n❓ TKG-Installer - Help\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nShows all Commandline usage.\n\nSee documentation at:\n🌐 https://github.com/damachine/tkginstaller";; \
+                Exit*)      echo -e "\033[1;34m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\n👋 Exit\n────────────────────────────────────────────────────────────────────────────────────────────────────────────────────\033[0m\n\nQuit the program and removes temporary files.\n\nSee documentation at:\n🌐 https://github.com/damachine/tkginstaller\n\nIf you like this program and want to support the project on GitHub ⭐ ⭐ ⭐\n\n🐸 Frogging-Family: https://github.com/Frogging-Family\n🌐 About: https://github.com/damachine/tkginstaller";; \
             esac' \
             --preview-label="Preview" \
             --preview-window="right:nowrap:60%" \
@@ -811,13 +821,13 @@ _main() {
         Clean)        
             _pre
             sleep 1
-            echo -e "${BLUE} 🔁 Restarting 🐸 TKG Installer ...${RESET}"
+            echo -e "${YELLOW}${BREAKOPT} 🔁 Restarting 🐸 TKG Installer ...${BREAKOPT}${RESET}"
             sleep 1
             rm -f "$LOCKFILE"
             exec "$0" 
             ;;
         Exit)         
-            echo -e "${BLUE} 👋 Goodbye!${RESET}"
+            echo -e "${BLUE} 👋 TKG Installer closed.${RESET}"
             exit 0 
             ;;
         *)            
