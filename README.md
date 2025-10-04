@@ -21,7 +21,7 @@
 #### Planned Feature: 
 - **Multi-Distribution Support.**
 
-[🎬 Demo-Video](images/tkginstaller.gif)
+##### **[🎬 Demo-Video](images/tkginstaller.gif)**
 
 ---
 
