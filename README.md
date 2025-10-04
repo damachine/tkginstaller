@@ -21,10 +21,6 @@
 #### Planned Feature: 
 - **Multi-Distribution Support.**
 
-<div align="center">
-  <img src="images/tkginstaller.png" alt="TKG Installer Screenshot" />
-</div>
-
 [🎬 Demo-Video](images/tkginstaller.gif)
 
 ---
