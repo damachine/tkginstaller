@@ -59,17 +59,16 @@ readonly CONFIG_DIR="$HOME/.config/frogminer"
 readonly FROGGING_FAMILY_REPO="https://github.com/Frogging-Family"
 readonly FROGGING_FAMILY_RAW="https://raw.githubusercontent.com/Frogging-Family"
 
-
 # 🎨 Formatting and color definitions
-readonly ECHO="echo -e"
-readonly BREAK="\n"
-readonly LINE="──────────────────────────────────────────────────────────────────────────────────────────"
-readonly RESET=$"\033[0m"
-readonly BOLD=$"\033[1m"
-readonly RED=$"\033[0;31m"
-readonly GREEN=$"\033[0;32m"
-readonly YELLOW=$"\033[0;33m"
-readonly BLUE=$"\033[0;34m"
+ECHO="echo -e"
+BREAK="\n"
+LINE="──────────────────────────────────────────────────────────────────────────────────────────"
+RESET=$"\033[0m"
+BOLD=$"\033[1m"
+RED=$"\033[0;31m"
+GREEN=$"\033[0;32m"
+YELLOW=$"\033[0;33m"
+BLUE=$"\033[0;34m"
 
 # 📝 Export variables for fzf subshells (unset _on_exit run)
 export ECHO BREAK LINE RESET BOLD RED GREEN YELLOW BLUE
