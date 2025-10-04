@@ -158,23 +158,23 @@ _pre() {
     echo -e "${BLUE} 📡 Retrieving content from Frogging-Family repo...${RESET}"
 
     # Update system (Arch Linux specific)
-    if command -v pacman &>/dev/null; then
-        echo -e "${BLUE} 🔍 Updating $DISTRO_NAME mirrors...${RESET}"
-        if ! sudo -n pacman -Sy >/dev/null 2>&1; then
-            echo -e "${YELLOW} ⚠️ Password required for mirror update. You can skip this step.${RESET}"
-            read -r -p "Do you want to update mirrors now? [y/N]: " update_mirrors
-            case "$update_mirrors" in
-                y|Y|yes)
-                    sudo pacman -Syy >/dev/null 2>&1 || {
-                        echo -e "${YELLOW} ⚠️ Mirror update failed or cancelled. Continuing without update...${RESET}"
-                    }
-                    ;;
-                *)
-                    echo -e "${YELLOW} ⚠️ Mirror update skipped. Continuing...${RESET}"
-                    ;;
-            esac
-        fi
-    fi
+    #if command -v pacman &>/dev/null; then
+    #    echo -e "${BLUE} 🔍 Updating $DISTRO_NAME mirrors...${RESET}"
+    #    if ! sudo -n pacman -Sy >/dev/null 2>&1; then
+    #        echo -e "${YELLOW} ⚠️ Password required for mirror update. You can skip this step.${RESET}"
+    #        read -r -p "Do you want to update mirrors now? [y/N]: " update_mirrors
+    #        case "$update_mirrors" in
+    #            y|Y|yes)
+    #                sudo pacman -Syy >/dev/null 2>&1 || {
+    #                    echo -e "${YELLOW} ⚠️ Mirror update failed or cancelled. Continuing without update...${RESET}"
+    #                }
+    #                ;;
+    #            *)
+    #                echo -e "${YELLOW} ⚠️ Mirror update skipped. Continuing...${RESET}"
+    #                ;;
+    #        esac
+    #    fi
+    #fi
 
     # Final message
     echo -e "${GREEN}${LINE}${BREAK} ✅ Pre-checks completed${BREAK}${LINE}${RESET}"
