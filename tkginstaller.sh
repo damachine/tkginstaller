@@ -50,7 +50,7 @@
 set -euo pipefail
 
 # 📌 Global paths and configuration
-readonly VERSION="v0.7.1"
+readonly VERSION="v0.7.2"
 readonly LOCKFILE="/tmp/tkginstaller.lock"
 readonly TEMP_DIR="$HOME/.cache/tkginstaller"
 readonly CONFIG_DIR="$HOME/.config/frogminer"
@@ -96,7 +96,7 @@ _on_exit() {
     # Message handling
     if [[ $code -ne 0 ]]; then
         # Show abort message on error FIRST
-        echo -e "${RED}${BOLD}${LINE}${BREAK} 🎯 ERROR 🎯 Script aborted by user! Exiting...${BREAK}${LINE}${RESET}"
+        echo -e "${RED}${BOLD}${LINE}${BREAK} 🎯 ERROR 🎯 Script aborted! Exiting...${BREAK}${LINE}${RESET}"
     else
         # Final cleanup message
         echo -e "${GREEN} 💖 Thank you for using TKG-Installer 🌐 https://github.com/damachine/tkginstaller${RESET}"
@@ -800,9 +800,9 @@ _main() {
             help|-h|--help)
                 _help_prompt
                 ;;
-            *)        
+            *)
                 echo -e "${RED}${BOLD} ❌ Unknown argument: ${1:-}${RESET}"
-                echo -e "${BLUE}Usage: $0 [linux|nvidia|mesa|wine|proton]${RESET}"
+                echo -e "${GREEN} 📝 Usage: $0 [linux|nvidia|mesa|wine|proton]${RESET}"
                 exit 1
                 ;;
         esac
