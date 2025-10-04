@@ -50,7 +50,7 @@
 set -euo pipefail
 
 # 📌 Global paths and configuration
-readonly VERSION="v0.6.8"
+readonly VERSION="v0.6.9"
 readonly LOCKFILE="/tmp/tkginstaller.lock"
 readonly TEMP_DIR="$HOME/.cache/tkginstaller"
 readonly CONFIG_DIR="$HOME/.config/frogminer"
@@ -99,9 +99,10 @@ _on_exit() {
         echo -e "${RED}${BOLD}${LINE} 🎯 Script aborted: $code 🎯${LINE}${RESET}"
     else
         # Final cleanup message
-        echo -e "${GREEN} 💖 Thank you for using TKG-Installer 🌐 https://github.com/damachine/tkginstaller 🐸 Frogging-Family: https://github.com/Frogging-Family${RESET}"
+        echo -e "${GREEN} 💖 Thank you for using TKG-Installer 🌐 https://github.com/damachine/tkginstaller${RESET}"
+        echo -e "${GREEN}                                      🐸 https://github.com/Frogging-Family${RESET}"
         echo -e "${GREEN} 🧹 Cleanup completed${RESET}"
-        echo -e "${GREEN} 🐸 TKG-Installer closed 👋${RESET}"
+        echo -e "${GREEN} 👋 TKG-Installer closed${RESET}"
         echo -e "${GREEN}${LINE}${BREAK}${RESET}"
     fi
     
@@ -126,7 +127,7 @@ _pre() {
 
     # Welcome message
     echo -e "${GREEN}${LINE}${BREAK} 🐸 TKG-Installer ${VERSION} for $DISTRO_NAME${BREAK}${LINE}${RESET}"
-    echo -e "${GREEN} 🔁 Starting 🐸 TKG-Installer...${RESET}"
+    echo -e "${GREEN} 🔁 Starting...${RESET}"
 
     # Check for root execution
     if [[ "$(id -u)" -eq 0 ]]; then
@@ -204,17 +205,28 @@ _show_done() {
 
 # ❓ Help information display
 _help_prompt() {
-    echo -e "${BLUE}Usage: $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|combo]${RESET}"
+    echo -e "${GREEN}${LINE}${BREAK}No arguments: Launch interactive menu${RESET}"
+    echo -e "${GREEN}Commandline usage: $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|combo]${RESET}"
     echo -e "${BLUE}Shortcuts: l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/combo=combo combo${RESET}"
-    echo -e "${BLUE}Examples:${RESET}"
-    echo -e "  $0 linux         # Install Linux-TKG"
-    echo -e "  $0 nvidia        # Install Nvidia-TKG"
-    echo -e "  $0 mesa          # Install Mesa-TKG"
-    echo -e "  $0 wine          # Install Wine-TKG"
-    echo -e "  $0 proton        # Install Proton-TKG"
-    echo -e "  $0 linuxnvidia   # Install Linux-TKG + Nvidia-TKG"
-    echo -e "  $0 ln            # Install Linux-TKG + Nvidia-TKG"
-    echo -e "  $0 combo         # Install Linux-TKG + Nvidia-TKG"
+    echo -e " "
+    echo -e "${YELLOW}Example:${RESET}"
+    echo -e "${YELLOW}  $0 linux         # Install Linux-TKG${RESET}"
+    echo -e "${YELLOW}  $0 nvidia        # Install Nvidia-TKG${RESET}"
+    echo -e "${YELLOW}  $0 mesa          # Install Mesa-TKG${RESET}"
+    echo -e "${YELLOW}  $0 wine          # Install Wine-TKG${RESET}"
+    echo -e "${YELLOW}  $0 proton        # Install Proton-TKG${RESET}"
+    echo -e "${YELLOW}  $0 combo         # Install Linux-TKG + Nvidia-TKG${RESET}"
+    echo -e "${YELLOW}  See all shortcuts${RESET}"
+    echo -e "${GREEN}${LINE}${RESET}"
+
+    # Disable exit trap before cleanup and exit
+    trap - INT TERM EXIT HUP
+    
+    # Clean exit without triggering _on_exit cleanup messages
+    rm -f "$LOCKFILE" 2>/dev/null || true
+    rm -rf /tmp/tkginstaller_choice "$TEMP_DIR" 2>/dev/null || true
+    unset PREVIEW_LINUX PREVIEW_NVIDIA PREVIEW_MESA PREVIEW_WINE PREVIEW_PROTON 2>/dev/null || true
+    
     exit 0
 }
 
@@ -694,7 +706,7 @@ _menu() {
             --no-input \
             --no-multi \
             --no-multi-line \
-            --header=$'🐸 🐸 🐸 TKG Installer ── Select a package 🐸 🐸 🐸' \
+            --header=$'🐸 🐸 🐸 TKG-Installer ── Select a package 🐸 🐸 🐸' \
             --header-border=thinblock \
             --header-label="$VERSION" \
             --header-label-pos=2 \
@@ -838,7 +850,7 @@ _main() {
         Clean)
             _pre
             sleep 1
-            echo -e "${YELLOW}${LINE}${BREAK} 🔁 Restarting 🐸 TKG Installer...${BREAK}${LINE}${RESET}"
+            echo -e "${YELLOW}${LINE}${BREAK} 🔁 Restarting 🐸 TKG-Installer...${BREAK}${LINE}${RESET}"
             rm -f "$LOCKFILE"
             sleep 2
             clear
