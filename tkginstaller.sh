@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # TKG-Installer VERSION
-readonly VERSION="v0.7.4"
+readonly VERSION="v0.7.5"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -506,7 +506,7 @@ _config_edit() {
                 --no-input \
                 --no-multi \
                 --no-multi-line \
-                --header=$'🐸 TKG Configuration Editor ── External configuration file\n📝 Default directory: ~/.config/frogminer/' \
+                --header='🐸 TKG Configuration Editor ── External configuration file\n📝 Default directory: ~/.config/frogminer/' \
                 --header-border=thinblock \
                 --header-first \
                 --footer=$'📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit\nℹ️ Usage: Editor nano is fallback if environment $EDITOR is not set\n🌐 See: https://wiki.archlinux.org/title/Environment_variables' \
@@ -716,16 +716,26 @@ _menu() {
             --footer=$'📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit\n🐸 Frogging-Family: https://github.com/Frogging-Family\n🌐 About: https://github.com/damachine/tkginstaller' \
             --footer-border=thinblock \
             --preview='case {} in \
-                Linux*)     ${ECHO} "${BLUE}${BOLD}${LINE}${BREAK}🧠 Linux-TKG ─ Custom Linux kernels${BREAK}${LINE}${RESET}${BREAK}${BREAK}$PREVIEW_LINUX";; \
-                Nvidia*)    ${ECHO} "${BLUE}${BOLD}${LINE}${BREAK}🖥️ Nvidia-TKG ─ Open-Source or proprietary graphics driver${BREAK}${LINE}${RESET}${BREAK}${BREAK}$PREVIEW_NVIDIA";; \
-                Combo*)     ${ECHO} "${BLUE}${BOLD}${LINE}${BREAK}🧬 Combo package: 🟦Linux-TKG ✚ 🟩Nvidia-TKG${BREAK}${LINE}${RESET}${BREAK}${BREAK}$PREVIEW_LINUX${BREAK}${BREAK}$PREVIEW_NVIDIA";; \
-                Mesa*)      ${ECHO} "${BLUE}${BOLD}${LINE}${BREAK}🧩 Mesa-TKG ─ Open-Source graphics driver for AMD and Intel${BREAK}${LINE}${RESET}${BREAK}${BREAK}$PREVIEW_MESA";; \
-                Wine*)      ${ECHO} "${BLUE}${BOLD}${LINE}${BREAK}🍷 Wine-TKG ─ Windows compatibility layer${BREAK}${LINE}${RESET}${BREAK}${BREAK}$PREVIEW_WINE";; \
-                Proton*)    ${ECHO} "${BLUE}${BOLD}${LINE}${BREAK}🎮 Proton-TKG ─ Windows compatibility layer for Steam / Gaming${BREAK}${LINE}${RESET}${BREAK}${BREAK}$PREVIEW_PROTON";; \
-                Config*)    ${ECHO} "${BLUE}${BOLD}${LINE}${BREAK}🛠️ TKG external configuration files ➡️${BREAK}${LINE}${RESET}${BREAK}${BREAK}Edit all external TKG configuration files${BREAK}📝 Default directory: ~/.config/frogminer/${BREAK}${BREAK}See full documentation at:${BREAK}🌐 https://github.com/damachine/tkginstaller${BREAK}🐸 Frogging-Family: https://github.com/Frogging-Family";; \
-                Clean*)     ${ECHO} "${BLUE}${BOLD}${LINE}${BREAK}🧹 TKG-Installer - Cleaning${BREAK}${LINE}${RESET}${BREAK}${BREAK}Removes temporary files in ~/.cache/tkginstaller and resets the installer.${BREAK}${BREAK}See full documentation at:${BREAK}🌐 https://github.com/damachine/tkginstaller";; \
-                Help*)      ${ECHO} "${BLUE}${BOLD}${LINE}${BREAK}❓ TKG-Installer - Help${BREAK}${LINE}${RESET}${BREAK}${BREAK}Shows all Commandline usage.${BREAK}${BREAK}See full documentation at:${BREAK}🌐 https://github.com/damachine/tkginstaller${BREAK}🐸 Frogging-Family: https://github.com/Frogging-Family";; \
-                Exit*)      ${ECHO} "${BLUE}${BOLD}${LINE}${BREAK}👋 Exit the program and removes temporary files${BREAK}${LINE}${RESET}${BREAK}${BREAK}💖 Thank you for using TKG-Installer! 💖${BREAK}${BREAK}If you like this program, please support the project on GitHub ⭐ ⭐ ⭐${BREAK}${BREAK}🌐 See: https://github.com/damachine/tkginstaller${BREAK}🐸 Frogging-Family: https://github.com/Frogging-Family";; \
+                Linux*)
+                    ${ECHO} "${BLUE}${LINE}${BOLD}${BREAK}🧠 Linux-TKG ─ Custom Linux kernels${BREAK}${LINE}${RESET}${BREAK}${BREAK}$PREVIEW_LINUX";; \
+                Nvidia*)
+                    ${ECHO} "${BLUE}${LINE}${BOLD}${BREAK}🖥️ Nvidia-TKG ─ Open-Source or proprietary graphics driver${BREAK}${LINE}${RESET}${BREAK}${BREAK}$PREVIEW_NVIDIA";; \
+                Combo*)
+                    ${ECHO} "${BLUE}${LINE}${BOLD}${BREAK}🧬 Combo package: 🟦Linux-TKG ✚ 🟩Nvidia-TKG${BREAK}${LINE}${RESET}${BREAK}${BREAK}$PREVIEW_LINUX${BREAK}${BREAK}$PREVIEW_NVIDIA";; \
+                Mesa*)
+                    ${ECHO} "${BLUE}${LINE}${BOLD}${BREAK}🧩 Mesa-TKG ─ Open-Source graphics driver for AMD and Intel${BREAK}${LINE}${RESET}${BREAK}${BREAK}$PREVIEW_MESA";; \
+                Wine*)
+                    ${ECHO} "${BLUE}${LINE}${BOLD}${BREAK}🍷 Wine-TKG ─ Windows compatibility layer${BREAK}${LINE}${RESET}${BREAK}${BREAK}$PREVIEW_WINE";; \
+                Proton*)
+                    ${ECHO} "${BLUE}${LINE}${BOLD}${BREAK}🎮 Proton-TKG ─ Windows compatibility layer for Steam / Gaming${BREAK}${LINE}${RESET}${BREAK}${BREAK}$PREVIEW_PROTON";; \
+                Config*)
+                    ${ECHO} "${BLUE}${LINE}${BOLD}${BREAK}🛠️ TKG external configuration files ➡️${BREAK}${LINE}${RESET}${BREAK}${BREAK}Edit all external TKG configuration files${BREAK}📝 Default directory: ~/.config/frogminer/${BREAK}${BREAK}See full documentation at:${BREAK}🌐 https://github.com/damachine/tkginstaller${BREAK}🐸 Frogging-Family: https://github.com/Frogging-Family";; \
+                Clean*)
+                    ${ECHO} "${BLUE}${LINE}${BOLD}${BREAK}🧹 TKG-Installer - Cleaning${BREAK}${LINE}${RESET}${BREAK}${BREAK}Removes temporary files in ~/.cache/tkginstaller and resets the installer.${BREAK}${BREAK}See full documentation at:${BREAK}🌐 https://github.com/damachine/tkginstaller";; \
+                Help*)
+                    ${ECHO} "${BLUE}${LINE}${BOLD}${BREAK}❓ TKG-Installer - Help${BREAK}${LINE}${RESET}${BREAK}${BREAK}Shows all Commandline usage.${BREAK}${BREAK}See full documentation at:${BREAK}🌐 https://github.com/damachine/tkginstaller${BREAK}🐸 Frogging-Family: https://github.com/Frogging-Family";; \
+                Exit*)
+                    ${ECHO} "${BLUE}${LINE}${BOLD}${BREAK}👋 Exit the program and removes temporary files${BREAK}${LINE}${RESET}${BREAK}${BREAK}💖 Thank you for using TKG-Installer! 💖${BREAK}${BREAK}If you like this program, please support the project on GitHub ⭐ ⭐ ⭐${BREAK}${BREAK}🌐 See: https://github.com/damachine/tkginstaller${BREAK}🐸 Frogging-Family: https://github.com/Frogging-Family";; \
                 esac' \
             --preview-label="Preview" \
             --preview-window="right:nowrap:60%" \
