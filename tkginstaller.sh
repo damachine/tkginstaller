@@ -166,7 +166,6 @@ _pre() {
     ${TKG_ECHO} "${TKG_BLUE} 📡 Retrieving content from Frogging-Family repo...${TKG_RESET}"
 
     # Update system (Arch Linux specific)
-<<<<<<< HEAD
     #if command -v pacman &>/dev/null; then
     #    echo -e "${BLUE} 🔍 Updating $DISTRO_NAME mirrors...${RESET}"
     #    if ! sudo -n pacman -Sy >/dev/null 2>&1; then
@@ -184,32 +183,6 @@ _pre() {
     #        esac
     #    fi
     #fi
-=======
-    if command -v pacman &>/dev/null; then
-        ${TKG_ECHO} "${TKG_BLUE} 🔍 Updating $DISTRO_NAME mirrors...${TKG_RESET}"
-        # Check if we can run pacman without password
-        if sudo -n true 2>/dev/null; then
-            # Password-less sudo available
-            if ! sudo pacman -Sy >/dev/null 2>&1; then
-                ${TKG_ECHO} "${TKG_YELLOW} ⚠️ Mirror update failed. Continuing without update...${TKG_RESET}"
-            fi
-        else
-            # Password required
-            ${TKG_ECHO} "${TKG_YELLOW} ⚠️ Password required for mirror update. You can skip this step.${TKG_RESET}"
-            read -r -p "Do you want to update mirrors now? [y/N]: " update_mirrors
-            case "${update_mirrors,,}" in  # Convert to lowercase
-                y|yes)
-                    if ! sudo pacman -Sy >/dev/null 2>&1; then
-                        ${TKG_ECHO} "${TKG_YELLOW} ⚠️ Mirror update failed or cancelled. Continuing without update...${TKG_RESET}"
-                    fi
-                    ;;
-                *)
-                    ${TKG_ECHO} "${TKG_YELLOW} ⚠️ Mirror update skipped. Continuing...${TKG_RESET}"
-                    ;;
-            esac
-        fi
-    fi
->>>>>>> 9f96531a193c860d788740183dbe1cc4a02c0a26
 
     # Final message
     ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} ✅ Pre-checks completed${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
