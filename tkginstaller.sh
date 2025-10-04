@@ -50,7 +50,7 @@
 set -euo pipefail
 
 # 📌 Global paths and configuration
-readonly VERSION="v0.6.9"
+readonly VERSION="v0.7.0"
 readonly LOCKFILE="/tmp/tkginstaller.lock"
 readonly TEMP_DIR="$HOME/.cache/tkginstaller"
 readonly CONFIG_DIR="$HOME/.config/frogminer"
@@ -90,13 +90,13 @@ fi
 
 # 🧹 Cleanup handler for graceful exit
 _on_exit() {
-    trap - INT TERM EXIT HUP
     local code=$?
+    trap - INT TERM EXIT HUP
     
     # Message handling
     if [[ $code -ne 0 ]]; then
         # Show abort message on error FIRST
-        echo -e "${RED}${BOLD}${LINE} 🎯 Script aborted: $code 🎯${LINE}${RESET}"
+        echo -e "${RED}${BOLD}${LINE}${BREAK} 🎯 Script aborted 🎯${BREAK}${LINE}${RESET}"
     else
         # Final cleanup message
         echo -e "${GREEN} 💖 Thank you for using TKG-Installer 🌐 https://github.com/damachine/tkginstaller${RESET}"
