@@ -96,7 +96,7 @@ _on_exit() {
     # Message handling
     if [[ $code -ne 0 ]]; then
         # Show abort message on error FIRST
-        echo -e "${RED}${BOLD}${LINE}${BREAK} 🎯 Script aborted 🎯${BREAK}${LINE}${RESET}"
+        echo -e "${RED}${BOLD}${LINE}${BREAK} 🎯 ERROR 🎯 Script aborted by user! Exiting...${BREAK}${LINE}${RESET}"
     else
         # Final cleanup message
         echo -e "${GREEN} 💖 Thank you for using TKG-Installer 🌐 https://github.com/damachine/tkginstaller${RESET}"
