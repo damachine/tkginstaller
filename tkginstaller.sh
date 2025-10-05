@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # TKG-Installer VERSION
-readonly VERSION="v0.8.5"
+readonly VERSION="v0.8.6"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
