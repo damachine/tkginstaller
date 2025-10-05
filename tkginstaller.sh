@@ -368,7 +368,7 @@ _nvidia_install() {
     fi
     
     # Build and install 
-    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Nvidia-TKG package, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
+    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Nvidia-TKG package, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust customization.cfg to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
     makepkg -si || {
         ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: nvidia-all${TKG_RESET}"
         return 1
@@ -393,7 +393,7 @@ _mesa_install() {
     fi
     
     # Build and install 
-    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Mesa-TKG package, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
+    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Mesa-TKG package, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust customization.cfg to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
     makepkg -si || {
         ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: mesa-tkg${TKG_RESET}"
         return 1
@@ -418,7 +418,7 @@ _wine_install() {
     fi
     
     # Build and install 
-    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Wine-TKG package, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
+    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Wine-TKG package, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust customization.cfg to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
     makepkg -si || {
         ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: wine-tkg${TKG_RESET}"
         return 1
@@ -443,7 +443,7 @@ _proton_install() {
     fi
     
     # Build Proton-TKG
-    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Proton-TKG package, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: If you adjust the config file, you can skip prompted questions during installation.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
+    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Proton-TKG package, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust customization.cfg to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
     ./proton-tkg.sh || {
         ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: proton-tkg${TKG_RESET}"
         return 1
