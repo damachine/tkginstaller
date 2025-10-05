@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # TKG-Installer VERSION
-readonly VERSION="v0.8.9"
+readonly VERSION="v0.9.0"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -247,11 +247,11 @@ _get_preview_content() {
             TKG_PREVIEW_STATIC="Note:${TKG_BREAK}- Open-source graphics drivers for AMD and Intel GPUs.${TKG_BREAK}- Use the configuration editor for custom build flags.${TKG_BREAK}- Installer will clone, build, and install Mesa.${TKG_BREAK}- Reboot or restart X for changes to apply.${TKG_BREAK}${TKG_BREAK}Tips:${TKG_BREAK}- Run 'tkginstaller mesa' to skip menu${TKG_BREAK}- Useful for gaming and Vulkan support.${TKG_BREAK}- Join the Frogging-Family community for updates.${TKG_BREAK}${TKG_BREAK}${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧩 Online Preview${TKG_BREAK}${TKG_BREAK} - See full documentation at:${TKG_BREAK} - ${FROGGING_FAMILY_REPO}/mesa-git/blob/master/README.md${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
             ;;
         wine)
-            TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/wine-tkg-git/master/README.md"
+            TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/wine-tkg-git/refs/heads/master/wine-tkg-git/README.md"
             TKG_PREVIEW_STATIC="Note:${TKG_BREAK}- Custom Wine builds for better compatibility and gaming performance.${TKG_BREAK}- Use the configuration editor for patches and tweaks.${TKG_BREAK}- Installer will clone, build, and install Wine-TKG.${TKG_BREAK}- Configure your prefix after installation.${TKG_BREAK}${TKG_BREAK}Tips:${TKG_BREAK}- Run 'tkginstaller wine' to skip menu${TKG_BREAK}- Ideal for running Windows games and apps.${TKG_BREAK}- Join the Frogging-Family community for support.${TKG_BREAK}${TKG_BREAK}${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🍷 Online Preview${TKG_BREAK}${TKG_BREAK} - See full documentation at:${TKG_BREAK} - ${FROGGING_FAMILY_REPO}/wine-tkg-git/blob/master/README.md${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
             ;;
         proton)
-            TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/wine-tkg-git/master/proton-tkg/README.md"
+            TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/wine-tkg-git/refs/heads/master/proton-tkg/README.md"
             TKG_PREVIEW_STATIC="Note:${TKG_BREAK}- Custom Proton builds for Steam Play and gaming.${TKG_BREAK}- Use the configuration editor for tweaks and patches.${TKG_BREAK}- Installer will clone, build, and install Proton-TKG.${TKG_BREAK}- Select Proton-TKG in Steam after installation.${TKG_BREAK}${TKG_BREAK}Tips:${TKG_BREAK}- Run 'tkginstaller proton' to skip menu${TKG_BREAK}- Great for running Windows games via Steam.${TKG_BREAK}- Join the Frogging-Family community for updates.${TKG_BREAK}${TKG_BREAK}${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🎮 Online Preview${TKG_BREAK}${TKG_BREAK} - See full documentation at:${TKG_BREAK} - ${FROGGING_FAMILY_REPO}/wine-tkg-git/blob/master/proton-tkg/README.md${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
             ;;
     esac
