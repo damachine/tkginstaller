@@ -331,8 +331,8 @@ _linux_install() {
     fi
     
     # Build and install based on distribution
-    local TKG_DISTRO_ID="${TKG_DISTRO_ID,,}"
-    local TKG_DISTRO_LIKE="${TKG_DISTRO_ID_LIKE,,}"
+    local DISTRO_ID="${TKG_DISTRO_ID,,}"
+    local DISTRO_LIKE="${TKG_DISTRO_ID_LIKE,,}"
     
     if [[ "${TKG_DISTRO_ID}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${TKG_DISTRO_LIKE}" == *"arch"* ]]; then
         ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Linux-TKG package for $TKG_DISTRO_NAME, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust customization.cfg to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
