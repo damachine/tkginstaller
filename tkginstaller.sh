@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # TKG-Installer VERSION
-readonly VERSION="v0.8.7"
+readonly VERSION="v0.8.8"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -121,11 +121,14 @@ _on_exit() {
     # Remove TKG_LOCKFILE
     rm -f "$TKG_LOCKFILE" 2>/dev/null || true
 
+    # Remove temporary choice file
+    rm -rf /tmp/tkginstaller.choice 2>/dev/null || true
+
     # Clean temporary files
-    rm -rf /tmp/tkginstaller.choice "$TKG_TEMP_DIR" 2>/dev/null || true
+    rm -rf "$TKG_TEMP_DIR" 2>/dev/null || true
 
     # Unset exported all variables
-    unset TKG_INSTALLER_REPO FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE
+    unset TKG_INSTALLER_REPO FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON 
 
     # Exit with original exit code
     wait
@@ -148,11 +151,11 @@ _pre() {
     fi
 
     # Check required dependencies
-    local dependencies=(fzf bat curl fmt git)
-    for required in "${dependencies[@]}"; do
-        if ! command -v "$required" >/dev/null; then
-            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ $required is not installed! Please install it first.${TKG_RESET}"
-            ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD} 🔁 Run: pacman -S $required${TKG_RESET}"            
+    local TKG_DEPENDENCIES=(fzf bat curl fmt git)
+    for TKG_REQUIRED in "${TKG_DEPENDENCIES[@]}"; do
+        if ! command -v "$TKG_REQUIRED" >/dev/null; then
+            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ $TKG_REQUIRED is not installed! Please install it first.${TKG_RESET}"
+            ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD} 🔁 Run: pacman -S $TKG_REQUIRED${TKG_RESET}"            
             exit 1
         fi
     done
@@ -233,7 +236,7 @@ _get_preview_content() {
     case "$TKG_PREVIEW_CHOICE" in
         linux)
             TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/linux-tkg/master/README.md"
-            TKG_PREVIEW_STATIC="Note:${TKG_BREAK}- Use the configuration editor to customize build options.${TKG_BREAK}- Ensure you have the necessary build dependencies installed.${TKG_BREAK}- The installer will clone the repository, build the kernel, and install it.${TKG_BREAK}- After installation, reboot to use the new kernel.${TKG_BREAK}${TKG_BREAK}Tips:${TKG_BREAK}- Run 'tkginstaller linux' to skip menu${TKG_BREAK}- Join the Frogging-Family community for support and updates.${TKG_BREAK}${TKG_BREAK}${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧠 Online Preview${TKG_BREAK}${TKG_BREAK} - See full documentation at:${TKG_BREAK} - ${FROGGING_FAMILY_REPO}/linux-tkg/blob/master/README.md${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
+            TKG_PREVIEW_STATIC="Note:${TKG_BREAK}- Use the configuration editor to customize build options.${TKG_BREAK}- Ensure you have the necessary build TKG_DEPENDENCIES installed.${TKG_BREAK}- The installer will clone the repository, build the kernel, and install it.${TKG_BREAK}- After installation, reboot to use the new kernel.${TKG_BREAK}${TKG_BREAK}Tips:${TKG_BREAK}- Run 'tkginstaller linux' to skip menu${TKG_BREAK}- Join the Frogging-Family community for support and updates.${TKG_BREAK}${TKG_BREAK}${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧠 Online Preview${TKG_BREAK}${TKG_BREAK} - See full documentation at:${TKG_BREAK} - ${FROGGING_FAMILY_REPO}/linux-tkg/blob/master/README.md${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
             ;;
         nvidia)
             TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/nvidia-all/master/README.md"
@@ -289,25 +292,25 @@ _init_previews() {
 
 # 📝 Text editor wrapper with fallback support
 _editor() {
-    local file="$1"
+    local TKG_FILE="$1"
 
     # Parse $EDITOR variable (may contain arguments)
-    local _editor_raw="${EDITOR-}"
-    local _editor_parts=()
-    IFS=' ' read -r -a _editor_parts <<< "$_editor_raw" || true
+    local TKG_EDITOR_RAW="${EDITOR-}"
+    local TKG_EDITOR_PARTS=()
+    IFS=' ' read -r -a TKG_EDITOR_PARTS <<< "$TKG_EDITOR_RAW" || true
 
     # Fallback to nano if no editor configured or not executable
-    if [[ -z "${_editor_parts[0]:-}" ]] || ! command -v "${_editor_parts[0]}" >/dev/null 2>&1; then
+    if [[ -z "${TKG_EDITOR_PARTS[0]:-}" ]] || ! command -v "${TKG_EDITOR_PARTS[0]}" >/dev/null 2>&1; then
         if command -v nano >/dev/null 2>&1; then
-            _editor_parts=(nano)
+            TKG_EDITOR_PARTS=(nano)
         else
             ${TKG_ECHO} "${TKG_YELLOW} ⚠️ No editor found: please set \$EDITOR or install 'nano'.${TKG_RESET}"
             return 1
         fi
     fi
 
-    # Execute the editor with the target file
-    "${_editor_parts[@]}" "$file"
+    # Execute the editor with the target TKG_FILE
+    "${TKG_EDITOR_PARTS[@]}" "$TKG_FILE"
 }
 # =============================================================================
 # INSTALLATION FUNCTIONS
