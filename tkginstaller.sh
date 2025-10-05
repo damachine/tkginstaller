@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # TKG-Installer VERSION
-readonly VERSION="v0.8.3"
+readonly VERSION="v0.8.4"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -260,6 +260,7 @@ _get_preview_content() {
             content=$(curl -fsSL --max-time 5 "$TKG_PREVIEW_URL" 2>/dev/null)
         fi
 
+        # View content with fallback to static preview
         if [[ -n "$content" ]]; then
             if command -v bat >/dev/null 2>&1; then
                 ${TKG_ECHO} " "
@@ -497,15 +498,15 @@ _config_edit() {
                     key=\$(echo {} | cut -d'|' -f1 | xargs)
                     case \$key in
                         linux-tkg)
-                            bat --style=numbers --color=always \"${TKG_CONFIG_DIR}/linux-tkg.cfg\" 2>/dev/null || ${TKG_ECHO} \"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}\" ;;
+                            bat --style=numbers --paging=never --language=bash --wrap never --highlight-line 1 --force-colorization \"${TKG_CONFIG_DIR}/linux-tkg.cfg\" 2>/dev/null || ${TKG_ECHO} \"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}\" ;;
                         nvidia-all)
-                            bat --style=numbers --color=always \"${TKG_CONFIG_DIR}/nvidia-all.cfg\" 2>/dev/null || ${TKG_ECHO} \"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}\" ;;
+                            bat --style=numbers --paging=never --language=bash --wrap never --highlight-line 1 --force-colorization \"${TKG_CONFIG_DIR}/nvidia-all.cfg\" 2>/dev/null || ${TKG_ECHO} \"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}\" ;;
                         mesa-git)
-                            bat --style=numbers --color=always \"${TKG_CONFIG_DIR}/mesa-git.cfg\" 2>/dev/null || ${TKG_ECHO} \"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}\" ;;
+                            bat --style=numbers --paging=never --language=bash --wrap never --highlight-line 1 --force-colorization \"${TKG_CONFIG_DIR}/mesa-git.cfg\" 2>/dev/null || ${TKG_ECHO} \"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}\" ;;
                         wine-tkg)
-                            bat --style=numbers --color=always \"${TKG_CONFIG_DIR}/wine-tkg.cfg\" 2>/dev/null || ${TKG_ECHO} \"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}\" ;;
+                            bat --style=numbers --paging=never --language=bash --wrap never --highlight-line 1 --force-colorization \"${TKG_CONFIG_DIR}/wine-tkg.cfg\" 2>/dev/null || ${TKG_ECHO} \"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}\" ;;
                         proton-tkg)
-                            bat --style=numbers --color=always \"${TKG_CONFIG_DIR}/proton-tkg.cfg\" 2>/dev/null || ${TKG_ECHO} \"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}\" ;;
+                            bat --style=numbers --paging=never --language=bash --wrap never --highlight-line 1 --force-colorization \"${TKG_CONFIG_DIR}/proton-tkg.cfg\" 2>/dev/null || ${TKG_ECHO} \"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}\" ;;
                         back)
                             ${TKG_ECHO} \"${TKG_GREEN}${TKG_BOLD}⏪ Back to Mainmenu!${TKG_RESET}\" ;;
                     esac
