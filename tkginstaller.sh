@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # TKG-Installer VERSION
-readonly VERSION="v0.8.1"
+readonly VERSION="v0.8.2"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -164,25 +164,6 @@ _pre() {
 
     # Message for preview section
     ${TKG_ECHO} "${TKG_BLUE} 📡 Retrieving content from Frogging-Family repo...${TKG_RESET}"
-
-    # Update system (Arch Linux specific)
-    #if command -v pacman &>/dev/null; then
-    #    echo -e "${BLUE} 🔍 Updating $DISTRO_NAME mirrors...${RESET}"
-    #    if ! sudo -n pacman -Sy >/dev/null 2>&1; then
-    #        echo -e "${YELLOW} ⚠️ Password required for mirror update. You can skip this step.${RESET}"
-    #        read -r -p "Do you want to update mirrors now? [y/N]: " update_mirrors
-    #        case "$update_mirrors" in
-    #            y|Y|yes)
-    #                sudo pacman -Syy >/dev/null 2>&1 || {
-    #                    echo -e "${YELLOW} ⚠️ Mirror update failed or cancelled. Continuing without update...${RESET}"
-    #                }
-    #                ;;
-    #            *)
-    #                echo -e "${YELLOW} ⚠️ Mirror update skipped. Continuing...${RESET}"
-    #                ;;
-    #        esac
-    #    fi
-    #fi
 
     # Final message
     ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} ✅ Pre-checks completed${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
@@ -494,15 +475,16 @@ _config_edit() {
         # shellcheck disable=SC2016  # allow fzf to expand variables in its own shell at runtime
         TKG_CONFIG_CHOICE=$(
             fzf \
-                --with-shell="bash -c" \
+                --with-shell='bash -c' \
                 --style full:thinblock \
                 --border=none \
                 --layout=reverse \
                 --highlight-line \
-                --height="-1" \
+                --height='-1' \
                 --ansi \
-                --delimiter="|" \
-                --with-nth="2" \
+                --delimiter='|' \
+                --with-nth='2' \
+                --no-extended \
                 --no-input \
                 --no-multi \
                 --no-multi-line \
@@ -525,18 +507,20 @@ _config_edit() {
                         proton-tkg)
                             bat --style=numbers --color=always \"${TKG_CONFIG_DIR}/proton-tkg.cfg\" 2>/dev/null || ${TKG_ECHO} \"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}\" ;;
                         back)
-                            ${TKG_ECHO} \"${TKG_GREEN}${TKG_BOLD}👋 Back to Mainmenu!${TKG_RESET}\" ;;
+                            ${TKG_ECHO} \"${TKG_GREEN}${TKG_BOLD}⏪ Back to Mainmenu!${TKG_RESET}\" ;;
                     esac
                 " \
-                --preview-label="Preview" \
-                --preview-window="right:nowrap:60%" \
+                --preview-label='Preview' \
+                --preview-window='right:nowrap:60%' \
                 --preview-border=thinblock \
-                --color='header:green,pointer:green,marker:green'<<'MENU'
+                --pointer='🐸' \
+                --disabled \
+                --color='header:green,pointer:green,marker:green' <<'MENU'
 linux-tkg  |🧠 Linux   ─ Ext. 🛠️ 📝: ~/.config/frogminer/linux-tkg.cfg
-nvidia-all |🎮 Nvidia  ─           : ~/.config/frogminer/nvidia-all.cfg
-mesa-git   |🧩 Mesa    ─           : ~/.config/frogminer/mesa-git.cfg
-wine-tkg   |🍷 Wine    ─           : ~/.config/frogminer//wine-tkg.cfg
-proton-tkg |🎮 Proton  ─           : ~/.config/frogminer/proton-tkg.cfg
+nvidia-all |🎮 Nvidia  ─ ➡️        : ➡️                  nvidia-all.cfg
+mesa-git   |🧩 Mesa    ─ ➡️        : ➡️                  mesa-git.cfg
+wine-tkg   |🍷 Wine    ─ ➡️        : ➡️                  wine-tkg.cfg
+proton-tkg |🎮 Proton  ─ ➡️        : ➡️                  proton-tkg.cfg
 back       |⏪ Back
 MENU
         )
@@ -583,7 +567,8 @@ MENU
                     "${TKG_CONFIG_DIR}/proton-tkg.cfg" \
                     "${FROGGING_FAMILY_RAW}/wine-tkg-git/master/proton-tkg/proton-tkg.cfg"
                 ;;
-            back)       
+            back)
+                ${TKG_ECHO} "${TKG_YELLOW}${TKG_LINE}${TKG_BREAK} ⏪ Exit editor menue${TKG_BREAK}${TKG_LINE}${TKG_RESET}"      
                 return 0
                 ;;
             *)          
@@ -703,19 +688,19 @@ _menu() {
     # shellcheck disable=SC2016  # allow fzf to expand variables in its own shell at runtime
     selection=$(
         fzf \
-            --with-shell="bash -c" \
+            --with-shell='bash -c' \
             --style full:thinblock \
             --border=none \
             --layout=reverse \
             --highlight-line \
-            --height="-1" \
-            --ansi \
-            --delimiter="|" \
-            --with-nth="2" \
+            --height='-1' \
+            --delimiter='|' \
+            --with-nth='2' \
+            --no-extended \
             --no-input \
             --no-multi \
             --no-multi-line \
-            --header="🐸 🐸 🐸 TKG-Installer ── Select a package 🐸 🐸 🐸" \
+            --header='🐸 🐸 🐸 TKG-Installer ── Select a package 🐸 🐸 🐸' \
             --header-border=thinblock \
             --header-label="$VERSION" \
             --header-label-pos=2 \
@@ -744,10 +729,12 @@ _menu() {
                 Exit*)
                     ${TKG_ECHO} "${TKG_BLUE}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}👋 Exit the program and removes temporary files${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}💖 Thank you for using TKG-Installer! 💖${TKG_BREAK}${TKG_BREAK}If you like this program, please support the project on GitHub ⭐ ⭐ ⭐${TKG_BREAK}${TKG_BREAK}🌐 See: ${TKG_INSTALLER_REPO}${TKG_BREAK}🐸 Frogging-Family: ${FROGGING_FAMILY_REPO}";; \
                 esac' \
-            --preview-label="Preview" \
-            --preview-window="right:nowrap:60%" \
+            --preview-label='Preview' \
+            --preview-window='right:nowrap:60%' \
             --preview-border=thinblock \
-            --color='header:green,pointer:green,marker:green' <<'MENU'
+            --pointer='🐸' \
+            --disabled \
+            --color='header:green,pointer:green,marker:green'\ <<'MENU'
 Linux  |🧠 Kernel    ─ Linux-TKG custom kernels
 Nvidia |🖥️ Nvidia    ─ Nvidia Open-Source or proprietary graphics driver
 Combo  |🧬 Combo➕   ─ Combo package: 🟥🟦Linux-TKG ✚ 🟩Nvidia-TKG
@@ -763,7 +750,7 @@ MENU
 
     # Handle cancelled selection (ESC pressed)
     if [[ -z "$selection" ]]; then
-        ${TKG_ECHO} " ${TKG_RED}${TKG_BOLD} ❌ Selection cancelled.${TKG_RESET}"
+        ${TKG_ECHO} " ${TKG_RED}${TKG_BOLD}❌ Selection cancelled.${TKG_RESET}"
         _on_exit
     fi
 
@@ -863,6 +850,7 @@ _main() {
             _help_prompt
             ;;
         Clean)
+            ${TKG_ECHO} "${TKG_YELLOW}${TKG_LINE}${TKG_BREAK} 🧹 Cleaning temporary files...${TKG_BREAK}${TKG_LINE}${TKG_RESET}"      
             _pre
             sleep 1
             ${TKG_ECHO} "${TKG_YELLOW}${TKG_LINE}${TKG_BREAK} 🔁 Restarting 🐸 TKG-Installer...${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
@@ -875,7 +863,7 @@ _main() {
             _on_exit
             ;;
         *)
-            ${TKG_ECHO} "${TKG_GREEN}${TKG_BOLD} ❌ Invalid option: $TKG_CHOICE${TKG_RESET}"
+            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Invalid option: $TKG_CHOICE${TKG_RESET}"
             ;;
     esac
 }
