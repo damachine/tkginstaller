@@ -341,7 +341,7 @@ _linux_install() {
             return 1
         }
     else
-        ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building Linux-TKG via install.sh... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Review customization.cfg before continuing.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building Linux-TKG via install.sh... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust customization.cfg to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
         chmod +x install.sh 2>/dev/null || true
         ./install.sh install || {
             ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error running install.sh for linux-tkg${TKG_RESET}"
