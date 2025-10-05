@@ -728,7 +728,7 @@ _menu() {
                 Nvidia*)
                     ${TKG_ECHO} "${TKG_BLUE}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🖥️ Nvidia-TKG ─ Open-Source or proprietary graphics driver${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_NVIDIA";; \
                 Combo*)
-                    ${TKG_ECHO} "${TKG_BLUE}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧬 Combo package: 🟦Linux-TKG ✚ 🟩Nvidia-TKG${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_LINUX${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_NVIDIA";; \
+                    ${TKG_ECHO} "${TKG_BLUE}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧬 Combo package: 🟥🟦Linux-TKG ✚ 🟩Nvidia-TKG${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_LINUX${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_NVIDIA";; \
                 Mesa*)
                     ${TKG_ECHO} "${TKG_BLUE}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧩 Mesa-TKG ─ Open-Source graphics driver for AMD and Intel${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_MESA";; \
                 Wine*)
@@ -750,7 +750,7 @@ _menu() {
             --color='header:green,pointer:green,marker:green' <<'MENU'
 Linux  |🧠 Kernel    ─ Linux-TKG custom kernels
 Nvidia |🖥️ Nvidia    ─ Nvidia Open-Source or proprietary graphics driver
-Combo  |🧬 Combo➕   ─ Combo package: 🟦Linux-TKG ✚ 🟩Nvidia-TKG
+Combo  |🧬 Combo➕   ─ Combo package: 🟥🟦Linux-TKG ✚ 🟩Nvidia-TKG
 Mesa   |🧩 Mesa      ─ Open-Source graphics driver for AMD and Intel
 Wine   |🍷 Wine      ─ Windows compatibility layer
 Proton |🎮 Proton    ─ Windows compatibility layer for Steam / Gaming
