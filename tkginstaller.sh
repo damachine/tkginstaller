@@ -87,13 +87,13 @@ touch "$TKG_LOCKFILE"
 if [[ -f /etc/os-release ]]; then
     # shellcheck disable=SC1091
     . /etc/os-release
-    readonly DISTRO_NAME="$NAME"
-    readonly DISTRO_ID="${ID:-unknown}"
-    readonly DISTRO_ID_LIKE="${ID_LIKE:-}"
+    readonly TKG_DISTRO_NAME="$NAME"
+    readonly TKG_DISTRO_ID="${ID:-unknown}"
+    readonly TKG_DISTRO_ID_LIKE="${ID_LIKE:-}"
 else
-    readonly DISTRO_NAME="Unknown"
-    readonly DISTRO_ID="unknown"
-    readonly DISTRO_ID_LIKE=""
+    readonly TKG_DISTRO_NAME="Unknown"
+    readonly TKG_DISTRO_ID="unknown"
+    readonly TKG_DISTRO_ID_LIKE=""
 fi
 
 # =============================================================================
@@ -138,7 +138,7 @@ trap _on_exit INT TERM EXIT HUP
 _pre() {
 
     # Welcome message
-    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🐸 TKG-Installer ${VERSION} for $DISTRO_NAME${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
+    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🐸 TKG-Installer ${VERSION} for $TKG_DISTRO_NAME${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
     ${TKG_ECHO} "${TKG_GREEN} 🔁 Starting...${TKG_RESET}"
 
     # Check for root execution
@@ -331,17 +331,17 @@ _linux_install() {
     fi
     
     # Build and install based on distribution
-    local distro_id="${DISTRO_ID,,}"
-    local distro_like="${DISTRO_ID_LIKE,,}"
+    local TKG_DISTRO_ID="${TKG_DISTRO_ID,,}"
+    local TKG_DISTRO_LIKE="${TKG_DISTRO_ID_LIKE,,}"
     
-    if [[ "${distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${distro_like}" == *"arch"* ]]; then
-        ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Linux-TKG package for $DISTRO_NAME, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust customization.cfg to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
+    if [[ "${TKG_DISTRO_ID}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${TKG_DISTRO_LIKE}" == *"arch"* ]]; then
+        ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Linux-TKG package for $TKG_DISTRO_NAME, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust customization.cfg to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
         makepkg -si || {
             ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: linux-tkg${TKG_RESET}"
             return 1
         }
     else
-        ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building Linux-TKG for $DISTRO_NAME, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust customization.cfg to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building Linux-TKG for $TKG_DISTRO_NAME, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust customization.cfg to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
         chmod +x install.sh 2>/dev/null || true
         ./install.sh install || {
             ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: linux-tkg${TKG_RESET}"
