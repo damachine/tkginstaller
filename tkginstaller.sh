@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # TKG-Installer VERSION
-readonly VERSION="v0.8.2"
+readonly VERSION="v0.8.3"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -144,11 +144,11 @@ _pre() {
     fi
 
     # Check required dependencies
-    local required_commands=(fzf bat curl git glow)
-    for cmd in "${required_commands[@]}"; do
-        if ! command -v "$cmd" >/dev/null; then
-            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ $cmd is not installed! Please install it first.${TKG_RESET}"
-            ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD} 🔁 Run: pacman -S $cmd${TKG_RESET}"            
+    local dependencies=(fzf bat curl fmt git)
+    for required in "${dependencies[@]}"; do
+        if ! command -v "$required" >/dev/null; then
+            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ $required is not installed! Please install it first.${TKG_RESET}"
+            ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD} 🔁 Run: pacman -S $required${TKG_RESET}"            
             exit 1
         fi
     done
@@ -252,10 +252,8 @@ _get_preview_content() {
     # Always show static preview first
     ${TKG_ECHO} "$TKG_PREVIEW_STATIC"
        
-   # Try to display remote content with available tools (glow > bat > plain text)
-    if command -v glow >/dev/null 2>&1; then
-        FORCE_COLOR=1 CLICOLOR_FORCE=1 TERM=xterm-256color glow --style=dark --width=80 "$TKG_PREVIEW_URL" 2>/dev/null
-    else
+   # Display remote content with available tools (bat > plain text)
+    if [[ -n "$TKG_PREVIEW_URL" ]]; then
         # Download content
         local content=""
         if command -v curl >/dev/null 2>&1; then
@@ -264,9 +262,11 @@ _get_preview_content() {
 
         if [[ -n "$content" ]]; then
             if command -v bat >/dev/null 2>&1; then
-                echo "$content" | bat --style=plain --color=always --language=markdown 2>/dev/null
+                ${TKG_ECHO} " "
+                ${TKG_ECHO} "$content" | fmt -w 99 | bat --style=plain --paging=never --language=md --wrap never --highlight-line 1 --force-colorization 2>/dev/null
             else
-                echo "$content"
+                ${TKG_ECHO} " "
+                ${TKG_ECHO} "$content"
             fi
         fi
     fi
@@ -568,7 +568,7 @@ MENU
                     "${FROGGING_FAMILY_RAW}/wine-tkg-git/master/proton-tkg/proton-tkg.cfg"
                 ;;
             back)
-                ${TKG_ECHO} "${TKG_YELLOW}${TKG_LINE}${TKG_BREAK} ⏪ Exit editor menue${TKG_BREAK}${TKG_LINE}${TKG_RESET}"      
+                ${TKG_ECHO} "${TKG_YELLOW}${TKG_LINE}${TKG_BREAK} ⏪ Exit editor menue...${TKG_BREAK}${TKG_LINE}${TKG_RESET}"      
                 return 0
                 ;;
             *)          
