@@ -88,8 +88,12 @@ if [[ -f /etc/os-release ]]; then
     # shellcheck disable=SC1091
     . /etc/os-release
     readonly DISTRO_NAME="$NAME"
+    readonly DISTRO_ID="${ID:-unknown}"
+    readonly DISTRO_ID_LIKE="${ID_LIKE:-}"
 else
     readonly DISTRO_NAME="Unknown"
+    readonly DISTRO_ID="unknown"
+    readonly DISTRO_ID_LIKE=""
 fi
 
 # =============================================================================
