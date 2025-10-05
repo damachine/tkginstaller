@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # TKG-Installer VERSION
-readonly VERSION="v0.8.0"
+readonly VERSION="v0.8.1"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -646,7 +646,9 @@ _handle_TKG_CONFIG_FILE() {
 _linuxnvidia_prompt() {
     SECONDS=0
     _linux_prompt
+    _show_done
     _nvidia_prompt
+    _show_done
 }
 
 # 🧠 Linux-TKG installation prompt
