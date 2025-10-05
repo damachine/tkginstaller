@@ -7,7 +7,7 @@ readonly VERSION="v0.8.2"
 # author: damachine (christkue79@gmail.com)
 # Maintainer: DAMACHINE <christkue79@gmail.com>
 # website: https://github.com/damachine
-#          ${TKG_INSTALLER_REPO} 
+#          https://github.com/damachine/tkginstaller 
 # copyright: (c) 2025 damachine
 # license: MIT
 # version: 1.0
