@@ -646,9 +646,7 @@ _handle_TKG_CONFIG_FILE() {
 _linuxnvidia_prompt() {
     SECONDS=0
     _linux_prompt
-    _show_done
     _nvidia_prompt
-    _show_done
 }
 
 # 🧠 Linux-TKG installation prompt
