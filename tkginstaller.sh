@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # TKG-Installer VERSION
-readonly VERSION="v0.9.0"
+readonly VERSION="v0.9.1"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -235,15 +235,15 @@ _get_preview_content() {
     # Define repository URLs and static previews for each TKG package
     case "$TKG_PREVIEW_CHOICE" in
         linux)
-            TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/linux-tkg/master/README.md"
+            TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/linux-tkg/refs/heads/master/README.md"
             TKG_PREVIEW_STATIC="Note:${TKG_BREAK}- Use the configuration editor to customize build options.${TKG_BREAK}- Ensure you have the necessary build TKG_DEPENDENCIES installed.${TKG_BREAK}- The installer will clone the repository, build the kernel, and install it.${TKG_BREAK}- After installation, reboot to use the new kernel.${TKG_BREAK}${TKG_BREAK}Tips:${TKG_BREAK}- Run 'tkginstaller linux' to skip menu${TKG_BREAK}- Join the Frogging-Family community for support and updates.${TKG_BREAK}${TKG_BREAK}${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧠 Online Preview${TKG_BREAK}${TKG_BREAK} - See full documentation at:${TKG_BREAK} - ${FROGGING_FAMILY_REPO}/linux-tkg/blob/master/README.md${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
             ;;
         nvidia)
-            TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/nvidia-all/master/README.md"
+            TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/nvidia-all/refs/heads/master/README.md"
             TKG_PREVIEW_STATIC="Note:${TKG_BREAK}- Supports both open-source and proprietary Nvidia drivers.${TKG_BREAK}- Use the configuration editor to set driver options and patches.${TKG_BREAK}- Installer will clone the repo, build and install the driver.${TKG_BREAK}- Reboot after installation for changes to take effect.${TKG_BREAK}${TKG_BREAK}Tips:${TKG_BREAK}- Run 'tkginstaller nvidia' to skip menu${TKG_BREAK}- Check compatibility with your GPU model.${TKG_BREAK}- Join the Frogging-Family community for troubleshooting.${TKG_BREAK}${TKG_BREAK}${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🖥️ Online Preview${TKG_BREAK}${TKG_BREAK} - See full documentation at:${TKG_BREAK} - ${FROGGING_FAMILY_REPO}/nvidia-all/blob/master/README.md${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
             ;;
         mesa)
-            TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/mesa-git/master/README.md"
+            TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/mesa-git/refs/heads/master/README.md"
             TKG_PREVIEW_STATIC="Note:${TKG_BREAK}- Open-source graphics drivers for AMD and Intel GPUs.${TKG_BREAK}- Use the configuration editor for custom build flags.${TKG_BREAK}- Installer will clone, build, and install Mesa.${TKG_BREAK}- Reboot or restart X for changes to apply.${TKG_BREAK}${TKG_BREAK}Tips:${TKG_BREAK}- Run 'tkginstaller mesa' to skip menu${TKG_BREAK}- Useful for gaming and Vulkan support.${TKG_BREAK}- Join the Frogging-Family community for updates.${TKG_BREAK}${TKG_BREAK}${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧩 Online Preview${TKG_BREAK}${TKG_BREAK} - See full documentation at:${TKG_BREAK} - ${FROGGING_FAMILY_REPO}/mesa-git/blob/master/README.md${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
             ;;
         wine)
