@@ -319,7 +319,7 @@ _linux_install() {
     
     # Clone repository
     git clone "${FROGGING_FAMILY_REPO}/linux-tkg.git" || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error cloning: linux-tkg${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error cloning: linux-tkg for $TKG_DISTRO_NAME${TKG_RESET}"
         return 1
     }
     
@@ -335,16 +335,16 @@ _linux_install() {
     local DISTRO_LIKE="${TKG_DISTRO_ID_LIKE,,}"
     
     if [[ "${DISTRO_ID}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${DISTRO_LIKE}" == *"arch"* ]]; then
-        ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Linux-TKG package for $TKG_DISTRO_NAME, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust customization.cfg to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Linux-TKG package for $TKG_DISTRO_NAME, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust external configuration file to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
         makepkg -si || {
-            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: linux-tkg${TKG_RESET}"
+            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: linux-tkg for $TKG_DISTRO_NAME${TKG_RESET}"
             return 1
         }
     else
-        ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building Linux-TKG for $TKG_DISTRO_NAME, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust customization.cfg to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Linux-TKG for $TKG_DISTRO_NAME, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust external configuration file to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
         chmod +x install.sh 2>/dev/null || true
         ./install.sh install || {
-            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: linux-tkg${TKG_RESET}"
+            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: linux-tkg for $TKG_DISTRO_NAME${TKG_RESET}"
             return 1
         }
     fi
@@ -356,7 +356,7 @@ _nvidia_install() {
     
     # Clone repository
     git clone "${FROGGING_FAMILY_REPO}/nvidia-all.git" || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error cloning: nvidia-all${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error cloning: nvidia-all for $TKG_DISTRO_NAME${TKG_RESET}"
         return 1
     }
     
@@ -368,9 +368,9 @@ _nvidia_install() {
     fi
     
     # Build and install 
-    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Nvidia-TKG package, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust customization.cfg to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
+    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Nvidia-TKG package for $TKG_DISTRO_NAME, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust external configuration file to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
     makepkg -si || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: nvidia-all${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: nvidia-all for $TKG_DISTRO_NAME${TKG_RESET}"
         return 1
     }
 }
@@ -381,7 +381,7 @@ _mesa_install() {
     
     # Clone repository
     git clone "${FROGGING_FAMILY_REPO}/mesa-git.git" || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error cloning: mesa-git${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error cloning: mesa-git for $TKG_DISTRO_NAME${TKG_RESET}"
         return 1
     }
     
@@ -393,9 +393,9 @@ _mesa_install() {
     fi
     
     # Build and install 
-    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Mesa-TKG package, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust customization.cfg to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
+    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Mesa-TKG package for $TKG_DISTRO_NAME, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust external configuration file to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
     makepkg -si || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: mesa-tkg${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: mesa-tkg for $TKG_DISTRO_NAME${TKG_RESET}"
         return 1
     }
 }
@@ -406,7 +406,7 @@ _wine_install() {
     
     # Clone repository
     git clone "${FROGGING_FAMILY_REPO}/wine-tkg-git.git" || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error cloning: wine-tkg-git${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error cloning: wine-tkg-git for $TKG_DISTRO_NAME${TKG_RESET}"
         return 1
     }
     
@@ -418,9 +418,9 @@ _wine_install() {
     fi
     
     # Build and install 
-    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Wine-TKG package, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust customization.cfg to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
+    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Wine-TKG package for $TKG_DISTRO_NAME, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust external configuration file to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
     makepkg -si || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: wine-tkg${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: wine-tkg for $TKG_DISTRO_NAME${TKG_RESET}"
         return 1
     }
 }
@@ -431,7 +431,7 @@ _proton_install() {
     
     # Clone repository
     git clone "${FROGGING_FAMILY_REPO}/wine-tkg-git.git" || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error cloning: wine-tkg-git${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error cloning: wine-tkg-git for $TKG_DISTRO_NAME${TKG_RESET}"
         return 1
     }
     
@@ -443,9 +443,9 @@ _proton_install() {
     fi
     
     # Build Proton-TKG
-    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Proton-TKG package, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust customization.cfg to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
+    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Proton-TKG package for $TKG_DISTRO_NAME, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust external configuration file to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
     ./proton-tkg.sh || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: proton-tkg${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: proton-tkg for $TKG_DISTRO_NAME${TKG_RESET}"
         return 1
     }
     
