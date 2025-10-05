@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # TKG-Installer VERSION
-readonly VERSION="v0.8.8"
+readonly VERSION="v0.8.9"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -421,11 +421,23 @@ _wine_install() {
     fi
     
     # Build and install 
-    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Wine-TKG package for $TKG_DISTRO_NAME, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust external configuration file to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
-    makepkg -si || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: wine-tkg for $TKG_DISTRO_NAME${TKG_RESET}"
-        return 1
-    }
+    local DISTRO_ID="${TKG_DISTRO_ID,,}"
+    local DISTRO_LIKE="${TKG_DISTRO_ID_LIKE,,}"
+
+    if [[ "${DISTRO_ID}" =~ ^(arch|cachyos|manjaro|endeavo1uros)$ || "${DISTRO_LIKE}" == *"arch"* ]]; then
+        ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Wine-TKG package for $TKG_DISTRO_NAME... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust external configuration file to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
+        makepkg -si || {
+            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: wine-tkg for $TKG_DISTRO_NAME${TKG_RESET}"
+            return 1
+        }
+    else
+        ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building Wine-TKG for $TKG_DISTRO_NAME... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust external configuration file to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
+        chmod +x non-makepkg-build.sh 2>/dev/null || true
+        ./non-makepkg-build.sh || {
+            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: wine-tkg for $TKG_DISTRO_NAME${TKG_RESET}"
+            return 1
+        }
+    fi
 }
 
 # 🎮 Proton-TKG installation
