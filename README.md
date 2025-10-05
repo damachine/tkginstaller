@@ -43,6 +43,8 @@
    tkginstaller help
    ```
 
+#### All Distributions
+
 - Manual installation:
 
    ```bash
