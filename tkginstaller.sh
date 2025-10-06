@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # TKG-Installer VERSION
-readonly TKG_INSTALLER_VERSION="v0.9.7"
+readonly TKG_INSTALLER_VERSION="v0.9.8"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -55,6 +55,7 @@ set -euo pipefail
 # 📌 Global paths and configuration
 readonly TKG_LOCKFILE="/tmp/tkginstaller.lock"
 TKG_INSTALLER_REPO="https://github.com/damachine/tkginstaller"
+TKG_INSTALLER_RAW="https://raw.githubusercontent.com/tkginstaller"
 FROGGING_FAMILY_REPO="https://github.com/Frogging-Family"
 FROGGING_FAMILY_RAW="https://raw.githubusercontent.com/Frogging-Family"
 TKG_TEMP_DIR="$HOME/.cache/tkginstaller"
@@ -72,7 +73,7 @@ TKG_YELLOW=$"\033[0;33m"
 TKG_BLUE=$"\033[0;34m"
 
 # 📝 Export variables for fzf subshells (unset _exit run)
-export TKG_INSTALLER_REPO FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR
+export TKG_INSTALLER_REPO TKG_INSTALLER_RAW FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR
 export TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE
 
 # 🔒 Prevent concurrent execution
@@ -129,10 +130,13 @@ _exit() {
     rm -rf "$TKG_TEMP_DIR" 2>/dev/null || true
 
     # Unset exported all variables
-    unset TKG_INSTALLER_REPO FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON 
+    unset TKG_INSTALLER_REPO TKG_INSTALLER_RAW FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR
+    unset TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE
+    unset TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON 
 
     # Exit with original exit code
     wait
+    sleep 1
     exit $code
 }
 # Setup exit trap for cleanup on script termination
@@ -234,46 +238,37 @@ _get_preview() {
     case "$TKG_PREVIEW_CHOICE" in
         linux)
             TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/linux-tkg/refs/heads/master/README.md"
-            TKG_PREVIEW_STATIC="Note:${TKG_BREAK}- Use the configuration editor to customize build options.${TKG_BREAK}- Ensure you have the necessary build TKG_DEPENDENCIES installed.${TKG_BREAK}- The installer will clone the repository, build the kernel, and install it.${TKG_BREAK}- After installation, reboot to use the new kernel.${TKG_BREAK}${TKG_BREAK}Tips:${TKG_BREAK}- Run 'tkginstaller linux' to skip menu${TKG_BREAK}- Join the Frogging-Family community for support and updates.${TKG_BREAK}${TKG_BREAK}${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧠 Online Preview${TKG_BREAK}${TKG_BREAK} - See full documentation at:${TKG_BREAK} - ${FROGGING_FAMILY_REPO}/linux-tkg/blob/master/README.md${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
+            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/preview/linux.md"
             ;;
         nvidia)
             TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/nvidia-all/refs/heads/master/README.md"
-            TKG_PREVIEW_STATIC="Note:${TKG_BREAK}- Supports both open-source and proprietary Nvidia drivers.${TKG_BREAK}- Use the configuration editor to set driver options and patches.${TKG_BREAK}- Installer will clone the repo, build and install the driver.${TKG_BREAK}- Reboot after installation for changes to take effect.${TKG_BREAK}${TKG_BREAK}Tips:${TKG_BREAK}- Run 'tkginstaller nvidia' to skip menu${TKG_BREAK}- Check compatibility with your GPU model.${TKG_BREAK}- Join the Frogging-Family community for troubleshooting.${TKG_BREAK}${TKG_BREAK}${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🖥️ Online Preview${TKG_BREAK}${TKG_BREAK} - See full documentation at:${TKG_BREAK} - ${FROGGING_FAMILY_REPO}/nvidia-all/blob/master/README.md${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
+            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/preview/nvidia.md"
             ;;
         mesa)
             TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/mesa-git/refs/heads/master/README.md"
-            TKG_PREVIEW_STATIC="Note:${TKG_BREAK}- Open-source graphics drivers for AMD and Intel GPUs.${TKG_BREAK}- Use the configuration editor for custom build flags.${TKG_BREAK}- Installer will clone, build, and install Mesa.${TKG_BREAK}- Reboot or restart X for changes to apply.${TKG_BREAK}${TKG_BREAK}Tips:${TKG_BREAK}- Run 'tkginstaller mesa' to skip menu${TKG_BREAK}- Useful for gaming and Vulkan support.${TKG_BREAK}- Join the Frogging-Family community for updates.${TKG_BREAK}${TKG_BREAK}${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧩 Online Preview${TKG_BREAK}${TKG_BREAK} - See full documentation at:${TKG_BREAK} - ${FROGGING_FAMILY_REPO}/mesa-git/blob/master/README.md${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
+            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/preview/mesa.md"
             ;;
         wine)
             TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/wine-tkg-git/refs/heads/master/wine-tkg-git/README.md"
-            TKG_PREVIEW_STATIC="Note:${TKG_BREAK}- Custom Wine builds for better compatibility and gaming performance.${TKG_BREAK}- Use the configuration editor for patches and tweaks.${TKG_BREAK}- Installer will clone, build, and install Wine-TKG.${TKG_BREAK}- Configure your prefix after installation.${TKG_BREAK}${TKG_BREAK}Tips:${TKG_BREAK}- Run 'tkginstaller wine' to skip menu${TKG_BREAK}- Ideal for running Windows games and apps.${TKG_BREAK}- Join the Frogging-Family community for support.${TKG_BREAK}${TKG_BREAK}${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🍷 Online Preview${TKG_BREAK}${TKG_BREAK} - See full documentation at:${TKG_BREAK} - ${FROGGING_FAMILY_REPO}/wine-tkg-git/blob/master/README.md${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
+            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/preview/wine.md"
             ;;
         proton)
             TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/wine-tkg-git/refs/heads/master/proton-tkg/README.md"
-            TKG_PREVIEW_STATIC="Note:${TKG_BREAK}- Custom Proton builds for Steam Play and gaming.${TKG_BREAK}- Use the configuration editor for tweaks and patches.${TKG_BREAK}- Installer will clone, build, and install Proton-TKG.${TKG_BREAK}- Select Proton-TKG in Steam after installation.${TKG_BREAK}${TKG_BREAK}Tips:${TKG_BREAK}- Run 'tkginstaller proton' to skip menu${TKG_BREAK}- Great for running Windows games via Steam.${TKG_BREAK}- Join the Frogging-Family community for updates.${TKG_BREAK}${TKG_BREAK}${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🎮 Online Preview${TKG_BREAK}${TKG_BREAK} - See full documentation at:${TKG_BREAK} - ${FROGGING_FAMILY_REPO}/wine-tkg-git/blob/master/proton-tkg/README.md${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
+            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/preview/proton.md"
             ;;
     esac
 
-    # Always show static preview first
-    ${TKG_ECHO} "$TKG_PREVIEW_STATIC"
-       
-   # Display remote content with available tools (bat > plain text)
-    if [[ -n "$TKG_PREVIEW_URL" ]]; then
-        # Download content
-        local content=""
-        if command -v curl >/dev/null 2>&1; then
-            content=$(curl -fsSL --max-time 5 "${TKG_PREVIEW_URL}" 2>/dev/null)
+    # Download all preview file
+    if command -v bat >/dev/null 2>&1; then
+        # Always show static preview first
+        if [[ -n "$TKG_PREVIEW_STATIC" ]]; then
+            cat "$TKG_PREVIEW_STATIC" | fmt -w 99 | bat --style=plain --paging=never --language=md --wrap never --highlight-line 1 --force-colorization 2>/dev/null
         fi
-
-        # View content with fallback to static preview
-        if [[ -n "$content" ]]; then
-            if command -v bat >/dev/null 2>&1; then
-                ${TKG_ECHO} " "
-                ${TKG_ECHO} "$content" | fmt -w 99 | bat --style=plain --paging=never --language=md --wrap never --highlight-line 1 --force-colorization 2>/dev/null
-            else
-                ${TKG_ECHO} " "
-                ${TKG_ECHO} "$content"
-            fi
+        
+        # Display remote content with available tools
+        if [[ -n "$TKG_PREVIEW_URL" ]]; then
+            ${TKG_ECHO} " "
+            cat "$TKG_PREVIEW_URL" | fmt -w 99 | bat --style=plain --paging=never --language=md --wrap never --highlight-line 1 --force-colorization 2>/dev/null
         fi
     fi
 }
