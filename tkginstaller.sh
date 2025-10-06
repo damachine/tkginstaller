@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # TKG-Installer VERSION
-readonly TKG_INSTALLER_VERSION="v0.9.5"
+readonly TKG_INSTALLER_VERSION="v0.9.6"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -523,7 +523,7 @@ _edit_config() {
                 --no-input \
                 --no-multi \
                 --no-multi-line \
-                --header=$'🐸 TKG-Installer ─ Editor menue\n🛠️ Edit external configuration file\n📝 Default directory: ~/.config/frogminer/' \
+                --header=$'🐸 TKG-Installer ─ Editor menue\n\n🛠️ Edit external configuration file\n📝 Default directory: ~/.config/frogminer/' \
                 --header-border=thinblock \
                 --header-label="${TKG_INSTALLER_VERSION}" \
                 --header-label-pos=2 \
@@ -604,7 +604,7 @@ MENU
                     "${FROGGING_FAMILY_RAW}/wine-tkg-git/master/proton-tkg/proton-tkg.cfg"
                 ;;
             return)
-                ${TKG_ECHO} "${TKG_YELLOW}${TKG_LINE}${TKG_BREAK} 👋 Exit editor menu...${TKG_BREAK} ⏪ Return to Mainmenu${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
+                ${TKG_ECHO} "${TKG_YELLOW}${TKG_LINE}${TKG_BREAK} 👋 Exit editor menu...${TKG_BREAK} ⏪ Return to Mainmenu...${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
                 sleep 2
                 clear
                 return 0
