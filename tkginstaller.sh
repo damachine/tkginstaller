@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 # TKG-Installer VERSION
-readonly VERSION="v0.9.3"
+readonly TKG_INSTALLER_VERSION="v0.9.4"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
 # Maintainer: DAMACHINE <christkue79@gmail.com>
 # website: https://github.com/damachine
-#          https://github.com/damachine/tkginstaller 
+#          https://github.com/damachine/tkginstaller
 # copyright: (c) 2025 damachine
 # license: MIT
 # version: 1.0
@@ -109,6 +109,7 @@ _exit() {
     if [[ $code -ne 0 ]]; then
         # Show abort message on error FIRST
         ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} 🎯 ERROR 🎯 TKG-Installer aborted! Exiting...${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
+        ${TKG_ECHO} " "
     else
         # Final cleanup message
         ${TKG_ECHO} "${TKG_GREEN} 💖 Thank you for using TKG-Installer 🌐 ${TKG_INSTALLER_REPO}${TKG_RESET}"
@@ -153,13 +154,14 @@ _done() {
     fi
 
     ${TKG_ECHO} "${TKG_YELLOW} ⏱️ Duration: ${minutes} min ${seconds} sec${TKG_RESET}${TKG_GREEN}${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
+    ${TKG_ECHO} " "
 }
 
 # 🧼 Pre-installation checks and preparation
 _pre() {
 
     # Welcome message
-    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🐸 TKG-Installer ${VERSION} for $TKG_DISTRO_NAME${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
+    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🐸 TKG-Installer ${TKG_INSTALLER_VERSION} for ${TKG_DISTRO_NAME}${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
     ${TKG_ECHO} "${TKG_YELLOW} 🔁 Pre-checks starting...${TKG_RESET}"
 
     # Check for root execution
@@ -173,7 +175,7 @@ _pre() {
     for TKG_REQUIRED in "${TKG_DEPENDENCIES[@]}"; do
         if ! command -v "$TKG_REQUIRED" >/dev/null; then
             ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ $TKG_REQUIRED is not installed! Please install it first.${TKG_RESET}"
-            ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD} 🔁 Run: pacman -S $TKG_REQUIRED${TKG_RESET}"            
+            ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD} 🔁 Run: pacman -S ${TKG_REQUIRED}${TKG_RESET}"            
             exit 1
         fi
     done
@@ -183,7 +185,7 @@ _pre() {
     rm -rf "$TKG_TEMP_DIR" /tmp/tkginstaller.choice 2>/dev/null || true
     ${TKG_ECHO} "${TKG_GREEN} ✅ Create temporary directory...${TKG_RESET}"
     mkdir -p "$TKG_TEMP_DIR" 2>/dev/null || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error creating temporary directory: $TKG_TEMP_DIR${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error creating temporary directory: ${TKG_TEMP_DIR}${TKG_RESET}"
         return 1
     }
 
@@ -191,24 +193,24 @@ _pre() {
     ${TKG_ECHO} "${TKG_BLUE} 📡 Retrieving content from Frogging-Family repo...${TKG_RESET}"
 
     # Final message
-    ${TKG_ECHO} "${TKG_GREEN} 🐸 Starting 🐸 TKG-Installer...${TKG_RESET}"
+    ${TKG_ECHO} "${TKG_GREEN} 🐸 TKG-Installer 🐸 starting...${TKG_RESET}"
     sleep 2
 }
 
 # ❓ Help information display
 _help() {
     ${TKG_ECHO} " "
-    ${TKG_ECHO} "${TKG_GREEN}No arguments:${TKG_RESET} $0 Launch interactive menu"
-    ${TKG_ECHO} "${TKG_GREEN}Commandline usage:${TKG_RESET} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|combo]"
-    ${TKG_ECHO} "${TKG_GREEN}Shortcuts:${TKG_RESET} l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/combo=combo combo"
+    ${TKG_ECHO} "${TKG_GREEN} Interactive:${TKG_RESET} $0"
+    ${TKG_ECHO} "${TKG_GREEN} Commandline:${TKG_RESET} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|combo]"
+    ${TKG_ECHO} "${TKG_GREEN} Shortcuts:${TKG_RESET} l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/combo=combo combo"
     ${TKG_ECHO} " "
-    ${TKG_ECHO} "${TKG_GREEN}Example:${TKG_RESET} Run commandline mode directly without menu"
-    ${TKG_ECHO} "        $0 linux         # Install Linux-TKG${TKG_RESET}"
-    ${TKG_ECHO} "        $0 nvidia        # Install Nvidia-TKG${TKG_RESET}"
-    ${TKG_ECHO} "        $0 mesa          # Install Mesa-TKG${TKG_RESET}"
-    ${TKG_ECHO} "        $0 wine          # Install Wine-TKG${TKG_RESET}"
-    ${TKG_ECHO} "        $0 proton        # Install Proton-TKG${TKG_RESET}"
-    ${TKG_ECHO} "        $0 combo         # Install Linux-TKG + Nvidia-TKG${TKG_RESET}"
+    ${TKG_ECHO} "${TKG_GREEN} Example:${TKG_RESET} Run commandline mode directly without menu"
+    ${TKG_ECHO} "         $0 linux         # Install Linux-TKG${TKG_RESET}"
+    ${TKG_ECHO} "         $0 nvidia        # Install Nvidia-TKG${TKG_RESET}"
+    ${TKG_ECHO} "         $0 mesa          # Install Mesa-TKG${TKG_RESET}"
+    ${TKG_ECHO} "         $0 wine          # Install Wine-TKG${TKG_RESET}"
+    ${TKG_ECHO} "         $0 proton        # Install Proton-TKG${TKG_RESET}"
+    ${TKG_ECHO} "         $0 combo         # Install Linux-TKG + Nvidia-TKG${TKG_RESET}"
     ${TKG_ECHO} " "
 
     # Disable exit trap before cleanup and exit
@@ -216,7 +218,7 @@ _help() {
     
     # Clean exit without triggering _exit cleanup messages
     rm -f "$TKG_LOCKFILE" 2>/dev/null || true
-    rm -rf /tmp/tkginstaller.choice "$TKG_TEMP_DIR" 2>/dev/null || true
+    rm -rf /tmp/tkginstaller.choice "${TKG_TEMP_DIR}" 2>/dev/null || true
     unset TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR 2>/dev/null || true
     
     exit 0
@@ -260,7 +262,7 @@ _get_preview() {
         # Download content
         local content=""
         if command -v curl >/dev/null 2>&1; then
-            content=$(curl -fsSL --max-time 5 "$TKG_PREVIEW_URL" 2>/dev/null)
+            content=$(curl -fsSL --max-time 5 "${TKG_PREVIEW_URL}" 2>/dev/null)
         fi
 
         # View content with fallback to static preview
@@ -739,7 +741,7 @@ _menu() {
             --no-multi-line \
             --header='🐸 🐸 🐸 TKG-Installer ── Select a package 🐸 🐸 🐸' \
             --header-border=thinblock \
-            --header-label="$VERSION" \
+            --header-label="${TKG_INSTALLER_VERSION}" \
             --header-label-pos=2 \
             --header-first \
             --footer=$'📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit\n🐸 Frogging-Family: https://github.com/Frogging-Family\n🌐 About: https://github.com/damachine/tkginstaller' \
@@ -839,9 +841,20 @@ _main() {
                 _help
                 ;;
             *)
+                ${TKG_ECHO} " "
                 ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Unknown argument: ${1:-}${TKG_RESET}"
-                ${TKG_ECHO} "${TKG_GREEN} 📝 Usage:${TKG_RESET} $0 help${TKG_RESET}"
-                ${TKG_ECHO} "           $0 [linux|nvidia|mesa|wine|proton]${TKG_RESET}"
+                ${TKG_ECHO} "${TKG_GREEN} Usage:${TKG_RESET} $0 help${TKG_RESET}"
+                ${TKG_ECHO} "        $0 [linux|nvidia|mesa|wine|proton]${TKG_RESET}"
+                ${TKG_ECHO} " "
+                
+                # Disable exit trap before cleanup and exit
+                trap - INT TERM EXIT HUP
+                
+                # Clean exit without triggering _exit cleanup messages
+                rm -f "$TKG_LOCKFILE" 2>/dev/null || true
+                rm -rf /tmp/tkginstaller.choice "$TKG_TEMP_DIR" 2>/dev/null || true
+                unset TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR 2>/dev/null || true
+                
                 exit 1
                 ;;
         esac
