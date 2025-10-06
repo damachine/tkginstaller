@@ -191,7 +191,7 @@ _pre() {
     ${TKG_ECHO} "${TKG_BLUE} 📡 Retrieving content from Frogging-Family repo...${TKG_RESET}"
 
     # Final message
-    ${TKG_ECHO} "${TKG_GREEN} 🐸 Starting 🐸 TKG--Installer...${TKG_RESET}"
+    ${TKG_ECHO} "${TKG_GREEN} 🐸 Starting 🐸 TKG-Installer...${TKG_RESET}"
     sleep 2
 }
 
