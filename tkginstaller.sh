@@ -277,7 +277,7 @@ _get_preview() {
 }
 
 # 📝 Preview content is initialized only for interactive mode
-_init_previews() {
+_init_preview() {
     # shellcheck disable=SC2218  # Function is defined earlier
     TKG_PREVIEW_LINUX="$(_get_preview linux)"
     # shellcheck disable=SC2218  # Function is defined earlier
@@ -849,7 +849,7 @@ _main() {
 
     # Interactive mode - show menu and handle user selection
     # shellcheck disable=SC2218  # Function is defined earlier
-    _init_previews
+    _init_preview
     # shellcheck disable=SC2218  # Function is defined earlier
     _pre
     clear
