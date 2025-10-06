@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # TKG-Installer VERSION
-readonly TKG_INSTALLER_VERSION="v0.9.4"
+readonly TKG_INSTALLER_VERSION="v0.9.5"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -112,9 +112,9 @@ _exit() {
         ${TKG_ECHO} " "
     else
         # Final cleanup message
-        ${TKG_ECHO} "${TKG_GREEN} 💖 Thank you for using TKG-Installer 🌐 ${TKG_INSTALLER_REPO}${TKG_RESET}"
-        ${TKG_ECHO} "${TKG_GREEN}                                      🐸 ${FROGGING_FAMILY_REPO}${TKG_RESET}"
-        ${TKG_ECHO} "${TKG_GREEN} 🧹 Cleanup completed${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_GREEN} 💖 Thank you for using TKG-Installer 🌐${TKG_RESET}${TKG_BLUE} ${TKG_INSTALLER_REPO}${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_GREEN}                                      🐸${TKG_RESET}${TKG_BLUE} ${FROGGING_FAMILY_REPO}${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_GREEN} 🧹 Cleanup completed!${TKG_RESET}"
         ${TKG_ECHO} "${TKG_GREEN} 👋 Closed!${TKG_RESET}"
         ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
     fi
@@ -183,17 +183,17 @@ _pre() {
     # Setup temporary directory
     ${TKG_ECHO} "${TKG_YELLOW} 🧹 Cleaning old temporary files...${TKG_RESET}"
     rm -rf "$TKG_TEMP_DIR" /tmp/tkginstaller.choice 2>/dev/null || true
-    ${TKG_ECHO} "${TKG_GREEN} ✅ Create temporary directory...${TKG_RESET}"
+    ${TKG_ECHO} "${TKG_YELLOW} 🗂️ Create temporary directory...${TKG_RESET}"
     mkdir -p "$TKG_TEMP_DIR" 2>/dev/null || {
         ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error creating temporary directory: ${TKG_TEMP_DIR}${TKG_RESET}"
         return 1
     }
 
     # Message for preview section
-    ${TKG_ECHO} "${TKG_BLUE} 📡 Retrieving content from Frogging-Family repo...${TKG_RESET}"
+    ${TKG_ECHO} "${TKG_YELLOW} 📡 Retrieving content...${TKG_RESET}"
 
     # Final message
-    ${TKG_ECHO} "${TKG_GREEN} 🐸 TKG-Installer 🐸 starting...${TKG_RESET}"
+    ${TKG_ECHO} "${TKG_GREEN} 🐸 Starting...${TKG_RESET}"
     sleep 2
 }
 
@@ -523,8 +523,10 @@ _edit_config() {
                 --no-input \
                 --no-multi \
                 --no-multi-line \
-                --header=$'🐸 TKG Configuration Editor ── External configuration file\n📝 Default directory: ~/.config/frogminer/' \
+                --header=$'🐸 TKG-Installer ─ Editor menue\n🛠️ Edit external configuration file\n📝 Default directory: ~/.config/frogminer/' \
                 --header-border=thinblock \
+                --header-label="${TKG_INSTALLER_VERSION}" \
+                --header-label-pos=2 \
                 --header-first \
                 --footer=$'📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit\nℹ️ Usage: Editor nano is fallback if environment $EDITOR is not set\n🌐 See: https://wiki.archlinux.org/title/Environment_variables' \
                 --footer-border=thinblock \
@@ -541,22 +543,21 @@ _edit_config() {
                             bat --style=numbers --paging=never --language=bash --wrap never --highlight-line 1 --force-colorization \"${TKG_CONFIG_DIR}/wine-tkg.cfg\" 2>/dev/null || ${TKG_ECHO} \"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}\" ;;
                         proton-tkg)
                             bat --style=numbers --paging=never --language=bash --wrap never --highlight-line 1 --force-colorization \"${TKG_CONFIG_DIR}/proton-tkg.cfg\" 2>/dev/null || ${TKG_ECHO} \"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}\" ;;
-                        back)
-                            ${TKG_ECHO} \"${TKG_BLUE}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}⏪ Back to Mainmenu!${TKG_BREAK}${TKG_LINE}${TKG_RESET}\" ;;
-                    esac
-                " \
-                --preview-label='Preview' \
+                        return)
+                            ${TKG_ECHO} \"${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}⏪ Return to Mainmenu - Exit editor menu${TKG_BREAK}${TKG_LINE}${TKG_RESET}\" ;;
+                    esac" \
+                --preview-label='🐸 🐸 🐸 🐸 🐸 🐸 🐸 🐸 🐸 🐸' \
                 --preview-window='right:nowrap:60%' \
                 --preview-border=thinblock \
                 --pointer='🐸' \
                 --disabled \
                 --color='header:green,pointer:green,marker:green' <<'MENU'
-linux-tkg  |🧠 Linux   ─ Ext. 🛠️ 📝: ~/.config/frogminer/linux-tkg.cfg
-nvidia-all |🎮 Nvidia  ─ ➡️        :                     nvidia-all.cfg
-mesa-git   |🧩 Mesa    ─ ➡️        :                     mesa-git.cfg
-wine-tkg   |🍷 Wine    ─ ➡️        :                     wine-tkg.cfg
-proton-tkg |🎮 Proton  ─ ➡️        :                     proton-tkg.cfg
-back       |⏪ Back
+linux-tkg  |🧠 Linux   ─ 📝: ~/.config/frogminer/linux-tkg.cfg
+nvidia-all |🎮 Nvidia  ─ ➡️                      nvidia-all.cfg
+mesa-git   |🧩 Mesa    ─ ➡️                      mesa-git.cfg
+wine-tkg   |🍷 Wine    ─ ➡️                      wine-tkg.cfg
+proton-tkg |🎮 Proton  ─ ➡️                      proton-tkg.cfg
+return     |⏪ Return
 MENU
         )
         
@@ -602,8 +603,10 @@ MENU
                     "${TKG_CONFIG_DIR}/proton-tkg.cfg" \
                     "${FROGGING_FAMILY_RAW}/wine-tkg-git/master/proton-tkg/proton-tkg.cfg"
                 ;;
-            back)
-                ${TKG_ECHO} "${TKG_YELLOW}${TKG_LINE}${TKG_BREAK} ⏪ Exit editor menue...${TKG_BREAK}${TKG_LINE}${TKG_RESET}"      
+            return)
+                ${TKG_ECHO} "${TKG_YELLOW}${TKG_LINE}${TKG_BREAK} 👋 Exit editor menu...${TKG_BREAK} ⏪ Return to Mainmenu${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
+                sleep 2
+                clear
                 return 0
                 ;;
             *)          
@@ -748,27 +751,27 @@ _menu() {
             --footer-border=thinblock \
             --preview='case {} in \
                 Linux*)
-                    ${TKG_ECHO} "${TKG_BLUE}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧠 Linux-TKG ─ Custom Linux kernels${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_LINUX";; \
+                    ${TKG_ECHO} "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧠 Linux-TKG ─ Custom Linux kernels${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_LINUX";; \
                 Nvidia*)
-                    ${TKG_ECHO} "${TKG_BLUE}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🖥️ Nvidia-TKG ─ Open-Source or proprietary graphics driver${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_NVIDIA";; \
+                    ${TKG_ECHO} "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🖥️ Nvidia-TKG ─ Open-Source or proprietary graphics driver${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_NVIDIA";; \
                 Combo*)
-                    ${TKG_ECHO} "${TKG_BLUE}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧬 Combo package: 🟥🟦Linux-TKG ✚ 🟩Nvidia-TKG${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_LINUX${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_NVIDIA";; \
+                    ${TKG_ECHO} "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧬 Combo package: 🟥🟦Linux-TKG ✚ 🟩Nvidia-TKG${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_LINUX${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_NVIDIA";; \
                 Mesa*)
-                    ${TKG_ECHO} "${TKG_BLUE}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧩 Mesa-TKG ─ Open-Source graphics driver for AMD and Intel${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_MESA";; \
+                    ${TKG_ECHO} "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧩 Mesa-TKG ─ Open-Source graphics driver for AMD and Intel${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_MESA";; \
                 Wine*)
-                    ${TKG_ECHO} "${TKG_BLUE}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🍷 Wine-TKG ─ Windows compatibility layer${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_WINE";; \
+                    ${TKG_ECHO} "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🍷 Wine-TKG ─ Windows compatibility layer${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_WINE";; \
                 Proton*)
-                    ${TKG_ECHO} "${TKG_BLUE}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🎮 Proton-TKG ─ Windows compatibility layer for Steam / Gaming${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_PROTON";; \
+                    ${TKG_ECHO} "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🎮 Proton-TKG ─ Windows compatibility layer for Steam / Gaming${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_PROTON";; \
                 Config*)
-                    ${TKG_ECHO} "${TKG_BLUE}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🛠️ TKG external configuration files ➡️${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}Edit all external TKG configuration files${TKG_BREAK}📝 Default directory: ~/.config/frogminer/${TKG_BREAK}${TKG_BREAK}See full documentation at:${TKG_BREAK}🌐 ${TKG_INSTALLER_REPO}${TKG_BREAK}🐸 Frogging-Family: ${FROGGING_FAMILY_REPO}";; \
+                    ${TKG_ECHO} "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🛠️ TKG external configuration files ➡️${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}Edit all external TKG configuration files${TKG_BREAK}📝 Default directory: ~/.config/frogminer/${TKG_BREAK}${TKG_BREAK}See full documentation at:${TKG_BREAK}🌐 ${TKG_INSTALLER_REPO}${TKG_BREAK}🐸 Frogging-Family: ${FROGGING_FAMILY_REPO}";; \
                 Clean*)
-                    ${TKG_ECHO} "${TKG_BLUE}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧹 TKG-Installer - Cleaning${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}Removes temporary files in ~/.cache/tkginstaller and resets the installer.${TKG_BREAK}${TKG_BREAK}See full documentation at:${TKG_BREAK}🌐 ${TKG_INSTALLER_REPO}";; \
+                    ${TKG_ECHO} "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧹 TKG-Installer - Cleaning${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}Removes temporary files in ~/.cache/tkginstaller and resets the installer.${TKG_BREAK}${TKG_BREAK}See full documentation at:${TKG_BREAK}🌐 ${TKG_INSTALLER_REPO}";; \
                 Help*)
-                    ${TKG_ECHO} "${TKG_BLUE}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}❓ TKG-Installer - Help${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}Shows all Commandline usage.${TKG_BREAK}${TKG_BREAK}See full documentation at:${TKG_BREAK}🌐 ${TKG_INSTALLER_REPO}${TKG_BREAK}🐸 Frogging-Family: ${FROGGING_FAMILY_REPO}";; \
+                    ${TKG_ECHO} "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}❓ TKG-Installer - Help${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}Shows all Commandline usage.${TKG_BREAK}${TKG_BREAK}See full documentation at:${TKG_BREAK}🌐 ${TKG_INSTALLER_REPO}${TKG_BREAK}🐸 Frogging-Family: ${FROGGING_FAMILY_REPO}";; \
                 Exit*)
-                    ${TKG_ECHO} "${TKG_BLUE}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}👋 Exit the program and removes temporary files${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}💖 Thank you for using TKG-Installer! 💖${TKG_BREAK}${TKG_BREAK}If you like this program, please support the project on GitHub ⭐ ⭐ ⭐${TKG_BREAK}${TKG_BREAK}🌐 See: ${TKG_INSTALLER_REPO}${TKG_BREAK}🐸 Frogging-Family: ${FROGGING_FAMILY_REPO}";; \
+                    ${TKG_ECHO} "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}👋 Exit the program and removes temporary files${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}💖 Thank you for using TKG-Installer! 💖${TKG_BREAK}${TKG_BREAK}If you like this program, please support the project on GitHub ⭐ ⭐ ⭐${TKG_BREAK}${TKG_BREAK}🌐 See: ${TKG_INSTALLER_REPO}${TKG_BREAK}🐸 Frogging-Family: ${FROGGING_FAMILY_REPO}";; \
                 esac' \
-            --preview-label='Preview' \
+            --preview-label='🐸 🐸 🐸 🐸 🐸 🐸 🐸 🐸 🐸 🐸' \
             --preview-window='right:nowrap:60%' \
             --preview-border=thinblock \
             --pointer='🐸' \
@@ -903,10 +906,8 @@ _main() {
             _help
             ;;
         Clean)
-            ${TKG_ECHO} "${TKG_YELLOW}${TKG_LINE}${TKG_BREAK} 🧹 Cleaning temporary files...${TKG_BREAK}${TKG_LINE}${TKG_RESET}"      
-            _pre
-            sleep 1
-            ${TKG_ECHO} "${TKG_YELLOW}${TKG_LINE}${TKG_BREAK} 🔁 Restarting 🐸 TKG-Installer...${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
+            ${TKG_ECHO} "${TKG_YELLOW}${TKG_LINE}${TKG_BREAK} 🔁 Restarting...${TKG_BREAK} 🧹 Cleaning temporary files...${TKG_BREAK}${TKG_LINE}${TKG_RESET}"      
+            _pre >/dev/null 2>&1 || true
             rm -f "$TKG_LOCKFILE"
             sleep 2
             clear
