@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # TKG-Installer VERSION
-readonly VERSION="v0.9.1"
+readonly VERSION="v0.9.2"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -142,7 +142,7 @@ _pre() {
 
     # Welcome message
     ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🐸 TKG-Installer ${VERSION} for $TKG_DISTRO_NAME${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
-    ${TKG_ECHO} "${TKG_GREEN} 🔁 Starting...${TKG_RESET}"
+    ${TKG_ECHO} "${TKG_YELLOW} 🔁 Pre-checks starting...${TKG_RESET}"
 
     # Check for root execution
     if [[ "$(id -u)" -eq 0 ]]; then
@@ -173,7 +173,7 @@ _pre() {
     ${TKG_ECHO} "${TKG_BLUE} 📡 Retrieving content from Frogging-Family repo...${TKG_RESET}"
 
     # Final message
-    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} ✅ Pre-checks completed${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
+    ${TKG_ECHO} "${TKG_GREEN} 🐸 Starting 🐸 TKG--Installer...${TKG_RESET}"
     sleep 2
 }
 
@@ -304,7 +304,7 @@ _editor() {
         if command -v nano >/dev/null 2>&1; then
             TKG_EDITOR_PARTS=(nano)
         else
-            ${TKG_ECHO} "${TKG_YELLOW} ⚠️ No editor found: please set \$EDITOR or install 'nano'.${TKG_RESET}"
+            ${TKG_ECHO} "${TKG_YELLOW} ⚠️ No editor found: please set \$EDITOR environment or install 'nano'.${TKG_RESET}"
             return 1
         fi
     fi
@@ -539,7 +539,7 @@ _config_edit() {
                         proton-tkg)
                             bat --style=numbers --paging=never --language=bash --wrap never --highlight-line 1 --force-colorization \"${TKG_CONFIG_DIR}/proton-tkg.cfg\" 2>/dev/null || ${TKG_ECHO} \"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}\" ;;
                         back)
-                            ${TKG_ECHO} \"${TKG_GREEN}${TKG_BOLD}⏪ Back to Mainmenu!${TKG_RESET}\" ;;
+                            ${TKG_ECHO} \"${TKG_BLUE}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}⏪ Back to Mainmenu!${TKG_BREAK}${TKG_LINE}${TKG_RESET}\" ;;
                     esac
                 " \
                 --preview-label='Preview' \
@@ -549,10 +549,10 @@ _config_edit() {
                 --disabled \
                 --color='header:green,pointer:green,marker:green' <<'MENU'
 linux-tkg  |🧠 Linux   ─ Ext. 🛠️ 📝: ~/.config/frogminer/linux-tkg.cfg
-nvidia-all |🎮 Nvidia  ─ ➡️        : ➡️                  nvidia-all.cfg
-mesa-git   |🧩 Mesa    ─ ➡️        : ➡️                  mesa-git.cfg
-wine-tkg   |🍷 Wine    ─ ➡️        : ➡️                  wine-tkg.cfg
-proton-tkg |🎮 Proton  ─ ➡️        : ➡️                  proton-tkg.cfg
+nvidia-all |🎮 Nvidia  ─ ➡️        :                     nvidia-all.cfg
+mesa-git   |🧩 Mesa    ─ ➡️        :                     mesa-git.cfg
+wine-tkg   |🍷 Wine    ─ ➡️        :                     wine-tkg.cfg
+proton-tkg |🎮 Proton  ─ ➡️        :                     proton-tkg.cfg
 back       |⏪ Back
 MENU
         )
