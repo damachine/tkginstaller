@@ -54,7 +54,7 @@ set -euo pipefail
 
 # 📌 Global paths and configuration
 readonly TKG_LOCKFILE="/tmp/tkginstaller.lock"
-TKG_INSTALLER_REPO="https://github.com/damachine/tkginstaller"
+TKG_INSTALLER_REPO="https://github.com/damachine/damachine/tkginstaller"
 TKG_INSTALLER_RAW="https://raw.githubusercontent.com/tkginstaller"
 FROGGING_FAMILY_REPO="https://github.com/Frogging-Family"
 FROGGING_FAMILY_RAW="https://raw.githubusercontent.com/Frogging-Family"
@@ -238,23 +238,23 @@ _get_preview() {
     case "$TKG_PREVIEW_CHOICE" in
         linux)
             TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/linux-tkg/refs/heads/master/README.md"
-            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/preview/linux.md"
+            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/refs/heads/master/preview/linux.md"
             ;;
         nvidia)
             TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/nvidia-all/refs/heads/master/README.md"
-            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/preview/nvidia.md"
+            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/refs/heads/master/preview/nvidia.md"
             ;;
         mesa)
             TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/mesa-git/refs/heads/master/README.md"
-            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/preview/mesa.md"
+            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/refs/heads/master/preview/mesa.md"
             ;;
         wine)
             TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/wine-tkg-git/refs/heads/master/wine-tkg-git/README.md"
-            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/preview/wine.md"
+            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/refs/heads/master/preview/wine.md"
             ;;
         proton)
             TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/wine-tkg-git/refs/heads/master/proton-tkg/README.md"
-            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/preview/proton.md"
+            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/refs/heads/master/preview/proton.md"
             ;;
     esac
 
@@ -262,13 +262,13 @@ _get_preview() {
     if command -v bat >/dev/null 2>&1; then
         # Always show static preview first
         if [[ -n "$TKG_PREVIEW_STATIC" ]]; then
-            cat "$TKG_PREVIEW_STATIC" | fmt -w 99 | bat --style=plain --paging=never --language=md --wrap never --highlight-line 1 --force-colorization 2>/dev/null
+            ${TKG_ECHO} "$TKG_PREVIEW_STATIC" | fmt -w 99 | bat --style=plain --paging=never --language=md --wrap never --highlight-line 1 --force-colorization 2>/dev/null
         fi
         
         # Display remote content with available tools
         if [[ -n "$TKG_PREVIEW_URL" ]]; then
             ${TKG_ECHO} " "
-            cat "$TKG_PREVIEW_URL" | fmt -w 99 | bat --style=plain --paging=never --language=md --wrap never --highlight-line 1 --force-colorization 2>/dev/null
+            ${TKG_ECHO} "$TKG_PREVIEW_URL" | fmt -w 99 | bat --style=plain --paging=never --language=md --wrap never --highlight-line 1 --force-colorization 2>/dev/null
         fi
     fi
 }
