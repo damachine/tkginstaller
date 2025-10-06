@@ -55,7 +55,7 @@ set -euo pipefail
 # 📌 Global paths and configuration
 readonly TKG_LOCKFILE="/tmp/tkginstaller.lock"
 TKG_INSTALLER_REPO="https://github.com/damachine/damachine/tkginstaller"
-TKG_INSTALLER_RAW="https://raw.githubusercontent.com/tkginstaller"
+TKG_INSTALLER_RAW="https://raw.githubusercontent.com/damachine/tkginstaller/refs/heads/master/preview"
 FROGGING_FAMILY_REPO="https://github.com/Frogging-Family"
 FROGGING_FAMILY_RAW="https://raw.githubusercontent.com/Frogging-Family"
 TKG_TEMP_DIR="$HOME/.cache/tkginstaller"
@@ -223,8 +223,12 @@ _help() {
     # Clean exit without triggering _exit cleanup messages
     rm -f "$TKG_LOCKFILE" 2>/dev/null || true
     rm -rf /tmp/tkginstaller.choice "${TKG_TEMP_DIR}" 2>/dev/null || true
-    unset TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR 2>/dev/null || true
-    
+    # Unset exported all variables
+    unset TKG_INSTALLER_REPO TKG_INSTALLER_RAW FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR
+    unset TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE
+    unset TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON 
+
+    wait
     exit 0
 }
 
@@ -238,23 +242,23 @@ _get_preview() {
     case "$TKG_PREVIEW_CHOICE" in
         linux)
             TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/linux-tkg/refs/heads/master/README.md"
-            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/refs/heads/master/preview/linux.md"
+            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/linux.md"
             ;;
         nvidia)
             TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/nvidia-all/refs/heads/master/README.md"
-            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/refs/heads/master/preview/nvidia.md"
+            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/nvidia.md"
             ;;
         mesa)
             TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/mesa-git/refs/heads/master/README.md"
-            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/refs/heads/master/preview/mesa.md"
+            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/mesa.md"
             ;;
         wine)
             TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/wine-tkg-git/refs/heads/master/wine-tkg-git/README.md"
-            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/refs/heads/master/preview/wine.md"
+            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/wine.md"
             ;;
         proton)
             TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/wine-tkg-git/refs/heads/master/proton-tkg/README.md"
-            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/refs/heads/master/preview/proton.md"
+            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/proton.md"
             ;;
     esac
 
@@ -851,8 +855,10 @@ _main() {
                 # Clean exit without triggering _exit cleanup messages
                 rm -f "$TKG_LOCKFILE" 2>/dev/null || true
                 rm -rf /tmp/tkginstaller.choice "$TKG_TEMP_DIR" 2>/dev/null || true
-                unset TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR 2>/dev/null || true
-                
+                # Unset exported all variables
+                unset TKG_INSTALLER_REPO TKG_INSTALLER_RAW FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR
+                unset TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE
+                unset TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON 
                 exit 1
                 ;;
         esac
