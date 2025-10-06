@@ -262,6 +262,7 @@ _get_preview() {
             ;;
     esac
 
+
     # Download all preview file
     if command -v bat >/dev/null 2>&1; then
         # Always show static preview first
@@ -275,6 +276,8 @@ _get_preview() {
             ${TKG_ECHO} "$TKG_PREVIEW_URL" | fmt -w 99 | bat --style=plain --paging=never --language=md --wrap never --highlight-line 1 --force-colorization 2>/dev/null
         fi
     fi
+
+
 }
 
 # 📝 Preview content is initialized only for interactive mode
