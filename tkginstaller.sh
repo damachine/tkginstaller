@@ -201,8 +201,8 @@ _pre() {
 _help() {
     ${TKG_ECHO} " "
     ${TKG_ECHO} "${TKG_GREEN} Interactive:${TKG_RESET} $0"
-    ${TKG_ECHO} "${TKG_GREEN} Commandline:${TKG_RESET} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|nl|combo]"
-    ${TKG_ECHO} "${TKG_GREEN} Shortcuts:${TKG_RESET} l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/combo=combo combo"
+    ${TKG_ECHO} "${TKG_GREEN} Commandline:${TKG_RESET} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p|linuxnvidia|ln|combo]"
+    ${TKG_ECHO} "${TKG_GREEN} Shortcuts:${TKG_RESET} l=linux, n=nvidia, m=mesa, w=wine, p=proton, ln/combo=combo"
     ${TKG_ECHO} " "
     ${TKG_ECHO} "${TKG_GREEN} Example:${TKG_RESET} Run commandline mode directly without menu"
     ${TKG_ECHO} "         $0 linux         # Install Linux-TKG${TKG_RESET}"
