@@ -14,10 +14,13 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Install dependencies
+      - name: Install dependencies and create user
         run: |
           pacman -Syu --noconfirm
-          pacman -S --noconfirm --needed git base-devel
+          pacman -S --noconfirm --needed git base-devel sudo
+          useradd -m builder
+          echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+          chown -R builder:builder "$GITHUB_WORKSPACE"
 
       - name: Checkout repo
         uses: actions/checkout@v4
@@ -41,8 +44,7 @@ jobs:
       - name: Update PKGBUILD version
         run: |
           sed -i "s/^pkgver=.*/pkgver=${{ steps.version.outputs.version }}/" PKGBUILD
-          # optional: SRCINFO automatisch updaten
-          makepkg --printsrcinfo > .SRCINFO
+          sudo -u builder makepkg --printsrcinfo > .SRCINFO
 
       - name: Commit and push changes
         run: |
