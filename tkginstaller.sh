@@ -6,7 +6,7 @@
 # TKG-Installer VERSION
 readonly TKG_INSTALLER_VERSION="v0.9.9"
 
-# -----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
 # Maintainer: DAMACHINE <christkue79@gmail.com>
 # website: https://github.com/damachine
@@ -57,8 +57,7 @@ set -euo pipefail
 
 # 📌 Global paths and configuration
 readonly TKG_LOCKFILE="/tmp/tkginstaller.lock"
-TKG_INSTALLER_REPO="https://github.com/damachine/damachine/tkginstaller"
-TKG_INSTALLER_RAW="https://raw.githubusercontent.com/damachine/tkginstaller/refs/heads/master/preview"
+TKG_INSTALLER_REPO="https://github.com/damachine/tkginstaller"
 FROGGING_FAMILY_REPO="https://github.com/Frogging-Family"
 FROGGING_FAMILY_RAW="https://raw.githubusercontent.com/Frogging-Family"
 TKG_TEMP_DIR="$HOME/.cache/tkginstaller"
@@ -76,7 +75,7 @@ TKG_YELLOW=$"\033[0;33m"
 TKG_BLUE=$"\033[0;34m"
 
 # 📝 Export variables for fzf subshells (unset _exit run)
-export TKG_INSTALLER_REPO TKG_INSTALLER_RAW FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR
+export TKG_INSTALLER_REPO FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR
 export TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE
 
 # 🔒 Prevent concurrent execution
@@ -133,9 +132,7 @@ _exit() {
     rm -rf "$TKG_TEMP_DIR" 2>/dev/null || true
 
     # Unset exported all variables
-    unset TKG_INSTALLER_REPO TKG_INSTALLER_RAW FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR
-    unset TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE
-    unset TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON 
+    unset TKG_INSTALLER_REPO FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON 
 
     # Exit with original exit code
     wait
@@ -225,12 +222,8 @@ _help() {
     # Clean exit without triggering _exit cleanup messages
     rm -f "$TKG_LOCKFILE" 2>/dev/null || true
     rm -rf /tmp/tkginstaller.choice "${TKG_TEMP_DIR}" 2>/dev/null || true
-    # Unset exported all variables
-    unset TKG_INSTALLER_REPO TKG_INSTALLER_RAW FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR
-    unset TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE
-    unset TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON 
-
-    wait
+    unset TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR 2>/dev/null || true
+    
     exit 0
 }
 
@@ -870,10 +863,8 @@ _main() {
                 # Clean exit without triggering _exit cleanup messages
                 rm -f "$TKG_LOCKFILE" 2>/dev/null || true
                 rm -rf /tmp/tkginstaller.choice "$TKG_TEMP_DIR" 2>/dev/null || true
-                # Unset exported all variables
-                unset TKG_INSTALLER_REPO TKG_INSTALLER_RAW FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR
-                unset TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE
-                unset TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON 
+                unset TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW TKG_TEMP_DIR TKG_CONFIG_DIR 2>/dev/null || true
+                
                 exit 1
                 ;;
         esac
