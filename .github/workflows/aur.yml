@@ -1,0 +1,55 @@
+name: Sync to Arch/AUR
+
+on:
+  push:
+    paths:
+      - "tkginstaller.sh" # Trigger only when tkginstaller.sh changes
+
+jobs:
+  aur-update:
+    name: Synchronize with Arch/AUR
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    permissions:
+      contents: write
+    steps:
+      - name: Install dependencies and create user
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm --needed git base-devel sudo
+          useradd -m builder
+          echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Mark repository as safe
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Extract TKG_INSTALLER_VERSION
+        id: version
+        run: |
+          VERSION=$(grep -Po 'TKG_INSTALLER_VERSION="\K[^"]+' tkginstaller.sh)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Checkout aur branch
+        run: |
+          git fetch origin aur
+          git checkout aur
+
+      - name: Update PKGBUILD version
+        run: |
+          sed -i "s/^pkgver=.*/pkgver=${{ steps.version.outputs.version }}/" PKGBUILD
+          sudo -u builder makepkg --printsrcinfo > .SRCINFO
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add PKGBUILD .SRCINFO
+          git commit -m "AUR: bump to ${{ steps.version.outputs.version }}"
+          git push origin aur
