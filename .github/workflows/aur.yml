@@ -1,16 +1,23 @@
-name: Update AUR branch
+name: Sync to Arch/AUR
 
 on:
   push:
     paths:
-      - 'tkginstaller.sh'   # Trigger only when tkginstaller.sh changes
+      - "tkginstaller.sh" # Trigger only when tkginstaller.sh changes
 
 jobs:
   aur-update:
     runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
     permissions:
       contents: write
     steps:
+      - name: Install dependencies
+        run: |
+          pacman -Syu --noconfirm
+          pacman -S --noconfirm --needed git base-devel
+
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
