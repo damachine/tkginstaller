@@ -1,3 +1,6 @@
+### 🧩 Mesa-TKG ─ Open-Source graphics driver for AMD and Intel
+
+---
 **Note:**
 - This option is for AMD/Intel GPU users.
 - Builds a custom Mesa version with TKG-specific patches.

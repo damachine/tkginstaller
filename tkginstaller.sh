@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
+# Fuzzy finder run in a separate shell and brings SC2218 fail warnings
+# shellcheck disable=SC2218
+
 # TKG-Installer VERSION
-readonly TKG_INSTALLER_VERSION="v0.9.8"
+readonly TKG_INSTALLER_VERSION="v0.9.9"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -136,7 +139,6 @@ _exit() {
 
     # Exit with original exit code
     wait
-    sleep 1
     exit $code
 }
 # Setup exit trap for cleanup on script termination
@@ -198,7 +200,7 @@ _pre() {
 
     # Final message
     ${TKG_ECHO} "${TKG_GREEN} 🐸 Starting...${TKG_RESET}"
-    sleep 2
+    sleep 1
 }
 
 # ❓ Help information display
@@ -235,60 +237,71 @@ _help() {
 # 📝 Dynamic preview content generator for fzf menus
 _get_preview() {
     local TKG_PREVIEW_CHOICE="$1"
-    local TKG_PREVIEW_URL=""
-    local TKG_PREVIEW_STATIC=""
+    local FROGGING_FAMILY_PREVIEW_URL=""
+    local TKG_INSTALLER_PREVIEW_URL=""
     
     # Define repository URLs and static previews for each TKG package
     case "$TKG_PREVIEW_CHOICE" in
         linux)
-            TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/linux-tkg/refs/heads/master/README.md"
-            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/linux.md"
+            TKG_INSTALLER_PREVIEW_URL="${TKG_INSTALLER_RAW}/linux.md"
+            FROGGING_FAMILY_PREVIEW_URL="${FROGGING_FAMILY_RAW}/linux-tkg/refs/heads/master/README.md"
             ;;
         nvidia)
-            TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/nvidia-all/refs/heads/master/README.md"
-            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/nvidia.md"
+            TKG_INSTALLER_PREVIEW_URL="${TKG_INSTALLER_RAW}/nvidia.md"
+            FROGGING_FAMILY_PREVIEW_URL="${FROGGING_FAMILY_RAW}/nvidia-all/refs/heads/master/README.md"
             ;;
         mesa)
-            TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/mesa-git/refs/heads/master/README.md"
-            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/mesa.md"
+            TKG_INSTALLER_PREVIEW_URL="${TKG_INSTALLER_RAW}/mesa.md"
+            FROGGING_FAMILY_PREVIEW_URL="${FROGGING_FAMILY_RAW}/mesa-git/refs/heads/master/README.md"
             ;;
         wine)
-            TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/wine-tkg-git/refs/heads/master/wine-tkg-git/README.md"
-            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/wine.md"
+            TKG_INSTALLER_PREVIEW_URL="${TKG_INSTALLER_RAW}/wine.md"
+            FROGGING_FAMILY_PREVIEW_URL="${FROGGING_FAMILY_RAW}/wine-tkg-git/refs/heads/master/wine-tkg-git/README.md"
             ;;
         proton)
-            TKG_PREVIEW_URL="${FROGGING_FAMILY_RAW}/wine-tkg-git/refs/heads/master/proton-tkg/README.md"
-            TKG_PREVIEW_STATIC="${TKG_INSTALLER_RAW}/proton.md"
+            TKG_INSTALLER_PREVIEW_URL="${TKG_INSTALLER_RAW}/proton.md"
+            FROGGING_FAMILY_PREVIEW_URL="${FROGGING_FAMILY_RAW}/wine-tkg-git/refs/heads/master/proton-tkg/README.md"
             ;;
     esac
-
-
-    # Download all preview file
-    if command -v bat >/dev/null 2>&1; then
-        # Always show static preview first
-        if [[ -n "$TKG_PREVIEW_STATIC" ]]; then
-            ${TKG_ECHO} "$TKG_PREVIEW_STATIC" | fmt -w 99 | bat --style=plain --paging=never --language=md --wrap never --highlight-line 1 --force-colorization 2>/dev/null
+       
+   # Display TKG-INSTALLER remote preview content
+    if [[ -n "$TKG_INSTALLER_PREVIEW_URL" ]]; then
+        # Download content
+        local tkg_installer_content=""
+        if command -v curl >/dev/null 2>&1; then
+            tkg_installer_content=$(curl -fsSL --max-time 5 "${TKG_INSTALLER_PREVIEW_URL}" 2>/dev/null)
         fi
-        
-        # Display remote content with available tools
-        if [[ -n "$TKG_PREVIEW_URL" ]]; then
-            ${TKG_ECHO} " "
-            ${TKG_ECHO} "$TKG_PREVIEW_URL" | fmt -w 99 | bat --style=plain --paging=never --language=md --wrap never --highlight-line 1 --force-colorization 2>/dev/null
+        # View content 
+        if [[ -n "$tkg_installer_content" ]]; then
+            if command -v bat >/dev/null 2>&1; then
+                ${TKG_ECHO} " "
+                ${TKG_ECHO} "$tkg_installer_content" | fmt -w 99 | bat --style=plain --paging=never --language=md --wrap never --highlight-line 1 --force-colorization 2>/dev/null
+            fi
         fi
     fi
-
-
+       
+   # Display FROGGING-FAMILY remote preview content
+    if [[ -n "$FROGGING_FAMILY_PREVIEW_URL" ]]; then
+        # Download content
+        local frogging_family_content=""
+        if command -v curl >/dev/null 2>&1; then
+            frogging_family_content=$(curl -fsSL --max-time 5 "${FROGGING_FAMILY_PREVIEW_URL}" 2>/dev/null)
+        fi
+        # View content 
+        if [[ -n "$frogging_family_content" ]]; then
+            if command -v bat >/dev/null 2>&1; then
+                ${TKG_ECHO} " "
+                ${TKG_ECHO} "$frogging_family_content" | fmt -w 99 | bat --style=plain --paging=never --language=md --wrap never --highlight-line 1 --force-colorization 2>/dev/null
+            fi
+        fi
+    fi
 }
 
 # 📝 Preview content is initialized only for interactive mode
 _init_preview() {
-    # shellcheck disable=SC2218  # Function is defined earlier
     TKG_PREVIEW_LINUX="$(_get_preview linux)"
-    # shellcheck disable=SC2218  # Function is defined earlier
     TKG_PREVIEW_NVIDIA="$(_get_preview nvidia)"
-    # shellcheck disable=SC2218  # Function is defined earlier
     TKG_PREVIEW_MESA="$(_get_preview mesa)"
-    # shellcheck disable=SC2218  # Function is defined earlier
     TKG_PREVIEW_WINE="$(_get_preview wine)"
     TKG_PREVIEW_PROTON="$(_get_preview proton)"
     export TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON
@@ -607,7 +620,7 @@ MENU
                 ;;
             return)
                 ${TKG_ECHO} "${TKG_YELLOW}${TKG_LINE}${TKG_BREAK} 👋 Exit editor menu...${TKG_BREAK} ⏪ Return to Mainmenu...${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
-                sleep 2
+                sleep 1
                 clear
                 return 0
                 ;;
@@ -658,7 +671,7 @@ _handle_confg() {
     fi
 
     ${TKG_ECHO} "${TKG_GREEN} ✅ Configuration closed!${TKG_RESET}"
-    sleep 2
+    sleep 1
     clear
     return 0
 }
@@ -753,17 +766,17 @@ _menu() {
             --footer-border=thinblock \
             --preview='case {} in \
                 Linux*)
-                    ${TKG_ECHO} "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧠 Linux-TKG ─ Custom Linux kernels${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_LINUX";; \
+                    echo "$TKG_PREVIEW_LINUX";; \
                 Nvidia*)
-                    ${TKG_ECHO} "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🖥️ Nvidia-TKG ─ Open-Source or proprietary graphics driver${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_NVIDIA";; \
+                    echo "$TKG_PREVIEW_NVIDIA";; \
                 Combo*)
                     ${TKG_ECHO} "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧬 Combo package: 🟥🟦Linux-TKG ✚ 🟩Nvidia-TKG${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_LINUX${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_NVIDIA";; \
                 Mesa*)
-                    ${TKG_ECHO} "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧩 Mesa-TKG ─ Open-Source graphics driver for AMD and Intel${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_MESA";; \
+                    echo "$TKG_PREVIEW_MESA";; \
                 Wine*)
-                    ${TKG_ECHO} "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🍷 Wine-TKG ─ Windows compatibility layer${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_WINE";; \
+                    echo "$TKG_PREVIEW_WINE";; \
                 Proton*)
-                    ${TKG_ECHO} "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🎮 Proton-TKG ─ Windows compatibility layer for Steam / Gaming${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}$TKG_PREVIEW_PROTON";; \
+                    echo "$TKG_PREVIEW_PROTON";; \
                 Config*)
                     ${TKG_ECHO} "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🛠️ TKG external configuration files ➡️${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}Edit all external TKG configuration files${TKG_BREAK}📝 Default directory: ~/.config/frogminer/${TKG_BREAK}${TKG_BREAK}See full documentation at:${TKG_BREAK}🌐 ${TKG_INSTALLER_REPO}${TKG_BREAK}🐸 Frogging-Family: ${FROGGING_FAMILY_REPO}";; \
                 Clean*)
@@ -842,7 +855,6 @@ _main() {
                 exit 0
                 ;;
             help|-h|--help)
-                # shellcheck disable=SC2218  # Function is defined earlier
                 _help
                 ;;
             *)
@@ -868,12 +880,9 @@ _main() {
     fi
 
     # Interactive mode - show menu and handle user selection
-    # shellcheck disable=SC2218  # Function is defined earlier
     _init_preview
-    # shellcheck disable=SC2218  # Function is defined earlier
     _pre
     clear
-    # shellcheck disable=SC2218  # fzf is not a regular command
     _menu
 
     # Process user selection from menu
@@ -913,7 +922,7 @@ _main() {
             ${TKG_ECHO} "${TKG_YELLOW}${TKG_LINE}${TKG_BREAK} 🧹 Cleaning temporary files...${TKG_BREAK} 🔁 Restarting...${TKG_BREAK}${TKG_LINE}${TKG_RESET}"      
             _pre >/dev/null 2>&1 || true
             rm -f "$TKG_LOCKFILE"
-            sleep 2
+            sleep 1
             clear
             exec "$0" 
             ;;
