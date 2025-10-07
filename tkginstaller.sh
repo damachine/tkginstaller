@@ -3,7 +3,7 @@
 # TKG-Installer VERSION
 readonly TKG_INSTALLER_VERSION="v0.9.8"
 
-# -----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
 # Maintainer: DAMACHINE <christkue79@gmail.com>
 # website: https://github.com/damachine
