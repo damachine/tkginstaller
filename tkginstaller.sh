@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
-# Fuzzy finder run in a separate shell and brings SC2218 fail warnings
+# Fuzzy finder run in a separate shell and brings SC2016, SC2218 fail warnings. Allow fzf to expand variables in its own shell at runtime
+# shellcheck disable=SC2016
+# shellcheck disable=SC2086
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION
-readonly TKG_INSTALLER_VERSION="v0.10.4"
+readonly TKG_INSTALLER_VERSION="v0.10.5"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -165,6 +167,46 @@ _exit() {
 }
 # Setup exit trap for cleanup on script termination
 trap _exit INT TERM EXIT HUP
+
+# 🧩 Fuzzy finder menu wrapper function
+_fzf_menu() {
+    local menu_content="$1"
+    local preview_cmd="$2"
+    local header="$3"
+    local footer="$4"
+    local border_label="${5:-$TKG_INSTALLER_VERSION}"
+    local preview_window="${6:-right:nowrap:60%}"
+
+    fzf \
+        --with-shell='bash -c' \
+        --style minimal \
+        --color='header:#00ff00,pointer:#00ff00,marker:#00ff00' \
+        --border=none \
+        --border-label="${border_label}" \
+        --layout=reverse \
+        --highlight-line \
+        --height='-1' \
+        --padding=0 \
+        --ansi \
+        --delimiter='|' \
+        --with-nth='2' \
+        --no-extended \
+        --no-input \
+        --no-multi \
+        --no-multi-line \
+        --pointer='▶' \
+        --header="${header}" \
+        --header-border=line \
+        --header-label="${border_label}" \
+        --header-label-pos=256 \
+        --header-first \
+        --footer="${footer}" \
+        --footer-border=line \
+        --preview-window="${preview_window}" \
+        --preview="${preview_cmd}" \
+        --disabled \
+        <<< "${menu_content}"
+}
 
 # ✅ Display completion status with timestamp
 _done() {
@@ -487,7 +529,7 @@ _editor() {
 _edit_config() {
     while true; do
         local TKG_CONFIG_CHOICE
-        
+
         # Ensure configuration directory exists
         if [[ ! -d "${TKG_CONFIG_DIR}" ]]; then
             ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Configuration directory not found: ${TKG_CONFIG_DIR}${TKG_RESET}"
@@ -511,70 +553,38 @@ _edit_config() {
                     ;;
             esac
         fi
-        
-        # Interactive configuration file selection with preview
-        # shellcheck disable=SC2016  # allow fzf to expand variables in its own shell at runtime
-        TKG_CONFIG_CHOICE=$(
-            fzf \
-                --with-shell='bash -c' \
-                --style minimal \
-                --color='header:#00ff00,pointer:#00ff00,marker:#00ff00'\
-                --border=none \
-                --border-label="${TKG_INSTALLER_VERSION}" \
-                --layout=reverse \
-                --highlight-line \
-                --height='-1' \
-                --padding=0 \
-                --ansi \
-                --delimiter='|' \
-                --with-nth='2' \
-                --no-extended \
-                --no-input \
-                --no-multi \
-                --no-multi-line \
-                --pointer='▶' \
-                --header=$'🐸 TKG-Installer ─ Editor menue\n\n   Edit external configuration file\n   Default directory: ~/.config/frogminer/' \
-                --header-border=line \
-                --header-label="${TKG_INSTALLER_VERSION}" \
-                --header-label-pos=256 \
-                --header-first \
-                --footer=$'📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit\n🐸 Frogging-Family: https://github.com/Frogging-Family\n🌐 About: https://github.com/damachine/tkginstaller' \
-                --footer-border=line \
-                --preview-window='right:nowrap:70%' \
-                --preview-border=line \
-                --disabled \
-                --preview='
-                    key=$(echo {} | cut -d"|" -f1 | xargs)
-                    case $key in
-                        linux-tkg)
-                            bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_CONFIG_DIR}/linux-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}"'"
-                            ;;
-                        nvidia-all)
-                            bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_CONFIG_DIR}/nvidia-all.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}"'"
-                            ;;
-                        mesa-git)
-                            bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_CONFIG_DIR}/mesa-git.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}"'"
-                            ;;
-                        wine-tkg)
-                            bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_CONFIG_DIR}/wine-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}"'"
-                            ;;
-                        proton-tkg)
-                            bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_CONFIG_DIR}/proton-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}"'"
-                            ;;
-                        return)
-                            '"${TKG_ECHO}"' "'"${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}⏪ Return to Mainmenu - Exit editor menu${TKG_BREAK}${TKG_LINE}${TKG_RESET}"'"
-                            ;;
-                    esac
-                ' <<'MENU'
-linux-tkg  |🧠 Linux   ─ 📝 linux-tkg.cfg
-nvidia-all |🎮 Nvidia  ─ 📝 nvidia-all.cfg
-mesa-git   |🧩 Mesa    ─ 📝 mesa-git.cfg
-wine-tkg   |🍷 Wine    ─ 📝 wine-tkg.cfg
-proton-tkg |🎮 Proton  ─ 📝 proton-tkg.cfg
-return     |⏪ Return
-MENU
-        )
-        
+
+        local menu_content=$'linux-tkg  |🧠 Linux   ─ 📝 linux-tkg.cfg\nnvidia-all |🎮 Nvidia  ─ 📝 nvidia-all.cfg\nmesa-git   |🧩 Mesa    ─ 📝 mesa-git.cfg\nwine-tkg   |🍷 Wine    ─ 📝 wine-tkg.cfg\nproton-tkg |🎮 Proton  ─ 📝 proton-tkg.cfg\nreturn     |⏪ Return'
+        local preview_cmd='
+            key=$(echo {} | cut -d"|" -f1 | xargs)
+            case $key in
+                linux-tkg)
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_CONFIG_DIR}/linux-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}"'"
+                    ;;
+                nvidia-all)
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_CONFIG_DIR}/nvidia-all.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}"'"
+                    ;;
+                mesa-git)
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_CONFIG_DIR}/mesa-git.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}"'"
+                    ;;
+                wine-tkg)
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_CONFIG_DIR}/wine-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}"'"
+                    ;;
+                proton-tkg)
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_CONFIG_DIR}/proton-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}"'"
+                    ;;
+                return)
+                    '"${TKG_ECHO}"' "'"${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}⏪ Return to Mainmenu - Exit editor menu${TKG_BREAK}${TKG_LINE}${TKG_RESET}"'"
+                    ;;
+            esac
+        '
+        local header=$'🐸 TKG-Installer ─ Editor menue\n\n   Edit external configuration file\n   Default directory: ~/.config/frogminer/'
+        local footer=$'📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit\n🐸 Frogging-Family: https://github.com/Frogging-Family\n🌐 About: https://github.com/damachine/tkginstaller'
+        local border_label="${TKG_INSTALLER_VERSION}"
+        local preview_window='right:nowrap:70%'
+
+        TKG_CONFIG_CHOICE=$(_fzf_menu "$menu_content" "$preview_cmd" "$header" "$footer" "$border_label" "$preview_window")
+
         # Handle cancelled selection
         if [[ -z "$TKG_CONFIG_CHOICE" ]]; then
             ${TKG_ECHO} "${TKG_YELLOW} 👋 Selection cancelled. Exiting...${TKG_RESET}"
@@ -748,83 +758,31 @@ _config_prompt() {
 
 # 🎛️ Interactive main menu with fzf preview
 _menu() {
-    # shellcheck disable=SC2016  # allow fzf to expand variables in its own shell at runtime
+    local menu_content=$'Linux  |🧠 Kernel  ─ Linux-TKG custom kernels\nNvidia |🖥️ Nvidia  ─ Nvidia Open-Source or proprietary graphics driver\nMesa   |🧩 Mesa    ─ Open-Source graphics driver for AMD and Intel\nWine   |🍷 Wine    ─ Windows compatibility layer\nProton |🎮 Proton  ─ Windows compatibility layer for Steam / Gaming\nConfig |🛠️ Config  ─ Edit external TKG configuration files\nClean  |🧹 Clean   ─ Clean downloaded files\nHelp   |❓ Help    ─ Shows all commands\nExit   |❌ Exit'
+    local preview_cmd='
+        key=$(echo {} | cut -d"|" -f1 | xargs)
+        case $key in
+            Linux*) $TKG_ECHO "$TKG_PREVIEW_LINUX" ;;
+            Nvidia*) $TKG_ECHO "$TKG_PREVIEW_NVIDIA" ;;
+            Mesa*) $TKG_ECHO "$TKG_PREVIEW_MESA" ;;
+            Wine*) $TKG_ECHO "$TKG_PREVIEW_WINE" ;;
+            Proton*) $TKG_ECHO "$TKG_PREVIEW_PROTON" ;;
+            Config*) $TKG_ECHO "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🛠️ TKG external configuration files ➡️${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}Edit all external TKG configuration files${TKG_BREAK}📝 Default directory: ~/.config/frogminer/${TKG_BREAK}${TKG_BREAK}See full documentation at:${TKG_BREAK}🌐 ${TKG_INSTALLER_REPO}${TKG_BREAK}🐸 Frogging-Family: ${FROGGING_FAMILY_REPO}" ;;
+            Clean*) $TKG_ECHO "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧹 TKG-Installer - Cleaning${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}Removes temporary files in ~/.cache/tkginstaller and resets the installer.${TKG_BREAK}${TKG_BREAK}See full documentation at:${TKG_BREAK}🌐 ${TKG_INSTALLER_REPO}" ;;
+            Help*) $TKG_ECHO "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}❓ TKG-Installer - Help${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}Shows all Commandline usage.${TKG_BREAK}${TKG_BREAK}See full documentation at:${TKG_BREAK}🌐 ${TKG_INSTALLER_REPO}${TKG_BREAK}🐸 Frogging-Family: ${FROGGING_FAMILY_REPO}" ;;
+            Exit*) $TKG_ECHO "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}👋 Exit the program and removes temporary files${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}💖 Thank you for using TKG-Installer! 💖${TKG_BREAK}${TKG_BREAK}If you like this program, please support the project on GitHub ⭐ ⭐ ⭐${TKG_BREAK}${TKG_BREAK}🌐 See: ${TKG_INSTALLER_REPO}${TKG_BREAK}🐸 Frogging-Family: ${FROGGING_FAMILY_REPO}" ;;
+        esac
+    '
+    local header=$'🐸 TKG-Installer ─ Select a option\n\n   Manage the popular TKG packages from the Frogging-Family repositories.'
+    local footer=$'📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit\n🐸 Frogging-Family: https://github.com/Frogging-Family\n🌐 About: https://github.com/damachine/tkginstaller'
+    local border_label="${TKG_INSTALLER_VERSION}"
+    local preview_window='right:nowrap:60%'
+
     local TKG_MAIN_CHOICE
-    TKG_MAIN_CHOICE=$(
-        fzf \
-            --with-shell='bash -c' \
-            --style minimal \
-            --color='header:#00ff00,pointer:#00ff00,marker:#00ff00'\
-            --border=none \
-            --border-label="${TKG_INSTALLER_VERSION}" \
-            --layout=reverse \
-            --highlight-line \
-            --height='-1' \
-            --padding=0 \
-            --ansi \
-            --delimiter='|' \
-            --with-nth='2' \
-            --no-extended \
-            --no-input \
-            --no-multi \
-            --no-multi-line \
-            --pointer='▶' \
-            --header=$'🐸 TKG-Installer ─ Select a option\n\n   Manage the popular TKG packages from the Frogging-Family repositories.' \
-            --header-border=line \
-            --header-label="${TKG_INSTALLER_VERSION}" \
-            --header-label-pos=256 \
-            --header-first \
-            --footer=$'📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit\n🐸 Frogging-Family: https://github.com/Frogging-Family\n🌐 About: https://github.com/damachine/tkginstaller' \
-            --footer-border=line \
-            --preview-window='right:nowrap:60%' \
-            --preview-border=line \
-            --disabled \
-            --preview='
-                key=$(echo {} | cut -d"|" -f1 | xargs)
-                case $key in
-                    Linux*)
-                        $TKG_ECHO "$TKG_PREVIEW_LINUX"
-                        ;;
-                    Nvidia*)
-                        $TKG_ECHO "$TKG_PREVIEW_NVIDIA"
-                        ;;
-                    Mesa*)
-                        $TKG_ECHO "$TKG_PREVIEW_MESA"
-                        ;;
-                    Wine*)
-                        $TKG_ECHO "$TKG_PREVIEW_WINE"
-                        ;;
-                    Proton*)
-                        $TKG_ECHO "$TKG_PREVIEW_PROTON"
-                        ;;
-                    Config*)
-                        $TKG_ECHO "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🛠️ TKG external configuration files ➡️${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}Edit all external TKG configuration files${TKG_BREAK}📝 Default directory: ~/.config/frogminer/${TKG_BREAK}${TKG_BREAK}See full documentation at:${TKG_BREAK}🌐 ${TKG_INSTALLER_REPO}${TKG_BREAK}🐸 Frogging-Family: ${FROGGING_FAMILY_REPO}"
-                        ;;
-                    Clean*)
-                        $TKG_ECHO "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}🧹 TKG-Installer - Cleaning${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}Removes temporary files in ~/.cache/tkginstaller and resets the installer.${TKG_BREAK}${TKG_BREAK}See full documentation at:${TKG_BREAK}🌐 ${TKG_INSTALLER_REPO}"
-                        ;;
-                    Help*)
-                        $TKG_ECHO "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}❓ TKG-Installer - Help${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}Shows all Commandline usage.${TKG_BREAK}${TKG_BREAK}See full documentation at:${TKG_BREAK}🌐 ${TKG_INSTALLER_REPO}${TKG_BREAK}🐸 Frogging-Family: ${FROGGING_FAMILY_REPO}"
-                        ;;
-                    Exit*)
-                        $TKG_ECHO "${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}👋 Exit the program and removes temporary files${TKG_BREAK}${TKG_LINE}${TKG_RESET}${TKG_BREAK}${TKG_BREAK}💖 Thank you for using TKG-Installer! 💖${TKG_BREAK}${TKG_BREAK}If you like this program, please support the project on GitHub ⭐ ⭐ ⭐${TKG_BREAK}${TKG_BREAK}🌐 See: ${TKG_INSTALLER_REPO}${TKG_BREAK}🐸 Frogging-Family: ${FROGGING_FAMILY_REPO}"
-                        ;;
-                esac
-            ' <<'MENU'
-Linux  |🧠 Kernel  ─ Linux-TKG custom kernels
-Nvidia |🖥️ Nvidia  ─ Nvidia Open-Source or proprietary graphics driver
-Mesa   |🧩 Mesa    ─ Open-Source graphics driver for AMD and Intel
-Wine   |🍷 Wine    ─ Windows compatibility layer
-Proton |🎮 Proton  ─ Windows compatibility layer for Steam / Gaming
-Config |🛠️ Config  ─ Edit external TKG configuration files
-Clean  |🧹 Clean   ─ Clean downloaded files
-Help   |❓ Help    ─ Shows all commands
-Exit   |❌ Exit
-MENU
-)
+    TKG_MAIN_CHOICE=$(_fzf_menu "$menu_content" "$preview_cmd" "$header" "$footer" "$border_label" "$preview_window")
 
     # Handle cancelled selection (ESC pressed)
-    if [[ -z "$TKG_MAIN_CHOICE" ]]; then
+    if [[ -z "${TKG_MAIN_CHOICE:-}" ]]; then
         ${TKG_ECHO} "${TKG_YELLOW} 👋 Selection cancelled. Exiting...${TKG_RESET}"
         sleep 1
         _exit 0
