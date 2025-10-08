@@ -83,9 +83,7 @@ export TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELL
 
 # Check for root execution
 if [[ "$(id -u)" -eq 0 ]]; then
-    ${TKG_ECHO} " "
-    ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Do not run as root!${TKG_RESET}"
-    ${TKG_ECHO} " "
+    ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_BREAK} ❌ Do not run as root!${TKG_BREAK}${TKG_RESET}"
     exit 1
 fi
 
@@ -149,6 +147,8 @@ echo $$ > "$TKG_INSTALLER_LOCKFILE"
 # =============================================================================
 
 # 🧹 Cleanup handler for graceful exit
+
+# Cleanup function to remove temporary files and lockfile
 _clean() {
     rm -f "$TKG_INSTALLER_LOCKFILE" 2>/dev/null || true
     rm -f "$TKG_INSTALLER_CHOICE_FILE" 2>/dev/null || true
