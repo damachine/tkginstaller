@@ -151,7 +151,7 @@ echo $$ > "$TKG_INSTALLER_LOCKFILE"
 # 🧹 Cleanup handler for graceful exit
 
 # Cleanup function to remove temporary files and lockfile
-_prune() {
+_clean() {
     rm -f "$TKG_INSTALLER_LOCKFILE" 2>/dev/null || true
     rm -f "$TKG_INSTALLER_CHOICE_FILE" 2>/dev/null || true
     rm -rf "$TKG_INSTALLER_DIR" 2>/dev/null || true
@@ -178,7 +178,7 @@ _exit() {
     fi
 
     # Perform cleanup
-    _prune
+    _clean
     wait
     exit "$code"
 }
@@ -847,7 +847,7 @@ _main() {
                 trap - INT TERM EXIT HUP
                     
                 # Clean exit without triggering _exit cleanup messages. Unset exported all variables
-                _prune
+                _clean
                 exit 0
                 ;;
             *)
@@ -861,7 +861,7 @@ _main() {
                 trap - INT TERM EXIT HUP
                 
                 # Clean exit without triggering _exit cleanup messages. Unset exported all variables
-                _prune
+                _clean
                 exit 1
                 ;;
         esac
@@ -914,7 +914,7 @@ _main() {
             trap - INT TERM EXIT HUP
                 
             # Clean exit without triggering _exit cleanup messages. Unset exported all variables
-            _prune
+            _clean
             exit 0
             ;;
         Clean)
