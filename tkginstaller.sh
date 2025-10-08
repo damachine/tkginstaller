@@ -5,7 +5,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION
-readonly TKG_INSTALLER_VERSION="v0.10.8"
+readonly TKG_INSTALLER_VERSION="v0.10.9"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
