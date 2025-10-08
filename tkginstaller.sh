@@ -5,7 +5,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION
-readonly TKG_INSTALLER_VERSION="v0.11.0"
+readonly TKG_INSTALLER_VERSION="v0.11.1"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -533,6 +533,7 @@ _editor() {
             TKG_EDITOR_PARTS=(nano)
         else
             ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ⚠️ No editor found: please set \$EDITOR environment or install 'nano'.${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
+            sleep 2
             return 1
         fi
     fi
@@ -549,45 +550,50 @@ _edit_config() {
         # Ensure configuration directory exists
         if [[ ! -d "${TKG_INSTALLER_CONFIG_DIR}" ]]; then
             ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Configuration directory not found: ${TKG_INSTALLER_CONFIG_DIR}${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
-            read -r -p "Do you want to create the configuration directory? [y/N]:" create_dir
+            read -r -p "Do you want to create the configuration directory? [y/N]: " create_dir
+            echo
             case "$create_dir" in
                 y|Y|yes)
                     mkdir -p "${TKG_INSTALLER_CONFIG_DIR}" || {
                         ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error creating configuration directory!${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
+                        sleep 3
+                        clear
                         return 1
                     }
-                    ;;
-                n|N|no)
-                    ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ⚠️ Directory creation cancelled. Returning to menu.${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
-                    sleep 1
-                    return 0
+                    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} ✅ Configuration directory created: ${TKG_INSTALLER_CONFIG_DIR}${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
+                    sleep 3
                     ;;
                 *)
-                    ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ⚠️ Invalid input. Returning to menu.${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
-                    sleep 1
+                    ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ⚠️ Directory creation cancelled. Return to Mainmenu...${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
+                    sleep 3
+                    clear
                     return 0
                     ;;
             esac
+
+            # Clear screen
+            clear
         fi
 
+        # Function to handle configuration file editing
         local menu_content=$'linux-tkg  |🧠 Linux   ─ 📝 linux-tkg.cfg\nnvidia-all |🎮 Nvidia  ─ 📝 nvidia-all.cfg\nmesa-git   |🧩 Mesa    ─ 📝 mesa-git.cfg\nwine-tkg   |🍷 Wine    ─ 📝 wine-tkg.cfg\nproton-tkg |🎮 Proton  ─ 📝 proton-tkg.cfg\nreturn     |⏪ Return'
         local preview_cmd='
             key=$(echo {} | cut -d"|" -f1 | xargs)
             case $key in
                 linux-tkg)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/linux-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}"'"
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/linux-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found.\n\n ⚠️ Click to download missing file${TKG_RESET}"'"
                     ;;
                 nvidia-all)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/nvidia-all.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}"'"
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/nvidia-all.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found\n\n ⚠️ Click to download missing file${TKG_RESET}"'"
                     ;;
                 mesa-git)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/mesa-git.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}"'"
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/mesa-git.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found\n\n ⚠️ Click to download missing file${TKG_RESET}"'"
                     ;;
                 wine-tkg)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/wine-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}"'"
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/wine-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found\n\n ⚠️ Click to download missing file${TKG_RESET}"'"
                     ;;
                 proton-tkg)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/proton-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found${TKG_RESET}"'"
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/proton-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found\n\n ⚠️ Click to download missing file${TKG_RESET}"'"
                     ;;
                 return)
                     '"${TKG_ECHO}"' "'"${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}⏪ Return to Mainmenu - Exit editor menu${TKG_BREAK}${TKG_LINE}${TKG_RESET}"'"
@@ -676,31 +682,45 @@ _handle_confg() {
         # Edit existing configuration file
         _editor "$TKG_CONFIG_PATCH" || {
             ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error opening $TKG_CONFIG_PATCH configuration!${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
+            sleep 3
+            clear
             return 1
         }
     else
         # Download and create new configuration file
-        ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ⚠️ $TKG_CONFIG_PATCH does not exist.${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ⚠️ $TKG_CONFIG_PATCH does not exist.${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
         read -r -p "Do you want to download the default configuration from $TKG_CONFIG_URL? [y/N]: " answer
+        echo
         case "$answer" in
             y|Y|yes)
                 mkdir -p "$(dirname "$TKG_CONFIG_PATCH")"
                 if curl -fsSL "$TKG_CONFIG_URL" -o "$TKG_CONFIG_PATCH" 2>/dev/null; then
                     ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} ✅ Configuration ready at $TKG_CONFIG_PATCH${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
+                    sleep 3
+                    clear
                     _editor "$TKG_CONFIG_PATCH" || {
                         ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error opening $TKG_CONFIG_PATCH configuration!${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
+                        sleep 3
+                        clear
                         return 1
                     }
                 else
                     ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error downloading configuration from $TKG_CONFIG_URL${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
+                    sleep 3
+                    clear
                     return 1
                 fi
                 ;;
             *)
-                ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ⚠️ Download cancelled. No configuration file created.${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
+                ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ⚠️ Download cancelled. No configuration file created. Return to Mainmenu...${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
+                sleep 3
+                clear
                 return 1
                 ;;
         esac
+
+        # Clear screen
+        clear
     fi
     
     ${TKG_ECHO} "${TKG_YELLOW}${TKG_LINE}${TKG_BREAK} ✅ Closing external $TKG_CONFIG_NAME configuration file...${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
@@ -896,6 +916,7 @@ _main() {
         Config)
             _config_prompt
             rm -f "$TKG_INSTALLER_LOCKFILE"
+            clear
             exec "$0"
             ;;
         Help)
