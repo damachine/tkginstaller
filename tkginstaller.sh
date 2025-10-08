@@ -5,7 +5,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION
-readonly TKG_INSTALLER_VERSION="v0.10.9"
+readonly TKG_INSTALLER_VERSION="v0.11.0"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -114,6 +114,8 @@ _help() {
     ${TKG_ECHO} "         $0 wine          # Install Wine-TKG${TKG_RESET}"
     ${TKG_ECHO} "         $0 proton        # Install Proton-TKG${TKG_RESET}"
     ${TKG_ECHO} " "
+    ${TKG_ECHO} " 🌐${TKG_RESET}${TKG_BLUE} ${TKG_INSTALLER_REPO} 🐸 ${FROGGING_FAMILY_REPO}${TKG_RESET}"
+    ${TKG_ECHO} " "
 }
 
 if [[ $# -gt 0 && "${1:-}" =~ ^(help|-h|--help)$ ]]; then
@@ -168,11 +170,10 @@ _exit() {
     if [[ $code -ne 0 ]]; then
         ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} 🎯 ERROR 🎯 TKG-Installer aborted! Exiting...${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
     else
-        ${TKG_ECHO} "${TKG_GREEN} 🌐${TKG_RESET}${TKG_BLUE} ${TKG_INSTALLER_REPO} 🐸 ${FROGGING_FAMILY_REPO}${TKG_RESET}"
-        ${TKG_ECHO} " "
         ${TKG_ECHO} "${TKG_GREEN} 🧹 Cleanup completed!${TKG_RESET}"
         ${TKG_ECHO} "${TKG_GREEN} 👋 TKG-Installer closed!${TKG_RESET}"
-        ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_GREEN} 🌐${TKG_RESET}${TKG_BLUE} ${TKG_INSTALLER_REPO} 🐸 ${FROGGING_FAMILY_REPO}${TKG_BREAK}${TKG_RESET}"
     fi
 
     # Perform cleanup
@@ -363,7 +364,7 @@ _linux_install() {
     
     # Clone repository
     git clone "${FROGGING_FAMILY_REPO}/linux-tkg.git" || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error cloning: linux-tkg for ${TKG_DISTRO_NAME}${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error cloning: linux-tkg for ${TKG_DISTRO_NAME}${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
         return 1
     }
     
@@ -371,7 +372,7 @@ _linux_install() {
     
     # Fetch git repository information if available
     if command -v onefetch >/dev/null 2>&1; then
-        onefetch --no-art --http-url --email --number-of-authors 6 --text-colors 3 15 3 3 15 3 || true
+        onefetch --no-bold --no-art --http-url --email --number-of-authors 6 --text-colors 15 3 15 3 15 11 || true
     fi
     
     # Build and install based on distribution
@@ -381,14 +382,14 @@ _linux_install() {
     if [[ "${DISTRO_ID}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${DISTRO_LIKE}" == *"arch"* ]]; then
         ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Linux-TKG package for ${TKG_DISTRO_NAME}, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust external configuration file to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
         makepkg -si || {
-            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: linux-tkg for ${TKG_DISTRO_NAME}${TKG_RESET}"
+            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error building: linux-tkg for ${TKG_DISTRO_NAME}${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
             return 1
         }
     else
         ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Linux-TKG for ${TKG_DISTRO_NAME}, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust external configuration file to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
         chmod +x install.sh 2>/dev/null || true
         ./install.sh install || {
-            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: linux-tkg for ${TKG_DISTRO_NAME}${TKG_RESET}"
+            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error building: linux-tkg for ${TKG_DISTRO_NAME}${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
             return 1
         }
     fi
@@ -400,7 +401,7 @@ _nvidia_install() {
     
     # Clone repository
     git clone "${FROGGING_FAMILY_REPO}/nvidia-all.git" || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error cloning: nvidia-all for ${TKG_DISTRO_NAME}${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error cloning: nvidia-all for ${TKG_DISTRO_NAME}${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
         return 1
     }
     
@@ -408,13 +409,13 @@ _nvidia_install() {
     
     # Fetch git repository information if available
     if command -v onefetch >/dev/null 2>&1; then
-        onefetch --no-art --http-url --email --number-of-authors 6 --text-colors 3 15 3 3 15 3 || true
+        onefetch --no-bold --no-art --http-url --email --number-of-authors 6 --text-colors 15 3 15 3 15 11 || true
     fi
     
     # Build and install 
     ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Nvidia-TKG package for ${TKG_DISTRO_NAME}, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust external configuration file to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
     makepkg -si || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: nvidia-all for ${TKG_DISTRO_NAME}${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error building: nvidia-all for ${TKG_DISTRO_NAME}${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
         return 1
     }
 }
@@ -425,7 +426,7 @@ _mesa_install() {
     
     # Clone repository
     git clone "${FROGGING_FAMILY_REPO}/mesa-git.git" || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error cloning: mesa-git for ${TKG_DISTRO_NAME}${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error cloning: mesa-git for ${TKG_DISTRO_NAME}${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
         return 1
     }
     
@@ -433,13 +434,13 @@ _mesa_install() {
     
     # Fetch git repository information if available
     if command -v onefetch >/dev/null 2>&1; then
-        onefetch --no-art --http-url --email --number-of-authors 6 --text-colors 3 15 3 3 15 3 || true
+        onefetch --no-bold --no-art --http-url --email --number-of-authors 6 --text-colors 15 3 15 3 15 11 || true
     fi
     
     # Build and install 
     ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Mesa-TKG package for ${TKG_DISTRO_NAME}, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust external configuration file to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
     makepkg -si || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: mesa-tkg for ${TKG_DISTRO_NAME}${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error building: mesa-tkg for ${TKG_DISTRO_NAME}${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
         return 1
     }
 }
@@ -450,7 +451,7 @@ _wine_install() {
     
     # Clone repository
     git clone "${FROGGING_FAMILY_REPO}/wine-tkg-git.git" || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error cloning: wine-tkg-git for ${TKG_DISTRO_NAME}${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}❌ Error cloning: wine-tkg-git for ${TKG_DISTRO_NAME}${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
         return 1
     }
     
@@ -458,7 +459,7 @@ _wine_install() {
     
     # Fetch git repository information if available
     if command -v onefetch >/dev/null 2>&1; then
-        onefetch --no-art --http-url --email --number-of-authors 6 --text-colors 3 15 3 3 15 3 || true
+        onefetch --no-bold --no-art --http-url --email --number-of-authors 6 --text-colors 15 3 15 3 15 11 || true
     fi
     
     # Build and install 
@@ -468,14 +469,14 @@ _wine_install() {
     if [[ "${DISTRO_ID}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${DISTRO_LIKE}" == *"arch"* ]]; then
         ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Wine-TKG package for ${TKG_DISTRO_NAME}... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust external configuration file to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
         makepkg -si || {
-            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: wine-tkg for ${TKG_DISTRO_NAME}${TKG_RESET}"
+            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error building: wine-tkg for ${TKG_DISTRO_NAME}${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
             return 1
         }
     else
         ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building Wine-TKG for ${TKG_DISTRO_NAME}... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust external configuration file to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
         chmod +x non-makepkg-build.sh 2>/dev/null || true
         ./non-makepkg-build.sh || {
-            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: wine-tkg for ${TKG_DISTRO_NAME}${TKG_RESET}"
+            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error building: wine-tkg for ${TKG_DISTRO_NAME}${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
             return 1
         }
     fi
@@ -487,7 +488,7 @@ _proton_install() {
     
     # Clone repository
     git clone "${FROGGING_FAMILY_REPO}/wine-tkg-git.git" || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error cloning: wine-tkg-git for ${TKG_DISTRO_NAME}${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error cloning: wine-tkg-git for ${TKG_DISTRO_NAME}${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
         return 1
     }
     
@@ -501,14 +502,14 @@ _proton_install() {
     # Build Proton-TKG
     ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Building and installing Proton-TKG package for ${TKG_DISTRO_NAME}, this may take a while... ⏳${TKG_BREAK}${TKG_YELLOW} 💡 Tip: Adjust external configuration file to skip prompts.${TKG_BREAK}${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
     ./proton-tkg.sh || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error building: proton-tkg for ${TKG_DISTRO_NAME}${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error building: proton-tkg for ${TKG_DISTRO_NAME}${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
         return 1
     }
     
     # Clean up build artifacts
     ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🏗️ Clean up build artifacts...${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
     ./proton-tkg.sh clean || {
-        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Nothing to clean: proton-tkg${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ✅ Nothing to clean: proton-tkg${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
         return 1
     }
 }
@@ -531,7 +532,7 @@ _editor() {
         if command -v nano >/dev/null 2>&1; then
             TKG_EDITOR_PARTS=(nano)
         else
-            ${TKG_ECHO} "${TKG_YELLOW} ⚠️ No editor found: please set \$EDITOR environment or install 'nano'.${TKG_RESET}"
+            ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ⚠️ No editor found: please set \$EDITOR environment or install 'nano'.${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
             return 1
         fi
     fi
@@ -547,22 +548,22 @@ _edit_config() {
 
         # Ensure configuration directory exists
         if [[ ! -d "${TKG_INSTALLER_CONFIG_DIR}" ]]; then
-            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Configuration directory not found: ${TKG_INSTALLER_CONFIG_DIR}${TKG_RESET}"
+            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Configuration directory not found: ${TKG_INSTALLER_CONFIG_DIR}${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
             read -r -p "Do you want to create the configuration directory? [y/N]:" create_dir
             case "$create_dir" in
                 y|Y|yes)
                     mkdir -p "${TKG_INSTALLER_CONFIG_DIR}" || {
-                        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error creating configuration directory!${TKG_RESET}"
+                        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error creating configuration directory!${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
                         return 1
                     }
                     ;;
                 n|N|no)
-                    ${TKG_ECHO} "${TKG_YELLOW} ⚠️ Directory creation cancelled. Returning to menu.${TKG_RESET}"
+                    ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ⚠️ Directory creation cancelled. Returning to menu.${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
                     sleep 1
                     return 0
                     ;;
                 *)
-                    ${TKG_ECHO} "${TKG_YELLOW} ⚠️ Invalid input. Returning to menu.${TKG_RESET}"
+                    ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ⚠️ Invalid input. Returning to menu.${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
                     sleep 1
                     return 0
                     ;;
@@ -674,29 +675,29 @@ _handle_confg() {
     if [[ -f "$TKG_CONFIG_PATCH" ]]; then
         # Edit existing configuration file
         _editor "$TKG_CONFIG_PATCH" || {
-            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error opening $TKG_CONFIG_PATCH configuration!${TKG_RESET}"
+            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error opening $TKG_CONFIG_PATCH configuration!${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
             return 1
         }
     else
         # Download and create new configuration file
-        ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD} ⚠️ $TKG_CONFIG_PATCH does not exist.${TKG_RESET}"
+        ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ⚠️ $TKG_CONFIG_PATCH does not exist.${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
         read -r -p "Do you want to download the default configuration from $TKG_CONFIG_URL? [y/N]: " answer
         case "$answer" in
             y|Y|yes)
                 mkdir -p "$(dirname "$TKG_CONFIG_PATCH")"
                 if curl -fsSL "$TKG_CONFIG_URL" -o "$TKG_CONFIG_PATCH" 2>/dev/null; then
-                    ${TKG_ECHO} "${TKG_GREEN} ✅ Configuration ready at $TKG_CONFIG_PATCH${TKG_RESET}"
+                    ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} ✅ Configuration ready at $TKG_CONFIG_PATCH${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
                     _editor "$TKG_CONFIG_PATCH" || {
-                        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error opening $TKG_CONFIG_PATCH configuration!${TKG_RESET}"
+                        ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error opening $TKG_CONFIG_PATCH configuration!${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
                         return 1
                     }
                 else
-                    ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Error downloading configuration from $TKG_CONFIG_URL${TKG_RESET}"
+                    ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error downloading configuration from $TKG_CONFIG_URL${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
                     return 1
                 fi
                 ;;
             *)
-                ${TKG_ECHO} "${TKG_YELLOW} ⚠️ Download cancelled. No configuration file created.${TKG_RESET}"
+                ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ⚠️ Download cancelled. No configuration file created.${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
                 return 1
                 ;;
         esac
@@ -898,13 +899,6 @@ _main() {
             exec "$0"
             ;;
         Help)
-            # Display goodbye message and cleanup
-            ${TKG_ECHO} "${TKG_GREEN} 💖 Thank you for using TKG-Installer 🌐${TKG_RESET}${TKG_BLUE} ${TKG_INSTALLER_REPO}${TKG_RESET}"
-            ${TKG_ECHO} "${TKG_GREEN}                                      🐸${TKG_RESET}${TKG_BLUE} ${FROGGING_FAMILY_REPO}${TKG_RESET}"
-            ${TKG_ECHO} "${TKG_GREEN} 🧹 Cleanup completed!${TKG_RESET}"
-            ${TKG_ECHO} "${TKG_GREEN} 👋 Closed!${TKG_RESET}"
-            ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_RESET}"
-            
             # Help argument handling
             _help
 
