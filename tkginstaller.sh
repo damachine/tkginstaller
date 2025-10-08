@@ -149,8 +149,6 @@ echo $$ > "$TKG_INSTALLER_LOCKFILE"
 # =============================================================================
 
 # 🧹 Cleanup handler for graceful exit
-
-# Cleanup function to remove temporary files and lockfile
 _clean() {
     rm -f "$TKG_INSTALLER_LOCKFILE" 2>/dev/null || true
     rm -f "$TKG_INSTALLER_CHOICE_FILE" 2>/dev/null || true
