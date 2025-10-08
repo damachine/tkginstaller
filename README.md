@@ -19,8 +19,6 @@
 - **Optional download configuration files.**
 - **Multi-Distribution Support.**
 
-##### **[🎬 Demo-Video](images/tkginstaller.gif)**
-
 ---
 
 ## 🛠️ Installation
