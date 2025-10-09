@@ -5,7 +5,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION
-readonly TKG_INSTALLER_VERSION="v0.11.1"
+readonly TKG_INSTALLER_VERSION="v0.11.2"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -576,24 +576,32 @@ _edit_config() {
         fi
 
         # Function to handle configuration file editing
-        local menu_content=$'linux-tkg  |🧠 Linux   ─ 📝 linux-tkg.cfg\nnvidia-all |🎮 Nvidia  ─ 📝 nvidia-all.cfg\nmesa-git   |🧩 Mesa    ─ 📝 mesa-git.cfg\nwine-tkg   |🍷 Wine    ─ 📝 wine-tkg.cfg\nproton-tkg |🎮 Proton  ─ 📝 proton-tkg.cfg\nreturn     |⏪ Return'
-        local preview_cmd='
+        local menu_content=$(cat <<EOF
+linux-tkg  |🧠 Linux   ─ 📝 linux-tkg.cfg
+nvidia-all |🎮 Nvidia  ─ 📝 nvidia-all.cfg
+mesa-git   |🧩 Mesa    ─ 📝 mesa-git.cfg
+wine-tkg   |🍷 Wine    ─ 📝 wine-tkg.cfg
+proton-tkg |🎮 Proton  ─ 📝 proton-tkg.cfg
+return     |⏪ Return
+EOF
+)
+            local preview_cmd='
             key=$(echo {} | cut -d"|" -f1 | xargs)
             case $key in
                 linux-tkg)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/linux-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error: No external configuration file found.${TKG_BREAK}${TKG_BREAK} ⚠️ Click to download missing file${TKG_BREAK$}${TKG_LINE}${TKG_RESET}"'"
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/linux-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error: No external configuration file found.${TKG_BREAK}${TKG_BREAK} ⚠️ Click to download missing file${TKG_BREAK}${TKG_LINE}${TKG_RESET}"'"
                     ;;
                 nvidia-all)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/nvidia-all.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error: No external configuration file found${TKG_BREAK}${TKG_BREAK} ⚠️ Click to download missing file${TKG_BREAK$}${TKG_LINE}${TKG_RESET}"'"
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/nvidia-all.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error: No external configuration file found${TKG_BREAK}${TKG_BREAK} ⚠️ Click to download missing file${TKG_BREAK}${TKG_LINE}${TKG_RESET}"'"
                     ;;
                 mesa-git)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/mesa-git.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error: No external configuration file found${TKG_BREAK}${TKG_BREAK} ⚠️ Click to download missing file${TKG_BREAK$}${TKG_LINE}${TKG_RESET}"'"
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/mesa-git.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error: No external configuration file found${TKG_BREAK}${TKG_BREAK} ⚠️ Click to download missing file${TKG_BREAK}${TKG_LINE}${TKG_RESET}"'"
                     ;;
                 wine-tkg)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/wine-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error: No external configuration file found${TKG_BREAK}${TKG_BREAK} ⚠️ Click to download missing file${TKG_BREAK$}${TKG_LINE}${TKG_RESET}"'"
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/wine-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error: No external configuration file found${TKG_BREAK}${TKG_BREAK} ⚠️ Click to download missing file${TKG_BREAK}${TKG_LINE}${TKG_RESET}"'"
                     ;;
                 proton-tkg)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/proton-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error: No external configuration file found${TKG_BREAK}${TKG_BREAK} ⚠️ Click to download missing file${TKG_BREAK$}${TKG_LINE}${TKG_RESET}"'"
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/proton-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error: No external configuration file found${TKG_BREAK}${TKG_BREAK} ⚠️ Click to download missing file${TKG_BREAK}${TKG_LINE}${TKG_RESET}"'"
                     ;;
                 return)
                     '"${TKG_ECHO}"' "'"${TKG_GREEN}${TKG_LINE}${TKG_BREAK}⏪ Return to Mainmenu - Exit editor menu${TKG_BREAK}${TKG_LINE}${TKG_RESET}"'"
@@ -791,8 +799,19 @@ _config_prompt() {
 
 # 🎛️ Interactive main menu with fzf preview
 _menu() {
-    local menu_content=$'Linux  |🧠 Kernel  ─ Linux-TKG custom kernels\nNvidia |🖥️ Nvidia  ─ Nvidia Open-Source or proprietary graphics driver\nMesa   |🧩 Mesa    ─ Open-Source graphics driver for AMD and Intel\nWine   |🍷 Wine    ─ Windows compatibility layer\nProton |🎮 Proton  ─ Windows compatibility layer for Steam / Gaming\nConfig |🛠️ Config  ─ Edit external TKG configuration files\nClean  |🧹 Clean   ─ Clean downloaded files\nHelp   |❓ Help    ─ Shows all commands\nExit   |❌ Exit'
-    local preview_cmd='
+    local menu_content=$(cat <<EOF
+Linux  |🧠 Kernel  ─ Linux-TKG custom kernels
+Nvidia |🖥️ Nvidia  ─ Nvidia Open-Source or proprietary graphics driver
+Mesa   |🧩 Mesa    ─ Open-Source graphics driver for AMD and Intel
+Wine   |🍷 Wine    ─ Windows compatibility layer
+Proton |🎮 Proton  ─ Windows compatibility layer for Steam / Gaming
+Config |🛠️ Config  ─ Edit external TKG configuration files
+Clean  |🧹 Clean   ─ Clean downloaded files
+Help   |❓ Help    ─ Shows all commands
+Exit   |❌ Exit
+EOF
+)
+        local preview_cmd='
         key=$(echo {} | cut -d"|" -f1 | xargs)
         case $key in
             Linux*) $TKG_ECHO "$TKG_PREVIEW_LINUX" ;;
