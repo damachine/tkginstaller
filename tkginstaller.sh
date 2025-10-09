@@ -133,6 +133,7 @@ _help() {
     ${TKG_ECHO} "${TKG_BLUE} 🌐 ${TKG_REPO} 🐸 ${FROGGING_FAMILY_REPO}${TKG_BREAK}${TKG_RESET}"
 }
 
+# ❓ Help can show always
 if [[ $# -gt 0 && "${1:-}" =~ ^(help|-h|--help)$ ]]; then
     _help
 fi
@@ -164,8 +165,6 @@ echo $$ > "$TKG_LOCKFILE"
 # =============================================================================
 
 # 🧹 Cleanup handler for graceful exit
-
-# Cleanup function to remove temporary files and lockfile
 _clean() {
     rm -f "$TKG_LOCKFILE" 2>/dev/null || true
     rm -f "$TKG_CHOICE_FILE" 2>/dev/null || true
@@ -178,6 +177,7 @@ _clean() {
     unset TKG_PREVIEW_CONFIG TKG_PREVIEW_CLEAN TKG_PREVIEW_HELP TKG_PREVIEW_RETURN TKG_PREVIEW_EXIT
  }
 
+# 👋 Setup exit trap for cleanup on script termination
 _exit() {
     local exit_code=${1:-$?}
     trap - INT TERM EXIT HUP
@@ -197,7 +197,6 @@ _exit() {
     wait
     exit "$exit_code"
 }
-# Setup exit trap for cleanup on script termination
 trap _exit INT TERM EXIT HUP
 
 # 🧩 Fuzzy finder menu wrapper function
@@ -349,15 +348,11 @@ _get_preview() {
     if [[ -n "$tkg_installer_preview_url" ]]; then
         # Download content
         local tkg_installer_content=""
-        if command -v curl >/dev/null 2>&1; then
-            tkg_installer_content=$(curl -fsSL --max-time 10 "${tkg_installer_preview_url}" 2>/dev/null)
-        fi
+        tkg_installer_content=$(curl -fsSL --max-time 10 "${tkg_installer_preview_url}" 2>/dev/null)
         # View content 
         if [[ -n "$tkg_installer_content" ]]; then
-            if command -v bat >/dev/null 2>&1; then
-                ${TKG_ECHO} " "
-                ${TKG_ECHO} "$tkg_installer_content" | bat --plain --language=md --wrap never --highlight-line 1 --force-colorization 2>/dev/null
-            fi
+            ${TKG_ECHO} " "
+            ${TKG_ECHO} "$tkg_installer_content" | bat --plain --language=md --wrap never --highlight-line 1 --force-colorization 2>/dev/null
         fi
     fi
        
@@ -365,15 +360,11 @@ _get_preview() {
     if [[ -n "$frogging_family_preview_url" ]]; then
         # Download content
         local frogging_family_content=""
-        if command -v curl >/dev/null 2>&1; then
-            frogging_family_content=$(curl -fsSL --max-time 10 "${frogging_family_preview_url}" 2>/dev/null)
-        fi
+        frogging_family_content=$(curl -fsSL --max-time 10 "${frogging_family_preview_url}" 2>/dev/null)
         # View content 
         if [[ -n "$frogging_family_content" ]]; then
-            if command -v bat >/dev/null 2>&1; then
-                ${TKG_ECHO} " "
-                ${TKG_ECHO} "$frogging_family_content" | bat --plain --language=md --wrap never --highlight-line 1 --force-colorization 2>/dev/null
-            fi
+            ${TKG_ECHO} " "
+            ${TKG_ECHO} "$frogging_family_content" | bat --plain --language=md --wrap never --highlight-line 1 --force-colorization 2>/dev/null
         fi
     fi
 }
