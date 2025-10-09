@@ -1,10 +1,11 @@
 ### 🖥️ Nvidia-TKG ─ Open-Source or proprietary graphics driver
 
 ---
+
 **Note:**
 - Supports both open-source and proprietary Nvidia drivers.
-- Use the configuration editor to set driver options and patches.
-- Installer will clone the repo, build and install the driver.
+- Allows for deep customization via patches and configuration options.
+- Use the configuration editor to tweak the build.
 - Reboot after installation for changes to take effect.
 
 **Tips:**
@@ -13,9 +14,9 @@
 - Join the Frogging-Family community for troubleshooting.
 
 ---
-**🖥️ Online Preview**
 
-See full documentation at:
-[Frogging-Family/nvidia-all](https://github.com/Frogging-Family/nvidia-all/blob/master/README.md)
+**🌐 Online Preview**
+
+#### ***See full documentation at:***
+#### [Frogging-Family/nvidia-all](https://github.com/Frogging-Family/nvidia-all/blob/master/README.md)
 ---
-Managed by [tkginstaller](https://github.com/damachine/tkginstaller)
