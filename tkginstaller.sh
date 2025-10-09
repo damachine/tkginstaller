@@ -366,6 +366,7 @@ _install_package() {
     local package_name="$2"
     local build_cmd="$3"
     local clean_cmd="${4:-}"  # Optional clean command after build proton-tkg only
+    local work_dir="${5:-}"   # Optional working directory relative to cloned repo
 
     cd "$TKG_INSTALLER_DIR" || return 1
 
@@ -379,6 +380,14 @@ _install_package() {
     local repo_dir
     repo_dir=$(basename "$repo_url" .git)
     cd "$repo_dir" || return 1
+
+    # Navigate to working directory if specified
+    if [[ -n "$work_dir" ]]; then
+        cd "$work_dir" || {
+            ${TKG_ECHO} "${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error: Working directory not found: $work_dir${TKG_BREAK}${TKG_LINE}${TKG_BREAK}${TKG_RESET}"
+            return 1
+        }
+    fi
 
     # Fetch git repository information if available
     if command -v onefetch >/dev/null 2>&1; then
@@ -439,14 +448,12 @@ _wine_install() {
         build_cmd="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
     fi
 
-    _install_package "${FROGGING_FAMILY_REPO}/wine-tkg-git.git" "wine-tkg-git" "$build_cmd"
-    cd wine-tkg-git/wine-tkg-git || return 1  # Adjust if needed
+    _install_package "${FROGGING_FAMILY_REPO}/wine-tkg-git.git" "wine-tkg-git" "$build_cmd" "" "wine-tkg-git"
 }
 
 # 🎮 Proton-TKG installation
 _proton_install() {
-    _install_package "${FROGGING_FAMILY_REPO}/wine-tkg-git.git" "wine-tkg-git" "./proton-tkg.sh" "./proton-tkg.sh clean"
-    cd wine-tkg-git/proton-tkg || return 1  # Adjust if needed
+    _install_package "${FROGGING_FAMILY_REPO}/wine-tkg-git.git" "wine-tkg-git" "./proton-tkg.sh" "./proton-tkg.sh clean" "proton-tkg"
 }
 
 # =============================================================================
