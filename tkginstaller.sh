@@ -5,7 +5,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION
-readonly TKG_INSTALLER_VERSION="v0.11.5"
+readonly TKG_INSTALLER_VERSION="v0.11.6"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -571,24 +571,22 @@ _edit_config() {
 
         # Define common error message for preview
         local error_config_not_exist="${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error: No external configuration file found.${TKG_BREAK}${TKG_BREAK} ⚠️ Click to download missing file${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
+        
+        # Define a reusable bat command for the preview
+        local bat_cmd="bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization"
 
         local preview_command='
             key=$(echo {} | cut -d"|" -f1 | xargs)
+            config_file_path="'"${FROGGING_FAMILY_CONFIG_DIR}"'/${key}.cfg"
+
+            # For wine-tkg, the config file name is different
+            if [[ "$key" == "wine-tkg" ]]; then
+                config_file_path="'"${FROGGING_FAMILY_CONFIG_DIR}"'/wine-tkg.cfg"
+            fi
+            
             case $key in
-                linux-tkg)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${FROGGING_FAMILY_CONFIG_DIR}/linux-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"$error_config_not_exist"'"
-                    ;;
-                nvidia-all)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${FROGGING_FAMILY_CONFIG_DIR}/nvidia-all.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"$error_config_not_exist"'"
-                    ;;
-                mesa-git)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${FROGGING_FAMILY_CONFIG_DIR}/mesa-git.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"$error_config_not_exist"'"
-                    ;;
-                wine-tkg)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${FROGGING_FAMILY_CONFIG_DIR}/wine-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"$error_config_not_exist"'"
-                    ;;
-                proton-tkg)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${FROGGING_FAMILY_CONFIG_DIR}/proton-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"$error_config_not_exist"'"
+                linux-tkg|nvidia-all|mesa-git|wine-tkg|proton-tkg)
+                    '"$bat_cmd"' "$config_file_path" 2>/dev/null || '"${TKG_ECHO}"' "'"$error_config_not_exist"'"
                     ;;
                 return)
                     $TKG_ECHO "$TKG_PREVIEW_RETURN"
