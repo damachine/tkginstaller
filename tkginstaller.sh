@@ -581,22 +581,22 @@ _edit_config() {
             key=$(echo {} | cut -d"|" -f1 | xargs)
             case $key in
                 linux-tkg)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/linux-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found.\n\n ⚠️ Click to download missing file${TKG_RESET}"'"
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/linux-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error: No external configuration file found.${TKG_BREAK}${TKG_BREAK} ⚠️ Click to download missing file${TKG_BREAK$}${TKG_LINE}${TKG_RESET}"'"
                     ;;
                 nvidia-all)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/nvidia-all.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found\n\n ⚠️ Click to download missing file${TKG_RESET}"'"
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/nvidia-all.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error: No external configuration file found${TKG_BREAK}${TKG_BREAK} ⚠️ Click to download missing file${TKG_BREAK$}${TKG_LINE}${TKG_RESET}"'"
                     ;;
                 mesa-git)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/mesa-git.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found\n\n ⚠️ Click to download missing file${TKG_RESET}"'"
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/mesa-git.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error: No external configuration file found${TKG_BREAK}${TKG_BREAK} ⚠️ Click to download missing file${TKG_BREAK$}${TKG_LINE}${TKG_RESET}"'"
                     ;;
                 wine-tkg)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/wine-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found\n\n ⚠️ Click to download missing file${TKG_RESET}"'"
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/wine-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error: No external configuration file found${TKG_BREAK}${TKG_BREAK} ⚠️ Click to download missing file${TKG_BREAK$}${TKG_LINE}${TKG_RESET}"'"
                     ;;
                 proton-tkg)
-                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/proton-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD} ❌ Error: No external configuration file found\n\n ⚠️ Click to download missing file${TKG_RESET}"'"
+                    bat --style=numbers --language=bash --wrap never --highlight-line 1 --force-colorization "'"${TKG_INSTALLER_CONFIG_DIR}/proton-tkg.cfg"'" 2>/dev/null || '"${TKG_ECHO}"' "'"${TKG_RED}${TKG_BOLD}${TKG_LINE}${TKG_BREAK} ❌ Error: No external configuration file found${TKG_BREAK}${TKG_BREAK} ⚠️ Click to download missing file${TKG_BREAK$}${TKG_LINE}${TKG_RESET}"'"
                     ;;
                 return)
-                    '"${TKG_ECHO}"' "'"${TKG_GREEN}${TKG_BOLD}${TKG_LINE}${TKG_BREAK}⏪ Return to Mainmenu - Exit editor menu${TKG_BREAK}${TKG_LINE}${TKG_RESET}"'"
+                    '"${TKG_ECHO}"' "'"${TKG_GREEN}${TKG_LINE}${TKG_BREAK}⏪ Return to Mainmenu - Exit editor menu${TKG_BREAK}${TKG_LINE}${TKG_RESET}"'"
                     ;;
             esac
         '
