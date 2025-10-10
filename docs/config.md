@@ -8,7 +8,8 @@
 #### The configuration menu prompts you to download missing files to the default directory.
 
 **Tips:**
-- Configuration files from Frogging-Family may change over time. It's a good practice to manually update them periodically to get the latest options and fixes.
+- Configuration files from Frogging-Family may change over time.
+- It's a good practice to manually update them periodically to get the latest options and fixes.
 
 ---
 
