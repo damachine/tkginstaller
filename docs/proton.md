@@ -1,4 +1,4 @@
-### 🎮 Proton-TKG ─ Windows compatibility layer for Steam / Gaming
+## 🎮 Proton-TKG ─ Windows compatibility layer for Steam / Gaming
 
 ---
 
@@ -30,5 +30,5 @@
 **🌐 Online Preview**
 
 #### ***See full documentation at:***
+
 #### [Frogging-Family/proton-tkg](https://github.com/Frogging-Family/proton-tkg/blob/master/README.md)
----

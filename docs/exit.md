@@ -1,4 +1,4 @@
-### 👋 TKG-Installer - Exit
+## 👋 TKG-Installer - Exit
 
 ---
 
@@ -19,5 +19,6 @@
 ---
 
 **🌐 See full documentation at:**
+
 - [TKG-Installer](https://github.com/damachine/tkginstaller)
 - [Frogging-Family](https://github.com/Frogging-Family/)

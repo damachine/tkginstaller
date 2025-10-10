@@ -1,4 +1,4 @@
-### 🖥️ Nvidia-TKG ─ Open-Source or proprietary graphics driver
+## 🖥️ Nvidia-TKG ─ Open-Source or proprietary graphics driver
 
 ---
 
@@ -29,5 +29,5 @@
 **🌐 Online Preview**
 
 #### ***See full documentation at:***
+
 #### [Frogging-Family/nvidia-all](https://github.com/Frogging-Family/nvidia-all/blob/master/README.md)
----

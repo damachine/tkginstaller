@@ -1,4 +1,4 @@
-### 🧩 Mesa-TKG ─ Open-Source graphics driver for AMD and Intel
+## 🧩 Mesa-TKG ─ Open-Source graphics driver for AMD and Intel
 
 ---
 
@@ -29,5 +29,6 @@
 **🌐 Online Preview**
 
 #### ***See full documentation at:***
+
 #### [Frogging-Family/mesa-tkg](https://github.com/Frogging-Family/mesa-tkg/blob/master/README.md)
 ---

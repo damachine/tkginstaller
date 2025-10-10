@@ -1,4 +1,4 @@
-### ❓ TKG-Installer - Help
+## ❓ TKG-Installer - Help
 
 ---
 
@@ -19,7 +19,6 @@
 
 **Examples:**
 - `linux config` or `l c`: Edit Linux-TKG config.
-- `config nvidia` or `c n`: Edit Nvidia-TKG config.
 
 **Other Commands:**
 - `help` / `h` / `--help` / `-h`: Show this help message
@@ -27,5 +26,6 @@
 ---
 
 **🌐 See full documentation at:**
+
 - [TKG-Installer](https://github.com/damachine/tkginstaller)
 - [Frogging-Family](https://github.com/Frogging-Family/)

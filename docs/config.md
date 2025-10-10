@@ -1,4 +1,4 @@
-### 🛠️ TKG-Installer - Config menue
+## 🛠️ TKG-Installer - Config menue
 
 ---
 
@@ -24,7 +24,6 @@ You can edit configuration files in two ways:
   - `tkginstaller [config|c|edit|e] [package]`
 - **Examples:**
   - `tkginstaller linux config` or `tkginstaller l c`
-  - `tkginstaller config nvidia` or `tkginstaller c n`
 
 ---
 
@@ -36,5 +35,6 @@ You can edit configuration files in two ways:
 ---
 
 **🌐 See full documentation at:**
+
 - [TKG-Installer](https://github.com/damachine/tkginstaller)
 - [Frogging-Family](https://github.com/Frogging-Family/)

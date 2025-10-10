@@ -1,4 +1,4 @@
-### 🧠 Linux-TKG ─ Custom Linux kernels
+## 🧠 Linux-TKG ─ Custom Linux kernels
 
 ---
 
@@ -29,5 +29,5 @@
 **🌐 Online Preview**
 
 #### ***See full documentation at:***
+
 #### [Frogging-Family/linux-tkg](https://github.com/Frogging-Family/linux-tkg/blob/master/README.md)
----

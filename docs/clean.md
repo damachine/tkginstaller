@@ -1,4 +1,4 @@
-### 🧹 TKG-Installer - Cleaning
+## 🧹 TKG-Installer - Cleaning
 
 ---
 
@@ -24,5 +24,6 @@
 ---
 
 **🌐 See full documentation at:**
+
 - [TKG-Installer](https://github.com/damachine/tkginstaller)
 - [Frogging-Family](https://github.com/Frogging-Family/)

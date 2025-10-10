@@ -1,4 +1,4 @@
-### 🍷 Wine-TKG ─ Windows compatibility layer
+## 🍷 Wine-TKG ─ Windows compatibility layer
 
 ---
 
@@ -30,5 +30,5 @@
 **🌐 Online Preview**
 
 #### ***See full documentation at:***
+
 #### [Frogging-Family/wine-tkg-git](https://github.com/Frogging-Family/wine-tkg-git/blob/master/README.md)
----
