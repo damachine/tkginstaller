@@ -6,7 +6,7 @@
 
 # TKG-Installer VERSION
 # TKG-Installer VERSION
-readonly TKG_INSTALLER_VERSION="v0.11.8"
+readonly TKG_INSTALLER_VERSION="v0.11.9"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -250,7 +250,7 @@ _fzf_menu() {
 
 # ✅ Display completion status with timestamp
 _done() {
-    local status=$?
+    local status=${1:-$?} # Use passed status, fallback to $? for compatibility
     local duration="${SECONDS:-0}"
     local minutes=$((duration / 60))
     local seconds=$((duration % 60))
@@ -741,40 +741,40 @@ _linuxnvidia_prompt() {
 _linux_prompt() {
     SECONDS=0
     ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🧠 Fetching Linux-TKG from Frogging-Family repository... ⏳${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
-    _linux_install || true
-    _done
+    _linux_install
+    _done $?
 }
 
 # 🖥️ Nvidia-TKG installation prompt
 _nvidia_prompt() {
     SECONDS=0
     ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🖥️ Fetching Nvidia-TKG from Frogging-Family repository... ⏳${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
-    _nvidia_install || true
-    _done
+    _nvidia_install
+    _done $?
 }
 
 # 🧩 Mesa-TKG installation prompt
 _mesa_prompt() {
     SECONDS=0
     ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🧩 Fetching Mesa-TKG from Frogging-Family repository... ⏳${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
-    _mesa_install || true
-    _done
+    _mesa_install
+    _done $?
 }
 
 # 🍷 Wine-TKG installation prompt
 _wine_prompt() {
     SECONDS=0
     ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🍷 Fetching Wine-TKG from Frogging-Family repository... ⏳${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
-    _wine_install || true
-    _done
+    _wine_install
+    _done $?
 }
 
 # 🎮 Proton-TKG installation prompt
 _proton_prompt() {
     SECONDS=0
     ${TKG_ECHO} "${TKG_GREEN}${TKG_LINE}${TKG_BREAK} 🎮 Fetching Proton-TKG from Frogging-Family repository... ⏳${TKG_BREAK}${TKG_LINE}${TKG_RESET}"
-    _proton_install || true
-    _done
+    _proton_install
+    _done $?
 }
 
 # 🛠️ Configuration editor prompt
