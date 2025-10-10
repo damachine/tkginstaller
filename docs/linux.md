@@ -2,17 +2,26 @@
 
 ---
 
-**Note:**
-- Ensure you have the necessary build dependencies installed.
-- The installer will clone the repository, build the kernel, and install it.
-- Build can take a significant amount of time.
-- Allows for deep customization via patches and configuration options.
-- Use the configuration editor to tweak the build.
-- After installation, reboot to use the new kernel.
+**Installs a custom-patched Linux kernel from the Frogging-Family, optimized for performance and gaming.**
 
-**Tips:**
-- Run `tkginstaller linux` to skip menu.
-- Ensure you have enough free disk space.
+---
+
+### Key Information:
+
+- **Dependencies:** Ensure you have the necessary build dependencies for compiling a kernel on your distribution (e.g., `base-devel` on Arch).
+- **Process:** The installer clones the repository, builds the kernel using your external configuration, and installs it.
+- **Build Time:** Compiling a kernel can take a significant amount of time, depending on your hardware.
+- **Customization:** Allows for deep customization via the `linux-tkg.cfg` file. Use the configuration editor to tweak build options.
+- **Post-Install:** After a successful installation, you must **reboot** your system to use the new kernel.
+
+### Quick Commands:
+
+- **Install:** `tkginstaller linux` or `tkginstaller l`
+- **Edit Config:** `tkginstaller linux config` or `tkginstaller l c`
+
+### Tips:
+
+- Ensure you have enough free disk space, as kernel sources are large.
 - Join the Frogging-Family community for support and updates.
 
 ---

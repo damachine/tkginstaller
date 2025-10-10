@@ -5,7 +5,8 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION
-readonly TKG_INSTALLER_VERSION="v0.11.7"
+# TKG-Installer VERSION
+readonly TKG_INSTALLER_VERSION="v0.11.8"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -134,8 +135,8 @@ _help() {
     ${TKG_ECHO} "${TKG_YELLOW} Example:${TKG_RESET} Edit configuration files directly"
     ${TKG_ECHO} "         $0 linux config  # Edit Linux-TKG config"
     ${TKG_ECHO} "         $0 l c           # Edit Linux-TKG config (short)"
-    ${TKG_ECHO} "         $0 config nvidia # Edit Nvidia-TKG config"
-    ${TKG_ECHO} "         $0 c n           # Edit Nvidia-TKG config (short)"
+    ${TKG_ECHO} ""
+    ${TKG_ECHO} "${TKG_YELLOW} Tip: See all possible shortcuts above${TKG_RESET}"
     ${TKG_ECHO} ""
     ${TKG_ECHO} " 🌐 ${TKG_BLUE}${TKG_REPO} 🐸 ${FROGGING_FAMILY_REPO}${TKG_RESET}"
     ${TKG_ECHO} ""
@@ -852,8 +853,8 @@ _handle_direct_mode() {
         ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Invalid second argument: ${2}${TKG_RESET}"
         ${TKG_ECHO} "${TKG_YELLOW}    Valid options:${TKG_RESET} config, c, edit, e"
         ${TKG_ECHO} "${TKG_YELLOW}    Usage:${TKG_RESET} $0 help${TKG_RESET}"
-        ${TKG_ECHO} "           $0 [linux|nvidia|mesa|wine|proton]${TKG_RESET}"
-        ${TKG_ECHO} "           $0 [linux|nvidia|mesa|wine|proton] [config|c|edit|e]${TKG_BREAK}${TKG_RESET}"
+        ${TKG_ECHO} "           $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p]${TKG_RESET}"
+        ${TKG_ECHO} "           $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p] [config|c|edit|e]${TKG_BREAK}${TKG_RESET}"
         
         # Disable exit trap before cleanup and exit
         trap - INT TERM EXIT HUP
@@ -973,8 +974,8 @@ _handle_direct_mode() {
             ${TKG_ECHO} " "
             ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Invalid argument: ${1:-}${TKG_RESET}"
             ${TKG_ECHO} "${TKG_YELLOW}    Usage:${TKG_RESET} $0 help${TKG_RESET}"
-            ${TKG_ECHO} "           $0 [linux|nvidia|mesa|wine|proton]${TKG_RESET}"
-            ${TKG_ECHO} "           $0 [linux|nvidia|mesa|wine|proton] [config|c|edit|e]${TKG_BREAK}${TKG_RESET}"
+            ${TKG_ECHO} "           $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p]${TKG_RESET}"
+            ${TKG_ECHO} "           $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p] [config|c|edit|e]${TKG_BREAK}${TKG_RESET}"
             
             # Disable exit trap before cleanup and exit
             trap - INT TERM EXIT HUP

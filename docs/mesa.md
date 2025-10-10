@@ -2,16 +2,27 @@
 
 ---
 
-**Note:**
-- This option is for AMD/Intel GPU users.
-- Builds a custom Mesa version with TKG-specific patches.
-- Allows for deep customization via patches and configuration options.
-- Use the configuration editor to tweak the build.
+**Installs a custom-patched Mesa build from the Frogging-Family, providing the latest features and optimizations for AMD and Intel GPUs.**
 
-**Tips:**
-- Run `tkginstaller mesa` to skip menu.
-- Check compatibility with your GPU model.
-- Join the Frogging-Family community for troubleshooting.
+---
+
+### Key Information:
+
+- **Audience:** This option is for users with AMD or Intel graphics cards.
+- **Process:** The installer clones the `mesa-git` repository, applies TKG patches, and builds the package according to your configuration.
+- **Customization:** Use the `mesa-git.cfg` file to enable or disable specific features and optimizations.
+- **Post-Install:** A system restart is often recommended to ensure the new drivers are loaded correctly.
+
+### Quick Commands:
+
+- **Install:** `tkginstaller mesa` or `tkginstaller m`
+- **Edit Config:** `tkginstaller mesa config` or `tkginstaller m c`
+
+### Tips:
+
+- Ensure you have the necessary build dependencies for Mesa on your distribution.
+- Check for compatibility with your specific GPU model and kernel version.
+- Join the Frogging-Family community for troubleshooting and support.
 
 ---
 

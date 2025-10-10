@@ -2,17 +2,28 @@
 
 ---
 
-**Note:**
-- Builds a custom Wine or Wine-Staging version.
-- Allows for deep customization via patches and configuration options.
-- Use the configuration editor to tweak the build.
-- Build can take a significant amount of time.
+**Builds a custom Wine or Wine-Staging version from the Frogging-Family, tailored for gaming and general application use.**
 
-**Tips:**
-- Run `tkginstaller wine` to skip menu.
-- Ensure you have enough free disk space.
-- Select the right version for your needs (staging or stable).
-- Join the Frogging-Family community for troubleshooting.
+---
+
+### Key Information:
+
+- **Dependencies:** Requires numerous build dependencies for compiling Wine (e.g., 32-bit libraries).
+- **Process:** The installer clones the `wine-tkg-git` repository, navigates to the `wine-tkg-git` subdirectory, and runs the build script.
+- **Build Time:** Compiling Wine is a resource-intensive process and can take a significant amount of time.
+- **Customization:** Use the `wine-tkg.cfg` file to choose between staging and stable, apply patches, and configure the build.
+- **Post-Install:** The custom Wine build will be installed on your system, ready to be used by launchers like Lutris or the command line.
+
+### Quick Commands:
+
+- **Install:** `tkginstaller wine` or `tkginstaller w`
+- **Edit Config:** `tkginstaller wine config` or `tkginstaller w c`
+
+### Tips:
+
+- Ensure you have enough free disk space and RAM for the compilation.
+- Select the right base version (staging or stable) for your needs in the config file.
+- Join the Frogging-Family community for troubleshooting and support.
 
 ---
 

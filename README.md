@@ -11,13 +11,14 @@
 ---
 
 ## ⭐ Features
-- **Manage the popular TKG packages `Kernel`, `Nvidia`, `Mesa`, `Wine`, `Proton` from the [Frogging-Family](https://github.com/Frogging-Family) repositories.** 
-- **Interactive Fuzzy finder `fzf` menue mode.**
-- **Quick direct command-line mode.**
-- **Preview readme and configuration.**
-- **Edit configuration files using your preferred editor.**  
-- **Optional download configuration files.**
-- **Multi-Distribution Support.**
+
+- **Dual Mode Operation**: Choose between an interactive `fzf`-based menu or a fast direct command-line mode.
+- **Full TKG Suite**: Manages `Kernel`, `Nvidia`, `Mesa`, `Wine`, and `Proton` builds from the Frogging-Family.
+- **Direct Config Editing**: Quickly open and edit package configurations directly from the command line (e.g., `tkginstaller linux config`).
+- **Smart Previews**: View official READMEs and local configurations directly in the `fzf` preview pane.
+- **Auto-Setup**: Automatically downloads missing configuration files.
+- **Multi-Distro Support**: Compatible with Arch-based systems and other distributions.
+- **Lightweight & Simple**: A single, easy-to-use Bash script with minimal dependencies.
 
 ---
 
@@ -74,44 +75,63 @@
    tkginstaller
    ```
 
+- Dependencies:
+
+> - **`bat`**: For syntax highlighting in the preview window.
+> - **`curl`**: For downloading files and previews.
+> - **`fzf`**: Powers the interactive menu.
+> - **`git`**: For cloning the TKG repositories.
+
 - Optional tools (Recommended):
 
-> - **`nano`, `micro`, `vim`** - An text editor for configuration files. ***Usage: Set the `$EDITOR` environment variable. Howto: [ArchWiki](https://wiki.archlinux.org/title/Environment_variables#) Fallback: `nano` if installed***
-> - **`onefetch`** - Git repository information display.
+> - **`onefetch`**: To display Git repository information during the build process.
+> - **`nano`, `vim`, `micro`, etc.** A text editor: For editing configuration files.
+> - The script uses the `$EDITOR` environment variable. If not set, it falls back to `nano`.
 
 ---
 
 ## 🚀 Usage
 
 - #### Interactive (Menu-mode)
-   ```bash
-   tkginstaller
-   ```
+
+> For a user-friendly, menu-driven experience, simply run:
+
+>   ```bash
+>   tkginstaller
+>   ```
 
 - #### Command-line (Direct-mode)
 
-   ```bash
-   # Skip the menu and run specific actions directly:
-   # Examples:
-   tkginstaller linux    # Install Linux-TKG
-   tkginstaller nvidia   # Install Nvidia-TKG
-   tkginstaller mesa     # Install Mesa-TKG
-   tkginstaller wine     # Install Wine-TKG
-   tkginstaller proton   # Install Proton-TKG
+> For quick, automated tasks, use direct commands. This mode skips the interactive menu.
 
-   # Show all available commands and shortcuts!
-   tkginstaller help
-   ```
+>   ```bash
+>   # Syntax: tkginstaller [package]
+>   # Use full names or shortcuts (l, n, m, w, p)
+>
+>   tkginstaller linux      # or 'tkginstaller l'
+>   tkginstaller nvidia     # or 'tkginstaller n'
+>   tkginstaller mesa       # or 'tkginstaller m'
+>   tkginstaller wine       # or 'tkginstaller w'
+>   tkginstaller proton     # or 'tkginstaller p'
+>
+>   # Syntax: tkginstaller [package] [action]
+>   # Use full names or shortcuts (c, e for config/edit)
+>
+>   # Edit a package's configuration file:
+>   tkginstaller linux config   # or 'tkginstaller l c'
+>
+>   # Use 'help' or its shortcuts (h, --help, -h)
+>   tkginstaller help
+>   ```
 
 ---
 
 > [!TIP]
-> Contribute and suggest improvements. Welcome ⭐ at **[Discussions](https://github.com/damachine/tkginstaller/discussions)**  
-> If you need help, open an **[Issues](https://github.com/damachine/tkginstaller/issues)**
+> ### Have a question or an idea?
+> - **Suggest improvements** or discuss new features in our **[Discussions](https://github.com/damachine/tkginstaller/discussions)**.
+> - **Report a bug** or request help by opening an **[Issue](https://github.com/damachine/tkginstaller/issues)**.
 >
-> <a href="https://github.com/damachine/tkginstaller/issues"><img src="https://img.shields.io/github/issues/damachine/tkginstaller"></a>
-
----
+> <a href="https://github.com/damachine/tkginstaller/discussions"><img src="https://img.shields.io/github/discussions/damachine/tkginstaller?style=flat-square&logo=github&label=Discussions"></a> <a href="https://github.com/damachine/tkginstaller/issues"><img src="https://img.shields.io/github/issues/damachine/tkginstaller?style=flat-square&logo=github&label=Issues"></a>
 
 ## ⚠️ Disclaimer
 This software is provided "as is", without warranty of any kind, express or implied.
