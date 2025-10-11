@@ -50,4 +50,4 @@ pubring.*
 # Ignore vscode AI rules
 .github/instructions/best_practices.md
 .github/instructions/codacy.instructions.md
-.github/instructions/copilot.instructions.md
+.github/instructions/copilot-instructions.md
