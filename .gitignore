@@ -4,7 +4,9 @@
 .cache/
 .makepkg/
 pkg/
+logs/
 temp/
+.*.sw[a-z]
 *~
 *.tmp
 *.log
@@ -14,6 +16,13 @@ temp/
 .directory
 .DS_Store
 Thumbs.db
+.thumbnails/
+.Trash-*
+core
+core.*
+secring.*
+pubring.*
+*.stackdump
 
 # Editor files
 *.code-workspace
