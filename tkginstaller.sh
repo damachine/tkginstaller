@@ -5,7 +5,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION
-readonly TKG_INSTALLER_VERSION="v0.12.0"
+readonly TKG_INSTALLER_VERSION="v0.12.1"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -778,8 +778,7 @@ _config_prompt() {
 }
 
 # =============================================================================
-# FZF MAINMENUE FUN# TKG-Installer VERSION
-CTIONS
+# FZF MAINMENUE FUNCTIONS
 # =============================================================================
 
 # Interactive main menu with fzf preview
