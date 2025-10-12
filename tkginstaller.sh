@@ -5,7 +5,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION
-readonly TKG_INSTALLER_VERSION="v0.12.2"
+readonly TKG_INSTALLER_VERSION="v0.12.3"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -367,7 +367,6 @@ _get_preview() {
    # Display TKG-INSTALLER remote preview content
     if [[ -n "$tkg_installer_preview_url" ]]; then
         # Download and cache content
-        local tkg_installer_content=""
         local tkg_installer_cache="${TKG_TMP_DIR}/$(basename "$tkg_installer_preview_url")"
         if [[ ! -f "$tkg_installer_cache" ]]; then
             curl -fsSL --max-time 10 "${tkg_installer_preview_url}" -o "$tkg_installer_cache" 2>/dev/null
@@ -381,7 +380,6 @@ _get_preview() {
     # Display FROGGING-FAMILY remote preview content
     if [[ -n "$frogging_family_preview_url" ]]; then
         # Download and cache content
-        local frogging_family_content=""
         local frogging_family_cache="${TKG_TMP_DIR}/$(basename "$frogging_family_preview_url")"
         if [[ ! -f "$frogging_family_cache" ]]; then
             curl -fsSL --max-time 10 "${frogging_family_preview_url}" -o "$frogging_family_cache" 2>/dev/null
