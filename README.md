@@ -15,7 +15,6 @@
 ## ⭐ Features
 
 - **Dual Mode Operation**: Choose between an interactive `fzf`-based menu or a fast direct command-line mode.
-- **Full TKG Suite**: Manages `Kernel`, `Nvidia`, `Mesa`, `Wine`, and `Proton` builds from the Frogging-Family.
 - **Direct Config Editing**: Quickly open and edit package configurations directly from the command line (e.g., `tkginstaller linux config`).
 - **Smart Previews**: View official READMEs and local configurations directly in the `fzf` preview pane.
 - **Auto-Setup**: Automatically downloads missing configuration files.
@@ -81,6 +80,7 @@
 
 > - **`bat`**: For syntax highlighting in the preview window.
 > - **`curl`**: For downloading files and previews.
+> - **`glow`**: For preview Readme.md files in the terminal.
 > - **`fzf`**: Powers the interactive menu.
 > - **`git`**: For cloning the TKG repositories.
 

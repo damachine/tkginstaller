@@ -20,8 +20,7 @@ You can edit configuration files in two ways:
 **2. Direct Command-Line:**
 - Access configuration files directly without entering the menu.
 - **Syntax:**
-  - `tkginstaller [package] [config|c|edit|e]`
-  - `tkginstaller [config|c|edit|e] [package]`
+  - `tkginstaller [package] [config|c]`
 - **Examples:**
   - `tkginstaller linux config` or `tkginstaller l c`
 
