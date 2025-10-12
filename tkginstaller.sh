@@ -5,7 +5,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION
-readonly TKG_INSTALLER_VERSION="v0.12.1"
+readonly TKG_INSTALLER_VERSION="v0.12.2"
 
 # -----------------------------------------------------------------------------
 # author: damachine (christkue79@gmail.com)
@@ -151,7 +151,7 @@ if [[ -f "$TKG_LOCKFILE" ]]; then
         if [[ -n "$old_pid" ]] && kill -0 "$old_pid" 2>/dev/null; then
             ${TKG_ECHO} ""
             ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ Script is already running (PID: $old_pid). Exiting...${TKG_RESET}"
-            ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD} 🔁 If the script was unexpectedly terminated, remove the lock file manually:${TKG_RESET}${TKG_BREAK}${TKG_BREAK}    rm -f $TKG_LOCKFILE${TKG_BREAK}${TKG_RESET}"
+            ${TKG_ECHO} "${TKG_YELLOW}${TKG_BOLD} 🔁 If the script was unexpectedly terminated, remove the lock file manually:${TKG_RESET}${TKG_BREAK}${TKG_BREAK}    tkginstaller.sh clean|c to remove the $TKG_LOCKFILE${TKG_BREAK}${TKG_RESET}"
             exit 1
         else
             ${TKG_ECHO} ""
@@ -179,7 +179,7 @@ _clean() {
     unset TKG_REPO TKG_RAW_URL FROGGING_FAMILY_REPO FROGGING_FAMILY_RAW_URL TKG_TMP_DIR FROGGING_FAMILY_CONFIG_DIR TKG_CHOICE_FILE
     unset TKG_ECHO TKG_BREAK TKG_LINE TKG_RESET TKG_BOLD TKG_RED TKG_GREEN TKG_YELLOW TKG_BLUE
     unset TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON
-    unset TKG_PREVIEW_CONFIG TKG_PREVIEW_CLEAN TKG_PREVIEW_HELP TKG_PREVIEW_RETURN TKG_PREVIEW_EXIT
+    unset TKG_PREVIEW_CONFIG TKG_PREVIEW_CLEAN TKG_PREVIEW_HELP TKG_PREVIEW_RETURN TKG_PREVIEW_EXIT TKG_GLOW_STYLE
  }
 
 # Setup exit trap for cleanup on script termination
@@ -271,7 +271,7 @@ _pre() {
     ${TKG_ECHO} "${TKG_YELLOW} 🔁 Pre-checks starting...${TKG_RESET}"
 
     # Check required dependencies
-    local dependencies=(bat curl fzf git)
+    local dependencies=(bat curl glow fzf git)
     for required_dependency in "${dependencies[@]}"; do
         if ! command -v "$required_dependency" >/dev/null; then
             ${TKG_ECHO} "${TKG_RED}${TKG_BOLD} ❌ $required_dependency is not installed! Please install it first.${TKG_RESET}"
@@ -352,29 +352,45 @@ _get_preview() {
             ;;
     esac
 
+    # Glow style detection (auto-detect based on COLORTERM/TERM, or use env override)
+    if [[ -z "${TKG_GLOW_STYLE:-}" ]]; then
+        case "${COLORTERM:-}${TERM:-}" in
+            *light*|*xterm*|*rxvt*|*konsole*)
+                TKG_GLOW_STYLE="light"
+                ;;
+            *)
+                TKG_GLOW_STYLE="dark"
+                ;;
+        esac
+    fi
+
    # Display TKG-INSTALLER remote preview content
     if [[ -n "$tkg_installer_preview_url" ]]; then
-        # Download content
+        # Download and cache content
         local tkg_installer_content=""
-        tkg_installer_content=$(curl -fsSL --max-time 10 "${tkg_installer_preview_url}" 2>/dev/null)
-        # View content 
-        if [[ -n "$tkg_installer_content" ]]; then
+        local tkg_installer_cache="${TKG_TMP_DIR}/$(basename "$tkg_installer_preview_url")"
+        if [[ ! -f "$tkg_installer_cache" ]]; then
+            curl -fsSL --max-time 10 "${tkg_installer_preview_url}" -o "$tkg_installer_cache" 2>/dev/null
+        fi
+        if [[ -s "$tkg_installer_cache" ]]; then
             ${TKG_ECHO} ""
-            ${TKG_ECHO} "$tkg_installer_content" | bat --plain --language=md --wrap character --highlight-line 1 --force-colorization 2>/dev/null
+            glow --pager --width 80 --style "${TKG_GLOW_STYLE:-dark}" "$tkg_installer_cache"
         fi
     fi
 
-#   # Display FROGGING-FAMILY remote preview content
-#    if [[ -n "$frogging_family_preview_url" ]]; then
-#        # Download content
-#        local frogging_family_content=""
-#        frogging_family_content=$(curl -fsSL --max-time 10 "${frogging_family_preview_url}" 2>/dev/null)
-#        # View content 
-#        if [[ -n "$frogging_family_content" ]]; then
-#            ${TKG_ECHO} ""
-#            ${TKG_ECHO} "$frogging_family_content" | bat --plain --language=md --wrap never --highlight-line 1 --force-colorization 2>/dev/null
-#        fi
-#    fi
+    # Display FROGGING-FAMILY remote preview content
+    if [[ -n "$frogging_family_preview_url" ]]; then
+        # Download and cache content
+        local frogging_family_content=""
+        local frogging_family_cache="${TKG_TMP_DIR}/$(basename "$frogging_family_preview_url")"
+        if [[ ! -f "$frogging_family_cache" ]]; then
+            curl -fsSL --max-time 10 "${frogging_family_preview_url}" -o "$frogging_family_cache" 2>/dev/null
+        fi
+        if [[ -s "$frogging_family_cache" ]]; then
+            ${TKG_ECHO} ""
+            glow --pager --width 80 --style "${TKG_GLOW_STYLE:-dark}" "$frogging_family_cache"
+        fi
+    fi
 }
 
 # Preview content is initialized only for interactive mode
@@ -392,7 +408,7 @@ _init_preview() {
     TKG_PREVIEW_EXIT="$(_get_preview exit)"
 
     export TKG_PREVIEW_LINUX TKG_PREVIEW_NVIDIA TKG_PREVIEW_MESA TKG_PREVIEW_WINE TKG_PREVIEW_PROTON
-    export TKG_PREVIEW_CONFIG TKG_PREVIEW_CLEAN TKG_PREVIEW_HELP TKG_PREVIEW_RETURN TKG_PREVIEW_EXIT
+    export TKG_PREVIEW_CONFIG TKG_PREVIEW_CLEAN TKG_PREVIEW_HELP TKG_PREVIEW_RETURN TKG_PREVIEW_EXIT TKG_GLOW_STYLE
 }
 
 # =============================================================================
@@ -860,8 +876,8 @@ _handle_direct_mode() {
     fi
 
     # Check if second argument is config-related
-    if [[ -n "$arg2" && "$arg2" =~ ^(config|c|edit|e)$ ]]; then
-        # Handle config editing: linux config, l c, config linux, etc.
+    if [[ -n "$arg2" && "$arg2" =~ ^(config|c)$ ]]; then
+        # Handle config editing: linux config, l c, nvidia config, n c, etc.
         local package=""
         case "$arg1" in
             linux|l) package="linux-tkg" ;;
@@ -955,7 +971,13 @@ _handle_direct_mode() {
             _proton_prompt
             exit 0
             ;;
-
+        clean|c)
+            ${TKG_ECHO} "${TKG_YELLOW}${TKG_LINE}${TKG_BREAK} 🧹 Cleaning temporary files...${TKG_BREAK}${TKG_LINE}${TKG_RESET}"      
+            _pre >/dev/null 2>&1 || true
+            rm -f "$TKG_LOCKFILE" 2>&1 || true
+            sleep 1
+            clear
+            ;;
         help|h|--help|-h)
             # Disable exit trap before cleanup and exit
             trap - INT TERM EXIT HUP

@@ -7,15 +7,14 @@
 ---
 
 **Quick Install Commands:**
-- `linux` / `l`: Install Linux-TKG
+- `linux`  / `l`: Install Linux-TKG
 - `nvidia` / `n`: Install Nvidia-TKG
-- `mesa` / `m`: Install Mesa-TKG
-- `wine` / `w`: Install Wine-TKG
+- `mesa`   / `m`: Install Mesa-TKG
+- `wine`   / `w`: Install Wine-TKG
 - `proton` / `p`: Install Proton-TKG
 
 **Configuration Commands:**
-- `[package] [config|c|edit|e]`: Edit a package's configuration file.
-- `[config|c|edit|e] [package]`: Alternative syntax.
+- `[package] [config|c]`: Edit a package's configuration file.
 
 **Examples:**
 - `linux config` or `l c`: Edit Linux-TKG config.
