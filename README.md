@@ -1,6 +1,8 @@
 
 # TKG-Installer 🐸
 
+### Manage the popular TKG packages (Kernel, Nvidia, Mesa, Wine, Proton) from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
+
 <p align="left">
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg"></a>
   <img src="https://img.shields.io/badge/language-bash-blue?logo=gnu-bash">
