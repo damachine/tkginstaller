@@ -15,9 +15,9 @@
 ## ⭐ Features
 
 - **Dual Mode Operation**: Choose between an interactive `fzf`-based menu or a fast direct command-line mode.
-- **Direct Config Editing**: Quickly open and edit package configurations directly from the command line (e.g., `tkginstaller linux config`).
+- **Direct Config Editing**: Edit package configuration files either from the interactive menu or directly via command line (e.g., `tkginstaller linux config`).
 - **Smart Previews**: View official READMEs and local configurations directly in the `fzf` preview pane.
-- **Auto-Setup**: Automatically downloads missing configuration files.
+- **Auto-Setup**: Automatically downloads missing configuration files (optional).
 - **Multi-Distro Support**: Compatible with Arch-based systems and other distributions.
 - **Lightweight & Simple**: A single, easy-to-use Bash script with minimal dependencies.
 
@@ -121,6 +121,11 @@
 >
 >   # Edit a package's configuration file:
 >   tkginstaller linux config   # or 'tkginstaller l c'
+>   tkginstaller config linux   # or 'tkginstaller c l'
+>   tkginstaller mesa edit      # or 'tkginstaller m e'
+>
+>   # Clean up all temporary files and restart installer:
+>   tkginstaller clean
 >
 >   # Use 'help' or its shortcuts (h, --help, -h)
 >   tkginstaller help

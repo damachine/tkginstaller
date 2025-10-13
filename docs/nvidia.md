@@ -13,12 +13,43 @@
 - **Customization:** Use the `nvidia-all.cfg` file to select the driver version, enable patches, and set other build options.
 - **Post-Install:** A system **reboot** is required for the new driver to be loaded and take effect.
 
-### Quick Commands:
+---
 
-- **Install:** `tkginstaller nvidia` or `tkginstaller n`
-- **Edit Config:** `tkginstaller nvidia config` or `tkginstaller n c`
+### Quick Commands
 
-### Tips:
+- **Install:**  
+  `tkginstaller nvidia` or `tkginstaller n`
+- **Edit Config:**  
+  `tkginstaller nvidia config` or `tkginstaller n c`  
+  `tkginstaller config nvidia` or `tkginstaller c n`
+
+---
+
+### Configuration
+
+- **Config Location:**  
+  Default: `~/.config/frogminer/nvidia-all.cfg`
+- **Missing Config:**  
+  If the config file is missing, TKG-Installer will prompt you to download the latest version from Frogging-Family.
+- **Manual Updates:**  
+  Nvidia configuration options may change. Update your config regularly for new features and fixes.
+- **Backup:**  
+  Always back up your config before making changes.
+
+---
+
+### Troubleshooting
+
+- **Invalid or incomplete arguments:**  
+  If you provide an invalid or incomplete command, TKG-Installer will show usage instructions and examples.
+- **Permissions:**  
+  Do not run TKG-Installer as root. Use a regular user account for security.
+- **Build Errors:**  
+  Check that all dependencies are installed and your config is valid.
+
+---
+
+### Tips
 
 - Ensure you have the correct kernel headers installed for your running kernel.
 - Check compatibility with your specific GPU model and the selected driver version.

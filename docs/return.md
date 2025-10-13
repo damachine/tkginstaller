@@ -2,7 +2,7 @@
 
 ---
 
-**This option exits the current menu and takes you back to the previous screen.**
+**This option exits the current menu and takes you back to the previous screen (e.g., back to the main menu).**
 
 - In the **Config Menu**, selecting this will return you to the **Main Menu**.
 

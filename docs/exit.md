@@ -18,6 +18,21 @@
 
 ---
 
+### Usage
+
+- Select "Exit" from the main menu or use the corresponding command-line option.
+- All resources will be cleaned up automatically.
+- You can safely restart the installer at any time after exit.
+
+---
+
+### Tips
+
+- Always use the "Exit" option to close the installer to avoid leftover temporary files.
+- If you encounter issues restarting, check and remove `/tmp/tkginstaller.lock` manually.
+
+---
+
 **🌐 See full documentation at:**
 
 - [TKG-Installer](https://github.com/damachine/tkginstaller)
