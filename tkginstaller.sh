@@ -62,7 +62,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION
-readonly _TKG_INSTALLER_VERSION="v0.12.4"
+readonly _TKG_INSTALLER_VERSION="v0.12.5"
 
 # =============================================================================
 # INITIALIZATION FUNCTIONS
@@ -142,7 +142,6 @@ __help() {
     ${_ECHO} ""
     ${_ECHO} "${_BLUE} Run directly without entering the menu.${_RESET}"
     ${_ECHO} "${_GREEN} Syntax:${_RESET} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
-    ${_ECHO} ""
     ${_ECHO} "${_YELLOW} Example:${_RESET}"
     ${_ECHO} "  $0 linux         # Install Linux-TKG"
     ${_ECHO} "  $0 nvidia        # Install Nvidia-TKG"
@@ -155,9 +154,7 @@ __help() {
     ${_ECHO} "${_GREEN}        ${_RESET} $0 [config|c|edit|e] [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
     ${_ECHO} "${_YELLOW} Example:${_RESET}"
     ${_ECHO} "  $0 linux config  # Edit Linux-TKG config"
-    ${_ECHO} "  $0 l c           # Edit Linux-TKG config (short)"
     ${_ECHO} "  $0 config linux  # Edit Linux-TKG config"
-    ${_ECHO} "  $0 c l           # Edit Linux-TKG config (short)"
     ${_ECHO} ""
     ${_ECHO} "${_YELLOW} Shortcuts:${_RESET} l=linux, n=nvidia, m=mesa, w=wine, p=proton, c=config, e=edit"
     ${_ECHO} "${_LINE}${_RESET}"

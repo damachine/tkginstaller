@@ -48,6 +48,7 @@ pubring.*
 # Local test files
 
 # Ignore vscode AI rules
+.github/instructions/BEST_PRACTICES.md
 .github/instructions/best_practices.md
 .github/instructions/codacy.instructions.md
 .github/instructions/copilot-instructions.md
