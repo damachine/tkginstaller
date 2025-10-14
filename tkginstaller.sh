@@ -30,7 +30,7 @@
 # Info:
 #   TKG-Installer
 #   Manage the popular TKG packages (Kernel, Nvidia, Mesa, Wine, Proton) from the Frogging-Family repositories.
-#   Interactive Fuzzy finder fzf menue mode.
+#   Interactive Fuzzy finder fzf menu mode.
 #   Quick direct command-line mode.
 #   Preview readme and configuration.
 #   Edit configuration files using your preferred editor.
@@ -565,7 +565,7 @@ __edit_config() {
                     sleep 3
                     ;;
                 *)
-                    ${_ECHO} "${_RED}${_BOLD}${_LINE}${_BREAK} ⚠️ Directory creation cancelled. Return to Mainmenu...${_BREAK}${_LINE}${_BREAK}${_RESET}"
+                    ${_ECHO} "${_RED}${_BOLD}${_LINE}${_BREAK} ⚠️ Directory creation cancelled. Return to Main menu...${_BREAK}${_LINE}${_BREAK}${_RESET}"
                     sleep 3
                     clear
                     return 0
@@ -612,7 +612,7 @@ __edit_config() {
                     ;;
             esac
         '
-        local _header_text=$'🐸 TKG-Installer ─ Editor menue\n\n   Edit external configuration file\n   Default directory: ~/.config/frogminer/'
+        local _header_text=$'🐸 TKG-Installer ─ Editor menu\n\n   Edit external configuration file\n   Default directory: ~/.config/frogminer/'
         local _footer_text=$'📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit\n🐸 Frogging-Family: https://github.com/Frogging-Family\n🌐 About: https://github.com/damachine/tkginstaller'
         local _border_label_text="${_TKG_INSTALLER_VERSION}"
         local _preview_window_settings='right:wrap:70%'
@@ -742,7 +742,7 @@ __handle_config() {
 }
 
 # =============================================================================
-# PROMT MENUE FUNCTIONS
+# PROMPT MENU FUNCTIONS
 # =============================================================================
 
 # Combined Linux + Nvidia installation
@@ -798,7 +798,7 @@ __config_prompt() {
 }
 
 # =============================================================================
-# FZF MAINMENUE FUNCTIONS
+# FZF MAIN MENU FUNCTIONS
 # =============================================================================
 
 # Interactive main menu with fzf preview
