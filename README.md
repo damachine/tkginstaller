@@ -1,7 +1,6 @@
 
 # TKG-Installer 🐸
 
-### Manage the popular TKG packages (Kernel, Nvidia, Mesa, Wine, Proton) from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
 
 <p align="left">
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg"></a>
@@ -14,12 +13,11 @@
 
 ## ⭐ Features
 
-- **Dual Mode Operation**: Choose between an interactive `fzf`-based menu or a fast direct command-line mode.
-- **Direct Config Editing**: Edit package configuration files either from the interactive menu or directly via command line (e.g., `tkginstaller linux config`).
-- **Smart Previews**: View official READMEs and local configurations directly in the `fzf` preview pane.
-- **Auto-Setup**: Automatically downloads missing configuration files (optional).
-- **Multi-Distro Support**: Compatible with Arch-based systems and other distributions.
-- **Lightweight & Simple**: A single, easy-to-use Bash script with minimal dependencies.
+### Easily build the TKG packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
+
+- **Dual Mode Operation**: Use either an interactive `fzf`-based menu or fast direct command-line mode.
+- **Advanced Package Configuration**: Easily customize builds with external config files.
+- **Multi-Distro Support***: Works seamlessly on Arch-based systems and most other Linux distributions.
 
 ---
 
@@ -38,9 +36,6 @@
 
    # After installation, you can simply run:
    tkginstaller
-
-   # Show all available commands and shortcuts (very useful!)
-   tkginstaller help
    ```
 
 #### All Distributions
@@ -52,25 +47,28 @@
    mkdir -p /patch/to/tkginstaller
    cd /patch/to/tkginstaller
 
-   # STEP 2: Download with wget
-   wget https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sh
-   # OR: Download with curl
+   # STEP 2: Download with curl
    curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sh
 
    # STEP 3: Make script executable
    chmod +x tkginstaller.sh
+   ```
+   ```bash
+   # Optional: Make the installer available system-wide after manual installation
 
-   # STEP 4: Optional (Recommended)
-   # Quick access: Create a system link 
-   # To make the installer available system-wide, create a symlink and skip alias:
+   # Method 1: Create a system link (Recommended)
    sudo ln -s /path/to/tkginstaller.sh /usr/bin/tkginstaller
-   # OR: Create a alias
-   # If you installed manually, add this to your `~/.bashrc` or `~/.zshrc` for easy access:
+
+   # Method 2: Create a shell alias or function
+   # Add one of this to your ~/.bashrc or ~/.zshrc:
+
+   # As alias:
+   alias tkginstaller="bash -c '/path/to/tkginstaller.sh'"
+
+   # OR as function:
    tkginstaller() {
       bash -c '/path/to/tkginstaller.sh'
    }
-   # OR:
-   alias tkginstaller="bash -c '/path/to/tkginstaller.sh'"
 
    # Now you can run from anywhere:
    tkginstaller

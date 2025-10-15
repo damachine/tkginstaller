@@ -27,42 +27,33 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 # -----------------------------------------------------------------------------
-# Info:
+# INFO:
 #   TKG-Installer
-#   Manage the popular TKG packages (Kernel, Nvidia, Mesa, Wine, Proton) from the Frogging-Family repositories.
-#   Interactive Fuzzy finder fzf menu mode.
-#   Quick direct command-line mode.
-#   Preview readme and configuration.
-#   Edit configuration files using your preferred editor.
-#   Optional download configuration files.
-# Details:
-#   This script handles installation, configuration for TKG/Frogminer packages.
+#   Easily build the TKG packages from the Frogging-Family repositories.
+# DESCRIPTION:
+#   This script handles building, installation and configuration for TKG/Frogminer packages.
 #   It uses color output and Unicode icons for better readability.
 #   Do not run as root. Use a dedicated user for security.
-#   See https://github.com/damachine/tkginstaller further details.
-# Usage:
-#   Interactive (Menu-mode)
+#   See https://github.com/damachine/tkginstaller for details.
+# USAGE:
+#   Interactive (Menu-mode) Run the script without arguments to enter the menu:
 #       run: tkginstaller
-#   Command-line (Direct-mode)
-#   Skip the menu and run specific actions directly:
-#   Examples:
+#   Command-line (Direct-mode) Skip the menu and run specific actions directly:
 #       run: tkginstaller linux          # Install Linux-TKG
-#       run: tkginstaller nvidia         # Install Nvidia-TKG
-#       run: tkginstaller mesa           # Install Mesa-TKG
-#       run: tkginstaller wine           # Install Wine-TKG
-#       run: tkginstaller proton         # Install Proton-TKG
 #       run: tkginstaller linux config   # Edit Linux-TKG config
-#       run: tkginstaller l c            # Edit Linux-TKG config (short)
 #   Show all available commands and shortcuts!
 #       run: tkginstaller help
 # -----------------------------------------------------------------------------
 
-# Fuzzy finder run in a separate shell and brings SC2016, SC2218 warnings. Allow fzf to expand variables in its own shell at runtime
+# Fuzzy finder run in a separate shell (subshell) - export variables for fzf
 # shellcheck disable=SC2016
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION
-readonly _TKG_INSTALLER_VERSION="v0.12.6"
+readonly _TKG_INSTALLER_VERSION="v0.12.7"
+
+# Lock file to prevent concurrent execution
+readonly _LOCK_FILE="/tmp/tkginstaller.lock"
 
 # =============================================================================
 # INITIALIZATION FUNCTIONS
@@ -71,7 +62,6 @@ readonly _TKG_INSTALLER_VERSION="v0.12.6"
 # Initialize global variables, paths, and configurations
 __init_globals() {
     # Global paths and configuration
-    readonly _LOCK_FILE="/tmp/tkginstaller.lock"
     _TMP_DIR="$HOME/.cache/tkginstaller"
     _CHOICE_FILE="${_TMP_DIR}/choice.tmp"
     _CONFIG_DIR="$HOME/.config/frogminer"
@@ -117,8 +107,12 @@ __init_colors
 
 # Check for root execution
 if [[ "$(id -u)" -eq 0 ]]; then
-    ${_ECHO} "${_RED}${_BOLD}${_BREAK} ❌ Do not run as root!${_BREAK}${_RESET}"
-    exit 1
+    ${_ECHO} "${_RED}${_BOLD}${_BREAK} ❌ Warning: You are running as root!${_BREAK}${_RESET}"
+    read -r -p "Do you really want to continue as root? [y/N]: " allow_root
+    if [[ ! "$allow_root" =~ ^(y|Y|yes|Yes|YES)$ ]]; then
+        ${_ECHO} "${_RED}${_BOLD}${_BREAK} ❌ Aborted. Please run as a regular user.${_BREAK}${_RESET}"
+        exit 1
+    fi
 fi
 
 # Detect Linux Distribution
@@ -126,12 +120,12 @@ if [[ -f /etc/os-release ]]; then
     # shellcheck disable=SC1091 # Source file is system-dependent and may not exist on all systems
     . /etc/os-release
     readonly _distro_name="$NAME"
-    readonly _os_id="${ID:-unknown}"
-    readonly _os_like="${ID_LIKE:-}"
+    readonly _distro_id="${ID:-unknown}"
+    readonly _distro_like="${ID_LIKE:-}"
 else
     readonly _distro_name="Unknown"
-    readonly _os_id="unknown"
-    readonly _os_like=""
+    readonly _distro_id="unknown"
+    readonly _distro_like=""
 fi
 
 # Help information display
@@ -173,7 +167,7 @@ if [[ -f "$_LOCK_FILE" ]]; then
         if [[ -n "$_old_pid" ]] && kill -0 "$_old_pid" 2>/dev/null; then
             ${_ECHO} ""
             ${_ECHO} "${_RED}${_BOLD} ❌ Script is already running (PID: $_old_pid). Exiting...${_RESET}"
-            ${_ECHO} "${_YELLOW}${_BOLD} 🔁 If the script was unexpectedly terminated, remove the lock file manually:${_RESET}${_BREAK}${_BREAK}    tkginstaller.sh clean|c to remove the $_LOCK_FILE${_BREAK}${_RESET}"
+            ${_ECHO} "${_YELLOW}${_BOLD} 🔁 If the script was unexpectedly terminated, remove the lock file manually:${_RESET}${_BREAK}${_BREAK}    tkginstaller clean|c to remove the $_LOCK_FILE${_BREAK}${_RESET}"
             exit 1
         else
             ${_ECHO} ""
@@ -251,7 +245,7 @@ __fzf_menu() {
         --no-input \
         --no-multi \
         --no-multi-line \
-        --pointer='▶' \
+        --pointer='🐸' \
         --header="${_header_text}" \
         --header-border=line \
         --header-label="${_border_label_text}" \
@@ -472,8 +466,6 @@ __install_package() {
 
 # Linux-TKG installation
 __linux_install() {
-    local _distro_id="${_os_id,,}"
-    local _distro_like="${_os_like,,}"
     local _build_command
 
     if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
@@ -497,8 +489,6 @@ __mesa_install() {
 
 # Wine-TKG installation
 __wine_install() {
-    local _distro_id="${_os_id,,}"
-    local _distro_like="${_os_like,,}"
     local _build_command
 
     if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
@@ -554,7 +544,7 @@ __edit_config() {
             read -r -p "Do you want to create the configuration directory? [y/N]: " create_dir
             echo
             case "$create_dir" in
-                y|Y|yes)
+                y|Y|yes|Yes|YES)
                     mkdir -p "${_CONFIG_DIR}" || {
                         ${_ECHO} "${_RED}${_BOLD}${_LINE}${_BREAK} ❌ Error creating configuration directory!${_BREAK}${_LINE}${_BREAK}${_RESET}"
                         sleep 3
@@ -704,7 +694,7 @@ __handle_config() {
         read -r -p "Do you want to download the default configuration from $_config_url? [y/N]: " user_answer
         echo
         case "$user_answer" in
-            y|Y|yes)
+            y|Y|yes|Yes|YES)
                 mkdir -p "$(dirname "$_config_path")"
                 if curl -fsSL "$_config_url" -o "$_config_path" 2>/dev/null; then
                     ${_ECHO} "${_GREEN}${_LINE}${_BREAK} ✅ Configuration ready at $_config_path${_BREAK}${_LINE}${_BREAK}${_RESET}"
@@ -804,7 +794,7 @@ __config_prompt() {
 # Interactive main menu with fzf preview
 __menu() {
     local _menu_options=(
-        "Linux  |🧠 Kernel  ─ Linux-TKG custom kernels"
+        "Linux  |🧠 Linux   ─ Linux-TKG custom kernels"
         "Nvidia |🖥️ Nvidia  ─ Nvidia Open-Source or proprietary graphics driver"
         "Mesa   |🧩 Mesa    ─ Open-Source graphics driver for AMD and Intel"
         "Wine   |🍷 Wine    ─ Windows compatibility layer"
@@ -832,7 +822,7 @@ __menu() {
             Exit*) $_ECHO "$_preview_exit" ;;
         esac
     '
-    local _header_text=$'🐸 TKG-Installer ─ Select a option\n\n   Manage the popular TKG packages from the Frogging-Family repositories.'
+    local _header_text=$'🐸 TKG-Installer\n\n🏗️ Easily build the TKG packages from the Frogging-Family repositories.'
     local _footer_text=$'📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit\n🐸 Frogging-Family: https://github.com/Frogging-Family\n🌐 About: https://github.com/damachine/tkginstaller'
     local _border_label_text="${_TKG_INSTALLER_VERSION}"
     local _preview_window_settings='right:wrap:60%'
