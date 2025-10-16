@@ -50,7 +50,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION
-readonly _TKG_INSTALLER_VERSION="v0.12.7"
+readonly _TKG_INSTALLER_VERSION="v0.12.8"
 
 # Lock file to prevent concurrent execution
 readonly _LOCK_FILE="/tmp/tkginstaller.lock"
@@ -287,14 +287,21 @@ __pre() {
     ${_ECHO} "${_YELLOW} 🔁 Pre-checks starting...${_RESET}"
 
     # Check required dependencies
-    local _dependencies=(bat curl glow fzf git)
+    local _dependencies=(git)
+    if [[ "$_load_preview" == "true" ]]; then
+        _dependencies+=(bat curl glow fzf)
+    fi
     for _required_dependency in "${_dependencies[@]}"; do
         if ! command -v "$_required_dependency" >/dev/null; then
-            ${_ECHO} "${_RED}${_BOLD} ❌ $_required_dependency is not installed! Please install it first.${_RESET}"
-            ${_ECHO} "${_YELLOW}${_BOLD} 🔁 Run: pacman -S ${_required_dependency}${_RESET}"            
-            exit 1
+            ${_ECHO} "${_RED}${_BOLD} ❌ Missing dependency: ${_required_dependency}. Please install it first.${_RESET}"
+            ${_ECHO} "${_YELLOW}${_BOLD} 🔃 Run:${_RESET} pacman -S ${_required_dependency}${_BREAK}${_RESET}"
+            _missing_deps+=("$_required_dependency")
         fi
     done
+    if [[ ${#_missing_deps[@]} -gt 0 ]]; then
+        ${_ECHO} "${_RED}${_BOLD} ❌ The following dependencies are missing: ${_missing_deps[*]}.${_RESET}"
+        exit 1
+    fi
 
     # Setup temporary directory
     ${_ECHO} "${_YELLOW} 🧹 Cleaning old temporary files...${_RESET}"
