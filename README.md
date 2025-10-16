@@ -15,7 +15,7 @@
 
 ### Easily build the TKG packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
 
-- **Dual Mode Operation**: Use either an interactive `fzf`-based menu or fast direct command-line mode.
+- **Dual Mode Operation**: Use either an interactive `fzf`-menu or fast direct command-line mode.
 - **Advanced Package Configuration**: Easily customize builds with external config files.
 - **Multi-Distro Support***: Works seamlessly on Arch-based systems and most other Linux distributions.
 
@@ -75,16 +75,18 @@
    ```
 
 - Dependencies:
+> - **`git`**: For cloning the TKG repositories.
+
+- Optional for interactive `fzf`-menu (Recommended):
 
 > - **`bat`**: For syntax highlighting in the preview window.
 > - **`curl`**: For downloading files and previews.
-> - **`glow`**: For preview Readme.md files in the terminal.
 > - **`fzf`**: Powers the interactive menu.
-> - **`git`**: For cloning the TKG repositories.
+> - **`glow`**: For preview Readme.md files in the terminal.
+> - **`onefetch`**: To display Git repository information during the build process. (Optional)
 
-- Optional tools (Recommended):
+- Optional for editor-menu (Recommended):
 
-> - **`onefetch`**: To display Git repository information during the build process.
 > - **`nano`, `vim`, `micro`, etc.** A text editor: For editing configuration files.
 > - The script uses the `$EDITOR` environment variable. If not set, it falls back to `nano`.
 
