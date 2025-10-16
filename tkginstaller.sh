@@ -978,7 +978,7 @@ __main_direct_mode() {
             __proton_prompt
             exit 0
             ;;
-        clean|c|--clean|-c)
+        clean|--clean)
             ${_ECHO} "${_YELLOW}${_LINE}${_BREAK} 🧹 Cleaning temporary files...${_BREAK}${_LINE}${_RESET}"      
             __pre >/dev/null 2>&1 || true
             rm -f "$_LOCK_FILE" 2>&1 || true
