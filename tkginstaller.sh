@@ -50,7 +50,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION
-readonly _TKG_INSTALLER_VERSION="v0.12.8"
+readonly _TKG_INSTALLER_VERSION="v0.12.9"
 
 # Lock file to prevent concurrent execution
 readonly _LOCK_FILE="/tmp/tkginstaller.lock"
@@ -119,13 +119,13 @@ fi
 if [[ -f /etc/os-release ]]; then
     # shellcheck disable=SC1091 # Source file is system-dependent and may not exist on all systems
     . /etc/os-release
-    readonly _distro_name="$NAME"
-    readonly _distro_id="${ID:-unknown}"
-    readonly _distro_like="${ID_LIKE:-}"
+    export _distro_name="$NAME"
+    export _distro_id="${ID:-unknown}"
+    export _distro_like="${ID_LIKE:-}"
 else
-    readonly _distro_name="Unknown"
-    readonly _distro_id="unknown"
-    readonly _distro_like=""
+    export _distro_name="Unknown"
+    export _distro_id="unknown"
+    export _distro_like=""
 fi
 
 # Help information display
@@ -196,6 +196,7 @@ __clean() {
     unset _ECHO _BREAK _LINE _RESET _BOLD _RED _GREEN _YELLOW _BLUE
     unset _preview_linux _preview_nvidia _preview_mesa _preview_wine _preview_proton
     unset _preview_config _preview_clean _preview_help _preview_return _preview_exit _glow_style
+    unset _distro_name _distro_id _distro_like
  }
 
 # Setup exit trap for cleanup on script termination
@@ -802,8 +803,17 @@ __config_prompt() {
 __menu() {
     local _menu_options=(
         "Linux  |🧠 Linux   ─ Linux-TKG custom kernels"
-        "Nvidia |🖥️ Nvidia  ─ Nvidia Open-Source or proprietary graphics driver"
-        "Mesa   |🧩 Mesa    ─ Open-Source graphics driver for AMD and Intel"
+    )
+
+    # Only show Nvidia and Mesa if Arch-based
+    if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
+        _menu_options+=(
+            "Nvidia |🖥️ Nvidia  ─ Nvidia Open-Source or proprietary graphics driver"
+            "Mesa   |🧩 Mesa    ─ Open-Source graphics driver for AMD and Intel"
+        )
+    fi
+
+    _menu_options+=(
         "Wine   |🍷 Wine    ─ Windows compatibility layer"
         "Proton |🎮 Proton  ─ Windows compatibility layer for Steam / Gaming"
         "Config |🛠️ Config  ─ Edit external TKG configuration files"
@@ -819,8 +829,20 @@ __menu() {
         key=$(echo {} | cut -d"|" -f1 | xargs)
         case $key in
             Linux*) $_ECHO "$_preview_linux" ;;
-            Nvidia*) $_ECHO "$_preview_nvidia" ;;
-            Mesa*) $_ECHO "$_preview_mesa" ;;
+            Nvidia*)
+                if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
+                    $_ECHO "$_preview_nvidia"
+                else
+                    $_ECHO "${_RED}${_BOLD} ❌ Nvidia-TKG is only available for Arch-based distributions.${_RESET}"
+                fi
+                ;;
+            Mesa*)
+                if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
+                    $_ECHO "$_preview_mesa"
+                else
+                    $_ECHO "${_RED}${_BOLD} ❌ Mesa-TKG is only available for Arch-based distributions.${_RESET}"
+                fi
+                ;;
             Wine*) $_ECHO "$_preview_wine" ;;
             Proton*) $_ECHO "$_preview_proton" ;;
             Config*) $_ECHO "$_preview_config" ;;
@@ -854,7 +876,7 @@ __menu() {
 # =============================================================================
 
 # Handle direct command-line arguments for quick execution
-__handle_direct_mode() {
+__main_direct_mode() {
     local _arg1="${1,,}"  # Convert to lowercase
     local _arg2="${2,,}"  # Convert to lowercase
 
@@ -1009,7 +1031,7 @@ __handle_direct_mode() {
 }
 
 # Main function for interactive mode
-__main_interactive() {
+__main_interactive_mode() {
     # Interactive mode - show menu and handle user selection
     __pre true
     clear
@@ -1074,9 +1096,9 @@ __main_interactive() {
 __main() {
     # Handle direct command line arguments for automation
     if [[ $# -gt 0 ]]; then
-        __handle_direct_mode "$@"
+        __main_direct_mode "$@"
     else
-        __main_interactive
+        __main_interactive_mode
     fi
 }
 

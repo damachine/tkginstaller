@@ -79,11 +79,11 @@
 
 - Optional for interactive `fzf`-menu (Recommended):
 
-> - **`bat`**: For syntax highlighting in the preview window.
-> - **`curl`**: For downloading files and previews.
+> - **`bat`**: For syntax highlighting.
+> - **`curl`**: Used to fetch configuration and markdown files.
 > - **`fzf`**: Powers the interactive menu.
-> - **`glow`**: For preview Readme.md files in the terminal.
-> - **`onefetch`**: To display Git repository information during the build process. (Optional)
+> - **`glow`**: For preview markdown files in the terminal.
+> - **`onefetch`**: To display Git repository information. (Optional)
 
 - Optional for editor-menu (Recommended):
 
