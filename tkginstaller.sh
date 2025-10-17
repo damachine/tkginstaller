@@ -50,7 +50,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION
-readonly _TKG_INSTALLER_VERSION="v0.13.3"
+readonly _TKG_INSTALLER_VERSION="v0.13.4"
 
 # Lock file to prevent concurrent execution
 readonly _LOCK_FILE="/tmp/tkginstaller.lock"
@@ -77,7 +77,7 @@ __init_globals() {
 # Initialize color and formatting definitions
 __init_colors() {
     # Formatting and color definitions
-    _ECHO="echo -e"
+    _PRINT="printf %b\n"
     _BREAK="\n"
     _LINE="──────────────────────────────────────────────────────────────────────────────────────────"
     _RESET=$"\033[0m"
@@ -88,7 +88,7 @@ __init_colors() {
     _BLUE=$"\033[0;34m"
 
     # Export variables for fzf subshells (unset __exit run)
-    export _ECHO _BREAK _LINE _RESET _BOLD _RED _GREEN _YELLOW _BLUE
+    export _PRINT _BREAK _LINE _RESET _BOLD _RED _GREEN _YELLOW _BLUE
 }
 
 # =============================================================================
@@ -107,10 +107,10 @@ __init_colors
 
 # Check for root execution
 if [[ "$(id -u)" -eq 0 ]]; then
-    ${_ECHO} "${_RED}${_BOLD}${_BREAK} ❌ Warning: You are running as root!${_BREAK}${_RESET}"
+    ${_PRINT} "${_RED}${_BOLD}${_BREAK} ❌ Warning: You are running as root!${_BREAK}${_RESET}"
     read -r -p "Do you really want to continue as root? [y/N]: " allow_root
     if [[ ! "$allow_root" =~ ^(y|Y|yes|Yes|YES)$ ]]; then
-        ${_ECHO} "${_RED}${_BOLD}${_BREAK} ❌ Aborted. Please run as a regular user.${_BREAK}${_RESET}"
+        ${_PRINT} "${_RED}${_BOLD}${_BREAK} ❌ Aborted. Please run as a regular user.${_BREAK}${_RESET}"
         exit 1
     fi
 fi
@@ -130,28 +130,28 @@ fi
 
 # Help information display
 __help() {
-    ${_ECHO} "${_LINE}${_BREAK}${_GREEN} 🛈 TKG-Installer Help${_BREAK}${_RESET}"
-    ${_ECHO} "${_BLUE} Run interactive fzf finder menu.${_RESET}"
-    ${_ECHO} "${_GREEN} Interactive:${_RESET} $0"
-    ${_ECHO} ""
-    ${_ECHO} "${_BLUE} Run directly without entering the menu.${_RESET}"
-    ${_ECHO} "${_GREEN} Syntax:${_RESET} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
-    ${_ECHO} "${_YELLOW} Example:${_RESET}"
-    ${_ECHO} "  $0 linux         # Install Linux-TKG"
-    ${_ECHO} "  $0 nvidia        # Install Nvidia-TKG"
-    ${_ECHO} "  $0 mesa          # Install Mesa-TKG"
-    ${_ECHO} "  $0 wine          # Install Wine-TKG"
-    ${_ECHO} "  $0 proton        # Install Proton-TKG"
-    ${_ECHO} ""
-    ${_ECHO} "${_BLUE} Access configuration files directly without entering the menu.${_RESET}"
-    ${_ECHO} "${_GREEN} Syntax:${_RESET} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p] [config|c|edit|e]"
-    ${_ECHO} "${_GREEN}        ${_RESET} $0 [config|c|edit|e] [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
-    ${_ECHO} "${_YELLOW} Example:${_RESET}"
-    ${_ECHO} "  $0 linux config  # Edit Linux-TKG config"
-    ${_ECHO} "  $0 config linux  # Edit Linux-TKG config"
-    ${_ECHO} ""
-    ${_ECHO} "${_YELLOW} Shortcuts:${_RESET} l=linux, n=nvidia, m=mesa, w=wine, p=proton, c=config, e=edit"
-    ${_ECHO} "${_LINE}${_RESET}"
+    ${_PRINT} "${_LINE}${_BREAK}${_GREEN} 🛈 TKG-Installer Help${_BREAK}${_RESET}"
+    ${_PRINT} "${_BLUE} Run interactive fzf finder menu.${_RESET}"
+    ${_PRINT} "${_GREEN} Interactive:${_RESET} $0"
+    ${_PRINT} ""
+    ${_PRINT} "${_BLUE} Run directly without entering the menu.${_RESET}"
+    ${_PRINT} "${_GREEN} Syntax:${_RESET} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
+    ${_PRINT} "${_YELLOW} Example:${_RESET}"
+    ${_PRINT} "  $0 linux         # Install Linux-TKG"
+    ${_PRINT} "  $0 nvidia        # Install Nvidia-TKG"
+    ${_PRINT} "  $0 mesa          # Install Mesa-TKG"
+    ${_PRINT} "  $0 wine          # Install Wine-TKG"
+    ${_PRINT} "  $0 proton        # Install Proton-TKG"
+    ${_PRINT} ""
+    ${_PRINT} "${_BLUE} Access configuration files directly without entering the menu.${_RESET}"
+    ${_PRINT} "${_GREEN} Syntax:${_RESET} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p] [config|c|edit|e]"
+    ${_PRINT} "${_GREEN}        ${_RESET} $0 [config|c|edit|e] [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
+    ${_PRINT} "${_YELLOW} Example:${_RESET}"
+    ${_PRINT} "  $0 linux config  # Edit Linux-TKG config"
+    ${_PRINT} "  $0 config linux  # Edit Linux-TKG config"
+    ${_PRINT} ""
+    ${_PRINT} "${_YELLOW} Shortcuts:${_RESET} l=linux, n=nvidia, m=mesa, w=wine, p=proton, c=config, e=edit"
+    ${_PRINT} "${_LINE}${_RESET}"
 }
 
 # Help can show always
@@ -165,15 +165,15 @@ if [[ -f "$_LOCK_FILE" ]]; then
     if [[ -r "$_LOCK_FILE" ]]; then
         _old_pid=$(cat "$_LOCK_FILE" 2>/dev/null || echo "")
         if [[ -n "$_old_pid" ]] && kill -0 "$_old_pid" 2>/dev/null; then
-            ${_ECHO} ""
-            ${_ECHO} "${_RED}${_BOLD} ❌ Script is already running (PID: $_old_pid). Exiting...${_RESET}"
-            ${_ECHO} "${_YELLOW}${_BOLD} 🔁 If the script was unexpectedly terminated, remove the lock file manually:${_RESET}${_BREAK}${_BREAK}    tkginstaller clean|c to remove the $_LOCK_FILE${_BREAK}${_RESET}"
+            ${_PRINT} ""
+            ${_PRINT} "${_RED}${_BOLD} ❌ Script is already running (PID: $_old_pid). Exiting...${_RESET}"
+            ${_PRINT} "${_YELLOW}${_BOLD} 🔁 If the script was unexpectedly terminated, remove the lock file manually:${_RESET}${_BREAK}${_BREAK}    tkginstaller clean|c to remove the $_LOCK_FILE${_BREAK}${_RESET}"
             exit 1
         else
-            ${_ECHO} ""
-            ${_ECHO} "${_YELLOW} 🔁 Removing stale lock file...${_BREAK}${_RESET}"
+            ${_PRINT} ""
+            ${_PRINT} "${_YELLOW} 🔁 Removing stale lock file...${_BREAK}${_RESET}"
             rm -f "$_LOCK_FILE" 2>/dev/null || {
-                ${_ECHO} "${_RED}${_BOLD} ❌ Error removing stale lock file! Exiting...${_RESET}"
+                ${_PRINT} "${_RED}${_BOLD} ❌ Error removing stale lock file! Exiting...${_RESET}"
                 exit 1
             }
         fi
@@ -193,7 +193,7 @@ __clean() {
 
     # Unset exported variables
     unset _TMP_DIR _CHOICE_FILE _CONFIG_DIR _TKG_REPO _TKG_RAW_URL _FROGGING_FAMILY_REPO _FROGGING_FAMILY_RAW_URL
-    unset _ECHO _BREAK _LINE _RESET _BOLD _RED _GREEN _YELLOW _BLUE
+    unset _PRINT _BREAK _LINE _RESET _BOLD _RED _GREEN _YELLOW _BLUE
     unset _preview_linux _preview_nvidia _preview_mesa _preview_wine _preview_proton
     unset _preview_config _preview_clean _preview_help _preview_return _preview_exit _glow_style
     unset _distro_name _distro_id _distro_like
@@ -206,11 +206,11 @@ __exit() {
 
     # Message handling
     if [[ $_exit_code -ne 0 ]]; then
-        ${_ECHO} "${_RED}${_BOLD}${_LINE}${_BREAK} 🎯 ERROR 🎯 TKG-Installer aborted! Exiting...${_BREAK}${_LINE}${_BREAK}${_RESET}"
+        ${_PRINT} "${_RED}${_BOLD}${_LINE}${_BREAK} 🎯 ERROR 🎯 TKG-Installer aborted! Exiting...${_BREAK}${_LINE}${_BREAK}${_RESET}"
     else
-        ${_ECHO} "${_GREEN} 🧹 Cleanup completed!${_RESET}"
-        ${_ECHO} "${_GREEN} 👋 TKG-Installer closed!${_RESET}"
-        ${_ECHO} "${_GREEN}${_LINE}${_BREAK}${_RESET}"
+        ${_PRINT} "${_GREEN} 🧹 Cleanup completed!${_RESET}"
+        ${_PRINT} "${_GREEN} 👋 TKG-Installer closed!${_RESET}"
+        ${_PRINT} "${_GREEN}${_LINE}${_BREAK}${_RESET}"
     fi
 
     # Perform cleanup
@@ -267,15 +267,15 @@ __done() {
     local _minutes=$((_duration / 60))
     local _seconds=$((_duration % 60))
 
-    ${_ECHO} "${_GREEN}${_LINE}${_BREAK}${_RESET}${_YELLOW} 📝 Action completed: $(date '+%Y-%m-%d %H:%M:%S')${_RESET}"
+    ${_PRINT} "${_GREEN}${_LINE}${_BREAK}${_RESET}${_YELLOW} 📝 Action completed: $(date '+%Y-%m-%d %H:%M:%S')${_RESET}"
 
     if [[ $_status -eq 0 ]]; then
-        ${_ECHO} "${_GREEN} ✅ Status: Successful${_RESET}"
+        ${_PRINT} "${_GREEN} ✅ Status: Successful${_RESET}"
     else
-        ${_ECHO} "${_RED}${_BOLD} ❌ Status: Error (Code: $_status)${_RESET}"
+        ${_PRINT} "${_RED}${_BOLD} ❌ Status: Error (Code: $_status)${_RESET}"
     fi
 
-    ${_ECHO} "${_YELLOW} ⏱️ Duration: ${_minutes} min ${_seconds} sec${_RESET}${_GREEN}${_BREAK}${_LINE}${_RESET}"
+    ${_PRINT} "${_YELLOW} ⏱️ Duration: ${_minutes} min ${_seconds} sec${_RESET}${_GREEN}${_BREAK}${_LINE}${_RESET}"
     return "$_status"
 }
 
@@ -284,8 +284,8 @@ __pre() {
     local _load_preview="${1:-false}"
 
     # Welcome message
-    ${_ECHO} "${_GREEN}${_LINE}${_BREAK} 🐸 TKG-Installer ${_TKG_INSTALLER_VERSION} for ${_distro_name}${_BREAK}${_LINE}${_RESET}"
-    ${_ECHO} "${_YELLOW} 🔁 Pre-checks starting...${_RESET}"
+    ${_PRINT} "${_GREEN}${_LINE}${_BREAK} 🐸 TKG-Installer ${_TKG_INSTALLER_VERSION} for ${_distro_name}${_BREAK}${_LINE}${_RESET}"
+    ${_PRINT} "${_YELLOW} 🔁 Pre-checks starting...${_RESET}"
 
     # Check required dependencies
     local _dependencies=(git)
@@ -294,36 +294,23 @@ __pre() {
     fi
 
     # Define package names per distro
-    declare -A _pkg_map
+    declare -A _pkg_map=(
+        [git]=git
+        [bat]=bat
+        [curl]=curl
+        [glow]=glow
+        [fzf]=fzf
+    )
+
+    # Set install command je nach Distro
     case "${_distro_id,,}" in
         arch|manjaro|endeavouros|cachyos)
-            _pkg_map=(
-                [git]=git
-                [bat]=bat
-                [curl]=curl
-                [glow]=glow
-                [fzf]=fzf
-            )
             _install_cmd="pacman -S"
             ;;
         fedora)
-            _pkg_map=(
-                [git]=git
-                [bat]=bat
-                [curl]=curl
-                [glow]=glow
-                [fzf]=fzf
-            )
             _install_cmd="dnf install"
             ;;
         opensuse*|suse*)
-            _pkg_map=(
-                [git]=git
-                [bat]=bat
-                [curl]=curl
-                [glow]=glow
-                [fzf]=fzf
-            )
             _install_cmd="zypper install"
             ;;
         gentoo)
@@ -337,24 +324,9 @@ __pre() {
             _install_cmd="emerge"
             ;;
         ubuntu|debian|linuxmint|pop|elementary)
-            _pkg_map=(
-                [git]=git
-                [bat]=bat
-                [curl]=curl
-                [glow]=glow
-                [fzf]=fzf
-            )
             _install_cmd="apt install"
             ;;
         *)
-            # Default: show generic names
-            _pkg_map=(
-                [git]=git
-                [bat]=bat
-                [curl]=curl
-                [glow]=glow
-                [fzf]=fzf
-            )
             _install_cmd="your-package-manager install"
             ;;
     esac
@@ -368,32 +340,32 @@ __pre() {
 
     # Exit if any dependencies are missing
     if [[ ${#_missing_deps[@]} -gt 0 ]]; then
-        ${_ECHO} "${_RED}${_BOLD} ❌ Please install this first...${_BREAK}    The following dependencies are missing:${_BREAK}${_RESET}"
+        ${_PRINT} "${_RED}${_BOLD} ❌ Please install this first...${_BREAK}    The following dependencies are missing:${_BREAK}${_RESET}"
         for _dep in "${_missing_deps[@]}"; do
             local _pkg_name="${_pkg_map[$_dep]:-$_dep}"
-            ${_ECHO} "${_YELLOW}${_BOLD}    - ${_dep}:${_RESET} ${_install_cmd} ${_pkg_name}${_RESET}"
+            ${_PRINT} "${_YELLOW}${_BOLD}    - ${_dep}:${_RESET} ${_install_cmd} ${_pkg_name}${_RESET}"
         done
-        ${_ECHO} "${_BREAK}${_RESET}"
+        ${_PRINT} "${_BREAK}${_RESET}"
         exit 1
     fi
 
     # Setup temporary directory
-    ${_ECHO} "${_YELLOW} 🧹 Cleaning old temporary files...${_RESET}"
+    ${_PRINT} "${_YELLOW} 🧹 Cleaning old temporary files...${_RESET}"
     rm -rf "$_TMP_DIR" "$_CHOICE_FILE" 2>/dev/null || true
-    ${_ECHO} "${_YELLOW} 🗂️ Create temporary directory...${_RESET}"
+    ${_PRINT} "${_YELLOW} 🗂️ Create temporary directory...${_RESET}"
     mkdir -p "$_TMP_DIR" 2>/dev/null || {
-        ${_ECHO} "${_RED}${_BOLD} ❌ Error creating temporary directory: ${_TMP_DIR}${_RESET}"
+        ${_PRINT} "${_RED}${_BOLD} ❌ Error creating temporary directory: ${_TMP_DIR}${_RESET}"
         return 1
     }
 
     # Load preview content only for interactive mode
     if [[ "$_load_preview" == "true" ]]; then
-        ${_ECHO} "${_YELLOW} 📡 Retrieving preview content...${_RESET}"
+        ${_PRINT} "${_YELLOW} 📡 Retrieving preview content...${_RESET}"
         __init_preview
     fi
 
     # Final message
-    ${_ECHO} "${_GREEN} 🐸 Starting...${_RESET}"
+    ${_PRINT} "${_GREEN} 🐸 Starting...${_RESET}"
 
     # Short delay for better UX
     wait
@@ -506,7 +478,7 @@ __install_package() {
 
     # Clone repository
     git clone "$_repo_url" || {
-        ${_ECHO} "${_RED}${_BOLD}${_LINE}${_BREAK} ❌ Error cloning: $_package_name for ${_distro_name}${_BREAK}${_LINE}${_BREAK}${_RESET}"
+        ${_PRINT} "${_RED}${_BOLD}${_LINE}${_BREAK} ❌ Error cloning: $_package_name for ${_distro_name}${_BREAK}${_LINE}${_BREAK}${_RESET}"
         return 1
     }
 
@@ -518,7 +490,7 @@ __install_package() {
     # Navigate to working directory if specified
     if [[ -n "$_work_directory" ]]; then
         cd "$_work_directory" || {
-            ${_ECHO} "${_RED}${_BOLD}${_LINE}${_BREAK} ❌ Error: Working directory not found: $_work_directory${_BREAK}${_LINE}${_BREAK}${_RESET}"
+            ${_PRINT} "${_RED}${_BOLD}${_LINE}${_BREAK} ❌ Error: Working directory not found: $_work_directory${_BREAK}${_LINE}${_BREAK}${_RESET}"
             return 1
         }
     fi
@@ -529,17 +501,17 @@ __install_package() {
     fi
 
     # Build and install
-    ${_ECHO} "${_GREEN}${_LINE}${_BREAK} 🏗️ Building and installing $_package_name for ${_distro_name}, this may take a while... ⏳${_BREAK}${_YELLOW} 💡 Tip: Adjust external configuration file to skip prompts.${_BREAK}${_GREEN}${_LINE}${_RESET}"
+    ${_PRINT} "${_GREEN}${_LINE}${_BREAK} 🏗️ Building and installing $_package_name for ${_distro_name}, this may take a while... ⏳${_BREAK}${_YELLOW} 💡 Tip: Adjust external configuration file to skip prompts.${_BREAK}${_GREEN}${_LINE}${_RESET}"
     eval "$_build_command" || {
-        ${_ECHO} "${_RED}${_BOLD}${_LINE}${_BREAK} ❌ Error building: $_package_name for ${_distro_name}${_BREAK}${_LINE}${_BREAK}${_RESET}"
+        ${_PRINT} "${_RED}${_BOLD}${_LINE}${_BREAK} ❌ Error building: $_package_name for ${_distro_name}${_BREAK}${_LINE}${_BREAK}${_RESET}"
         return 1
     }
 
     # Optional clean up
     if [[ -n "$_clean_command" ]]; then
-        ${_ECHO} "${_GREEN}${_LINE}${_BREAK} 🏗️ Clean up build artifacts...${_BREAK}${_LINE}${_RESET}"
+        ${_PRINT} "${_GREEN}${_LINE}${_BREAK} 🏗️ Clean up build artifacts...${_BREAK}${_LINE}${_RESET}"
         eval "$_clean_command" || {
-            ${_ECHO} "${_YELLOW}${_BOLD}${_LINE}${_BREAK} ✅ Nothing to clean: $_package_name${_BREAK}${_LINE}${_BREAK}${_RESET}"
+            ${_PRINT} "${_YELLOW}${_BOLD}${_LINE}${_BREAK} ✅ Nothing to clean: $_package_name${_BREAK}${_LINE}${_BREAK}${_RESET}"
             return 1
         }
     fi
@@ -604,7 +576,7 @@ __editor() {
         if command -v nano >/dev/null 2>&1; then
             _editor_parts=(nano)
         else
-            ${_ECHO} "${_YELLOW}${_BOLD}${_LINE}${_BREAK} ⚠️ No editor found: please set \$EDITOR environment or install 'nano'.${_BREAK}${_LINE}${_BREAK}${_RESET}"
+            ${_PRINT} "${_YELLOW}${_BOLD}${_LINE}${_BREAK} ⚠️ No editor found: please set \$EDITOR environment or install 'nano'.${_BREAK}${_LINE}${_BREAK}${_RESET}"
             sleep 2
             return 1
         fi
@@ -621,22 +593,22 @@ __edit_config() {
 
         # Ensure configuration directory exists
         if [[ ! -d "${_CONFIG_DIR}" ]]; then
-            ${_ECHO} "${_RED}${_BOLD}${_LINE}${_BREAK} ❌ Configuration directory not found: ${_CONFIG_DIR}${_BREAK}${_LINE}${_BREAK}${_RESET}"
+            ${_PRINT} "${_RED}${_BOLD}${_LINE}${_BREAK} ❌ Configuration directory not found: ${_CONFIG_DIR}${_BREAK}${_LINE}${_BREAK}${_RESET}"
             read -r -p "Do you want to create the configuration directory? [y/N]: " create_dir
             echo
             case "$create_dir" in
                 y|Y|yes|Yes|YES)
                     mkdir -p "${_CONFIG_DIR}" || {
-                        ${_ECHO} "${_RED}${_BOLD}${_LINE}${_BREAK} ❌ Error creating configuration directory!${_BREAK}${_LINE}${_BREAK}${_RESET}"
+                        ${_PRINT} "${_RED}${_BOLD}${_LINE}${_BREAK} ❌ Error creating configuration directory!${_BREAK}${_LINE}${_BREAK}${_RESET}"
                         sleep 3
                         clear
                         return 1
                     }
-                    ${_ECHO} "${_GREEN}${_LINE}${_BREAK} ✅ Configuration directory created: ${_CONFIG_DIR}${_BREAK}${_LINE}${_BREAK}${_RESET}"
+                    ${_PRINT} "${_GREEN}${_LINE}${_BREAK} ✅ Configuration directory created: ${_CONFIG_DIR}${_BREAK}${_LINE}${_BREAK}${_RESET}"
                     sleep 3
                     ;;
                 *)
-                    ${_ECHO} "${_RED}${_BOLD}${_LINE}${_BREAK} ⚠️ Directory creation cancelled. Return to Main menu...${_BREAK}${_LINE}${_BREAK}${_RESET}"
+                    ${_PRINT} "${_RED}${_BOLD}${_LINE}${_BREAK} ⚠️ Directory creation cancelled. Return to Main menu...${_BREAK}${_LINE}${_BREAK}${_RESET}"
                     sleep 3
                     clear
                     return 0
@@ -688,10 +660,10 @@ __edit_config() {
             
             case $key in
                 linux-tkg|nvidia-all|mesa-git|wine-tkg|proton-tkg)
-                    '"$_bat_cmd"' "$_config_file_path" 2>/dev/null || '"${_ECHO}"' "'"$_error_config_not_exist"'"
+                    '"$_bat_cmd"' "$_config_file_path" 2>/dev/null || '"${_PRINT}"' "'"$_error_config_not_exist"'"
                     ;;
                 return)
-                    $_ECHO "$_preview_return"
+                    $_PRINT "$_preview_return"
                     ;;
             esac
         '
@@ -704,7 +676,7 @@ __edit_config() {
 
         # Handle cancelled selection
         if [[ -z "$_config_choice" ]]; then
-            ${_ECHO} "${_YELLOW}${_LINE}${_BREAK} ⏪ Exit editor menu...${_BREAK}${_LINE}${_RESET}"
+            ${_PRINT} "${_YELLOW}${_LINE}${_BREAK} ⏪ Exit editor menu...${_BREAK}${_LINE}${_RESET}"
             sleep 1
             clear
             return 0
@@ -747,16 +719,16 @@ __edit_config() {
                     "${_FROGGING_FAMILY_RAW_URL}/wine-tkg-git/master/proton-tkg/proton-tkg.cfg"
                 ;;
             return)
-                ${_ECHO} "${_YELLOW}${_LINE}${_BREAK} ⏪ Exit editor menu...${_BREAK}${_LINE}${_RESET}"
+                ${_PRINT} "${_YELLOW}${_LINE}${_BREAK} ⏪ Exit editor menu...${_BREAK}${_LINE}${_RESET}"
                 sleep 1
                 clear
                 return 0
                 ;;
             *)
-                ${_ECHO} ""
-                ${_ECHO} "${_RED}${_BOLD} ❌ Invalid option: $TKG_CHOICE${_RESET}"
-                ${_ECHO} "${_GREEN} Usage:${_RESET} $0 help${_RESET}"
-                ${_ECHO} "        $0 [linux|nvidia|mesa|wine|proton]${_BREAK}${_RESET}"
+                ${_PRINT} ""
+                ${_PRINT} "${_RED}${_BOLD} ❌ Invalid option: $TKG_CHOICE${_RESET}"
+                ${_PRINT} "${_GREEN} Usage:${_RESET} $0 help${_RESET}"
+                ${_PRINT} "        $0 [linux|nvidia|mesa|wine|proton]${_BREAK}${_RESET}"
                 return 1
                 ;;
         esac
@@ -769,45 +741,45 @@ __handle_config() {
     local _config_path="$2" 
     local _config_url="$3"
 
-    ${_ECHO} "${_YELLOW}${_LINE}${_BREAK} 🔧 Opening external $_config_name configuration file...${_BREAK}${_LINE}${_RESET}"
+    ${_PRINT} "${_YELLOW}${_LINE}${_BREAK} 🔧 Opening external $_config_name configuration file...${_BREAK}${_LINE}${_RESET}"
     sleep 1
     clear
 
     if [[ -f "$_config_path" ]]; then
         # Edit existing configuration file
         __editor "$_config_path" || {
-            ${_ECHO} "${_RED}${_BOLD}${_LINE}${_BREAK} ❌ Error opening $_config_path configuration!${_BREAK}${_LINE}${_BREAK}${_RESET}"
+            ${_PRINT} "${_RED}${_BOLD}${_LINE}${_BREAK} ❌ Error opening $_config_path configuration!${_BREAK}${_LINE}${_BREAK}${_RESET}"
             sleep 3
             clear
             return 1
         }
     else
         # Download and create new configuration file
-        ${_ECHO} "${_RED}${_BOLD}${_LINE}${_BREAK} ⚠️ $_config_path does not exist.${_BREAK}${_LINE}${_BREAK}${_RESET}"
+        ${_PRINT} "${_RED}${_BOLD}${_LINE}${_BREAK} ⚠️ $_config_path does not exist.${_BREAK}${_LINE}${_BREAK}${_RESET}"
         read -r -p "Do you want to download the default configuration from $_config_url? [y/N]: " user_answer
         echo
         case "$user_answer" in
             y|Y|yes|Yes|YES)
                 mkdir -p "$(dirname "$_config_path")"
                 if curl -fsSL "$_config_url" -o "$_config_path" 2>/dev/null; then
-                    ${_ECHO} "${_GREEN}${_LINE}${_BREAK} ✅ Configuration ready at $_config_path${_BREAK}${_LINE}${_BREAK}${_RESET}"
+                    ${_PRINT} "${_GREEN}${_LINE}${_BREAK} ✅ Configuration ready at $_config_path${_BREAK}${_LINE}${_BREAK}${_RESET}"
                     sleep 3
                     clear
                     __editor "$_config_path" || {
-                        ${_ECHO} "${_RED}${_BOLD}${_LINE}${_BREAK} ❌ Error opening $_config_path configuration!${_BREAK}${_LINE}${_BREAK}${_RESET}"
+                        ${_PRINT} "${_RED}${_BOLD}${_LINE}${_BREAK} ❌ Error opening $_config_path configuration!${_BREAK}${_LINE}${_BREAK}${_RESET}"
                         sleep 3
                         clear
                         return 1
                     }
                 else
-                    ${_ECHO} "${_RED}${_BOLD}${_LINE}${_BREAK} ❌ Error downloading configuration from $_config_url${_BREAK}${_LINE}${_BREAK}${_RESET}"
+                    ${_PRINT} "${_RED}${_BOLD}${_LINE}${_BREAK} ❌ Error downloading configuration from $_config_url${_BREAK}${_LINE}${_BREAK}${_RESET}"
                     sleep 3
                     clear
                     return 1
                 fi
                 ;;
             *)
-                ${_ECHO} "${_RED}${_BOLD}${_LINE}${_BREAK} ⚠️ Download cancelled. No configuration file created. Return to Mainmenu...${_BREAK}${_LINE}${_BREAK}${_RESET}"
+                ${_PRINT} "${_RED}${_BOLD}${_LINE}${_BREAK} ⚠️ Download cancelled. No configuration file created. Return to Mainmenu...${_BREAK}${_LINE}${_BREAK}${_RESET}"
                 sleep 3
                 clear
                 return 1
@@ -818,7 +790,7 @@ __handle_config() {
         clear
     fi
 
-    ${_ECHO} "${_YELLOW}${_LINE}${_BREAK} ✅ Closing external $_config_name configuration file...${_BREAK}${_LINE}${_RESET}"
+    ${_PRINT} "${_YELLOW}${_LINE}${_BREAK} ✅ Closing external $_config_name configuration file...${_BREAK}${_LINE}${_RESET}"
     sleep 1
     clear
     return 0
@@ -838,7 +810,7 @@ __linuxnvidia_prompt() {
 # Linux-TKG installation prompt
 __linux_prompt() {
     SECONDS=0
-    ${_ECHO} "${_GREEN}${_LINE}${_BREAK} 🧠 Fetching Linux-TKG from Frogging-Family repository... ⏳${_BREAK}${_LINE}${_RESET}"
+    ${_PRINT} "${_GREEN}${_LINE}${_BREAK} 🧠 Fetching Linux-TKG from Frogging-Family repository... ⏳${_BREAK}${_LINE}${_RESET}"
     __linux_install
     __done $?
 }
@@ -846,7 +818,7 @@ __linux_prompt() {
 # Nvidia-TKG installation prompt
 __nvidia_prompt() {
     SECONDS=0
-    ${_ECHO} "${_GREEN}${_LINE}${_BREAK} 🖥️ Fetching Nvidia-TKG from Frogging-Family repository... ⏳${_BREAK}${_LINE}${_RESET}"
+    ${_PRINT} "${_GREEN}${_LINE}${_BREAK} 🖥️ Fetching Nvidia-TKG from Frogging-Family repository... ⏳${_BREAK}${_LINE}${_RESET}"
     __nvidia_install
     __done $?
 }
@@ -854,7 +826,7 @@ __nvidia_prompt() {
 # Mesa-TKG installation prompt
 __mesa_prompt() {
     SECONDS=0
-    ${_ECHO} "${_GREEN}${_LINE}${_BREAK} 🧩 Fetching Mesa-TKG from Frogging-Family repository... ⏳${_BREAK}${_LINE}${_RESET}"
+    ${_PRINT} "${_GREEN}${_LINE}${_BREAK} 🧩 Fetching Mesa-TKG from Frogging-Family repository... ⏳${_BREAK}${_LINE}${_RESET}"
     __mesa_install
     __done $?
 }
@@ -862,7 +834,7 @@ __mesa_prompt() {
 # Wine-TKG installation prompt
 __wine_prompt() {
     SECONDS=0
-    ${_ECHO} "${_GREEN}${_LINE}${_BREAK} 🍷 Fetching Wine-TKG from Frogging-Family repository... ⏳${_BREAK}${_LINE}${_RESET}"
+    ${_PRINT} "${_GREEN}${_LINE}${_BREAK} 🍷 Fetching Wine-TKG from Frogging-Family repository... ⏳${_BREAK}${_LINE}${_RESET}"
     __wine_install
     __done $?
 }
@@ -870,7 +842,7 @@ __wine_prompt() {
 # Proton-TKG installation prompt
 __proton_prompt() {
     SECONDS=0
-    ${_ECHO} "${_GREEN}${_LINE}${_BREAK} 🎮 Fetching Proton-TKG from Frogging-Family repository... ⏳${_BREAK}${_LINE}${_RESET}"
+    ${_PRINT} "${_GREEN}${_LINE}${_BREAK} 🎮 Fetching Proton-TKG from Frogging-Family repository... ⏳${_BREAK}${_LINE}${_RESET}"
     __proton_install
     __done $?
 }
@@ -913,27 +885,27 @@ __menu() {
     local _preview_command='
         key=$(echo {} | cut -d"|" -f1 | xargs)
         case $key in
-            Linux*) $_ECHO "$_preview_linux" ;;
+            Linux*) $_PRINT "$_preview_linux" ;;
             Nvidia*)
                 if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
-                    $_ECHO "$_preview_nvidia"
+                    $_PRINT "$_preview_nvidia"
                 else
-                    $_ECHO "${_RED}${_BOLD} ❌ Nvidia-TKG is only available for Arch-based distributions.${_RESET}"
+                    $_PRINT "${_RED}${_BOLD} ❌ Nvidia-TKG is only available for Arch-based distributions.${_RESET}"
                 fi
                 ;;
             Mesa*)
                 if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
-                    $_ECHO "$_preview_mesa"
+                    $_PRINT "$_preview_mesa"
                 else
-                    $_ECHO "${_RED}${_BOLD} ❌ Mesa-TKG is only available for Arch-based distributions.${_RESET}"
+                    $_PRINT "${_RED}${_BOLD} ❌ Mesa-TKG is only available for Arch-based distributions.${_RESET}"
                 fi
                 ;;
-            Wine*) $_ECHO "$_preview_wine" ;;
-            Proton*) $_ECHO "$_preview_proton" ;;
-            Config*) $_ECHO "$_preview_config" ;;
-            Clean*) $_ECHO "$_preview_clean" ;;
-            Help*) $_ECHO "$_preview_help" ;;
-            Exit*) $_ECHO "$_preview_exit" ;;
+            Wine*) $_PRINT "$_preview_wine" ;;
+            Proton*) $_PRINT "$_preview_proton" ;;
+            Config*) $_PRINT "$_preview_config" ;;
+            Clean*) $_PRINT "$_preview_clean" ;;
+            Help*) $_PRINT "$_preview_help" ;;
+            Exit*) $_PRINT "$_preview_exit" ;;
         esac
     '
     local _header_text=$'🐸 TKG-Installer\n\n🏗️ Easily build the TKG packages from the Frogging-Family repositories.'
@@ -946,7 +918,7 @@ __menu() {
 
     # Handle cancelled selection (ESC pressed)
     if [[ -z "${_main_choice:-}" ]]; then
-        ${_ECHO} "${_YELLOW}${_LINE}${_BREAK} 👋 Exit TKG-Installer...${_BREAK}${_LINE}${_RESET}"
+        ${_PRINT} "${_YELLOW}${_LINE}${_BREAK} 👋 Exit TKG-Installer...${_BREAK}${_LINE}${_RESET}"
         sleep 1
         clear
         __exit 0
@@ -1026,10 +998,10 @@ __main_direct_mode() {
         __handle_config "$_config_name" "$_config_path" "$_config_url"
 
         # Display exit messages
-        ${_ECHO} "${_GREEN} 🧹 Cleanup completed!${_RESET}"
-        ${_ECHO} "${_GREEN} 👋 TKG-Installer closed!${_RESET}"
-        ${_ECHO} "${_GREEN}${_LINE}${_RESET}"
-        ${_ECHO} "${_BREAK}${_RESET}"
+        ${_PRINT} "${_GREEN} 🧹 Cleanup completed!${_RESET}"
+        ${_PRINT} "${_GREEN} 👋 TKG-Installer closed!${_RESET}"
+        ${_PRINT} "${_GREEN}${_LINE}${_RESET}"
+        ${_PRINT} "${_BREAK}${_RESET}"
 
         # Clean exit
         __clean
@@ -1064,7 +1036,7 @@ __main_direct_mode() {
             exit 0
             ;;
         clean|--clean)
-            ${_ECHO} "${_YELLOW}${_LINE}${_BREAK} 🧹 Cleaning temporary files...${_BREAK}${_LINE}${_RESET}"      
+            ${_PRINT} "${_YELLOW}${_LINE}${_BREAK} 🧹 Cleaning temporary files...${_BREAK}${_LINE}${_RESET}"      
             __pre >/dev/null 2>&1 || true
             rm -f "$_LOCK_FILE" 2>&1 || true
             sleep 1
@@ -1080,30 +1052,30 @@ __main_direct_mode() {
             ;;
         *)
             # Invalid argument handling
-            ${_ECHO} "${_LINE}${_BREAK}${_RED}${_BOLD} ❌ Invalid argument: ${1:-}${_RESET}"
-            ${_ECHO} "${_YELLOW}    The argument is either invalid or incomplete.${_BREAK}${_RESET}"
-            ${_ECHO} "${_BLUE} Run interactive fzf finder menu.${_RESET}"
-            ${_ECHO} "${_GREEN} Interactive:${_RESET} $0"
-            ${_ECHO} ""
-            ${_ECHO} "${_BLUE} Run directly without entering the menu.${_RESET}"
-            ${_ECHO} "${_GREEN} Syntax:${_RESET} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
-            ${_ECHO} ""
-            ${_ECHO} "${_YELLOW} Example:${_RESET}"
-            ${_ECHO} "  $0 linux         # Install Linux-TKG"
-            ${_ECHO} "  $0 nvidia        # Install Nvidia-TKG"
-            ${_ECHO} "  $0 mesa          # Install Mesa-TKG"
-            ${_ECHO} "  $0 wine          # Install Wine-TKG"
-            ${_ECHO} "  $0 proton        # Install Proton-TKG"
-            ${_ECHO} ""
-            ${_ECHO} "${_BLUE} Access configuration files directly without entering the menu.${_RESET}"
-            ${_ECHO} "${_GREEN} Syntax:${_RESET} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p] [config|c|edit|e]"
-            ${_ECHO} "${_GREEN}        ${_RESET} $0 [config|c|edit|e] [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
-            ${_ECHO} "${_YELLOW} Example:${_RESET}"
-            ${_ECHO} "  $0 linux config  # Edit Linux-TKG config"
-            ${_ECHO} "  $0 config linux  # Edit Linux-TKG config"
-            ${_ECHO} ""
-            ${_ECHO} "${_YELLOW} Shortcuts:${_RESET} l=linux, n=nvidia, m=mesa, w=wine, p=proton, c=config, e=edit"
-            ${_ECHO} "${_LINE}${_RESET}"
+            ${_PRINT} "${_LINE}${_BREAK}${_RED}${_BOLD} ❌ Invalid argument: ${1:-}${_RESET}"
+            ${_PRINT} "${_YELLOW}    The argument is either invalid or incomplete.${_BREAK}${_RESET}"
+            ${_PRINT} "${_BLUE} Run interactive fzf finder menu.${_RESET}"
+            ${_PRINT} "${_GREEN} Interactive:${_RESET} $0"
+            ${_PRINT} ""
+            ${_PRINT} "${_BLUE} Run directly without entering the menu.${_RESET}"
+            ${_PRINT} "${_GREEN} Syntax:${_RESET} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
+            ${_PRINT} ""
+            ${_PRINT} "${_YELLOW} Example:${_RESET}"
+            ${_PRINT} "  $0 linux         # Install Linux-TKG"
+            ${_PRINT} "  $0 nvidia        # Install Nvidia-TKG"
+            ${_PRINT} "  $0 mesa          # Install Mesa-TKG"
+            ${_PRINT} "  $0 wine          # Install Wine-TKG"
+            ${_PRINT} "  $0 proton        # Install Proton-TKG"
+            ${_PRINT} ""
+            ${_PRINT} "${_BLUE} Access configuration files directly without entering the menu.${_RESET}"
+            ${_PRINT} "${_GREEN} Syntax:${_RESET} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p] [config|c|edit|e]"
+            ${_PRINT} "${_GREEN}        ${_RESET} $0 [config|c|edit|e] [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
+            ${_PRINT} "${_YELLOW} Example:${_RESET}"
+            ${_PRINT} "  $0 linux config  # Edit Linux-TKG config"
+            ${_PRINT} "  $0 config linux  # Edit Linux-TKG config"
+            ${_PRINT} ""
+            ${_PRINT} "${_YELLOW} Shortcuts:${_RESET} l=linux, n=nvidia, m=mesa, w=wine, p=proton, c=config, e=edit"
+            ${_PRINT} "${_LINE}${_RESET}"
 
             # Disable exit trap before cleanup and exit
             trap - INT TERM EXIT HUP
@@ -1161,7 +1133,7 @@ __main_interactive_mode() {
             exit 0
             ;;
         Clean)
-            ${_ECHO} "${_YELLOW}${_LINE}${_BREAK} 🧹 Cleaning temporary files...${_BREAK} 🔁 Restarting...${_BREAK}${_LINE}${_RESET}"      
+            ${_PRINT} "${_YELLOW}${_LINE}${_BREAK} 🧹 Cleaning temporary files...${_BREAK} 🔁 Restarting...${_BREAK}${_LINE}${_RESET}"      
             __pre >/dev/null 2>&1 || true
             rm -f "$_LOCK_FILE" 2>&1 || true
             sleep 1
@@ -1169,7 +1141,7 @@ __main_interactive_mode() {
             exec "$0" 
             ;;
         Exit)
-            ${_ECHO} "${_YELLOW}${_LINE}${_BREAK} 👋 Exit TKG-Installer...${_BREAK}${_LINE}${_RESET}"
+            ${_PRINT} "${_YELLOW}${_LINE}${_BREAK} 👋 Exit TKG-Installer...${_BREAK}${_LINE}${_RESET}"
             sleep 1
             clear
             exit 0
