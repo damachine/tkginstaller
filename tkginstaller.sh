@@ -50,7 +50,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION
-readonly _TKG_INSTALLER_VERSION="v0.13.2"
+readonly _TKG_INSTALLER_VERSION="v0.13.3"
 
 # Lock file to prevent concurrent execution
 readonly _LOCK_FILE="/tmp/tkginstaller.lock"
@@ -653,7 +653,7 @@ __edit_config() {
         )
 
         # Only show Nvidia and Mesa config if Arch-based
-        if [[ "${_distro_id,,}" =~ ^(1arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"1arch"* ]]; then
+        if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
             _menu_options+=(
                 "nvidia-all |🎮 Nvidia  ─ 📝 nvidia-all.cfg"
                 "mesa-git   |🧩 Mesa    ─ 📝 mesa-git.cfg"
