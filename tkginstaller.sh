@@ -50,7 +50,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION
-readonly _TKG_INSTALLER_VERSION="v0.13.1"
+readonly _TKG_INSTALLER_VERSION="v0.13.2"
 
 # Lock file to prevent concurrent execution
 readonly _LOCK_FILE="/tmp/tkginstaller.lock"
@@ -292,15 +292,88 @@ __pre() {
     if [[ "$_load_preview" == "true" ]]; then
         _dependencies+=(bat curl glow fzf)
     fi
+
+    # Define package names per distro
+    declare -A _pkg_map
+    case "${_distro_id,,}" in
+        arch|manjaro|endeavouros|cachyos)
+            _pkg_map=(
+                [git]=git
+                [bat]=bat
+                [curl]=curl
+                [glow]=glow
+                [fzf]=fzf
+            )
+            _install_cmd="pacman -S"
+            ;;
+        fedora)
+            _pkg_map=(
+                [git]=git
+                [bat]=bat
+                [curl]=curl
+                [glow]=glow
+                [fzf]=fzf
+            )
+            _install_cmd="dnf install"
+            ;;
+        opensuse*|suse*)
+            _pkg_map=(
+                [git]=git
+                [bat]=bat
+                [curl]=curl
+                [glow]=glow
+                [fzf]=fzf
+            )
+            _install_cmd="zypper install"
+            ;;
+        gentoo)
+            _pkg_map=(
+                [git]=dev-vcs/git
+                [bat]=app-misc/bat
+                [curl]=net-misc/curl
+                [glow]=app-text/glow
+                [fzf]=app-misc/fzf
+            )
+            _install_cmd="emerge"
+            ;;
+        ubuntu|debian|linuxmint|pop|elementary)
+            _pkg_map=(
+                [git]=git
+                [bat]=bat
+                [curl]=curl
+                [glow]=glow
+                [fzf]=fzf
+            )
+            _install_cmd="apt install"
+            ;;
+        *)
+            # Default: show generic names
+            _pkg_map=(
+                [git]=git
+                [bat]=bat
+                [curl]=curl
+                [glow]=glow
+                [fzf]=fzf
+            )
+            _install_cmd="your-package-manager install"
+            ;;
+    esac
+
+    local _missing_deps=()
     for _required_dependency in "${_dependencies[@]}"; do
         if ! command -v "$_required_dependency" >/dev/null; then
-            ${_ECHO} "${_RED}${_BOLD} ❌ Missing dependency: ${_required_dependency}. Please install it first.${_RESET}"
-            ${_ECHO} "${_YELLOW}${_BOLD} 🔃 Run:${_RESET} pacman -S ${_required_dependency}${_BREAK}${_RESET}"
             _missing_deps+=("$_required_dependency")
         fi
     done
+
+    # Exit if any dependencies are missing
     if [[ ${#_missing_deps[@]} -gt 0 ]]; then
-        ${_ECHO} "${_RED}${_BOLD} ❌ The following dependencies are missing: ${_missing_deps[*]}.${_RESET}"
+        ${_ECHO} "${_RED}${_BOLD} ❌ Please install this first...${_BREAK}    The following dependencies are missing:${_BREAK}${_RESET}"
+        for _dep in "${_missing_deps[@]}"; do
+            local _pkg_name="${_pkg_map[$_dep]:-$_dep}"
+            ${_ECHO} "${_YELLOW}${_BOLD}    - ${_dep}:${_RESET} ${_install_cmd} ${_pkg_name}${_RESET}"
+        done
+        ${_ECHO} "${_BREAK}${_RESET}"
         exit 1
     fi
 
@@ -577,12 +650,24 @@ __edit_config() {
         # Function to handle configuration file editing
         local _menu_options=(
             "linux-tkg  |🧠 Linux   ─ 📝 linux-tkg.cfg"
-            "nvidia-all |🎮 Nvidia  ─ 📝 nvidia-all.cfg"
-            "mesa-git   |🧩 Mesa    ─ 📝 mesa-git.cfg"
+        )
+
+        # Only show Nvidia and Mesa config if Arch-based
+        if [[ "${_distro_id,,}" =~ ^(1arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"1arch"* ]]; then
+            _menu_options+=(
+                "nvidia-all |🎮 Nvidia  ─ 📝 nvidia-all.cfg"
+                "mesa-git   |🧩 Mesa    ─ 📝 mesa-git.cfg"
+            )
+        fi
+
+        # Always show Wine and Proton config
+        _menu_options+=(
             "wine-tkg   |🍷 Wine    ─ 📝 wine-tkg.cfg"
             "proton-tkg |🎮 Proton  ─ 📝 proton-tkg.cfg"
             "return     |⏪ Return"
         )
+
+        # Prepare menu content
         local _menu_content
         _menu_content=$(printf '%s\n' "${_menu_options[@]}")
 
