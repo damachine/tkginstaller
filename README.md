@@ -1,14 +1,16 @@
 
-# TKG-Installer 🐸
-
-### Easily build the TKG packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
-
 <p align="left">
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg"></a>
   <img src="https://img.shields.io/badge/language-bash-blue?logo=gnu-bash">
   <a href="https://kernel.org/"><img src="https://img.shields.io/badge/Platform-Linux-green.svg"></a>
   <a href="https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21"></a>
 </p>
+
+---
+
+# TKG-Installer 🐸
+
+### Easily build the TKG packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
 
 ---
 
