@@ -10,14 +10,21 @@
 </p>
 
 ---
+#### Easily build the TKG packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
+
+
+###### Why this?
+###### This script is intended to simplify the installation and configuration of the powerful TKG packages.
+
+###### What really stands out are the many customization options of the TKG packages. With flexible configuration and powerful adjustment features, the packages can be tailored precisely to different systems and personal needs. This versatility has made them an indispensable part of my daily routine for a long time. 
+
+###### I've been using this script successfully for quite a while—maybe it will help you too!
 
 ## ⭐ Features
 
-### Easily build the TKG packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
-
-- **Dual Mode Operation**: Use either an interactive `fzf`-menu or fast direct command-line mode.
-- **Advanced Package Configuration**: Easily customize builds with external config files.
-- **Multi-Distro Support***: Works seamlessly on Arch-based systems and most other Linux distributions.
+- **Dual Mode Operation**: Use either an interactive `fzf`-menu or fast direct `command-line` mode.
+- **Advanced Package Configuration**: Easily create/edit customize builds with external config files.
+- **Multi-Distro Support**: Works seamlessly on Arch-based systems and most other Linux distributions support by the Frogging-Family.
 
 ---
 
