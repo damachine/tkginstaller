@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-readonly _tkg_version="v0.13.9"
+readonly _tkg_version="v0.14.0"
 
 # Lock file to prevent concurrent execution of the script
 readonly _lock_file="/tmp/tkginstaller.lock"
