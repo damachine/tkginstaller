@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-readonly _tkg_version="v0.14.3"
+readonly _tkg_version="v0.14.4"
 
 # Lock file to prevent concurrent execution of the script
 readonly _lock_file="/tmp/tkginstaller.lock"
@@ -619,9 +619,6 @@ __install_package() {
             sleep 3
         }
     fi
-
-    return 1
-
 }
 
 # Linux-TKG installation
