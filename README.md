@@ -1,6 +1,7 @@
 
 # TKG-Installer 🐸
 
+### Easily build the TKG packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
 
 <p align="left">
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg"></a>
@@ -10,15 +11,16 @@
 </p>
 
 ---
-#### Easily build the TKG packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
-
 
 ###### Why this?
+
 ###### This script is intended to simplify the installation and configuration of the powerful TKG packages.
 
 ###### What really stands out are the many customization options of the TKG packages. With flexible configuration and powerful adjustment features, the packages can be tailored precisely to different systems and personal needs. This versatility has made them an indispensable part of my daily routine for a long time. 
 
 ###### I've been using this script successfully for quite a while—maybe it will help you too!
+
+---
 
 ## ⭐ Features
 
