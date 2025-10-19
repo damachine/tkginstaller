@@ -870,7 +870,7 @@ __edit_config() {
                 ;;
             *)
                 echo ""
-                __msg "${_red} ❌ Invalid option: $TKG_CHOICE${_reset}"
+                __msg "${_red} ❌ Invalid option: $_config_file${_reset}"
                 __msg "${_green} Usage:${_reset} $0 help${_reset}"
                 __msg "        $0 [linux|nvidia|mesa|wine|proton]${_break}${_reset}"
                 return 1
@@ -904,7 +904,7 @@ __handle_config() {
     if [[ -f "$_config_path" ]]; then
         # Edit existing configuration file in the editor if it exists
         __editor "$_config_path" || {
-            __msg_error "Opening $_config_path configuration!"
+            __msg_error "Opening external $_config_path configuration failed!"
             sleep 3
             clear
             return 1
@@ -926,14 +926,14 @@ __handle_config() {
                     clear
                     # Open the downloaded configuration file in the editor
                     __editor "$_config_path" || {
-                        __msg_error "Opening external configuration $_config_path"
+                        __msg_error "Opening external configuration $_config_path failed!"
                         sleep 3
                         clear
                         return 1
                     }
                 else
                     # Failed to download configuration file from URL with error handling
-                    __msg_error "Downloading external configuration from $_config_url"
+                    __msg_error "Downloading external configuration from $_config_url failed!"
                     sleep 3
                     clear
                     return 1
@@ -1046,20 +1046,8 @@ __menu() {
         key=$(echo {} | cut -d"|" -f1 | xargs)
         case $key in
             Linux*) $_print "$_preview_linux" ;;
-            Nvidia*)
-                if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
-                    $_print "$_preview_nvidia"
-                else
-                    $_print "${_red} ❌ Nvidia-TKG is only available for Arch-based distributions.${_reset}"
-                fi
-                ;;
-            Mesa*)
-                if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
-                    $_print "$_preview_mesa"
-                else
-                    $_print "${_red} ❌ Mesa-TKG is only available for Arch-based distributions.${_reset}"
-                fi
-                ;;
+            Nvidia*) $_print "$_preview_nvidia" ;;
+            Mesa*) $_print "$_preview_mesa" ;;
             Wine*) $_print "$_preview_wine" ;;
             Proton*) $_print "$_preview_proton" ;;
             Config*) $_print "$_preview_config" ;;
