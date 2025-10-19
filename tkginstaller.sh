@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-readonly _tkg_version="v0.14.1"
+readonly _tkg_version="v0.14.2"
 
 # Lock file to prevent concurrent execution of the script
 readonly _lock_file="/tmp/tkginstaller.lock"
@@ -158,10 +158,7 @@ fi
 
 # Help information display
 __help() {
-    # Remove exit trap to avoid cleanup during help display
-    trap - INT TERM EXIT HUP
-
-    # Display help message
+    # Display help information with usage examples and shortcuts
     __msg "${_line}${_break}${_green} 🛈 TKG-Installer Help${_break}${_reset}"
     __msg "${_blue} Run interactive fzf finder menu.${_reset}"
     __msg "${_green} Interactive:${_reset} $0"
@@ -184,14 +181,13 @@ __help() {
     __msg ""
     __msg "${_orange} Shortcuts:${_reset} l=linux, n=nvidia, m=mesa, w=wine, p=proton, c=config, e=edit"
     __msg "${_line}${_reset}"
-
-    # Show help information and exit
-    exit 0
 }
 
 # Help can show always!
 if [[ $# -gt 0 && "${1:-}" =~ ^(help|h|--help|-h)$ ]]; then
     __help
+    trap - INT TERM EXIT HUP
+    exit 0
 fi
 
 # Prevent concurrent execution (after help check)
@@ -206,10 +202,9 @@ if [[ -f "$_lock_file" ]]; then
             __msg_warning "Remove the lock file manually.${_break}${_break}    ${_reset}    tkginstaller clean${_break}        rm -f $_lock_file${_reset}${_break}${_break}${_orange}    If the script was unexpectedly terminated before."
             exit 1
         else
-            ${_print} ""
-            __msg_warning "Removing stale lock file..."
+            __msg_warning "Removing stale lock file! Waiting..."
             rm -f "$_lock_file" 2>/dev/null || {
-                __msg_failed "Remove stale lock file."
+                __msg_failed " Remove stale lock file failed! Exiting..."
                 __msg_warning "Remove the lock file manually.${_break}${_break}    ${_reset}    tkginstaller clean${_break}        rm -f $_lock_file${_reset}${_break}${_break}${_orange}    If the script was unexpectedly terminated before."
                 exit 1
             }
@@ -1226,8 +1221,7 @@ __main_direct_mode() {
             clear
             ;;
         help|h|--help|-h)
-            __help
-
+            # Display help information
             ;;
         *)
             # Invalid argument handling and usage instructions display
@@ -1258,8 +1252,6 @@ __main_direct_mode() {
 
             # Disable exit trap before cleanup and exit to avoid duplicate cleanup messages on exit
             trap - INT TERM EXIT HUP
-
-            # Clean exit without triggering __exit cleanup messages. Unset exported all variables
             __clean
             exit 1
             ;;
@@ -1308,7 +1300,11 @@ __main_interactive_mode() {
             exec "$0"
             ;;
         Help)
+            # Remove exit trap to avoid cleanup during help display
+            trap - INT TERM EXIT HUP
             __help
+            __clean
+            exit 0
             ;;
         Clean)
             # Clean temporary files and restart script to refresh state and menu options
