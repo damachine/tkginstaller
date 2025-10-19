@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-readonly _tkg_version="v0.14.2"
+readonly _tkg_version="v0.14.3"
 
 # Lock file to prevent concurrent execution of the script
 readonly _lock_file="/tmp/tkginstaller.lock"
@@ -119,12 +119,12 @@ __msg_success() {
 
 # Print warning message in yellow with lines above and below
 __msg_warning() {
-    ${_print} "${_orange}${_line}${_break} ⚠️ Warning: $*${_break}${_line}${_break}${_reset}"
+    ${_print} "${_orange}${_line}${_break} ⚠️ WARNING: $*${_break}${_line}${_break}${_reset}"
 }
 
 # Print failed message in red with lines above and below
 __msg_failed() {
-    ${_print} "${_red}${_line}${_break} ❌ Failed: $*${_break}${_line}${_break}${_reset}"
+    ${_print} "${_red}${_line}${_break} ❌ FAILED: $*${_break}${_line}${_break}${_reset}"
 }
 
 # Print error message in red with lines above and below
