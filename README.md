@@ -73,7 +73,7 @@
    # Add one of this to your ~/.bashrc or ~/.zshrc:
 
    # As alias:
-   alias tkginstaller="bash -c '/path/to/tkginstaller.sh'"
+   alias tkginstaller='bash -c "/path/to/tkginstaller.sh"'
 
    # OR as function:
    tkginstaller() {
@@ -88,17 +88,15 @@
 -  Command-line mode need only:
 > - **`git`**: For cloning the TKG repositories.
 
-- Interactive `fzf`-menu mode need:
+- Interactive `fzf`-menu and Editor mode need:
 > - **`bat`**: For syntax highlighting.
 > - **`curl`**: Used to fetch configuration and markdown files.
 > - **`fzf`**: Powers the interactive menu.
 > - **`glow`**: For preview markdown files in the terminal.
-> - **`onefetch`**: To display Git repository information.
+> - **`nano`, `micro`, `vim`, etc.** The script uses the `$EDITOR` environment variable.
+> - **`onefetch`**: To display Git repository information like fastfetch.
 
-- Editor-menu mode needs: 
-
-> - **`nano`, `vim`, `micro`, etc.**
-> - The script uses the `$EDITOR` environment variable. If not set, it falls back to `nano`.
+#### Individual TKG packages have their own dependencies: [https://github.com/Frogging-Family](https://github.com/Frogging-Family)
 
 ---
 
