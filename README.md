@@ -29,7 +29,7 @@
 - **Advanced Package Configuration**: Easily create/edit customize builds with external config files.
 - **Multi-Distro Support**: Works seamlessly on Arch-based systems and most other Linux distributions support by the Frogging-Family.
 
-![TKG-Installer Demo](https://github.com/damachine/tkginstaller/raw/master/images/tkginstaller.gif)
+![TKG-Installer Demo](https://github.com/damachine/tkginstaller/raw/master/images/tkginstaller.webm)
 
 ---
 
