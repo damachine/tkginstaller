@@ -341,8 +341,7 @@ __prepare() {
     if [[ "$_load_preview" == "true" ]]; then
         __msg_info "Retrieving preview content..."
         __init_preview || {
-            __msg_error "Initializing preview content failed..."
-            return 1
+            __msg "${_red}Initializing preview content failed..."
         }
     fi
 
