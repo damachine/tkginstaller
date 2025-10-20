@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.15.0"
+_tkg_version="v0.15.1"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -136,14 +136,14 @@ __msg_error() {
 if [[ "$(id -u)" -eq 0 ]]; then
     __msg "${_break}${_orange}${_line}"
     __msg_warning "You are running as root!"
-    __msg "${_orange}           This is not recommended."
+    __msg "${_red}         This is not recommended for security reasons."
     __msg ""
     echo -en "${_blue} Do you really want to continue as root? [y/N]: ${_reset}"
     read -r _user_answer
     if [[ ! "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
         __msg ""
-        __msg_info2 "Aborted. Exiting..."
-        __msg "${_orange}${_line}"
+        __msg_info2 "Aborted.${_reset}${_green} Exiting..."
+        __msg "${_orange}${_line}${_break}"
         exit 1
     fi
     __msg "${_orange}${_line}${_break}"
@@ -202,44 +202,41 @@ fi
 
 # Prevent concurrent execution (after help check)
 if [[ -f "$_lock_file" ]]; then
-    # Check if the process is still running
+    # Check if the process is still running from the lock file
     if [[ -r "$_lock_file" ]]; then
         # Get old PID from lock file and check if process is running
         _old_pid=$(cat "$_lock_file" 2>/dev/null || echo "")
         if [[ -n "$_old_pid" ]] && kill -0 "$_old_pid" 2>/dev/null; then
-            __msg_info "${_break}${_line}"
-            __msg_warning "Script is already running (PID: $_old_pid). Exiting..."
-            __msg ""
+            __msg "${_break}${_orange}${_line}"
+            __msg_warning "Script is already running (PID: $_old_pid). Exiting...${_break}"
             __msg_info2 "If the script was unexpectedly terminated before."
-            __msg_info "        Remove $_lock_file manually run:"
-            __msg ""
-            __msg "${_red}        >>>${_reset}     tkginstaller clean     ${_red}<<<"
-            __msg ""
+            __msg_info "      Remove $_lock_file manually run:${_break}"
+            __msg "${_blue}      tkginstaller clean${_break}"
             __msg_info "${_line}${_break}"
             exit 1
         else
+            # Stale lock file found, remove it safely and continue
             rm -f "$_lock_file" 2>/dev/null || {
                 __msg "${_break}${_orange}${_line}"
-                __msg_warning "Script is already running (PID: $_old_pid). Exiting..."
-                __msg ""
+                __msg_warning "Script is already running (PID: $_old_pid). Exiting...${_break}"
                 __msg_info2 "If the script was unexpectedly terminated before."
-                __msg_info "        Remove $_lock_file manually run:"
-                __msg ""
-                __msg "${_red}        >>>${_reset}     tkginstaller clean     ${_red}<<<"
-                __msg ""
+                __msg_info "      Remove $_lock_file manually run:${_break}"
+                __msg "${_blue}      tkginstaller clean${_break}"
                 __msg_info "${_line}${_break}"
                 exit 1
             }
         fi
     fi
 fi
+
+# Create lock file with current PID to prevent concurrent execution (of this script)
 echo $$ > "$_lock_file"
 
 # =============================================================================
 # CORE UTILITY FUNCTIONS
 # =============================================================================
 
-# Pre-installation checks and preparation 
+# Pre-installation checks and preparation for installation process
 __prepare() {
     # Parameters:
     #   $1 = load preview content (boolean, optional, default: false)
@@ -840,7 +837,7 @@ __edit_config() {
         # Only show Nvidia and Mesa config if Arch-based distro is detected
         if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
             _menu_options+=(
-                "nvidia-all |🎮 Nvidia  ─ nvidia-all.cfg"
+                "nvidia-all |💻 Nvidia  ─ nvidia-all.cfg"
                 "mesa-git   |🧩 Mesa    ─ mesa-git.cfg"
             )
         fi
@@ -1130,7 +1127,7 @@ __menu() {
     # Only show Nvidia and Mesa options if Arch-based distribution is detected 
     if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
         _menu_options+=(
-            "Nvidia |🖥️ Nvidia  ─ Nvidia Open-Source or proprietary graphics driver"
+            "Nvidia |💻 Nvidia  ─ Nvidia Open-Source or proprietary graphics driver"
             "Mesa   |🧩 Mesa    ─ Open-Source graphics driver for AMD and Intel"
         )
     fi
@@ -1139,7 +1136,7 @@ __menu() {
     _menu_options+=(
         "Wine   |🍷 Wine    ─ Windows compatibility layer"
         "Proton |🎮 Proton  ─ Windows compatibility layer for Steam / Gaming"
-        "Config |🛠️ Config  ─ Edit external TKG configuration files"
+        "Config |🔧 Config  ─ Edit external TKG configuration files"
         "Clean  |🧹 Clean   ─ Clean downloaded files"
         "Help   |❓ Help    ─ Shows all commands"
         "Exit   |❌ Exit"
