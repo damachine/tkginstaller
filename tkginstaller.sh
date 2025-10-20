@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.14.6"
+_tkg_version="v0.14.7"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -745,7 +745,7 @@ __editor() {
             __msg "${_break}${_red}${_line}"
             __msg_error "No editor found: Please set \$EDITOR environment or install 'nano' Editor as fallback."
             __msg "${_red}${_line}${_break}"
-            sleep 2
+            read -n 1 -s -r -p "Press any key to continue..."
             return 1
         fi
     fi
@@ -784,7 +784,7 @@ __edit_config() {
                         __msg "${_break}${_red}${_line}"
                         __msg_error "Creating configuration directory failed: ${_config_dir}"
                         __msg "${_red}${_line}${_break}"
-                        sleep 5
+                        read -n 1 -s -r -p "Press any key to continue..."
                         clear
                         return 1
                     }
@@ -961,7 +961,7 @@ __handle_config() {
             __msg "${_break}${_red}${_line}"
             __msg_error "Opening external configuration failed: $_config_path"
             __msg "${_red}${_line}${_break}"
-            sleep 3
+            read -n 1 -s -r -p "Press any key to continue..."
             clear
             return 1
         }
@@ -980,11 +980,11 @@ __handle_config() {
             y|Y|yes|Yes|YES)
                 __msg ""
                 # Create the configuration directory if it doesn't exist and download the file using curl with error handling
-                mkdir -p "$(dirname "$_config_path") " || {
+                mkdir -p "$(dirname "$_config_path")" || {
                     __msg "${_break}${_red}${_line}"
                     __msg_error "Creating configuration directory failed: $_config_path"
                     __msg "${_red}${_line}${_break}"
-                    sleep 5
+                    read -n 1 -s -r -p "Press any key to continue..."
                     clear
                     return 1
                 }
@@ -999,7 +999,7 @@ __handle_config() {
                         __msg "${_break}${_red}${_line}"
                         __msg_error "Opening external configuration $_config_path failed!"
                         __msg "${_red}${_line}${_break}"
-                        sleep 5
+                        read -n 1 -s -r -p "Press any key to continue..."
                         clear
                         return 1
                     }
@@ -1008,7 +1008,7 @@ __handle_config() {
                     __msg "${_break}${_red}${_line}"
                     __msg_error "Downloading external configuration from $_config_url failed!"
                     __msg "${_red}${_line}${_break}"
-                    sleep 5
+                    read -n 1 -s -r -p "Press any key to continue..."
                     clear
                     return 1
                 fi
