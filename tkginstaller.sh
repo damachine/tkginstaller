@@ -342,6 +342,7 @@ __prepare() {
         __msg_info "Retrieving preview content..."
         __init_preview || {
             __msg "${_red}Initializing preview content failed..."
+            return 0
         }
     fi
 
