@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.14.9"
+_tkg_version="v0.15.0"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -711,21 +711,21 @@ __proton_install() {
     local _build_command="./proton-tkg.sh" # Build command for proton-tkg
     local _clean_command="./proton-tkg.sh clean" # Clean command for proton-tkg
 
-    # Build and install first
-    __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"
-  
-    # Ask user if clean command should be executed after build
-    echo -en "${_blue}Do you want to run './proton-tkg.sh clean' after building Proton-TKG? [y/N]: ${_reset}"
-    read -r _user_answer
-    if [[ "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
-        if (cd "$_tmp_dir/$_work_directory" && $_clean_command); then
-            __msg_success "${_line}"
-            __msg_success "Cleaning completed successfully: $_package_name"
-            __msg_success "${_line}"
-        else
-            __msg "${_break}${_red}${_line}"
-            __msg_error "Cleaning failed: $_package_name"
-            __msg "${_red}${_line}${_break}"
+    # Build and install and ask for cleaning after build process
+    if __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"; then
+        # Ask user if clean command should be executed after build
+        echo -en "${_blue}Do you want to run './proton-tkg.sh clean' after building Proton-TKG? [y/N]: ${_reset}"
+        read -r _user_answer
+        if [[ "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
+            if __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_clean_command" "proton-tkg"; then
+                __msg_success "${_line}"
+                __msg_success "Cleaning completed successfully: $_package_name"
+                __msg_success "${_line}"
+            else
+                __msg "${_break}${_red}${_line}"
+                __msg_error "Cleaning failed: $_package_name"
+                __msg "${_red}${_line}${_break}"
+            fi
         fi
     fi
 }
@@ -796,9 +796,12 @@ __edit_config() {
             __msg_info "${_line}${_break}"
             echo -en "${_blue} Do you want to create the configuration directory? [y/N]: ${_reset}"
             read -r _user_answer
-            # Handle user response
-            case "$_user_answer" in
-                y|Y|yes)
+            # Handle user response for directory creation prompt with case statement
+            if [[ -z "$_user_answer" ]]; then
+                _user_answer="n" # Default to 'no' if no input provided
+            fi
+            case "${_user_answer,,}" in
+                y|yes)
                     # Create the configuration directory with error handling
                     mkdir -p "${_config_dir}" || {
                         __msg "${_break}${_red}${_line}"
@@ -831,21 +834,21 @@ __edit_config() {
 
         # Function to handle configuration file editing and downloading if missing
         local _menu_options=(
-            "linux-tkg  |🧠 Linux   ─ 📝 linux-tkg.cfg"
+            "linux-tkg  |🧠 Linux   ─ linux-tkg.cfg"
         )
 
         # Only show Nvidia and Mesa config if Arch-based distro is detected
         if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
             _menu_options+=(
-                "nvidia-all |🎮 Nvidia  ─ 📝 nvidia-all.cfg"
-                "mesa-git   |🧩 Mesa    ─ 📝 mesa-git.cfg"
+                "nvidia-all |🎮 Nvidia  ─ nvidia-all.cfg"
+                "mesa-git   |🧩 Mesa    ─ mesa-git.cfg"
             )
         fi
 
         # Always show Wine and Proton config options
         _menu_options+=(
-            "wine-tkg   |🍷 Wine    ─ 📝 wine-tkg.cfg"
-            "proton-tkg |🎮 Proton  ─ 📝 proton-tkg.cfg"
+            "wine-tkg   |🍷 Wine    ─ wine-tkg.cfg"
+            "proton-tkg |🎮 Proton  ─ proton-tkg.cfg"
             "return     |⏪ Return"
         )
 
@@ -1004,9 +1007,12 @@ __handle_config() {
         # Prompt user for download confirmation
         echo -en "${_blue} Do you want to download the default configuration? [y/N]: ${_reset}"
         read -r _user_answer
+        if [[ -z "$_user_answer" ]]; then
+            _user_answer="n" # Default to 'no' if no input provided
+        fi
         # Handle user response for downloading the config file using case statement
-        case "$_user_answer" in
-            y|Y|yes)
+        case "${_user_answer,,}" in
+            y|yes)
                 __msg ""
                 # Create the configuration directory if it doesn't exist and download the file using curl with error handling
                 mkdir -p "$(dirname "$_config_path")" || {
