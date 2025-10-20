@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.14.8"
+_tkg_version="v0.14.9"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -119,17 +119,17 @@ __msg_info() {
 
 # Print info message in orange with [INFO] tag
 __msg_info2() {
-    ${_print} "${_orange}[INFO]: $*${_reset}"
+    ${_print} "${_orange}INFO: $*${_reset}"
 }
 
 # Print warning message in yellow with [WARNING] tag
 __msg_warning() {
-    ${_print} "${_orange}[WARNING]: $*${_reset}"
+    ${_print} "${_orange}WARNING: $*${_reset}"
 }
 
 # Print error message in red with [ERROR] tag
 __msg_error() {
-    ${_print} "${_red}[ERROR]: $*${_reset}"
+    ${_print} "${_red}ERROR: $*${_reset}"
 }
 
 # Check for root execution and warn the user (if running as root)
@@ -139,8 +139,8 @@ if [[ "$(id -u)" -eq 0 ]]; then
     __msg "${_orange}           This is not recommended."
     __msg ""
     echo -en "${_blue} Do you really want to continue as root? [y/N]: ${_reset}"
-    read -r user_answer
-    if [[ ! "$user_answer" =~ ^(y|Y|yes|Yes|YES)$ ]]; then
+    read -r _user_answer
+    if [[ ! "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
         __msg ""
         __msg_info2 "Aborted. Exiting..."
         __msg "${_orange}${_line}"
@@ -716,9 +716,9 @@ __proton_install() {
   
     # Ask user if clean command should be executed after build
     echo -en "${_blue}Do you want to run './proton-tkg.sh clean' after building Proton-TKG? [y/N]: ${_reset}"
-    read -r user_answer
-    if [[ "$user_answer" =~ ^(y|Y|yes|Yes|YES)$ ]]; then
-        if (cd "$_tmp_dir/$work_directory" && $_clean_command); then
+    read -r _user_answer
+    if [[ "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
+        if (cd "$_tmp_dir/$_work_directory" && $_clean_command); then
             __msg_success "${_line}"
             __msg_success "Cleaning completed successfully: $_package_name"
             __msg_success "${_line}"
@@ -795,10 +795,10 @@ __edit_config() {
             __msg "${_blue}           Folder path: ${_config_dir}"
             __msg_info "${_line}${_break}"
             echo -en "${_blue} Do you want to create the configuration directory? [y/N]: ${_reset}"
-            read -r user_answer
+            read -r _user_answer
             # Handle user response
-            case "$user_answer" in
-                y|Y|yes|Yes|YES)
+            case "$_user_answer" in
+                y|Y|yes)
                     # Create the configuration directory with error handling
                     mkdir -p "${_config_dir}" || {
                         __msg "${_break}${_red}${_line}"
@@ -1003,10 +1003,10 @@ __handle_config() {
         __msg_info "${_line}${_break}"
         # Prompt user for download confirmation
         echo -en "${_blue} Do you want to download the default configuration? [y/N]: ${_reset}"
-        read -r user_answer
+        read -r _user_answer
         # Handle user response for downloading the config file using case statement
-        case "$user_answer" in
-            y|Y|yes|Yes|YES)
+        case "$_user_answer" in
+            y|Y|yes)
                 __msg ""
                 # Create the configuration directory if it doesn't exist and download the file using curl with error handling
                 mkdir -p "$(dirname "$_config_path")" || {
