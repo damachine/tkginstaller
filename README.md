@@ -23,7 +23,7 @@
 
 ---
 
-## ⭐ Features
+## Features
 
 - **Dual Mode Operation**: Use either an interactive `fzf`-menu or fast direct `command-line` mode.
 - **Advanced Package Configuration**: Easily create/edit customize builds with external config files.
@@ -31,7 +31,7 @@
 
 ---
 
-## 🛠️ Installation
+## Installation
 
 #### Arch Linux
 
@@ -100,7 +100,7 @@
 
 ---
 
-## 🚀 Usage
+## Usage
 
 - #### Interactive (Menu-mode)
 
