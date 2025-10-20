@@ -56,13 +56,13 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-readonly _tkg_version="v0.14.4"
+_tkg_version="v0.14.5"
 
 # Lock file to prevent concurrent execution of the script
-readonly _lock_file="/tmp/tkginstaller.lock"
+_lock_file="/tmp/tkginstaller.lock"
 
 # =============================================================================
-# INITIALIZATION FUNCTIONS
+# ENVIRONMENT SETUP
 # =============================================================================
 
 # Initialize global variables, paths, and configurations for the script
@@ -95,7 +95,7 @@ __init_colors() {
 }
 
 # =============================================================================
-# ENVIRONMENT SETUP
+# INITIALIZATION AND PRE-CHECKS
 # =============================================================================
 
 # Initialize globals and colors for script execution
@@ -104,43 +104,49 @@ __init_colors
 
 # Print message in normal formatting
 __msg() {
-    ${_print} "$*"
+    ${_print} "$*${_reset}"
 }
 
-# Print info message in green with lines above and below
-__msg_info() {
-    ${_print} "${_green}${_line}${_break} $*${_break}${_line}${_reset}"
-}
-
-# Print success message in green with lines above and below
+# Print success message in green
 __msg_success() {
-    ${_print} "${_green}${_line}${_break} ✅ $*${_break}${_line}${_reset}"
+    ${_print} "${_green}$*${_reset}"
 }
 
-# Print warning message in yellow with lines above and below
+# Print info message in green
+__msg_info() {
+    ${_print} "${_orange}$*${_reset}"
+}
+
+# Print info message in orange with [INFO] tag
+__msg_info2() {
+    ${_print} "${_orange}[INFO]: $*${_reset}"
+}
+
+# Print warning message in yellow with [WARNING] tag
 __msg_warning() {
-    ${_print} "${_orange}${_line}${_break} ⚠️ WARNING: $*${_break}${_line}${_break}${_reset}"
+    ${_print} "${_orange}[WARNING]: $*${_reset}"
 }
 
-# Print failed message in red with lines above and below
-__msg_failed() {
-    ${_print} "${_red}${_line}${_break} ❌ FAILED: $*${_break}${_line}${_break}${_reset}"
-}
-
-# Print error message in red with lines above and below
+# Print error message in red with [ERROR] tag
 __msg_error() {
-    ${_print} "${_red}${_line}${_break} 🎯 ERROR 🎯 $*${_break}${_line}${_break}${_reset}"
+    ${_print} "${_red}[ERROR]: $*${_reset}"
 }
 
 # Check for root execution and warn the user (if running as root)
 if [[ "$(id -u)" -eq 0 ]]; then
-    __msg_warning "You are running as root!${_break}    This is not recommended."
-    read -r -p "Do you really want to continue as root? [y/N]: " allow_root
-    echo ""
+    __msg "${_break}${_orange}${_line}"
+    __msg_warning "You are running as root!"
+    __msg "${_orange}           This is not recommended."
+    __msg ""
+    echo -en "${_red} Do you really want to continue as root? [y/N]: ${_reset}"
+    read -r allow_root
     if [[ ! "$allow_root" =~ ^(y|Y|yes|Yes|YES)$ ]]; then
-        __msg "Aborted. Running as root. Exiting..."
+        __msg ""
+        __msg_info2 "Aborted. Exiting..."
+        __msg "${_orange}${_line}"
         exit 1
     fi
+    __msg "${_orange}${_line}${_break}"
 fi
 
 # Detect Linux Distribution
@@ -159,28 +165,32 @@ fi
 # Help information display
 __help() {
     # Display help information with usage examples and shortcuts
-    __msg "${_line}${_break}${_green} 🛈 TKG-Installer Help${_break}${_reset}"
-    __msg "${_blue} Run interactive fzf finder menu.${_reset}"
-    __msg "${_green} Interactive:${_reset} $0"
+    __msg "${_break}${_line}"
+    __msg "${_green}TKG-Installer Help"
     __msg ""
-    __msg "${_blue} Run directly without entering the menu.${_reset}"
-    __msg "${_green} Syntax:${_reset} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
-    __msg "${_orange} Example:${_reset}"
-    __msg "  $0 linux         # Install Linux-TKG"
-    __msg "  $0 nvidia        # Install Nvidia-TKG"
-    __msg "  $0 mesa          # Install Mesa-TKG"
-    __msg "  $0 wine          # Install Wine-TKG"
-    __msg "  $0 proton        # Install Proton-TKG"
+    __msg "${_blue}Run interactive fzf finder menu."
+    __msg "${_green}Interactive run:${_reset} $0"
     __msg ""
-    __msg "${_blue} Access configuration files directly without entering the menu.${_reset}"
-    __msg "${_green} Syntax:${_reset} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p] [config|c|edit|e]"
-    __msg "${_green}        ${_reset} $0 [config|c|edit|e] [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
-    __msg "${_orange} Example:${_reset}"
-    __msg "  $0 linux config  # Edit Linux-TKG config"
-    __msg "  $0 config linux  # Edit Linux-TKG config"
+    __msg "${_blue}Run directly without entering the menu."
+    __msg "${_green}Direct syntax:${_reset} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
+    __msg "${_orange}Example:${_reset}"
+    __msg " $0 linux    # Install Linux-TKG"
+    __msg " $0 l        # Install Linux-TKG (shortcut)"
+    __msg " $0 nvidia   # Install Nvidia-TKG"
+    __msg " $0 mesa     # Install Mesa-TKG"
+    __msg " $0 wine     # Install Wine-TKG"
+    __msg " $0 proton   # Install Proton-TKG"
     __msg ""
-    __msg "${_orange} Shortcuts:${_reset} l=linux, n=nvidia, m=mesa, w=wine, p=proton, c=config, e=edit"
-    __msg "${_line}${_reset}"
+    __msg "${_blue}Access configuration files directly without entering the menu.${_reset}"
+    __msg "${_green}Direct syntax:${_reset} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p] [config|c|edit|e]"
+    __msg "${_green}              ${_reset} $0 [config|c|edit|e] [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
+    __msg "${_orange}Example:${_reset}"
+    __msg " $0 linux config  # Edit Linux-TKG config"
+    __msg " $0 l c           # Edit Linux-TKG config (shortcut)"
+    __msg " $0 config linux  # Edit Linux-TKG config (alternate syntax)"
+    __msg ""
+    __msg "${_orange}Shortcuts:${_reset} l=linux, n=nvidia, m=mesa, w=wine, p=proton, c=config, e=edit"
+    __msg "${_line}${_break}"
 }
 
 # Help can show always!
@@ -197,15 +207,27 @@ if [[ -f "$_lock_file" ]]; then
         # Get old PID from lock file and check if process is running
         _old_pid=$(cat "$_lock_file" 2>/dev/null || echo "")
         if [[ -n "$_old_pid" ]] && kill -0 "$_old_pid" 2>/dev/null; then
-            ${_print} ""
-            __msg_failed "Script is already running (PID: $_old_pid). Exiting..."
-            __msg_warning "Remove the lock file manually.${_break}${_break}    ${_reset}    tkginstaller clean${_break}        rm -f $_lock_file${_reset}${_break}${_break}${_orange}    If the script was unexpectedly terminated before."
+            __msg "${_break}${_orange}${_line}"
+            __msg_warning "Script is already running (PID: $_old_pid). Exiting..."
+            __msg ""
+            __msg_info2 "If the script was unexpectedly terminated before."
+            __msg_info "        Remove $_lock_file manually run:"
+            __msg ""
+            __msg "${_red}        >>>${_reset}     tkginstaller clean     ${_red}<<<"
+            __msg ""
+            __msg "${_orange}${_line}${_break}"
             exit 1
         else
-            __msg_warning "Removing stale lock file! Waiting..."
             rm -f "$_lock_file" 2>/dev/null || {
-                __msg_failed " Remove stale lock file failed! Exiting..."
-                __msg_warning "Remove the lock file manually.${_break}${_break}    ${_reset}    tkginstaller clean${_break}        rm -f $_lock_file${_reset}${_break}${_break}${_orange}    If the script was unexpectedly terminated before."
+                __msg "${_break}${_orange}${_line}"
+                __msg_warning "Script is already running (PID: $_old_pid). Exiting..."
+                __msg ""
+                __msg_info2 "If the script was unexpectedly terminated before."
+                __msg_info "        Remove $_lock_file manually run:"
+                __msg ""
+                __msg "${_red}        >>>${_reset}     tkginstaller clean     ${_red}<<<"
+                __msg ""
+                __msg "${_orange}${_line}${_break}"
                 exit 1
             }
         fi
@@ -216,6 +238,182 @@ echo $$ > "$_lock_file"
 # =============================================================================
 # CORE UTILITY FUNCTIONS
 # =============================================================================
+
+# Pre-installation checks and preparation 
+__prepare() {
+    # Parameters:
+    #   $1 = load preview content (boolean, optional, default: false)
+    # Returns:
+    #   Performs pre-checks and setup for installation process
+    # Usage:
+    #   __prepare true  # Load preview content for interactive mode
+    #   __prepare false # Skip preview content for direct mode
+    # Example:
+    #   __prepare true
+    local _load_preview="${1:-false}" # Default to false if not provided (for direct mode)
+
+    # Welcome message and pre-checks
+    __msg_success "${_break}${_line}${_break}TKG-Installer ${_tkg_version} for ${_distro_name}${_break}${_line}"
+    __msg_info "Preparation..."
+
+    # Check required dependencies based on mode (interactive/direct)
+    local _dep=(git)
+    if [[ "$_load_preview" == "true" ]]; then
+        # Add optional dependencies for interactive mode
+        _dep+=(bat curl glow fzf onefetch)
+    fi
+
+    # Define package names per distro for missing dependencies installation mapping
+    declare -A _pkg_map_dep=(
+        [git]=git
+        [bat]=bat
+        [curl]=curl
+        [glow]=glow
+        [fzf]=fzf
+    )
+
+    # Set install command based on detected Linux distribution
+    case "${_distro_id,,}" in
+        arch|manjaro|endeavouros|cachyos)
+            _install_cmd_dep="pacman -S"
+            ;;
+        fedora)
+            _install_cmd_dep="dnf install"
+            ;;
+        opensuse*|suse*)
+            _install_cmd_dep="zypper install"
+            ;;
+        gentoo)
+            _pkg_map_dep=(
+                [git]=dev-vcs/git
+                [bat]=app-misc/bat
+                [curl]=net-misc/curl
+                [glow]=app-text/glow
+                [fzf]=app-misc/fzf
+            )
+            _install_cmd_dep="emerge"
+            ;;
+        ubuntu|debian|linuxmint|pop|elementary)
+            _install_cmd_dep="apt install"
+            ;;
+        *)
+            _install_cmd_dep="your-package-manager install"
+            ;;
+    esac
+
+    # Check for missing dependencies and collect them for installation instructions
+    local _missing_dep=() # Array to hold missing dependencies
+    for _required_dep in "${_dep[@]}"; do
+        if ! command -v "$_required_dep" >/dev/null; then
+            _missing_dep+=("$_required_dep")
+        fi
+    done
+
+    # Exit if any dependencies are missing with installation instructions
+    if [[ ${#_missing_dep[@]} -gt 0 ]]; then
+        __msg_error "Missing dependencies detected."
+        __msg_info "         Please install the following dependencies first:"
+        __msg ""
+
+        # Map dependencies to package names for installation command display
+        local _pkg_name_dep=()
+        for _dependency in "${_missing_dep[@]}"; do
+            _pkg_name_dep+=("${_pkg_map_dep[$_dependency]:-$_dependency}")
+        done
+
+        # Display installation command with missing packages
+        __msg_info "${_red}         >>> ${_reset}${_install_cmd_dep} ${_pkg_name_dep[*]}${_red} <<<"
+        exit 1
+    fi
+
+    # Setup temporary directory and files for installation process
+    __msg_info "Cleaning old temporary files..."
+    # Remove old temporary files and directories if they exist
+    rm -rf "$_tmp_dir" "$_choice_file" 2>/dev/null || true
+    __msg_info "Creating temporary directory..."
+    # Create necessary subdirectories for temporary files
+    mkdir -p "$_tmp_dir" 2>/dev/null || {
+        __msg_error "Creating temporary directory failed: ${_tmp_dir}"
+        return 1
+    }
+
+    # Load preview content only for interactive mode (if requested)
+    if [[ "$_load_preview" == "true" ]]; then
+        __msg_info "Retrieving preview content..."
+        __init_preview || {
+            __msg_error "Initializing preview content failed..."
+            return 1
+        }
+    fi
+
+    # Final message before starting TKG-Installer process
+    if [[ "$_load_preview" == "true" ]]; then
+        __msg "$_green${_line}"
+        __msg_success "Preparation done!"
+        __msg_success "Entering interactive menu..."
+        __msg "$_green${_line}"
+    else
+        __msg_success "Preparation done!"
+        __msg_success "Starting direct installation..."
+    fi
+
+    # Short delay for better UX
+    wait
+    sleep 3
+}
+
+# Display completion status with timestamp and duration of the action performed
+__done() {
+    local _status=${1:-$?} # Use passed status, fallback to $? for compatibility
+    local _duration="${SECONDS:-0}" # Total duration in seconds (since script start)
+    local _minutes=$((_duration / 60)) # Calculate minutes part
+    local _seconds=$((_duration % 60)) # Calculate remaining seconds part
+
+    # Finalizing message display
+    __msg "${_orange}${_line}"
+
+    # Display completion message with timestamp
+    __msg_info "Action completed: $(date '+%Y-%m-%d %H:%M:%S')"
+
+    # Display success or failure status based on exit code
+    if [[ $_status -eq 0 ]]; then
+        __msg_success "Status: Successfully completed!"
+    else
+        __msg_error "Failed process (Code: $_status)"
+    fi
+
+    # Display duration message with minutes and seconds
+    __msg_info "Duration: ${_minutes} min ${_seconds} sec"
+
+    __msg "${_orange}${_line}"
+
+    # Return status code
+    return "$_status"
+}
+
+# Setup exit trap for cleanup on script termination and errors
+__exit() {
+    # Get exit code or use passed code
+    local _exit_code=${1:-$?}
+
+    # Remove exit trap to avoid recursion during cleanup
+    trap - INT TERM EXIT HUP
+
+    # Message handling on exit based on exit code (0=success, non-0=failure)
+    if [[ $_exit_code -ne 0 ]]; then
+        __msg "${_break}${_red}${_line}${_break}TKG-Installer aborted! Exiting...${_break}${_line}${_break}"
+    else
+        __msg "${_break}${_green}${_line}${_break}TKG-Installer closed! Goodbye!${_break}${_line}${_break}"
+    fi
+
+    # Perform cleanup
+    __clean
+    wait
+    exit "$_exit_code"
+}
+
+# Set exit traps for various termination signals to ensure cleanup
+trap __exit INT TERM EXIT HUP
 
 # Cleanup handler for graceful exit and resource management
 __clean() {
@@ -231,32 +429,6 @@ __clean() {
     unset _preview_config _preview_clean _preview_help _preview_return _preview_exit _glow_style
     unset _distro_name _distro_id _distro_like
  }
-
-# Setup exit trap for cleanup on script termination and errors
-__exit() {
-    # Get exit code or use passed code
-    local _exit_code=${1:-$?}
-
-    # Remove exit trap to avoid recursion during cleanup
-    trap - INT TERM EXIT HUP
-
-    # Message handling on exit based on exit code (0=success, non-0=failure)
-    if [[ $_exit_code -ne 0 ]]; then
-        __msg_error "TKG-Installer aborted! Exiting..."
-    else
-        __msg "${_green} 🧹 Cleanup completed!${_reset}"
-        __msg "${_green} 👋 TKG-Installer closed!${_reset}"
-        __msg "${_green}${_line}${_break}${_reset}"
-    fi
-
-    # Perform cleanup
-    __clean
-    wait
-    exit "$_exit_code"
-}
-
-# Set exit traps for various termination signals to ensure cleanup
-trap __exit INT TERM EXIT HUP
 
 # Fuzzy finder menu wrapper function for consistent settings and usage
 __fzf_menu() {
@@ -310,144 +482,6 @@ __fzf_menu() {
         --preview-border=line \
         --disabled \
         <<< "${_menu_content}"
-}
-
-# Display completion status with timestamp and duration of the action performed
-__done() {
-    local _status=${1:-$?} # Use passed status, fallback to $? for compatibility
-    local _duration="${SECONDS:-0}" # Total duration in seconds (since script start)
-    local _minutes=$((_duration / 60)) # Calculate minutes part
-    local _seconds=$((_duration % 60)) # Calculate remaining seconds part
-
-    # Display completion message with timestamp
-    __msg "${_green}${_line}${_break}${_reset}${_orange} 📝 Action completed: $(date '+%Y-%m-%d %H:%M:%S')${_reset}"
-
-    # Display success or failure status based on exit code
-    if [[ $_status -eq 0 ]]; then
-        __msg "${_green} ✅ Status: Successfully${_reset}"
-    else
-        __msg "${_red} ❌ Status: Failed (Code: $_status)${_reset}"
-    fi
-
-    # Display duration message with minutes and seconds
-    __msg "${_orange} ⏱️ Duration: ${_minutes} min ${_seconds} sec${_reset}"
-
-    # Return status code
-    return "$_status"
-}
-
-# Pre-installation checks and preparation 
-__pre() {
-    # Parameters:
-    #   $1 = load preview content (boolean, optional, default: false)
-    # Returns:
-    #   Performs pre-checks and setup for installation process
-    # Usage:
-    #   __pre true  # Load preview content for interactive mode
-    #   __pre false # Skip preview content for direct mode
-    # Example:
-    #   __pre true
-    local _load_preview="${1:-false}" # Default to false if not provided (for direct mode)
-
-    # Welcome message and pre-checks
-    __msg "${_green}${_line}${_break} 🐸 TKG-Installer ${_tkg_version} for ${_distro_name}${_break}${_line}${_reset}"
-    __msg "${_orange} 🔁 Pre-checks starting...${_reset}"
-
-    # Check required dependencies based on mode (interactive/direct)
-    local _dep=(git)
-    if [[ "$_load_preview" == "true" ]]; then
-        # Add optional dependencies for interactive mode
-        _dep+=(bat curl glow fzf)
-    fi
-
-    # Define package names per distro for missing dependencies installation mapping
-    declare -A _pkg_map_dep=(
-        [git]=git
-        [bat]=bat
-        [curl]=curl
-        [glow]=glow
-        [fzf]=fzf
-    )
-
-    # Set install command based on detected Linux distribution
-    case "${_distro_id,,}" in
-        arch|manjaro|endeavouros|cachyos)
-            _install_cmd_dep="pacman -S"
-            ;;
-        fedora)
-            _install_cmd_dep="dnf install"
-            ;;
-        opensuse*|suse*)
-            _install_cmd_dep="zypper install"
-            ;;
-        gentoo)
-            _pkg_map_dep=(
-                [git]=dev-vcs/git
-                [bat]=app-misc/bat
-                [curl]=net-misc/curl
-                [glow]=app-text/glow
-                [fzf]=app-misc/fzf
-            )
-            _install_cmd_dep="emerge"
-            ;;
-        ubuntu|debian|linuxmint|pop|elementary)
-            _install_cmd_dep="apt install"
-            ;;
-        *)
-            _install_cmd_dep="your-package-manager install"
-            ;;
-    esac
-
-    # Check for missing dependencies and collect them for installation instructions
-    local _missing_dep=() # Array to hold missing dependencies
-    for _required_dep in "${_dep[@]}"; do
-        if ! command -v "$_required_dep" >/dev/null; then
-            _missing_dep+=("$_required_dep")
-        fi
-    done
-
-    # Exit if any dependencies are missing with installation instructions
-    if [[ ${#_missing_dep[@]} -gt 0 ]]; then
-        __msg "${_red} ❌ Missing dependencies detected.${_reset}"
-        __msg "${_blue}    Please install the following dependencies first:${_break}${_reset}"
-
-        # Map dependencies to package names for installation command display
-        local _pkg_name_dep=()
-        for _dependency in "${_missing_dep[@]}"; do
-            _pkg_name_dep+=("${_pkg_map_dep[$_dependency]:-$_dependency}")
-        done
-
-        # Display installation command with missing packages
-        __msg "${_blue}    ${_install_cmd_dep} ${_pkg_name_dep[*]}${_break}${_reset}"
-        exit 1
-    fi
-
-    # Setup temporary directory and files for installation process
-    __msg "${_orange} 🧹 Cleaning old temporary files...${_reset}"
-    # Remove old temporary files and directories if they exist
-    rm -rf "$_tmp_dir" "$_choice_file" 2>/dev/null || true
-    __msg "${_orange} 🗂️ Create temporary directory...${_reset}"
-    # Create necessary subdirectories for temporary files
-    mkdir -p "$_tmp_dir" 2>/dev/null || {
-        __msg "${_red} ❌ ERROR: creating temporary directory: ${_tmp_dir}${_reset}"
-        return 1
-    }
-
-    # Load preview content only for interactive mode (if requested)
-    if [[ "$_load_preview" == "true" ]]; then
-        __msg "${_orange} 📡 Retrieving preview content...${_reset}"
-        __init_preview || {
-            __msg "${_red} ❌ ERROR: initializing preview content.${_reset}"
-            return 1
-        }
-    fi
-
-    # Final message before starting TKG-Installer process
-    __msg "${_green} 🐸 Starting...${_reset}"
-
-    # Short delay for better UX
-    wait
-    sleep 1
 }
 
 # =============================================================================
@@ -577,23 +611,27 @@ __install_package() {
     local _work_directory="${5:-}" # Optional working directory relative to cloned repo (string)
 
     # Navigate to temporary directory for cloning and building process
-    cd "$_tmp_dir" || return 1
+    cd "$_tmp_dir" > /dev/null 2>&1 || return 1
 
     # Clone repository from provided URL
-    git clone "$_repo_url" || {
-        __msg_error "Cloning failed for: $_package_name from $_repo_url"
+    git clone "$_repo_url" > /dev/null 2>&1 || {
+        __msg "${_break}${_red}${_line}"
+        __msg_error "Cloning failed for: $_package_name @ $_repo_url"
+        __msg "${_red}${_line}${_break}"
         return 1
     }
 
     # Navigate to the correct directory (assume it's the cloned repo name)
     local _repo_dir
     _repo_dir=$(basename "$_repo_url" .git)
-    cd "$_repo_dir" || return 1
+    cd "$_repo_dir" > /dev/null 2>&1 || return 1
 
     # Navigate to working directory if specified (for proton-tkg)
     if [[ -n "$_work_directory" ]]; then
-        cd "$_work_directory" || {
+        cd "$_work_directory" > /dev/null 2>&1 || {
+            __msg "${_break}${_red}${_line}"
             __msg_error "Working directory not found: $_work_directory"
+            __msg "${_red}${_line}${_break}"
             return 1
         }
     fi
@@ -601,19 +639,21 @@ __install_package() {
     # Fetch git repository information if available (using onefetch if installed)
     if command -v onefetch >/dev/null 2>&1; then
         # Display git repository information using onefetch tool
-        onefetch --no-bold --no-art --http-url --email --number-of-authors 6 --text-colors 15 3 15 3 15 11 || true
+        onefetch --no-title --no-bold --no-art --http-url --email --number-of-authors 6 --text-colors 15 3 15 3 15 11 || true
     fi
 
     # Build and install the package using the provided build command
-    __msg "${_green}${_line}${_break} 🏗️ Cloning, building and installing $_package_name for ${_distro_name}, this may take a while... ⏳${_break}${_line}${_reset}"
+    __msg_info "${_line}${_break}Cloning, building and installing $_package_name for $_distro_name, this may take a while...${_break}${_line}"
     eval "$_build_command" || {
-        __msg_error "Building: $_package_name for ${_distro_name} failed!"
+        __msg "${_break}${_red}${_line}"
+        __msg_error "Building failed: $_package_name for $_distro_name failed!"
+        __msg "${_red}${_line}${_break}"
         return 1
     }
 
     # Optional clean up after build (for proton-tkg) if clean command provided
     if [[ -n "$_clean_command" ]]; then
-        __msg "${_green}${_line}${_break} 🏗️ Clean up old build artifacts...${_break}${_line}${_reset}"
+        __msg_info "${_line}${_break}Clean up old build artifacts...${_break}${_line}"
         eval "$_clean_command" || {
             __msg_info "Nothing to clean: $_package_name"
             sleep 3
@@ -702,7 +742,9 @@ __editor() {
             # Fallback to nano editor
             _editor_parts=(nano)
         else
+            __msg "${_break}${_red}${_line}"
             __msg_error "No editor found: Please set \$EDITOR environment or install 'nano' Editor as fallback."
+            __msg "${_red}${_line}${_break}"
             sleep 2
             return 1
         fi
@@ -727,26 +769,35 @@ __edit_config() {
 
         # Ensure configuration directory exists
         if [[ ! -d "${_config_dir}" ]]; then
-            __msg_warning "Configuration directory not found: ${_config_dir}"
+            __msg "${_break}${_orange}${_line}"
+            __msg_warning "Configuration directory not found."
+            __msg "${_blue}           Folder path: ${_config_dir}"
+            __msg "${_orange}${_line}${_break}"
             # Create the configuration directory if it doesn't exist
-            read -r -p "Do you want to create the configuration directory? [y/N]: " create_dir
-            echo
+            echo -en "${_blue} Do you want to create the configuration directory? [y/N]: ${_reset}"
+            read -r create_dir
             # Handle user response
             case "$create_dir" in
                 y|Y|yes|Yes|YES)
                     # Create the configuration directory with error handling
                     mkdir -p "${_config_dir}" || {
-                        __msg_warning "Error creating configuration directory!"
-                        sleep 3
+                        __msg "${_break}${_red}${_line}"
+                        __msg_error "Creating configuration directory failed: ${_config_dir}"
+                        __msg "${_red}${_line}${_break}"
+                        sleep 5
                         clear
                         return 1
                     }
+                    __msg "${_break}${_green}${_line}"
                     __msg_success "Configuration directory created: ${_config_dir}"
+                    __msg "${_green}${_line}${_break}"
                     sleep 3
                     ;;
                 *)
-                    __msg_warning "Directory creation cancelled. Return to Main menu..."
-                    sleep 3
+                    __msg "${_break}${_orange}${_line}"
+                    __msg_info "Directory creation cancelled.${_break}Return to Main menu..."
+                    __msg "${_orange}${_line}${_break}"
+                    sleep 5
                     clear
                     return 0
                     ;;
@@ -781,7 +832,7 @@ __edit_config() {
         _menu_content=$(printf '%s\n' "${_menu_options[@]}")
 
         # Define common error message for preview when config file is missing
-        local _error_config_not_exist="${_red}${_line}${_break} ❌ Error: No external configuration file found.${_break}${_break}${_reset} ⚠️ Click to download missing file${_break}${_red}${_line}${_reset}"
+        local _error_config_not_exist="${_red}${_line}${_break} ❌ ERROR: No external configuration file found.${_break}${_break}${_reset} ⚠️ Click to download missing file${_break}${_red}${_line}${_reset}"
 
         # Define a reusable bat command for the preview window
         local _bat_cmd="bat --style=numbers --language=bash --wrap character --highlight-line 1 --force-colorization"
@@ -817,7 +868,7 @@ __edit_config() {
 
         # Handle cancelled selection (ESC key) or empty choice to exit editor menu gracefully
         if [[ -z "$_config_choice" ]]; then
-            __msg "${_orange}${_line}${_break} ⏪ Exit editor menu...${_break}${_line}${_reset}"
+            __msg_info "Exit editor menu..."
             sleep 1
             clear
             return 0
@@ -860,16 +911,18 @@ __edit_config() {
                     "${_frog_raw_url}/wine-tkg-git/master/proton-tkg/proton-tkg.cfg"
                 ;;
             return)
-                __msg "${_orange}${_line}${_break} ⏪ Exit editor menu...${_break}${_line}${_reset}"
+                __msg "${_break}${_green}${_line}"
+                __msg_success "Returning to main menu..."
+                __msg "${_green}${_line}${_break}"
                 sleep 1
                 clear
                 return 0
                 ;;
             *)
-                echo ""
-                __msg "${_red} ❌ Invalid option: $_config_file${_reset}"
-                __msg "${_green} Usage:${_reset} $0 help${_reset}"
-                __msg "        $0 [linux|nvidia|mesa|wine|proton]${_break}${_reset}"
+                __msg_error "${_line}${_break}Invalid option: $_config_file"
+                __msg_info "Usage: $0 help"
+                __msg_info " $0 config|c [linux|nvidia|mesa|wine|proton]"
+                __msg_error "${_line}${_break}"
                 return 1
                 ;;
         esac
@@ -893,7 +946,9 @@ __handle_config() {
     local _config_url="$3" # Configuration file URL (string)
 
     # Notify user about opening the configuration file editor
-    __msg_success "Opening external $_config_name configuration file..."
+    __msg "${_break}${_green}${_line}"
+    __msg_success "Opening external configuration file: $_config_name"
+    __msg "${_green}${_line}${_break}"
     sleep 1
     clear
 
@@ -901,44 +956,66 @@ __handle_config() {
     if [[ -f "$_config_path" ]]; then
         # Edit existing configuration file in the editor if it exists
         __editor "$_config_path" || {
-            __msg_error "Opening external $_config_path configuration failed!"
+            __msg "${_break}${_red}${_line}"
+            __msg_error "Opening external configuration failed: $_config_path"
+            __msg "${_red}${_line}${_break}"
             sleep 3
             clear
             return 1
         }
     else
         # Download and create new configuration file if it does not exist
-        __msg_warning "External configuration file does not exist: $_config_path"
+        __msg "${_break}${_orange}${_line}"
+        __msg_warning "External configuration file does not exist."
+        __msg "${_blue}           Save path: $_config_path"
+        __msg "${_blue}           Download link: $_config_url"
+        __msg "${_orange}${_line}${_break}"
         # Prompt user for download confirmation
-        read -r -p "Do you want to download the default configuration from $_config_url? [y/N]: " user_answer
-        echo ""
+        echo -en "${_blue} Do you want to download the default configuration? [y/N]: ${_reset}"
+        read -r user_answer
         # Handle user response for downloading the config file using case statement
         case "$user_answer" in
             y|Y|yes|Yes|YES)
+                __msg ""
                 # Create the configuration directory if it doesn't exist and download the file using curl with error handling
-                mkdir -p "$(dirname "$_config_path")"
+                mkdir -p "$(dirname "$_config_path") " || {
+                    __msg "${_break}${_red}${_line}"
+                    __msg_error "Creating configuration directory failed: $_config_path"
+                    __msg "${_red}${_line}${_break}"
+                    sleep 5
+                    clear
+                    return 1
+                }
                 if curl -fsSL "$_config_url" -o "$_config_path" 2>/dev/null; then
+                    __msg "${_break}${_green}${_line}"
                     __msg_success "External configuration ready at $_config_path"
+                    __msg "${_green}${_line}${_break}"
                     sleep 3
                     clear
                     # Open the downloaded configuration file in the editor
                     __editor "$_config_path" || {
+                        __msg "${_break}${_red}${_line}"
                         __msg_error "Opening external configuration $_config_path failed!"
-                        sleep 3
+                        __msg "${_red}${_line}${_break}"
+                        sleep 5
                         clear
                         return 1
                     }
                 else
                     # Failed to download configuration file from URL with error handling
+                    __msg "${_break}${_red}${_line}"
                     __msg_error "Downloading external configuration from $_config_url failed!"
-                    sleep 3
+                    __msg "${_red}${_line}${_break}"
+                    sleep 5
                     clear
                     return 1
                 fi
                 ;;
             *)
                 # User chose not to download the configuration file
-                __msg_warning "Download cancelled. No configuration file created.${_break}    Return to Mainmenu..."
+                __msg "${_break}${_orange}${_line}"
+                __msg_info "Download cancelled. No configuration file created.${_break}Return to Mainmenu..."
+                __msg "${_orange}${_line}${_break}"
                 sleep 3
                 clear
                 return 1
@@ -950,8 +1027,11 @@ __handle_config() {
     fi
 
     # Notify user about closing the configuration file editor and remind to save changes
-    __msg_success "Closing external $_config_name configuration file...${_break}    Remember to save your changes!"
-    sleep 3
+    __msg "${_break}${_green}${_line}"
+    __msg_success "Closing external $_config_name configuration file..."
+    __msg_success "Remember to save all your changes!"
+    __msg "${_green}${_line}${_break}"
+    sleep 1
     clear
     return 0
 }
@@ -963,7 +1043,7 @@ __handle_config() {
 # Linux-TKG installation prompt
 __linux_prompt() {
     SECONDS=0
-    __msg "${_green}${_line}${_break} 🧠 Fetching Linux-TKG from Frogging-Family repository... ⏳${_break}${_line}${_reset}"
+    __msg_info "${_line}${_break}Fetching Linux-TKG from Frogging-Family repository...${_break}${_line}"
     __linux_install
     __done $?
 }
@@ -971,7 +1051,7 @@ __linux_prompt() {
 # Nvidia-TKG installation prompt
 __nvidia_prompt() {
     SECONDS=0
-    __msg "${_green}${_line}${_break} 🖥️ Fetching Nvidia-TKG from Frogging-Family repository... ⏳${_break}${_line}${_reset}"
+    __msg_info "${_line}${_break}Fetching Nvidia-TKG from Frogging-Family repository...${_break}${_line}"
     __nvidia_install
     __done $?
 }
@@ -979,7 +1059,7 @@ __nvidia_prompt() {
 # Mesa-TKG installation prompt
 __mesa_prompt() {
     SECONDS=0
-    __msg "${_green}${_line}${_break} 🧩 Fetching Mesa-TKG from Frogging-Family repository... ⏳${_break}${_line}${_reset}"
+    __msg_info "${_line}${_break}Fetching Mesa-TKG from Frogging-Family repository...${_break}${_line}"
     __mesa_install
     __done $?
 }
@@ -987,7 +1067,7 @@ __mesa_prompt() {
 # Wine-TKG installation prompt
 __wine_prompt() {
     SECONDS=0
-    __msg "${_green}${_line}${_break} 🍷 Fetching Wine-TKG from Frogging-Family repository... ⏳${_break}${_line}${_reset}"
+    __msg_info "${_line}${_break}Fetching Wine-TKG from Frogging-Family repository...${_break}${_line}"
     __wine_install
     __done $?
 }
@@ -995,7 +1075,7 @@ __wine_prompt() {
 # Proton-TKG installation prompt
 __proton_prompt() {
     SECONDS=0
-    __msg "${_green}${_line}${_break} 🎮 Fetching Proton-TKG from Frogging-Family repository... ⏳${_break}${_line}${_reset}"
+    __msg_info "${_line}${_break}Fetching Proton-TKG from Frogging-Family repository...${_break}${_line}"
     __proton_install
     __done $?
 }
@@ -1066,7 +1146,10 @@ __menu() {
 
     # Handle cancelled selection (ESC pressed) or empty choice to exit TKG-Installer gracefully
     if [[ -z "${_main_choice:-}" ]]; then
-        __msg "${_orange}${_line}${_break} 👋 Exit TKG-Installer...${_break}${_line}${_reset}"
+        __msg "${_break}${_green}${_line}"
+        __msg_success "Exit TKG-Installer..."
+        __msg_success "Cleaning temporary files..."
+        __msg "${_green}${_line}${_break}"
         sleep 1
         clear
         __exit 0
@@ -1160,10 +1243,7 @@ __main_direct_mode() {
         __handle_config "$_config_name" "$_config_path" "$_config_url"
 
         # Display exit messages after editing config file and before exiting script gracefully
-        __msg "${_orange}${_line}${_break} 🧹 Cleanup completed!"
-        __msg "👋 TKG-Installer closed!"
-        __msg "${_line}"
-        __msg "${_break}"
+        __msg "${_break}${_green}${_line}${_break}TKG-Installer closed! Goodbye!${_break}${_line}${_break}"
 
         # Clean exit without triggering __exit cleanup messages. Unset exported all variables
         __clean
@@ -1173,34 +1253,37 @@ __main_direct_mode() {
     # Handle regular install commands based on first argument using case statement
     case "$_arg1" in
         linux|l|--linux|-l)
-            __pre
+            __prepare
             __linux_prompt
             exit 0
             ;;
         nvidia|n|--nvidia|-n)
-            __pre
+            __prepare
             __nvidia_prompt
             exit 0
             ;;
         mesa|m|--mesa|-m)
-            __pre
+            __prepare
             __mesa_prompt
             exit 0
             ;;
         wine|w|--wine|-w)
-            __pre
+            __prepare
             __wine_prompt
             exit 0
             ;;
         proton|p|--proton|-p)
-            __pre
+            __prepare
             __proton_prompt
             exit 0
             ;;
         clean|--clean)
             # Clean temporary files and restart script
-            __msg "${_orange}${_line}${_break} 🧹 Cleaning temporary files...${_break}${_line}${_reset}"
-            __pre >/dev/null 2>&1 || true
+            __msg "${_break}${_orange}${_line}"
+            __msg_info "Cleaning temporary files..."
+            __msg_info "Restarting..."
+            __msg "${_orange}${_line}${_break}"
+            __prepare >/dev/null 2>&1 || true
             rm -f "$_lock_file" 2>&1 || true
             sleep 1
             clear
@@ -1210,30 +1293,12 @@ __main_direct_mode() {
             ;;
         *)
             # Invalid argument handling and usage instructions display
-            __msg "${_line}${_break}${_red} ❌ Invalid argument: ${1:-}${_reset}"
-            __msg "${_orange}    The argument is either invalid or incomplete.${_break}${_reset}"
-            __msg "${_blue} Run interactive fzf finder menu.${_reset}"
-            __msg "${_green} Interactive:${_reset} $0"
             __msg ""
-            __msg "${_blue} Run directly without entering the menu.${_reset}"
-            __msg "${_green} Syntax:${_reset} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
-            __msg ""
-            __msg "${_orange} Example:${_reset}"
-            __msg "  $0 linux         # Install Linux-TKG"
-            __msg "  $0 nvidia        # Install Nvidia-TKG"
-            __msg "  $0 mesa          # Install Mesa-TKG"
-            __msg "  $0 wine          # Install Wine-TKG"
-            __msg "  $0 proton        # Install Proton-TKG"
-            __msg ""
-            __msg "${_blue} Access configuration files directly without entering the menu.${_reset}"
-            __msg "${_green} Syntax:${_reset} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p] [config|c|edit|e]"
-            __msg "${_green}        ${_reset} $0 [config|c|edit|e] [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
-            __msg "${_orange} Example:${_reset}"
-            __msg "  $0 linux config  # Edit Linux-TKG config"
-            __msg "  $0 config linux  # Edit Linux-TKG config"
-            __msg ""
-            __msg "${_orange} Shortcuts:${_reset} l=linux, n=nvidia, m=mesa, w=wine, p=proton, c=config, e=edit"
-            __msg "${_line}${_reset}"
+            __msg "${_red}Invalid argument:${_reset} ${1:-} ${2:-}"
+            __msg "${_orange}The argument is either invalid or incomplete."
+
+            # Show usage instructions
+            __help
 
             # Disable exit trap before cleanup and exit to avoid duplicate cleanup messages on exit
             trap - INT TERM EXIT HUP
@@ -1246,7 +1311,7 @@ __main_direct_mode() {
 # Main function for interactive mode with menu selection handling loop
 __main_interactive_mode() {
     # Interactive mode - show menu and handle user selection loop until exit chosen
-    __pre true
+    __prepare true
     clear
 
     # Initialize dynamic preview content for fzf menus using glow command
@@ -1257,7 +1322,7 @@ __main_interactive_mode() {
     _user_choice=$(< "$_choice_file")
 
     # Remove temporary choice file after reading user choice to avoid stale data on next menu display
-    rm -f "$_choice_file"
+    rm -f "$_choice_file" 2>&1 || true
 
     # Handle user choice from menu using case statement and call corresponding prompt functions
     case $_user_choice in
@@ -1293,8 +1358,10 @@ __main_interactive_mode() {
             ;;
         Clean)
             # Clean temporary files and restart script to refresh state and menu options
-            __msg "${_orange}${_line}${_break} 🧹 Cleaning temporary files...${_break} 🔁 Restarting...${_break}${_line}${_reset}"      
-            __pre >/dev/null 2>&1 || true
+            __msg "${_break}${_orange}${_line}"
+            __msg_info "Cleaning temporary files...${_break}Restarting..."
+            __msg "${_orange}${_line}${_break}"
+            __prepare >/dev/null 2>&1 || true
             rm -f "$_lock_file" 2>&1 || true
             sleep 1
             clear
@@ -1302,7 +1369,10 @@ __main_interactive_mode() {
             ;;
         Exit)
             # Exit the script gracefully with cleanup messages
-            __msg "${_orange}${_line}${_break} 👋 Exit TKG-Installer...${_break}${_line}${_reset}"
+            __msg "${_break}${_green}${_line}"
+            __msg_success "Exit TKG-Installer..."
+            __msg_success "Cleaning temporary files..."
+            __msg "${_green}${_line}${_break}"
             sleep 1
             clear
             exit 0

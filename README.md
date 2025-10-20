@@ -14,11 +14,10 @@
 
 ---
 
-###### Why this?
 
 ###### This script is intended to simplify the installation and configuration of the powerful TKG packages.
 
-###### What really stands out are the many customization options of the TKG packages. With flexible configuration and powerful adjustment features, the packages can be tailored precisely to different systems and personal needs. This versatility has made them an indispensable part of my daily routine for a long time. 
+###### With flexible configuration and powerful adjustment features, the packages can be tailored precisely to different systems and personal needs. This versatility has made them an indispensable part of my daily routine for a long time. 
 
 ###### I've been using this script successfully for quite a while—maybe it will help you too!
 
@@ -85,20 +84,20 @@
    tkginstaller
    ```
 
-- Dependencies:
+#### Dependencies
+-  Command-line mode need only:
 > - **`git`**: For cloning the TKG repositories.
 
-- Optional for interactive `fzf`-menu (Recommended):
-
+- Interactive `fzf`-menu mode need:
 > - **`bat`**: For syntax highlighting.
 > - **`curl`**: Used to fetch configuration and markdown files.
 > - **`fzf`**: Powers the interactive menu.
 > - **`glow`**: For preview markdown files in the terminal.
-> - **`onefetch`**: To display Git repository information. (Optional)
+> - **`onefetch`**: To display Git repository information.
 
-- Optional for editor-menu (Recommended):
+- Editor-menu mode needs: 
 
-> - **`nano`, `vim`, `micro`, etc.** A text editor: For editing configuration files.
+> - **`nano`, `vim`, `micro`, etc.**
 > - The script uses the `$EDITOR` environment variable. If not set, it falls back to `nano`.
 
 ---
