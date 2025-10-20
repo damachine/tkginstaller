@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.14.5"
+_tkg_version="v0.14.6"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -868,7 +868,9 @@ __edit_config() {
 
         # Handle cancelled selection (ESC key) or empty choice to exit editor menu gracefully
         if [[ -z "$_config_choice" ]]; then
-            __msg_info "Exit editor menu..."
+            __msg "${_break}${_green}${_line}"
+            __msg_success "Returning to main menu..."
+            __msg "${_green}${_line}${_break}"
             sleep 1
             clear
             return 0
