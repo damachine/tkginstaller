@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.15.4"
+_tkg_version="v0.15.5"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -116,7 +116,7 @@ __msg_success() {
     ${_print} "${_green}$*${_reset}"
 }
 
-# Print info message in green
+# Print info message in orange
 __msg_info() {
     ${_print} "${_orange}$*${_reset}"
 }
@@ -629,7 +629,12 @@ __install_package() {
     # Navigate to the correct directory (assume it's the cloned repo name)
     local _repo_dir
     _repo_dir=$(basename "${_repo_url}" .git)
-    cd "${_repo_dir}" > /dev/null 2>&1 || return 1
+    cd "${_repo_dir}" > /dev/null 2>&1 || {
+        __msg "${_break}${_red}${_line}"
+        __msg_error "Cloned repository directory not found: ${_repo_dir}"
+        __msg "${_red}${_line}${_break}"
+        return 1
+    }
 
     # Navigate to working directory if specified (for proton-tkg)
     if [[ -n "${_work_directory}" ]]; then
@@ -641,16 +646,13 @@ __install_package() {
         }
     fi
 
-    # Fetch git repository information if available (using onefetch if installed)
-    if command -v onefetch >/dev/null 2>&1; then
-        # Display git repository information using onefetch tool
-        onefetch --no-title --no-bold --no-art --http-url --email --number-of-authors 6 --text-colors 15 3 15 3 15 11 || true
-    fi
+    # Fetch git repository information if available (using onefetch tool)
+    onefetch --no-title --no-bold --no-art --http-url --email --number-of-authors 6 --text-colors 15 3 15 3 15 11 || true
+    sleep 1.5s # Short delay for better UX (( :P ))
 
     # Build and install the package using the provided build command
     __msg_info "${_line}"
     __msg_info "Cloning, building and installing $_package_name for $_distro_name, this may take a while..."
-    __msg_info "Tip: Adjust your external configuration to skip prompted options during build!"
     __msg_info "${_line}"
     eval "$_build_command" || {
         __msg "${_break}${_red}${_line}"
@@ -662,8 +664,19 @@ __install_package() {
 
 # Linux-TKG installation
 __linux_install() {
-    # Determine build command based on distribution
-    # Arch-based distributions use makepkg, others use install.sh
+    # Inform user about external configuration usage for Linux-TKG build options customization
+    __msg_info "${_line}"
+    __msg_info "Tip: You can create an external configuration file to skip prompted options during build!"
+    __msg_info "     Create or edit the configuration file to customize Linux-TKG build options automatically."
+    __msg_info "     Many options are available to tailor the kernel to your needs."
+    __msg_info "     You can download all missing configuration files from the menu or run 'tkginstaller linux config'."
+    __msg_info "     The installer will only download the configuration files if they are missing."
+    __msg_info "     Refer to the customization.cfg documentation for detailed configuration options.${_break}"
+    __msg_info "     Location:${_reset}  ${_config_dir}/linux-tkg.cfg"
+    __msg_info "     More info:${_reset} ${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
+    __msg_info "${_line}"
+
+    # Determine build command based on distribution. Arch-based distributions use makepkg, others use install.sh
     local _build_command # Build command variable
 
     # Determine build command based on distribution
@@ -677,20 +690,59 @@ __linux_install() {
 
     # Execute installation process
     __install_package "${_frog_repo_url}/linux-tkg.git" "linux-tkg" "$_build_command"
+
+    # Installation status message display
+    __done $?
 }
 
 # Nvidia-TKG installation
 __nvidia_install() {
+    # Inform user about external configuration usage for Nvidia-TKG build options customization
+    __msg_info "${_line}"
+    __msg_info "Tip: You can create an external configuration file to skip prompted options during build!"
+    __msg_info "     Create or edit the configuration file to customize Nvidia-TKG build options automatically."
+    __msg_info "     You can download all missing configuration files from the menu or run 'tkginstaller nvidia config'."
+    __msg_info "     The installer will only download the configuration files if they are missing."
+    __msg_info "     Refer to the customization.cfg documentation for detailed configuration options.${_break}"
+    __msg_info "     Location:${_reset}  ${_config_dir}/nvidia-all.cfg"
+    __msg_info "     More info:${_reset} ${_frog_repo_url}/nvidia-all/blob/master/customization.cfg"
+    __msg_info "${_line}"
+
+    # Execute installation process for Nvidia-TKG
     __install_package "${_frog_repo_url}/nvidia-all.git" "nvidia-all" "makepkg -si"
 }
 
 # Mesa-TKG installation
 __mesa_install() {
+    # Inform user about external configuration usage for Mesa-TKG build options customization
+    __msg_info "${_line}"
+    __msg_info "Tip: You can create an external configuration file to skip prompted options during build!"
+    __msg_info "     Create or edit the configuration file to customize Mesa-TKG build options automatically."
+    __msg_info "     You can download all missing configuration files from the menu or run 'tkginstaller mesa config'."
+    __msg_info "     The installer will only download the configuration files if they are missing."
+    __msg_info "     Refer to the customization.cfg documentation for detailed configuration options.${_break}"
+    __msg_info "     Location:${_reset}  ${_config_dir}/mesa-git.cfg"
+    __msg_info "     More info:${_reset} ${_frog_repo_url}/mesa-git/blob/master/customization.cfg"
+    __msg_info "${_line}"
+
+    # Execute installation process for Mesa-TKG
     __install_package "${_frog_repo_url}/mesa-git.git" "mesa-git" "makepkg -si"
 }
 
 # Wine-TKG installation
 __wine_install() {
+    # Inform user about external configuration usage for Wine-TKG build options customization
+    __msg_info "${_line}"
+    __msg_info "Tip: You can create an external configuration file to skip prompted options during build!"
+    __msg_info "     Create or edit the configuration file to customize Wine-TKG build options automatically."
+    __msg_info "     Many options are available to tailor the Wine experience to your needs."
+    __msg_info "     You can download all missing configuration files from the menu or run 'tkginstaller wine config'."
+    __msg_info "     The installer will only download the configuration files if they are missing."
+    __msg_info "     Refer to the customization.cfg documentation for detailed configuration options.${_break}"
+    __msg_info "     Location:${_reset}  ${_config_dir}/wine-tkg.cfg"
+    __msg_info "     More info:${_reset} ${_frog_repo_url}/wine-tkg/blob/master/customization.cfg"
+    __msg_info "${_line}"
+
     # Determine build command based on distribution
     local _build_command
 
@@ -709,6 +761,18 @@ __wine_install() {
 
 # Proton-TKG installation
 __proton_install() {
+    # Inform user about external configuration usage for Proton-TKG build options customization
+    __msg_info "${_line}"
+    __msg_info "Tip: You can create an external configuration file to skip prompted options during build!"
+    __msg_info "     Create or edit the configuration file to customize Proton-TKG build options automatically."
+    __msg_info "     Many options are available to tailor the Proton gaming experience to your needs."
+    __msg_info "     You can download all missing configuration files from the menu or run 'tkginstaller proton config'."
+    __msg_info "     The installer will only download the configuration files if they are missing."
+    __msg_info "     Refer to the customization.cfg documentation for detailed configuration options.${_break}"
+    __msg_info "     Location:${_reset}  ${_config_dir}/proton-tkg.cfg"
+    __msg_info "     More info:${_reset} ${_frog_repo_url}/proton-tkg/blob/master/customization.cfg"
+    __msg_info "${_line}"
+
     # Determine build command for proton-tkg
     local _build_command="./proton-tkg.sh" # Build command for proton-tkg
     local _clean_command="./proton-tkg.sh clean" # Clean command for proton-tkg
@@ -1089,45 +1153,6 @@ __handle_config() {
 }
 
 # =============================================================================
-# PROMPT MENU FUNCTIONS
-# =============================================================================
-
-# Linux-TKG installation prompt
-__linux_prompt() {
-    __linux_install
-    __done $?
-}
-
-# Nvidia-TKG installation prompt
-__nvidia_prompt() {
-    __nvidia_install
-    __done $?
-}
-
-# Mesa-TKG installation prompt
-__mesa_prompt() {
-    __mesa_install
-    __done $?
-}
-
-# Wine-TKG installation prompt
-__wine_prompt() {
-    __wine_install
-    __done $?
-}
-
-# Proton-TKG installation prompt
-__proton_prompt() {
-    __proton_install
-    __done $?
-}
-
-# Configuration editor prompt
-__config_prompt() {
-    __edit_config || true
-}
-
-# =============================================================================
 # FZF MAIN MENU FUNCTIONS
 # =============================================================================
 
@@ -1298,28 +1323,23 @@ __main_direct_mode() {
     case "$_arg1" in
         linux|l|--linux|-l)
             __prepare
-            __linux_prompt
-            exit 0
+            __linux_install
             ;;
         nvidia|n|--nvidia|-n)
             __prepare
-            __nvidia_prompt
-            exit 0
+            __nvidia_install
             ;;
         mesa|m|--mesa|-m)
             __prepare
-            __mesa_prompt
-            exit 0
+            __mesa_install
             ;;
         wine|w|--wine|-w)
             __prepare
-            __wine_prompt
-            exit 0
+            __wine_install
             ;;
         proton|p|--proton|-p)
             __prepare
-            __proton_prompt
-            exit 0
+            __proton_install
             ;;
         clean|--clean)
             # Clean temporary files and restart script
@@ -1370,22 +1390,22 @@ __main_interactive_mode() {
     # Handle user choice from menu using case statement and call corresponding prompt functions
     case $_user_choice in
         Linux)
-            __linux_prompt
+            __linux_install
             ;;
         Nvidia)
-            __nvidia_prompt
+            __nvidia_install
             ;;
         Mesa)
-            __mesa_prompt
+            __mesa_install
             ;;
         Wine)
-            __wine_prompt
+            __wine_install
             ;;
         Proton)
-            __proton_prompt
+            __proton_install
             ;;
         Config)
-            __config_prompt
+            __edit_config || true
             # Remove temporary choice file and restart script after editing config file to refresh state and menu options
             rm -f "$_lock_file"
             # Restart the script after editing config file to refresh state and menu options
