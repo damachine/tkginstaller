@@ -17,7 +17,7 @@
 
 ###### This script is intended to simplify the installation and configuration of the powerful TKG packages.
 
-###### With flexible configuration and powerful adjustment features, the packages can be tailored precisely to different systems and personal needs. This versatility has made them an indispensable part of my daily routine for a long time. 
+###### With flexible configuration and powerful adjustment features, the TKG packages can be tailored precisely to different systems and personal needs. This versatility has made them an indispensable part of my daily routine for a long time. 
 
 ###### I've been using this script successfully for quite a while—maybe it will help you too!
 
@@ -26,8 +26,10 @@
 ## Features
 
 - **Dual Mode Operation**: Use either an interactive `fzf`-menu or fast direct `command-line` mode.
-- **Advanced Package Configuration**: Easily create/edit customize builds with external config files.
+- **Advanced Package Configuration**: This script can create external configuration files for all TKG packages and tools supporting the feature.
 - **Multi-Distro Support**: Works seamlessly on Arch-based systems and most other Linux distributions support by the Frogging-Family.
+
+![TKG-Installer Demo](https://github.com/damachine/tkginstaller/raw/master/images/tkginstaller.webm)
 
 ---
 
@@ -87,6 +89,7 @@
 #### Dependencies
 -  Command-line mode need only:
 > - **`git`**: For cloning the TKG repositories.
+> - **`onefetch`**: To display Git repository information like fastfetch.
 
 - Interactive `fzf`-menu and Editor mode need:
 > - **`bat`**: For syntax highlighting.
@@ -94,7 +97,6 @@
 > - **`fzf`**: Powers the interactive menu.
 > - **`glow`**: For preview markdown files in the terminal.
 > - **`nano`, `micro`, `vim`, etc.** The script uses the `$EDITOR` environment variable.
-> - **`onefetch`**: To display Git repository information like fastfetch.
 
 #### Individual TKG packages have their own dependencies: [https://github.com/Frogging-Family](https://github.com/Frogging-Family)
 
