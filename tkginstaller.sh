@@ -261,10 +261,10 @@ __prepare() {
     __msg_info "Preparation..."
 
     # Check required dependencies based on mode (interactive/direct)
-    local _dep=(git)
+    local _dep=(git onefetch)
     if [[ "$_load_preview" == "true" ]]; then
         # Add optional dependencies for interactive mode
-        _dep+=(bat curl glow fzf onefetch)
+        _dep+=(bat curl glow fzf)
     fi
 
     # Define package names per distro for missing dependencies installation mapping
