@@ -17,7 +17,7 @@
 
 ###### This script is intended to simplify the installation and configuration of the powerful TKG packages.
 
-###### With flexible configuration and powerful adjustment features, the packages can be tailored precisely to different systems and personal needs. This versatility has made them an indispensable part of my daily routine for a long time. 
+###### With flexible configuration and powerful adjustment features, the TKG packages can be tailored precisely to different systems and personal needs. This versatility has made them an indispensable part of my daily routine for a long time. 
 
 ###### I've been using this script successfully for quite a while—maybe it will help you too!
 
