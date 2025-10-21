@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.15.5"
+_tkg_version="v0.15.6"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -710,6 +710,9 @@ __nvidia_install() {
 
     # Execute installation process for Nvidia-TKG
     __install_package "${_frog_repo_url}/nvidia-all.git" "nvidia-all" "makepkg -si"
+
+    # Installation status message display
+    __done $?
 }
 
 # Mesa-TKG installation
@@ -727,6 +730,9 @@ __mesa_install() {
 
     # Execute installation process for Mesa-TKG
     __install_package "${_frog_repo_url}/mesa-git.git" "mesa-git" "makepkg -si"
+
+    # Installation status message display
+    __done $?
 }
 
 # Wine-TKG installation
@@ -757,6 +763,9 @@ __wine_install() {
 
     # Set appropriate build command for installation process
     __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "wine-tkg-git"
+
+    # Installation status message display
+    __done $?
 }
 
 # Proton-TKG installation
@@ -775,6 +784,11 @@ __proton_install() {
 
     # Determine build command for proton-tkg
     local _build_command="./proton-tkg.sh" # Build command for proton-tkg
+
+    # Installation status message display
+    __done $?
+
+    # Determine clean command for proton-tkg (after build process)
     local _clean_command="./proton-tkg.sh clean" # Clean command for proton-tkg
 
     # Build and install and ask for cleaning after build process
