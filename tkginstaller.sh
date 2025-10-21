@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.15.3"
+_tkg_version="v0.15.4"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -143,7 +143,7 @@ if [[ "$(id -u)" -eq 0 ]]; then
     __msg "${_red}         This is not recommended for security reasons."
     __msg ""
     # Ask for user confirmation to continue as root
-    echo -en "${_blue} Do you really want to continue as root? [y/N]: ${_reset}"
+    echo -en " Do you really want to continue as root? [y/N]: ${_reset}"
     read -r _user_answer
     if [[ ! "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
         __msg ""
@@ -216,7 +216,7 @@ if [[ -f "$_lock_file" ]]; then
             __msg_warning "Script is already running (PID: $_old_pid). Exiting...${_break}"
             __msg_info2 "If the script was unexpectedly terminated before."
             __msg_info "      Remove $_lock_file manually run:${_break}"
-            __msg "${_blue}      tkginstaller clean${_break}"
+            __msg "$      tkginstaller clean${_break}"
             __msg_info "${_line}${_break}"
             exit 1
         else
@@ -226,7 +226,7 @@ if [[ -f "$_lock_file" ]]; then
                 __msg_warning "Script is already running (PID: $_old_pid). Exiting...${_break}"
                 __msg_info2 "If the script was unexpectedly terminated before."
                 __msg_info "      Remove $_lock_file manually run:${_break}"
-                __msg "${_blue}      tkginstaller clean${_break}"
+                __msg "      tkginstaller clean${_break}"
                 __msg_info "${_line}${_break}"
                 exit 1
             }
@@ -716,7 +716,7 @@ __proton_install() {
     # Build and install and ask for cleaning after build process
     if __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"; then
         # Ask user if clean command should be executed after build
-        echo -en "${_blue}Do you want to run './proton-tkg.sh clean' after building Proton-TKG? [y/N]: ${_reset}"
+        echo -en "Do you want to run './proton-tkg.sh clean' after building Proton-TKG? [y/N]: ${_reset}"
         read -r _user_answer
         if [[ "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
             if __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_clean_command" "proton-tkg"; then
@@ -766,7 +766,7 @@ __editor() {
         else
             __msg "${_break}${_red}${_line}"
             __msg_error "No editor found: Please set \$EDITOR environment or install 'nano', 'micro', or 'vim' as fallback."
-            echo -en "${_blue} Press any key to continue...${_reset}"
+            echo -en " Press any key to continue...${_reset}"
             read -n 1 -s -r -p "" # Wait for user input before exiting
             __msg "${_red}${_line}${_break}"
             return 1
@@ -794,9 +794,9 @@ __edit_config() {
     if [[ ! -d "${_config_dir}" ]]; then
             __msg_info "${_break}${_line}"
             __msg_warning "Configuration directory not found."
-            __msg "${_blue}           Folder path: ${_config_dir}"
+            __msg "${_blue}           Folder path:${_reset} ${_config_dir}"
             __msg_info "${_line}${_break}"
-            echo -en "${_blue} Do you want to create the configuration directory? [y/N]: ${_reset}"
+            echo -en " Do you want to create the configuration directory? [y/N]: ${_reset}"
             read -r _user_answer
             # Handle user response for directory creation prompt with case statement
             if [[ -z "$_user_answer" ]]; then
@@ -809,7 +809,7 @@ __edit_config() {
                         __msg "${_break}${_red}${_line}"
                         __msg_error "Creating configuration directory failed: ${_config_dir}"
                         __msg "${_red}${_line}${_break}"
-                        echo -en "${_blue} Press any key to continue...${_reset}"
+                        echo -en " Press any key to continue...${_reset}"
                         read -n 1 -s -r -p "" # Wait for user input before exiting
                         clear
                         return 1
@@ -823,7 +823,7 @@ __edit_config() {
                     __msg_info "${_break}${_line}"
                     __msg_info "Directory creation cancelled.${_break}Return to Main menu..."
                     __msg_info "${_line}${_break}"
-                    echo -en "${_blue} Press any key to continue...${_reset}"
+                    echo -en " Press any key to continue...${_reset}"
                     read -n 1 -s -r -p "" # Wait for user input before exiting
                     clear
                     return 0
@@ -859,7 +859,7 @@ __edit_config() {
     _menu_content=$(printf '%s\n' "${_menu_options[@]}")
 
         # Define common error message for preview when config file is missing
-    local _error_config_not_exist="${_red}${_line}${_break} ❌ ERROR: No external configuration file found.${_break}${_break}${_reset} ⚠️ This configuration file is required for customizing TKG builds and options.${_break} ℹ️ You can download the default file now, or create your own later.${_break}${_break}${_blue}    Click the selected option to ask for downloading the missing file.${_break}${_red}${_line}${_reset}"
+    local _error_config_not_exist="${_red}${_line}${_break} ❌ ERROR: No external configuration file found.${_break}${_break}${_reset} ⚠️ This configuration file is required for customizing TKG builds and options.${_break} ℹ️ You can download the default file now, or create your own later.${_break}${_break}    Click the selected option to ask for downloading the missing file.${_break}${_red}${_line}${_reset}"
 
         # Define a reusable bat command for the preview window
     local _bat_cmd="bat --style=numbers --language=bash --wrap character --highlight-line 1 --force-colorization"
@@ -996,7 +996,7 @@ __handle_config() {
             __msg "${_break}${_red}${_line}"
             __msg_error "Opening external configuration failed: ${_config_path}"
             __msg "${_red}${_line}${_break}"
-            echo -en "${_blue} Press any key to continue...${_reset}"
+            echo -en " Press any key to continue...${_reset}"
             read -n 1 -s -r -p "" # Wait for user input before exiting
             clear
             return 1
@@ -1005,11 +1005,11 @@ __handle_config() {
         # Download and create new configuration file if it does not exist
     __msg_info "${_break}${_line}"
     __msg_warning "External configuration file does not exist."
-    __msg "${_blue}         Save path: ${_config_path}"
-    __msg "${_blue}         Download link: ${_config_url}"
+    __msg "${_blue}         Save path:${_reset} ${_config_path}"
+    __msg "${_blue}         Download link:${_reset} ${_config_url}"
     __msg_info "${_line}${_break}"
         # Prompt user for download confirmation
-        echo -en "${_blue} Do you want to download the default configuration? [y/N]: ${_reset}"
+        echo -en " Do you want to download the default configuration? [y/N]: ${_reset}"
         read -r _user_answer
         if [[ -z "${_user_answer}" ]]; then
             _user_answer="n" # Default to 'no' if no input provided
@@ -1023,14 +1023,14 @@ __handle_config() {
                     __msg "${_break}${_red}${_line}"
                     __msg_error "Creating configuration directory failed: ${_config_path}"
                     __msg "${_red}${_line}${_break}"
-                    echo -en "${_blue} Press any key to continue...${_reset}"
+                    echo -en " Press any key to continue...${_reset}"
                     read -n 1 -s -r -p "" # Wait for user input before exiting
                     clear
                     return 1
                 }
                 if ! command -v curl >/dev/null 2>&1; then
                     __msg_error "curl is not installed. Please install curl to download configuration files."
-                    echo -en "${_blue} Press any key to continue...${_reset}"
+                    echo -en " Press any key to continue...${_reset}"
                     read -n 1 -s -r -p ""
                     clear
                     return 1
@@ -1046,7 +1046,7 @@ __handle_config() {
                         __msg "${_break}${_red}${_line}"
                         __msg_error "Opening external configuration ${_config_path} failed!"
                         __msg "${_red}${_line}${_break}"
-                        echo -en "${_blue} Press any key to continue...${_reset}"
+                        echo -en " Press any key to continue...${_reset}"
                         read -n 1 -s -r -p "" # Wait for user input before exiting
                         clear
                         return 1
@@ -1056,7 +1056,7 @@ __handle_config() {
                     __msg "${_break}${_red}${_line}"
                     __msg_error "Downloading external configuration from ${_config_url} failed!"
                     __msg "${_red}${_line}${_break}"
-                    echo -en "${_blue} Press any key to continue...${_reset}"
+                    echo -en " Press any key to continue...${_reset}"
                     read -n 1 -s -r -p "" # Wait for user input before exiting
                     clear
                     return 1
@@ -1067,7 +1067,7 @@ __handle_config() {
                 __msg_info "${_break}${_line}"
                 __msg_info "Download cancelled. No configuration file created.${_break}Return to Mainmenu..."
                 __msg_info "${_line}${_break}"
-                echo -en "${_blue} Press any key to continue...${_reset}"
+                echo -en " Press any key to continue...${_reset}"
                 read -n 1 -s -r -p "" # Wait for user input before exiting
                 clear
                 return 1
