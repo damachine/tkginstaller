@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.15.2"
+_tkg_version="v0.15.3"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -1028,6 +1028,13 @@ __handle_config() {
                     clear
                     return 1
                 }
+                if ! command -v curl >/dev/null 2>&1; then
+                    __msg_error "curl is not installed. Please install curl to download configuration files."
+                    echo -en "${_blue} Press any key to continue...${_reset}"
+                    read -n 1 -s -r -p ""
+                    clear
+                    return 1
+                fi
                 if curl -fsSL "${_config_url}" -o "${_config_path}" 2>/dev/null; then
                     __msg_success "${_break}${_line}"
                     __msg_success "External configuration ready at ${_config_path}"
