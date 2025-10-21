@@ -26,7 +26,7 @@
 ## Features
 
 - **Dual Mode Operation**: Use either an interactive `fzf`-menu or fast direct `command-line` mode.
-- **Advanced Package Configuration**: Easily create/edit customize builds with external config files.
+- **Advanced Package Configuration**: ## This script can create external configuration files for all TKG packages and tools supporting the feature.
 - **Multi-Distro Support**: Works seamlessly on Arch-based systems and most other Linux distributions support by the Frogging-Family.
 
 ![TKG-Installer Demo](https://github.com/damachine/tkginstaller/raw/master/images/tkginstaller.webm)
