@@ -89,6 +89,7 @@
 #### Dependencies
 -  Command-line mode need only:
 > - **`git`**: For cloning the TKG repositories.
+> - **`onefetch`**: To display Git repository information like fastfetch.
 
 - Interactive `fzf`-menu and Editor mode need:
 > - **`bat`**: For syntax highlighting.
@@ -96,7 +97,6 @@
 > - **`fzf`**: Powers the interactive menu.
 > - **`glow`**: For preview markdown files in the terminal.
 > - **`nano`, `micro`, `vim`, etc.** The script uses the `$EDITOR` environment variable.
-> - **`onefetch`**: To display Git repository information like fastfetch.
 
 #### Individual TKG packages have their own dependencies: [https://github.com/Frogging-Family](https://github.com/Frogging-Family)
 
