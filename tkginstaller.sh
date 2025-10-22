@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.15.8"
+_tkg_version="v0.15.9"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -82,6 +82,7 @@ __init_globals() {
 # Initialize color and formatting definitions for output messages and prompts
 __init_style() {
     _print=$"printf %b\n" # Print formatted strings with escape sequences like \n, \033, etc.
+    _echo=$"echo -en" # Echo without newline and interpret escape sequences
     _break=$'\n' # Line break
     _reset=$'\033[0m' # Reset color/formatting
     _red=$'\033[0;31m' # Red color
@@ -141,6 +142,11 @@ __msg_error() {
     ${_print} "${_red}ERROR: $*${_reset}"
 }
 
+# Input prompt message
+__msg_prompt() {
+    ${_echo} "$*"
+}
+
 # Check for root execution and warn the user (if running as root)
 if [[ "$(id -u)" -eq 0 ]]; then
     __msg "${_break}${_orange}${_line}"
@@ -148,7 +154,7 @@ if [[ "$(id -u)" -eq 0 ]]; then
     __msg "${_red}         This is not recommended for security reasons."
     __msg ""
     # Ask for user confirmation to continue as root
-    echo -en " Do you really want to continue as root? [y/N]: ${_reset}"
+    __msg_prompt " Do you really want to continue as root? [y/N]: ${_reset}"
     read -r _user_answer
     if [[ ! "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
         __msg ""
@@ -678,7 +684,7 @@ __linux_install() {
     __msg "      The installer will only download the configuration files if they are missing."
     __msg "      Refer to the customization.cfg documentation for detailed configuration options.${_break}"
     __msg "      Location:  ${_config_dir}/linux-tkg.cfg"
-    __msg "      More info: ${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
+    __msg "      Download: ${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
     __msg_info "${_line}"
 
     # Determine build command based on distribution. Arch-based distributions use makepkg, others use install.sh
@@ -710,7 +716,7 @@ __nvidia_install() {
     __msg "      The installer will only download the configuration files if they are missing."
     __msg "      Refer to the customization.cfg documentation for detailed configuration options.${_break}"
     __msg "      Location:  ${_config_dir}/nvidia-all.cfg"
-    __msg "      More info: ${_frog_repo_url}/nvidia-all/blob/master/customization.cfg"
+    __msg "      Download: ${_frog_repo_url}/nvidia-all/blob/master/customization.cfg"
     __msg_info "${_line}"
 
     # Execute installation process for Nvidia-TKG
@@ -730,7 +736,7 @@ __mesa_install() {
     __msg "      The installer will only download the configuration files if they are missing."
     __msg "      Refer to the customization.cfg documentation for detailed configuration options.${_break}"
     __msg "      Location: ${_config_dir}/mesa-git.cfg"
-    __msg "      More info: ${_frog_repo_url}/mesa-git/blob/master/customization.cfg"
+    __msg "      Download: ${_frog_repo_url}/mesa-git/blob/master/customization.cfg"
     __msg_info "${_line}"
 
     # Execute installation process for Mesa-TKG
@@ -751,7 +757,7 @@ __wine_install() {
     __msg "      The installer will only download the configuration files if they are missing."
     __msg "      Refer to the customization.cfg documentation for detailed configuration options.${_break}"
     __msg "      Location:  ${_config_dir}/wine-tkg.cfg"
-    __msg "      More info: ${_frog_repo_url}/wine-tkg/blob/master/customization.cfg"
+    __msg "      Download: ${_frog_repo_url}/wine-tkg/blob/master/customization.cfg"
     __msg_info "${_line}"
 
     # Determine build command based on distribution
@@ -763,8 +769,7 @@ __wine_install() {
         __msg_info "${_break} Choice: Which build system do you want to use?${_break}         Detected distribution:${_reset} ${_distro_name}${_break}"
         __msg "    1) makepkg -si (recommended for Arch-based distros)"
         __msg "    2) ./non-makepkg-build.sh (use if you want a custom build script)${_break}"
-        __msg "    Select [1/2]: "
-        # Read user input for build system choice
+        __msg_prompt "    Select [1/2] (default: 1): ${_reset}"
         read -r _user_answer
         _user_answer=${_user_answer:-1} # Default to option 1 if no input provided
         case "$_user_answer" in
@@ -798,7 +803,7 @@ __proton_install() {
     __msg "     The installer will only download the configuration files if they are missing."
     __msg "     Refer to the customization.cfg documentation for detailed configuration options.${_break}"
     __msg "     Location:${_reset}  ${_config_dir}/proton-tkg.cfg"
-    __msg "     More info:${_reset} ${_frog_repo_url}/proton-tkg/blob/master/customization.cfg"
+    __msg "     Download:${_reset} ${_frog_repo_url}/proton-tkg/blob/master/customization.cfg"
     __msg_info "${_line}"
 
     # Determine build command for proton-tkg
@@ -813,7 +818,7 @@ __proton_install() {
     # Build and install and ask for cleaning after build process
     if __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"; then
         # Ask user if clean command should be executed after build
-        echo -en "Do you want to run './proton-tkg.sh clean' after building Proton-TKG? [y/N]: ${_reset}"
+        __msg_prompt "Do you want to run './proton-tkg.sh clean' after building Proton-TKG? [y/N]: ${_reset}"
         read -r _user_answer
         if [[ "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
             if __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_clean_command" "proton-tkg"; then
@@ -863,7 +868,7 @@ __editor() {
         else
             __msg "${_break}${_red}${_line}"
             __msg_error "No editor found: Please set \$EDITOR environment or install 'nano', 'micro', or 'vim' as fallback."
-            echo -en " Press any key to continue...${_reset}"
+            __msg_prompt " Press any key to continue...${_reset}"
             read -n 1 -s -r -p "" # Wait for user input before exiting
             __msg "${_red}${_line}${_break}"
             return 1
@@ -892,9 +897,10 @@ __edit_config() {
         if [[ ! -d "${_config_dir}" ]]; then
             __msg_info "${_break}${_line}"
             __msg_warning "Configuration directory not found."
-            __msg "${_blue}           Folder path:${_reset} ${_config_dir}"
+            __msg_info "         You can create the configuration directory to store external configuration files for TKG builds.${_break}"
+            __msg "         Location:${_reset} ${_config_dir}"
             __msg_info "${_line}${_break}"
-            echo -en " Do you want to create the configuration directory? [y/N]: ${_reset}"
+            __msg_prompt " Do you want to create the configuration directory? [y/N]: ${_reset}"
             read -r _user_answer
             # Handle user response for directory creation prompt with case statement
             if [[ -z "$_user_answer" ]]; then
@@ -907,7 +913,7 @@ __edit_config() {
                         __msg "${_break}${_red}${_line}"
                         __msg_error "Creating configuration directory failed: ${_config_dir}"
                         __msg "${_red}${_line}${_break}"
-                        echo -en " Press any key to continue...${_reset}"
+                        __msg_prompt " Press any key to continue...${_reset}"
                         read -n 1 -s -r -p "" # Wait for user input before exiting
                         clear
                         return 1
@@ -921,7 +927,7 @@ __edit_config() {
                     __msg_info "${_break}${_line}"
                     __msg_info "Directory creation cancelled.${_break}Return to Main menu..."
                     __msg_info "${_line}${_break}"
-                    echo -en " Press any key to continue...${_reset}"
+                    __msg_prompt " Press any key to continue...${_reset}"
                     read -n 1 -s -r -p "" # Wait for user input before exiting
                     clear
                     return 0
@@ -934,21 +940,21 @@ __edit_config() {
 
         # Function to handle configuration file editing and downloading if missing
         local _menu_options=(
-            "linux-tkg  |🐧 Linux   ─  ${_orange}linux-tkg.cfg${_reset} - Customize to your needs"
+            "linux-tkg  |🐧 Linux   ─  ${_orange}linux-tkg.cfg${_reset}   -  Customize to your needs"
         )
 
         # Only show Nvidia and Mesa config if Arch-based distro is detected
         if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
             _menu_options+=(
-                "nvidia-all |💻 Nvidia  ─  ${_orange}nvidia-all.cfg${_reset} - Customize to your needs"
-                "mesa-git   |🧩 Mesa    ─  ${_orange}mesa-git.cfg${_reset} - Customize to your needs"
+                "nvidia-all |💻 Nvidia  ─  ${_orange}nvidia-all.cfg${_reset}  -  Customize to your needs"
+                "mesa-git   |🧩 Mesa    ─  ${_orange}mesa-git.cfg${_reset}    -  Customize to your needs"
             )
         fi
 
         # Always show Wine and Proton config options
         _menu_options+=(
-            "wine-tkg   |🍷 Wine    ─  ${_orange}wine-tkg.cfg${_reset} - Customize to your needs"
-            "proton-tkg |🎮 Proton  ─  ${_orange}proton-tkg.cfg${_reset} - Customize to your needs"
+            "wine-tkg   |🍷 Wine    ─  ${_orange}wine-tkg.cfg${_reset}    -  Customize to your needs"
+            "proton-tkg |🎮 Proton  ─  ${_orange}proton-tkg.cfg${_reset}  -  Customize to your needs"
             "return     |⏪ Return"
         )
 
@@ -1094,7 +1100,7 @@ __handle_config() {
             __msg "${_break}${_red}${_line}"
             __msg_error "Opening external configuration failed: ${_config_path}"
             __msg "${_red}${_line}${_break}"
-            echo -en " Press any key to continue...${_reset}"
+            __msg_prompt " Press any key to continue...${_reset}"
             read -n 1 -s -r -p "" # Wait for user input before exiting
             clear
             return 1
@@ -1103,11 +1109,12 @@ __handle_config() {
         # Download and create new configuration file if it does not exist
     __msg_info "${_break}${_line}"
     __msg_warning "External configuration file does not exist."
-    __msg "${_blue}         Save path:${_reset} ${_config_path}"
-    __msg "${_blue}         Download link:${_reset} ${_config_url}"
+    __msg_info "         You can download the default configuration file now:${_break}"
+    __msg "         Location:${_reset} ${_config_path}"
+    __msg "         Download:${_reset} ${_config_url}"
     __msg_info "${_line}${_break}"
         # Prompt user for download confirmation
-        echo -en " Do you want to download the default configuration? [y/N]: ${_reset}"
+        __msg_prompt " Do you want to download the default configuration? [y/N]: ${_reset}"
         read -r _user_answer
         if [[ -z "${_user_answer}" ]]; then
             _user_answer="n" # Default to 'no' if no input provided
@@ -1121,14 +1128,14 @@ __handle_config() {
                     __msg "${_break}${_red}${_line}"
                     __msg_error "Creating configuration directory failed: ${_config_path}"
                     __msg "${_red}${_line}${_break}"
-                    echo -en " Press any key to continue...${_reset}"
+                    __msg_prompt " Press any key to continue...${_reset}"
                     read -n 1 -s -r -p "" # Wait for user input before exiting
                     clear
                     return 1
                 }
                 if ! command -v curl >/dev/null 2>&1; then
                     __msg_error "curl is not installed. Please install curl to download configuration files."
-                    echo -en " Press any key to continue...${_reset}"
+                    __msg_prompt " Press any key to continue...${_reset}"
                     read -n 1 -s -r -p ""
                     clear
                     return 1
@@ -1144,7 +1151,7 @@ __handle_config() {
                         __msg "${_break}${_red}${_line}"
                         __msg_error "Opening external configuration ${_config_path} failed!"
                         __msg "${_red}${_line}${_break}"
-                        echo -en " Press any key to continue...${_reset}"
+                        __msg_prompt " Press any key to continue...${_reset}"
                         read -n 1 -s -r -p "" # Wait for user input before exiting
                         clear
                         return 1
@@ -1154,7 +1161,7 @@ __handle_config() {
                     __msg "${_break}${_red}${_line}"
                     __msg_error "Downloading external configuration from ${_config_url} failed!"
                     __msg "${_red}${_line}${_break}"
-                    echo -en " Press any key to continue...${_reset}"
+                    __msg_prompt " Press any key to continue...${_reset}"
                     read -n 1 -s -r -p "" # Wait for user input before exiting
                     clear
                     return 1
@@ -1165,7 +1172,7 @@ __handle_config() {
                 __msg_info "${_break}${_line}"
                 __msg_info "Download cancelled. No configuration file created.${_break}Return to Mainmenu..."
                 __msg_info "${_line}${_break}"
-                echo -en " Press any key to continue...${_reset}"
+                __msg_prompt " Press any key to continue...${_reset}"
                 read -n 1 -s -r -p "" # Wait for user input before exiting
                 clear
                 return 1
