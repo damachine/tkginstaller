@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.15.7"
+_tkg_version="v0.15.8"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -67,13 +67,13 @@ _lock_file="/tmp/tkginstaller.lock"
 
 # Initialize global variables, paths, and configurations for the script
 __init_globals() {
-    _tmp_dir="${HOME}/.cache/tkginstaller" # Temporary directory for script operations
-    _choice_file="${_tmp_dir}/choice.tmp" # Temporary file to store user choices
-    _config_dir="${HOME}/.config/frogminer" # Configuration directory for Frogminer/TKG packages
-    _tkg_repo_url="https://github.com/damachine/tkginstaller" # TKG-Installer GitHub repository URL
-    _tkg_raw_url="https://raw.githubusercontent.com/damachine/tkginstaller/refs/heads/master/docs" # TKG-Installer raw content URL
-    _frog_repo_url="https://github.com/Frogging-Family" # Frogming-Family GitHub repository URL
-    _frog_raw_url="https://raw.githubusercontent.com/Frogging-Family" # Frogming-Family raw content URL
+    _tmp_dir=${HOME}/.cache/tkginstaller # Temporary directory for script operations
+    _choice_file=${_tmp_dir}/choice.tmp # Temporary file to store user choices
+    _config_dir=${HOME}/.config/frogminer # Configuration directory for Frogminer/TKG packages
+    _tkg_repo_url=https://github.com/damachine/tkginstaller # TKG-Installer GitHub repository URL
+    _tkg_raw_url=https://raw.githubusercontent.com/damachine/tkginstaller/refs/heads/master/docs # TKG-Installer raw content URL
+    _frog_repo_url=https://github.com/Frogging-Family # Frogging-Family GitHub repository URL
+    _frog_raw_url=https://raw.githubusercontent.com/Frogging-Family # Frogging-Family raw content URL
 
     # Export variables for fzf subshells (unset __exit run)
     export _tmp_dir _choice_file _config_dir _tkg_repo_url _tkg_raw_url _frog_repo_url _frog_raw_url
@@ -81,18 +81,23 @@ __init_globals() {
 
 # Initialize color and formatting definitions for output messages and prompts
 __init_style() {
-    _print="printf %b\n" # Print formatted strings with escape sequences like \n, \033, etc.
-    _break="\n" # Line break
-    local _cols # Terminal width in columns
-    _cols=$(tput cols 2>/dev/null || echo 80) # Get terminal width or default to 80
-    local _half_cols=$((_cols / 2)) # Half of the terminal width
-    _line="" # Initialize empty line variable
-    for ((i=0; i<_half_cols; i++)); do _line+="─"; done # Create a line of dashes based on terminal width
-    _reset=$"\033[0m" # Reset color/formatting
-    _red=$"\033[0;31m" # Red color
-    _green=$"\033[0;32m" # Green color
-    _orange=$"\033[0;33m" # Orange color
-    _blue=$"\033[0;34m" # Blue color
+    _print=$"printf %b\n" # Print formatted strings with escape sequences like \n, \033, etc.
+    _break=$'\n' # Line break
+    _reset=$'\033[0m' # Reset color/formatting
+    _red=$'\033[0;31m' # Red color
+    _green=$'\033[0;32m' # Green color
+    _orange=$'\033[0;33m' # Orange color
+    _blue=$'\033[0;34m' # Blue color
+
+    # Calculate terminal width for dynamic line generation (minimum 80, max half terminal width)
+    local _cols
+    _cols=$(tput cols 2>/dev/null || echo 80)
+    local _line_len=$((_cols / 2))
+    if [[ "$_line_len" -lt 80 ]]; then
+        _line_len=80
+    fi
+    _line=""
+    for ((i=0; i<_line_len; i++)); do _line+="─"; done
 
     # Export variables for fzf subshells (unset __exit run)
     export _print _break _line _reset _red _green _orange _blue
@@ -216,7 +221,7 @@ if [[ -f "$_lock_file" ]]; then
             __msg_warning "Script is already running (PID: $_old_pid). Exiting...${_break}"
             __msg_info2 "If the script was unexpectedly terminated before."
             __msg_info "      Remove $_lock_file manually run:${_break}"
-            __msg "$      tkginstaller clean${_break}"
+            __msg "      tkginstaller clean${_break}"
             __msg_info "${_line}${_break}"
             exit 1
         else
@@ -666,14 +671,14 @@ __install_package() {
 __linux_install() {
     # Inform user about external configuration usage for Linux-TKG build options customization
     __msg_info "${_line}"
-    __msg_info "Tip: You can create an external configuration file to skip prompted options during build!"
-    __msg_info "     Create or edit the configuration file to customize Linux-TKG build options automatically."
-    __msg_info "     Many options are available to tailor the kernel to your needs."
-    __msg_info "     You can download all missing configuration files from the menu or run 'tkginstaller linux config'."
-    __msg_info "     The installer will only download the configuration files if they are missing."
-    __msg_info "     Refer to the customization.cfg documentation for detailed configuration options.${_break}"
-    __msg_info "     Location:${_reset}  ${_config_dir}/linux-tkg.cfg"
-    __msg_info "     More info:${_reset} ${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
+    __msg_info " Tip:${_reset} You can create an external configuration file to skip prompted options during build!"
+    __msg "      Create or edit the configuration file to customize Linux-TKG build options automatically."
+    __msg "      Many options are available to tailor the kernel to your needs."
+    __msg "      You can download all missing configuration files from the menu or run 'tkginstaller linux config'."
+    __msg "      The installer will only download the configuration files if they are missing."
+    __msg "      Refer to the customization.cfg documentation for detailed configuration options.${_break}"
+    __msg "      Location:  ${_config_dir}/linux-tkg.cfg"
+    __msg "      More info: ${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
     __msg_info "${_line}"
 
     # Determine build command based on distribution. Arch-based distributions use makepkg, others use install.sh
@@ -699,13 +704,13 @@ __linux_install() {
 __nvidia_install() {
     # Inform user about external configuration usage for Nvidia-TKG build options customization
     __msg_info "${_line}"
-    __msg_info "Tip: You can create an external configuration file to skip prompted options during build!"
-    __msg_info "     Create or edit the configuration file to customize Nvidia-TKG build options automatically."
-    __msg_info "     You can download all missing configuration files from the menu or run 'tkginstaller nvidia config'."
-    __msg_info "     The installer will only download the configuration files if they are missing."
-    __msg_info "     Refer to the customization.cfg documentation for detailed configuration options.${_break}"
-    __msg_info "     Location:${_reset}  ${_config_dir}/nvidia-all.cfg"
-    __msg_info "     More info:${_reset} ${_frog_repo_url}/nvidia-all/blob/master/customization.cfg"
+    __msg_info " Tip:${_reset} You can create an external configuration file to skip prompted options during build!"
+    __msg "      Create or edit the configuration file to customize Nvidia-TKG build options automatically."
+    __msg "      You can download all missing configuration files from the menu or run 'tkginstaller nvidia config'."
+    __msg "      The installer will only download the configuration files if they are missing."
+    __msg "      Refer to the customization.cfg documentation for detailed configuration options.${_break}"
+    __msg "      Location:  ${_config_dir}/nvidia-all.cfg"
+    __msg "      More info: ${_frog_repo_url}/nvidia-all/blob/master/customization.cfg"
     __msg_info "${_line}"
 
     # Execute installation process for Nvidia-TKG
@@ -719,13 +724,13 @@ __nvidia_install() {
 __mesa_install() {
     # Inform user about external configuration usage for Mesa-TKG build options customization
     __msg_info "${_line}"
-    __msg_info "Tip: You can create an external configuration file to skip prompted options during build!"
-    __msg_info "     Create or edit the configuration file to customize Mesa-TKG build options automatically."
-    __msg_info "     You can download all missing configuration files from the menu or run 'tkginstaller mesa config'."
-    __msg_info "     The installer will only download the configuration files if they are missing."
-    __msg_info "     Refer to the customization.cfg documentation for detailed configuration options.${_break}"
-    __msg_info "     Location:${_reset}  ${_config_dir}/mesa-git.cfg"
-    __msg_info "     More info:${_reset} ${_frog_repo_url}/mesa-git/blob/master/customization.cfg"
+    __msg_info " Tip:${_reset} You can create an external configuration file to skip prompted options during build!"
+    __msg "      Create or edit the configuration file to customize Mesa-TKG build options automatically."
+    __msg "      You can download all missing configuration files from the menu or run 'tkginstaller mesa config'."
+    __msg "      The installer will only download the configuration files if they are missing."
+    __msg "      Refer to the customization.cfg documentation for detailed configuration options.${_break}"
+    __msg "      Location: ${_config_dir}/mesa-git.cfg"
+    __msg "      More info: ${_frog_repo_url}/mesa-git/blob/master/customization.cfg"
     __msg_info "${_line}"
 
     # Execute installation process for Mesa-TKG
@@ -739,14 +744,14 @@ __mesa_install() {
 __wine_install() {
     # Inform user about external configuration usage for Wine-TKG build options customization
     __msg_info "${_line}"
-    __msg_info "Tip: You can create an external configuration file to skip prompted options during build!"
-    __msg_info "     Create or edit the configuration file to customize Wine-TKG build options automatically."
-    __msg_info "     Many options are available to tailor the Wine experience to your needs."
-    __msg_info "     You can download all missing configuration files from the menu or run 'tkginstaller wine config'."
-    __msg_info "     The installer will only download the configuration files if they are missing."
-    __msg_info "     Refer to the customization.cfg documentation for detailed configuration options.${_break}"
-    __msg_info "     Location:${_reset}  ${_config_dir}/wine-tkg.cfg"
-    __msg_info "     More info:${_reset} ${_frog_repo_url}/wine-tkg/blob/master/customization.cfg"
+    __msg_info " Tip:${_reset} You can create an external configuration file to skip prompted options during build!"
+    __msg "      Create or edit the configuration file to customize Wine-TKG build options automatically."
+    __msg "      Many options are available to tailor the Wine experience to your needs."
+    __msg "      You can download all missing configuration files from the menu or run 'tkginstaller wine config'."
+    __msg "      The installer will only download the configuration files if they are missing."
+    __msg "      Refer to the customization.cfg documentation for detailed configuration options.${_break}"
+    __msg "      Location:  ${_config_dir}/wine-tkg.cfg"
+    __msg "      More info: ${_frog_repo_url}/wine-tkg/blob/master/customization.cfg"
     __msg_info "${_line}"
 
     # Determine build command based on distribution
@@ -754,8 +759,22 @@ __wine_install() {
 
     # Determine build command based on distribution
     if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
-        # Arch-based distributions
-        _build_command="makepkg -si"
+        # Arch-based distributions: Ask user which build system to use
+        __msg_info "${_break} Choice: Which build system do you want to use?${_break}         Detected distribution:${_reset} ${_distro_name}${_break}"
+        __msg "    1) makepkg -si (recommended for Arch-based distros)"
+        __msg "    2) ./non-makepkg-build.sh (use if you want a custom build script)${_break}"
+        __msg "    Select [1/2]: "
+        # Read user input for build system choice
+        read -r _user_answer
+        _user_answer=${_user_answer:-1} # Default to option 1 if no input provided
+        case "$_user_answer" in
+            2)
+                _build_command="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
+                ;;
+            *)
+                _build_command="makepkg -si"
+                ;;
+        esac
     else
         # Non-Arch distributions
         _build_command="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
@@ -772,14 +791,14 @@ __wine_install() {
 __proton_install() {
     # Inform user about external configuration usage for Proton-TKG build options customization
     __msg_info "${_line}"
-    __msg_info "Tip: You can create an external configuration file to skip prompted options during build!"
-    __msg_info "     Create or edit the configuration file to customize Proton-TKG build options automatically."
-    __msg_info "     Many options are available to tailor the Proton gaming experience to your needs."
-    __msg_info "     You can download all missing configuration files from the menu or run 'tkginstaller proton config'."
-    __msg_info "     The installer will only download the configuration files if they are missing."
-    __msg_info "     Refer to the customization.cfg documentation for detailed configuration options.${_break}"
-    __msg_info "     Location:${_reset}  ${_config_dir}/proton-tkg.cfg"
-    __msg_info "     More info:${_reset} ${_frog_repo_url}/proton-tkg/blob/master/customization.cfg"
+    __msg_info "Tip:${_reset} You can create an external configuration file to skip prompted options during build!"
+    __msg "     Create or edit the configuration file to customize Proton-TKG build options automatically."
+    __msg "     Many options are available to tailor the Proton gaming experience to your needs."
+    __msg "     You can download all missing configuration files from the menu or run 'tkginstaller proton config'."
+    __msg "     The installer will only download the configuration files if they are missing."
+    __msg "     Refer to the customization.cfg documentation for detailed configuration options.${_break}"
+    __msg "     Location:${_reset}  ${_config_dir}/proton-tkg.cfg"
+    __msg "     More info:${_reset} ${_frog_repo_url}/proton-tkg/blob/master/customization.cfg"
     __msg_info "${_line}"
 
     # Determine build command for proton-tkg
@@ -866,10 +885,11 @@ __edit_config() {
     # Example:
     #   __edit_config
     while true; do
+        # Show configuration options using fzf menu and capture user choice
         local _config_choice # User's configuration choice (string)
 
         # Ensure configuration directory exists before proceeding (with user prompt to create if missing)
-    if [[ ! -d "${_config_dir}" ]]; then
+        if [[ ! -d "${_config_dir}" ]]; then
             __msg_info "${_break}${_line}"
             __msg_warning "Configuration directory not found."
             __msg "${_blue}           Folder path:${_reset} ${_config_dir}"
@@ -914,21 +934,21 @@ __edit_config() {
 
         # Function to handle configuration file editing and downloading if missing
         local _menu_options=(
-            "linux-tkg  |🐧 Linux   ─ linux-tkg.cfg"
+            "linux-tkg  |🐧 Linux   ─  ${_orange}linux-tkg.cfg${_reset} - Customize to your needs"
         )
 
         # Only show Nvidia and Mesa config if Arch-based distro is detected
         if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
             _menu_options+=(
-                "nvidia-all |💻 Nvidia  ─ nvidia-all.cfg"
-                "mesa-git   |🧩 Mesa    ─ mesa-git.cfg"
+                "nvidia-all |💻 Nvidia  ─  ${_orange}nvidia-all.cfg${_reset} - Customize to your needs"
+                "mesa-git   |🧩 Mesa    ─  ${_orange}mesa-git.cfg${_reset} - Customize to your needs"
             )
         fi
 
         # Always show Wine and Proton config options
         _menu_options+=(
-            "wine-tkg   |🍷 Wine    ─ wine-tkg.cfg"
-            "proton-tkg |🎮 Proton  ─ proton-tkg.cfg"
+            "wine-tkg   |🍷 Wine    ─  ${_orange}wine-tkg.cfg${_reset} - Customize to your needs"
+            "proton-tkg |🎮 Proton  ─  ${_orange}proton-tkg.cfg${_reset} - Customize to your needs"
             "return     |⏪ Return"
         )
 
@@ -983,7 +1003,7 @@ __edit_config() {
         fi
 
         # Extract selected configuration type and file path from choice string
-        local _config_file
+    local _config_file
     _config_file=$(echo "${_config_choice}" | cut -d"|" -f1 | xargs)
 
         # Handle configuration file editing based on selection using case statement
@@ -1174,24 +1194,24 @@ __handle_config() {
 __menu() {
     # Define menu options and preview commands for fzf menu display using glow command for dynamic content based on selection
     local _menu_options=(
-        "Linux  |🐧 Linux   ─ Linux-TKG custom kernels"
+        "Linux  |🐧 Linux   ─  Linux-TKG custom kernels (highly customizable to your needs)"
     )
 
     # Only show Nvidia and Mesa options if Arch-based distribution is detected 
     if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
         _menu_options+=(
-            "Nvidia |💻 Nvidia  ─ Nvidia Open-Source or proprietary graphics driver"
-            "Mesa   |🧩 Mesa    ─ Open-Source graphics driver for AMD and Intel"
+            "Nvidia |💻 Nvidia  ─  Nvidia Open-Source or proprietary graphics driver"
+            "Mesa   |🧩 Mesa    ─  Open-Source graphics driver for AMD and Intel"
         )
     fi
 
     # Always show Wine, Proton, Config, and Clean options
     _menu_options+=(
-        "Wine   |🍷 Wine    ─ Windows compatibility layer (run Windows apps on Linux)"
-        "Proton |🎮 Proton  ─ Run Windows games on Linux via Steam (Proton)"
-        "Config |🔧 Config  ─ Edit external TKG configuration files (Expert)"
-        "Clean  |🧹 Clean   ─ Clean all downloaded files and restart the installer"
-        "Help   |❓ Help    ─ Displays all available usage commands"
+        "Wine   |🍷 Wine    ─  Windows compatibility layer (run Windows apps on Linux)"
+        "Proton |🎮 Proton  ─  Run Windows games on Linux via Steam (Proton)"
+        "Config |🔧 Config  ─  Edit external TKG configuration files (Expert)"
+        "Clean  |🧹 Clean   ─  Clean all downloaded files and restart the installer"
+        "Help   |❓ Help    ─  Displays all available usage commands"
         "Exit   |❎ Exit"
     )
 
