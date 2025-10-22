@@ -37,8 +37,6 @@
 [![tkginstaller-l](images/linux.png)](images/linux.png)
 [![tkginstaller-w](images/wine.png)](images/wine.png)
 [![tkginstaller-help](images/help.png)](images/help.png)
-[![tkginstaller-pid](images/pid.png)](images/pid.png)
-[![tkginstaller-danger](images/root.png)](images/root.png)
 
 ---
 
