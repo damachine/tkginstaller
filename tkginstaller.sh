@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.15.9"
+_tkg_version="v0.16.0"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -92,13 +92,13 @@ __init_style() {
 
     # Calculate terminal width for dynamic line generation (minimum 80, max half terminal width)
     local _cols
-    _cols=$(tput cols 2>/dev/null || echo 80)
-    local _line_len=$((_cols / 2))
-    if [[ "$_line_len" -lt 80 ]]; then
+    _cols=$(tput cols 2>/dev/null || echo 80) # Get terminal width, default to 80 if tput fails
+    local _line_len=$((_cols / 2)) # Set line length to half terminal width
+    if [[ "$_line_len" -lt 80 ]]; then # Minimum line length of 80
         _line_len=80
     fi
     _line=""
-    for ((i=0; i<_line_len; i++)); do _line+="─"; done
+    for ((i=0; i<_line_len; i++)); do _line+="─"; done # Generate line of specified length
 
     # Export variables for fzf subshells (unset __exit run)
     export _print _break _line _reset _red _green _orange _blue
@@ -142,7 +142,7 @@ __msg_error() {
     ${_print} "${_red}ERROR: $*${_reset}"
 }
 
-# Input prompt message
+# Print input prompt message
 __msg_prompt() {
     ${_echo} "$*"
 }
@@ -267,7 +267,9 @@ __prepare() {
 
     # Welcome message and pre-checks
     __msg_success "${_break}${_line}"
-    __msg_success "TKG-Installer ${_tkg_version} for ${_distro_name}"
+    __msg_success "TKG-Installer starting..."
+    __msg "Version: ${_tkg_version}"
+    __msg "Distribution: ${_distro_name} $(uname -m 2>/dev/null || echo "unknown")"
     __msg_success "${_line}"
     __msg_info "Preparation..."
 
@@ -364,11 +366,11 @@ __prepare() {
     if [[ "$_load_preview" == "true" ]]; then
         __msg "$_green${_line}"
         __msg_success "Preparation done!"
-        __msg_success "Entering interactive menu..."
+        __msg_success "Entering interactive menu"
         __msg "$_green${_line}"
     else
         __msg_success "Preparation done!"
-        __msg_success "Starting direct installation..."
+        __msg_success "Starting direct installation"
     fi
 
     # Short delay for better UX (( :P ))
@@ -481,7 +483,7 @@ __fzf_menu() {
         --no-input \
         --no-multi \
         --no-multi-line \
-        --pointer='>' \
+        --pointer='⯈' \
         --header="${_header_text}" \
         --header-border=line \
         --header-label="${_border_label_text}" \
@@ -492,6 +494,7 @@ __fzf_menu() {
         --preview-window="${_preview_window_settings}" \
         --preview="${_preview_command}" \
         --preview-border=line \
+        --bind='ctrl-p:toggle-preview' \
         --disabled \
         <<< "${_menu_content}"
 }
@@ -583,16 +586,16 @@ __get_preview() {
 # Preview content is initialized only for interactive mode (using glow command)
 __init_preview() {
     # Dynamic previews from remote Markdown files using glow command for fzf menus
-    _preview_linux="$(__get_preview linux)"
-    _preview_nvidia="$(__get_preview nvidia)"
-    _preview_mesa="$(__get_preview mesa)"
-    _preview_wine="$(__get_preview wine)"
-    _preview_proton="$(__get_preview proton)"
-    _preview_config="$(__get_preview config)"
-    _preview_clean="$(__get_preview clean)"
-    _preview_help="$(__get_preview help)"
-    _preview_return="$(__get_preview return)"
-    _preview_exit="$(__get_preview exit)"
+    _preview_linux=$(__get_preview linux)
+    _preview_nvidia=$(__get_preview nvidia)
+    _preview_mesa=$(__get_preview mesa)
+    _preview_wine=$(__get_preview wine)
+    _preview_proton=$(__get_preview proton)
+    _preview_config=$(__get_preview config)
+    _preview_clean=$(__get_preview clean)
+    _preview_help=$(__get_preview help)
+    _preview_return=$(__get_preview return)
+    _preview_exit=$(__get_preview exit)
 
     # Export all preview variables for fzf subshells (unset __exit run)
     export _preview_linux _preview_nvidia _preview_mesa _preview_wine _preview_proton
@@ -989,8 +992,8 @@ __edit_config() {
         '
 
         # Define header and footer texts for fzf menu display with TKG version info
-        local _header_text=$'🐸 TKG-Installer ─ Editor menu\n\n   Edit external configuration file\n   Default directory: ~/.config/frogminer/'
-        local _footer_text=$'📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit\n🐸 Frogging-Family: https://github.com/Frogging-Family\n🌐 About: https://github.com/damachine/tkginstaller'
+        local _header_text="🐸 TKG-Installer ─ Editor menu${_break}${_break}   Edit external configuration file${_break}   Default directory: ~/.config/frogminer/"
+        local _footer_text="📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}🔄 Press Ctrl+P to toggle preview window${_break}🐸 Frogging-Family: https://github.com/Frogging-Family${_break}🌐 About: https://github.com/damachine/tkginstaller"
         local _border_label_text="${_tkg_version}"
         local _preview_window_settings='right:wrap:70%'
 
@@ -1243,8 +1246,8 @@ __menu() {
     '
 
     # Define header and footer texts for fzf menu display with TKG version info and instructions
-    local _header_text=$'🐸 TKG-Installer\n\n   Easily build the TKG packages from the Frogging-Family repositories.'
-    local _footer_text=$'📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit\n🐸 Frogging-Family: https://github.com/Frogging-Family\n🌐 About: https://github.com/damachine/tkginstaller'
+    local _header_text="🐸 TKG-Installer ─ Editor menu${_break}${_break}   Edit external configuration file${_break}   Default directory: ~/.config/frogminer/"
+    local _footer_text="📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}🔄 Press Ctrl+P to toggle preview window${_break}🐸 Frogging-Family: https://github.com/Frogging-Family${_break}🌐 About: https://github.com/damachine/tkginstaller"
     local _border_label_text="${_tkg_version}"
     local _preview_window_settings='right:wrap:60%'
 
