@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.16.0"
+_tkg_version="v0.16.1"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -149,20 +149,19 @@ __msg_prompt() {
 
 # Check for root execution and warn the user (if running as root)
 if [[ "$(id -u)" -eq 0 ]]; then
-    __msg "${_break}${_orange}${_line}"
-    __msg_warning "You are running as root!"
-    __msg "${_red}         This is not recommended for security reasons."
-    __msg ""
+    __msg " "
+    __msg_warning "You are running as root!${_break}"
+    __msg "This is not recommended for security reasons.${_break}"
     # Ask for user confirmation to continue as root
     __msg_prompt " Do you really want to continue as root? [y/N]: ${_reset}"
+    trap 'echo;echo; __msg_error "Aborted by user.\n";sleep 1.5s; exit 1' INT
     read -r _user_answer
+    trap - INT
     if [[ ! "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
         __msg ""
-        __msg_info2 "Aborted.${_reset}${_green} Exiting..."
-        __msg "${_orange}${_line}${_break}"
+        __msg "Aborted by user.${_break}"
         exit 1
     fi
-    __msg "${_orange}${_line}${_break}"
 fi
 
 # Detect Linux Distribution
@@ -181,7 +180,7 @@ fi
 # Help information display
 __help() {
     # Display help information with usage examples and shortcuts
-    __msg "${_break}${_line}"
+    __msg " "
     __msg "${_green}TKG-Installer Help"
     __msg ""
     __msg "${_blue}Run interactive fzf finder menu."
@@ -205,8 +204,7 @@ __help() {
     __msg " $0 l c           # Edit Linux-TKG config (shortcut)"
     __msg " $0 config linux  # Edit Linux-TKG config (alternate syntax)"
     __msg ""
-    __msg "${_orange}Shortcuts:${_reset} l=linux, n=nvidia, m=mesa, w=wine, p=proton, c=config, e=edit"
-    __msg "${_line}${_break}"
+    __msg "${_orange}Shortcuts:${_reset} l=linux, n=nvidia, m=mesa, w=wine, p=proton, c=config, e=edit${_break}"
 }
 
 # Help can show always!
@@ -223,22 +221,20 @@ if [[ -f "$_lock_file" ]]; then
         # Get old PID from lock file and check if process is running
         _old_pid=$(cat "$_lock_file" 2>/dev/null || echo "")
         if [[ -n "$_old_pid" ]] && kill -0 "$_old_pid" 2>/dev/null; then
-            __msg "${_break}${_orange}${_line}"
+            __msg " "
             __msg_warning "Script is already running (PID: $_old_pid). Exiting...${_break}"
-            __msg_info2 "If the script was unexpectedly terminated before."
-            __msg_info "      Remove $_lock_file manually run:${_break}"
-            __msg "      tkginstaller clean${_break}"
-            __msg_info "${_line}${_break}"
+            __msg " If the script was unexpectedly terminated before."
+            __msg " Remove $_lock_file manually run:${_break}"
+            __msg "tkginstaller clean${_break}"
             exit 1
         else
             # Stale lock file found, remove it safely and continue
             rm -f "$_lock_file" 2>/dev/null || {
-                __msg "${_break}${_orange}${_line}"
+                __msg " "
                 __msg_warning "Script is already running (PID: $_old_pid). Exiting...${_break}"
-                __msg_info2 "If the script was unexpectedly terminated before."
-                __msg_info "      Remove $_lock_file manually run:${_break}"
-                __msg "      tkginstaller clean${_break}"
-                __msg_info "${_line}${_break}"
+                __msg " If the script was unexpectedly terminated before."
+                __msg " Remove $_lock_file manually run:${_break}"
+                __msg "tkginstaller clean${_break}"
                 exit 1
             }
         fi
@@ -266,11 +262,8 @@ __prepare() {
     local _load_preview="${1:-false}" # Default to false if not provided (for direct mode)
 
     # Welcome message and pre-checks
-    __msg_success "${_break}${_line}"
-    __msg_success "TKG-Installer starting..."
-    __msg "Version: ${_tkg_version}"
-    __msg "Distribution: ${_distro_name} $(uname -m 2>/dev/null || echo "unknown")"
-    __msg_success "${_line}"
+    __msg_success "${_break}TKG-Installer starting..."
+    __msg "Version: ${_tkg_version}${_break}"
     __msg_info "Preparation..."
 
     # Check required dependencies based on mode (interactive/direct)
@@ -328,8 +321,8 @@ __prepare() {
 
     # Exit if any dependencies are missing with installation instructions
     if [[ ${#_missing_dep[@]} -gt 0 ]]; then
-        __msg_error "Missing dependencies detected."
-        __msg_info "         Please install the following dependencies first:${_break}"
+        __msg_error "Missing dependencies detected.${_break}"
+        __msg " Please install the following dependencies first:${_break}"
 
         # Map dependencies to package names for installation command display
         local _pkg_name_dep=()
@@ -338,7 +331,9 @@ __prepare() {
         done
 
         # Display installation command with missing packages
-        __msg_info "${_red}         >>> ${_reset}${_install_cmd_dep} ${_pkg_name_dep[*]}${_red} <<<"
+        __msg "${_install_cmd_dep} ${_pkg_name_dep[*]}"
+
+        # Exit with error code
         exit 1
     fi
 
@@ -364,10 +359,8 @@ __prepare() {
 
     # Final message before starting TKG-Installer process
     if [[ "$_load_preview" == "true" ]]; then
-        __msg "$_green${_line}"
         __msg_success "Preparation done!"
         __msg_success "Entering interactive menu"
-        __msg "$_green${_line}"
     else
         __msg_success "Preparation done!"
         __msg_success "Starting direct installation"
@@ -411,13 +404,10 @@ __exit() {
 
     # Message handling on exit based on exit code (0=success, non-0=failure)
     if [[ $_exit_code -ne 0 ]]; then
-        __msg "${_break}${_red}${_line}"
-        __msg_error "TKG-Installer aborted! Exiting..."
-        __msg "${_red}${_line}${_break}"
+        __msg " "
+        __msg_error "Aborting TKG-Installer! Exiting...${_break}"
     else
-        __msg_success "${_break}${_line}"
-        __msg_success "TKG-Installer closed! Goodbye!"
-        __msg_success "${_line}${_break}"
+        __msg_success "${_break}Closing TKG-Installer! Goodbye!${_break}"
     fi
 
     # Perform cleanup actions before exiting the script
@@ -680,15 +670,14 @@ __install_package() {
 __linux_install() {
     # Inform user about external configuration usage for Linux-TKG build options customization
     __msg_info "${_line}"
-    __msg_info " Tip:${_reset} You can create an external configuration file to skip prompted options during build!"
-    __msg "      Create or edit the configuration file to customize Linux-TKG build options automatically."
-    __msg "      Many options are available to tailor the kernel to your needs."
-    __msg "      You can download all missing configuration files from the menu or run 'tkginstaller linux config'."
-    __msg "      The installer will only download the configuration files if they are missing."
-    __msg "      Refer to the customization.cfg documentation for detailed configuration options.${_break}"
-    __msg "      Location:  ${_config_dir}/linux-tkg.cfg"
-    __msg "      Download: ${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
-    __msg_info "${_line}"
+    __msg_info "Tip:${_reset} You can create an external configuration file to skip prompted options during build!"
+    __msg "     Create or edit the configuration file to customize Linux-TKG build options automatically."
+    __msg "     Many options are available to tailor the kernel to your needs."
+    __msg "     You can download all missing configuration files from the menu or run 'tkginstaller linux config'."
+    __msg "     The installer will only download the configuration files if they are missing."
+    __msg "     Refer to the customization.cfg documentation for detailed configuration options.${_break}"
+    __msg "     Location:  ${_config_dir}/linux-tkg.cfg"
+    __msg "     Download: ${_frog_repo_url}/linux-tkg/blob/master/customization.cfg${_break}"
 
     # Determine build command based on distribution. Arch-based distributions use makepkg, others use install.sh
     local _build_command # Build command variable
@@ -713,14 +702,13 @@ __linux_install() {
 __nvidia_install() {
     # Inform user about external configuration usage for Nvidia-TKG build options customization
     __msg_info "${_line}"
-    __msg_info " Tip:${_reset} You can create an external configuration file to skip prompted options during build!"
-    __msg "      Create or edit the configuration file to customize Nvidia-TKG build options automatically."
-    __msg "      You can download all missing configuration files from the menu or run 'tkginstaller nvidia config'."
-    __msg "      The installer will only download the configuration files if they are missing."
-    __msg "      Refer to the customization.cfg documentation for detailed configuration options.${_break}"
-    __msg "      Location:  ${_config_dir}/nvidia-all.cfg"
-    __msg "      Download: ${_frog_repo_url}/nvidia-all/blob/master/customization.cfg"
-    __msg_info "${_line}"
+    __msg_info "Tip:${_reset} You can create an external configuration file to skip prompted options during build!"
+    __msg "     Create or edit the configuration file to customize Nvidia-TKG build options automatically."
+    __msg "     You can download all missing configuration files from the menu or run 'tkginstaller nvidia config'."
+    __msg "     The installer will only download the configuration files if they are missing."
+    __msg "     Refer to the customization.cfg documentation for detailed configuration options.${_break}"
+    __msg "     Location:  ${_config_dir}/nvidia-all.cfg"
+    __msg "     Download: ${_frog_repo_url}/nvidia-all/blob/master/customization.cfg${_break}"
 
     # Execute installation process for Nvidia-TKG
     __install_package "${_frog_repo_url}/nvidia-all.git" "nvidia-all" "makepkg -si"
@@ -733,14 +721,13 @@ __nvidia_install() {
 __mesa_install() {
     # Inform user about external configuration usage for Mesa-TKG build options customization
     __msg_info "${_line}"
-    __msg_info " Tip:${_reset} You can create an external configuration file to skip prompted options during build!"
-    __msg "      Create or edit the configuration file to customize Mesa-TKG build options automatically."
-    __msg "      You can download all missing configuration files from the menu or run 'tkginstaller mesa config'."
-    __msg "      The installer will only download the configuration files if they are missing."
-    __msg "      Refer to the customization.cfg documentation for detailed configuration options.${_break}"
-    __msg "      Location: ${_config_dir}/mesa-git.cfg"
-    __msg "      Download: ${_frog_repo_url}/mesa-git/blob/master/customization.cfg"
-    __msg_info "${_line}"
+    __msg_info "Tip:${_reset} You can create an external configuration file to skip prompted options during build!"
+    __msg "     Create or edit the configuration file to customize Mesa-TKG build options automatically."
+    __msg "     You can download all missing configuration files from the menu or run 'tkginstaller mesa config'."
+    __msg "     The installer will only download the configuration files if they are missing."
+    __msg "     Refer to the customization.cfg documentation for detailed configuration options.${_break}"
+    __msg "     Location: ${_config_dir}/mesa-git.cfg"
+    __msg "     Download: ${_frog_repo_url}/mesa-git/blob/master/customization.cfg${_break}"
 
     # Execute installation process for Mesa-TKG
     __install_package "${_frog_repo_url}/mesa-git.git" "mesa-git" "makepkg -si"
@@ -753,15 +740,14 @@ __mesa_install() {
 __wine_install() {
     # Inform user about external configuration usage for Wine-TKG build options customization
     __msg_info "${_line}"
-    __msg_info " Tip:${_reset} You can create an external configuration file to skip prompted options during build!"
-    __msg "      Create or edit the configuration file to customize Wine-TKG build options automatically."
-    __msg "      Many options are available to tailor the Wine experience to your needs."
-    __msg "      You can download all missing configuration files from the menu or run 'tkginstaller wine config'."
-    __msg "      The installer will only download the configuration files if they are missing."
-    __msg "      Refer to the customization.cfg documentation for detailed configuration options.${_break}"
-    __msg "      Location:  ${_config_dir}/wine-tkg.cfg"
-    __msg "      Download: ${_frog_repo_url}/wine-tkg/blob/master/customization.cfg"
-    __msg_info "${_line}"
+    __msg_info "Tip:${_reset} You can create an external configuration file to skip prompted options during build!"
+    __msg "     Create or edit the configuration file to customize Wine-TKG build options automatically."
+    __msg "     Many options are available to tailor the Wine experience to your needs."
+    __msg "     You can download all missing configuration files from the menu or run 'tkginstaller wine config'."
+    __msg "     The installer will only download the configuration files if they are missing."
+    __msg "     Refer to the customization.cfg documentation for detailed configuration options.${_break}"
+    __msg "     Location:  ${_config_dir}/wine-tkg.cfg"
+    __msg "     Download: ${_frog_repo_url}/wine-tkg/blob/master/customization.cfg${_break}"
 
     # Determine build command based on distribution
     local _build_command
@@ -769,11 +755,14 @@ __wine_install() {
     # Determine build command based on distribution
     if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
         # Arch-based distributions: Ask user which build system to use
-        __msg_info "${_break} Choice: Which build system do you want to use?${_break}         Detected distribution:${_reset} ${_distro_name}${_break}"
-        __msg "    1) makepkg -si (recommended for Arch-based distros)"
-        __msg "    2) ./non-makepkg-build.sh (use if you want a custom build script)${_break}"
-        __msg_prompt "    Select [1/2] (default: 1): ${_reset}"
+        __msg_info "Choice: Which build system do you want to use?${_break}"
+        __msg " Detected distribution:${_reset} ${_distro_name}${_break}"
+        __msg " 1) makepkg -si (recommended for Arch-based distros)"
+        __msg " 2) ./non-makepkg-build.sh (use if you want a custom build script)${_break}"
+        __msg_prompt " Select [1/2] (default: 1): ${_reset}"
+        trap 'echo;echo; __msg_error "Aborted by user.";sleep 1.5s; return 0' INT
         read -r _user_answer
+        trap - INT
         _user_answer=${_user_answer:-1} # Default to option 1 if no input provided
         case "$_user_answer" in
             2)
@@ -822,7 +811,9 @@ __proton_install() {
     if __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"; then
         # Ask user if clean command should be executed after build
         __msg_prompt "Do you want to run './proton-tkg.sh clean' after building Proton-TKG? [y/N]: ${_reset}"
+        trap 'echo;echo; __msg_error "Aborted by user.";sleep 1.5s; return 0' INT
         read -r _user_answer
+        trap - INT
         if [[ "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
             if __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_clean_command" "proton-tkg"; then
                 __msg_success "${_line}"
@@ -869,11 +860,10 @@ __editor() {
         elif command -v vim >/dev/null 2>&1; then
             _editor_parts=(vim)
         else
-            __msg "${_break}${_red}${_line}"
-            __msg_error "No editor found: Please set \$EDITOR environment or install 'nano', 'micro', or 'vim' as fallback."
-            __msg_prompt " Press any key to continue...${_reset}"
+            __msg " "
+            __msg_error "No editor found: Please set \$EDITOR environment or install 'nano', 'micro', or 'vim' as fallback.${_break}"
+            __msg_prompt " Press any key to continue...${_reset}${_break}"
             read -n 1 -s -r -p "" # Wait for user input before exiting
-            __msg "${_red}${_line}${_break}"
             return 1
         fi
     fi
@@ -898,13 +888,14 @@ __edit_config() {
 
         # Ensure configuration directory exists before proceeding (with user prompt to create if missing)
         if [[ ! -d "${_config_dir}" ]]; then
-            __msg_info "${_break}${_line}"
-            __msg_warning "Configuration directory not found."
-            __msg_info "         You can create the configuration directory to store external configuration files for TKG builds.${_break}"
-            __msg "         Location:${_reset} ${_config_dir}"
-            __msg_info "${_line}${_break}"
+            __msg_info " "
+            __msg_warning "Configuration directory not found.${_break}"
+            __msg " You can create the configuration directory to store external configuration files for TKG builds.${_break}"
+            __msg " Location:${_reset} ${_config_dir}${_break}"
             __msg_prompt " Do you want to create the configuration directory? [y/N]: ${_reset}"
+            trap 'echo;echo; __msg_error "Aborted by user.";sleep 1.5; clear; return 0' INT
             read -r _user_answer
+            trap - INT
             # Handle user response for directory creation prompt with case statement
             if [[ -z "$_user_answer" ]]; then
                 _user_answer="n" # Default to 'no' if no input provided
@@ -913,32 +904,27 @@ __edit_config() {
                 y|yes)
                     # Create the configuration directory with error handling
                     mkdir -p "${_config_dir}" || {
-                        __msg "${_break}${_red}${_line}"
-                        __msg_error "Creating configuration directory failed: ${_config_dir}"
-                        __msg "${_red}${_line}${_break}"
-                        __msg_prompt " Press any key to continue...${_reset}"
+                        __msg " "
+                        __msg_error "Creating configuration directory failed: ${_config_dir}${_break}"
+                        __msg_prompt " Press any key to continue...${_reset}${_break}"
                         read -n 1 -s -r -p "" # Wait for user input before exiting
                         clear
                         return 1
                     }
-                    __msg_success "${_break}${_line}"
-                    __msg_success "Configuration directory created: ${_config_dir}"
-                    __msg_success "${_line}${_break}"
-                    sleep 1.5s
+                    __msg_success "${_break}Configuration directory created: ${_config_dir}${_break}"
+                    __msg_prompt " Press any key to continue...${_reset}"
+                    read -n 1 -s -r -p "" # Wait for user input before exiting
+                    clear
+                    return 0
                     ;;
                 *)
-                    __msg_info "${_break}${_line}"
-                    __msg_info "Directory creation cancelled.${_break}Return to Main menu..."
-                    __msg_info "${_line}${_break}"
+                    __msg_info "${_break}Directory creation cancelled.${_break}"
                     __msg_prompt " Press any key to continue...${_reset}"
                     read -n 1 -s -r -p "" # Wait for user input before exiting
                     clear
                     return 0
                     ;;
             esac
-
-            # Clear screen
-            clear
         fi
 
         # Function to handle configuration file editing and downloading if missing
@@ -1002,10 +988,8 @@ __edit_config() {
 
         # Handle cancelled selection (ESC key) or empty choice to exit editor menu gracefully
         if [[ -z "$_config_choice" ]]; then
-            __msg_success "${_break}${_line}"
-            __msg_success "Applying changes..."
-            __msg_success "Returning to main menu..."
-            __msg_success "${_line}${_break}"
+            __msg_success "${_break}Applying changes..."
+            __msg_success "Returning to main menu...${_break}"
             sleep 1.5s
             clear
             return 0
@@ -1048,21 +1032,18 @@ __edit_config() {
                     "${_frog_raw_url}/wine-tkg-git/master/proton-tkg/proton-tkg.cfg"
                 ;;
             return)
-                __msg "${_break}${_green}${_line}"
-                __msg_success "Applying changes..."
-                __msg_success "Returning to main menu..."
-                __msg "${_green}${_line}${_break}"
+                __msg_success "${_break}Applying changes..."
+                __msg_success "Returning...${_break}"
                 sleep 1.5s
                 clear
                 return 0
                 ;;
             *)
-                # Invalid option handling and usage instructions display
-                __msg "${_break}${_red}Invalid option:${_reset} $_config_file"
-                __msg "${_orange}The option is either invalid or incomplete."
-
-                # Show usage instructions
-                __help
+                __msg " "
+                __msg_error "Invalid option:${_reset} $_config_file${_break}"
+                __msg " The argument is either invalid or incomplete."
+                __msg " All available arguments run:${_break}"
+                __msg "$0 help${_break}"
 
                 # Disable exit trap before cleanup and exit to avoid duplicate cleanup messages on exit
                 trap - INT TERM EXIT HUP
@@ -1090,9 +1071,7 @@ __handle_config() {
     local _config_url="${3}" # Configuration file URL (string)
 
     # Notify user about opening the configuration file editor
-    __msg_success "${_break}${_line}"
-    __msg_success "Opening external configuration file: $_config_name"
-    __msg_success "${_line}${_break}"
+    __msg_success "${_break}Opening external configuration file: $_config_name${_break}"
     sleep 1.5s
     clear
 
@@ -1100,9 +1079,8 @@ __handle_config() {
     if [[ -f "${_config_path}" ]]; then
         # Edit existing configuration file in the editor if it exists
         __editor "${_config_path}" || {
-            __msg "${_break}${_red}${_line}"
-            __msg_error "Opening external configuration failed: ${_config_path}"
-            __msg "${_red}${_line}${_break}"
+            __msg " "
+            __msg_error "Opening external configuration failed: ${_config_path}${_break}"
             __msg_prompt " Press any key to continue...${_reset}"
             read -n 1 -s -r -p "" # Wait for user input before exiting
             clear
@@ -1110,15 +1088,17 @@ __handle_config() {
         }
     else
         # Download and create new configuration file if it does not exist
-    __msg_info "${_break}${_line}"
-    __msg_warning "External configuration file does not exist."
-    __msg_info "         You can download the default configuration file now:${_break}"
-    __msg "         Location:${_reset} ${_config_path}"
-    __msg "         Download:${_reset} ${_config_url}"
-    __msg_info "${_line}${_break}"
+        __msg_info " "
+        __msg_warning "External configuration file does not exist.${_break}"
+        __msg " You can download the default configuration file now:${_break}"
+        __msg " Location:${_reset} ${_config_path}"
+        __msg " Download:${_reset} ${_config_url}${_break}"
+
         # Prompt user for download confirmation
         __msg_prompt " Do you want to download the default configuration? [y/N]: ${_reset}"
+        trap 'echo;echo; __msg_error "Aborted by user.";sleep 1.5s; clear; return 0' INT
         read -r _user_answer
+        trap - INT
         if [[ -z "${_user_answer}" ]]; then
             _user_answer="n" # Default to 'no' if no input provided
         fi
@@ -1128,32 +1108,29 @@ __handle_config() {
                 __msg ""
                 # Create the configuration directory if it doesn't exist and download the file using curl with error handling
                 mkdir -p "$(dirname "${_config_path}")" || {
-                    __msg "${_break}${_red}${_line}"
-                    __msg_error "Creating configuration directory failed: ${_config_path}"
-                    __msg "${_red}${_line}${_break}"
+                    __msg " "
+                    __msg_error "Creating configuration directory failed: ${_config_path}${_break}"
                     __msg_prompt " Press any key to continue...${_reset}"
                     read -n 1 -s -r -p "" # Wait for user input before exiting
                     clear
                     return 1
                 }
                 if ! command -v curl >/dev/null 2>&1; then
-                    __msg_error "curl is not installed. Please install curl to download configuration files."
+                    __msg " "
+                    __msg_error "curl is not installed. Please install curl to download configuration files.${_break}"
                     __msg_prompt " Press any key to continue...${_reset}"
                     read -n 1 -s -r -p ""
                     clear
                     return 1
                 fi
                 if curl -fsSL "${_config_url}" -o "${_config_path}" 2>/dev/null; then
-                    __msg_success "${_break}${_line}"
-                    __msg_success "External configuration ready at ${_config_path}"
-                    __msg_success "${_line}${_break}"
+                    __msg_success "${_break}External configuration ready at ${_config_path}${_break}"
                     sleep 1.5s
                     clear
                     # Open the downloaded configuration file in the editor
                     __editor "${_config_path}" || {
-                        __msg "${_break}${_red}${_line}"
-                        __msg_error "Opening external configuration ${_config_path} failed!"
-                        __msg "${_red}${_line}${_break}"
+                        __msg " "
+                        __msg_error "Opening external configuration ${_config_path} failed!${_break}"
                         __msg_prompt " Press any key to continue...${_reset}"
                         read -n 1 -s -r -p "" # Wait for user input before exiting
                         clear
@@ -1161,9 +1138,8 @@ __handle_config() {
                     }
                 else
                     # Failed to download configuration file from URL with error handling
-                    __msg "${_break}${_red}${_line}"
-                    __msg_error "Downloading external configuration from ${_config_url} failed!"
-                    __msg "${_red}${_line}${_break}"
+                    __msg " "
+                    __msg_error "Downloading external configuration from ${_config_url} failed!${_break}"
                     __msg_prompt " Press any key to continue...${_reset}"
                     read -n 1 -s -r -p "" # Wait for user input before exiting
                     clear
@@ -1172,9 +1148,7 @@ __handle_config() {
                 ;;
             *)
                 # User chose not to download the configuration file
-                __msg_info "${_break}${_line}"
-                __msg_info "Download cancelled. No configuration file created.${_break}Return to Mainmenu..."
-                __msg_info "${_line}${_break}"
+                __msg_info "${_break}Download cancelled. No configuration file created.${_break}"
                 __msg_prompt " Press any key to continue...${_reset}"
                 read -n 1 -s -r -p "" # Wait for user input before exiting
                 clear
@@ -1187,10 +1161,8 @@ __handle_config() {
     fi
 
     # Notify user about closing the configuration file editor and remind to save changes
-    __msg_success "${_break}${_line}"
-    __msg_success "Closing external $_config_name configuration file..."
-    __msg_success "Remember to save all your changes!"
-    __msg_success "${_line}${_break}"
+    __msg_success "${_break}Closing external $_config_name configuration file..."
+    __msg_success "Remember to save all your changes!${_break}"
     sleep 1.5s
     clear
     return 0
@@ -1257,10 +1229,7 @@ __menu() {
 
     # Handle cancelled selection (ESC pressed) or empty choice to exit TKG-Installer gracefully
     if [[ -z "${_main_choice:-}" ]]; then
-        __msg_success "${_break}${_line}"
-        __msg_success "Exit TKG-Installer..."
-        __msg_success "Cleaning temporary files..."
-        __msg_success "${_line}${_break}"
+        __msg_success "${_break}TKG-Installer - Exiting...${_break}"
         sleep 1.5s
         clear
         __exit 0
@@ -1354,9 +1323,7 @@ __main_direct_mode() {
         __handle_config "$_config_name" "$_config_path" "$_config_url"
 
         # Display exit messages after editing config file and before exiting script gracefully
-        __msg_success "${_break}${_line}"
-        __msg_success "TKG-Installer closed! Goodbye!"
-        __msg_success "${_line}${_break}"
+        __msg_success "${_break}TKG-Installer closed! Goodbye!${_break}"
 
         # Clean exit without triggering __exit cleanup messages. Unset exported all variables
         __clean
@@ -1387,10 +1354,8 @@ __main_direct_mode() {
             ;;
         clean|--clean)
             # Clean temporary files and restart script
-            __msg_info "${_break}${_line}"
-            __msg_info "Cleaning temporary files..."
-            __msg_info "Restarting..."
-            __msg_info "${_line}${_break}"
+            __msg_success "${_break}Cleaning all temporary files..."
+            __msg_success "Location: ${_tmp_dir}${_break}"
             __prepare >/dev/null 2>&1 || true
             rm -f "$_lock_file" 2>&1 || true
             sleep 1.5s
@@ -1401,11 +1366,11 @@ __main_direct_mode() {
             ;;
         *)
             # Invalid argument handling and usage instructions display
-            __msg "${_break}${_red}Invalid argument:${_reset} ${1:-} ${2:-}"
-            __msg "${_orange}The argument is either invalid or incomplete."
-
-            # Show usage instructions
-            __help
+            __msg " "
+            __msg_error "Invalid argument:${_reset} ${1:-} ${2:-}${_break}"
+            __msg " The argument is either invalid or incomplete."
+            __msg " All available arguments run:${_break}"
+            __msg "$0 help${_break}"
 
             # Disable exit trap before cleanup and exit to avoid duplicate cleanup messages on exit
             trap - INT TERM EXIT HUP
@@ -1465,9 +1430,8 @@ __main_interactive_mode() {
             ;;
         Clean)
             # Clean temporary files and restart script to refresh state and menu options
-            __msg_info "${_break}${_line}"
-            __msg_info "Cleaning temporary files...${_break}Restarting..."
-            __msg_info "${_line}${_break}"
+            __msg_info "${_break}Cleaning temporary files..."
+            __msg_info "TKG-Installer - Restarting...${_break}"
             __prepare >/dev/null 2>&1 || true
             rm -f "$_lock_file" 2>&1 || true
             sleep 1.5s
@@ -1476,10 +1440,7 @@ __main_interactive_mode() {
             ;;
         Exit)
             # Exit the script gracefully with cleanup messages
-            __msg_success "${_break}${_line}"
-            __msg_success "Exit TKG-Installer..."
-            __msg_success "Cleaning temporary files..."
-            __msg_success "${_line}${_break}"
+            __msg_success "${_break}TKG-Installer - Exiting...${_break}"
             sleep 1.5s
             clear
             exit 0
