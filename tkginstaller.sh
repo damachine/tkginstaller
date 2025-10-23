@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.16.2"
+_tkg_version="v0.20.1"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -110,11 +110,11 @@ __init_style() {
 
         # Fallback to 256-color approx (green=10, yellow=11, red=1, blue=4)
         case "$idx" in
-            1) printf '\033[38;5;1m' ;;
-            2) printf '\033[38;5;2m' ;;
-            3) printf '\033[38;5;3m' ;;
-            4) printf '\033[38;5;4m' ;;
-            *) printf '\033[38;5;15m' ;;
+            1) printf '\033[38;5;1m' ;; # red
+            2) printf '\033[38;5;2m' ;; # green
+            3) printf '\033[38;5;3m' ;; # yellow
+            4) printf '\033[38;5;4m' ;; # blue
+            *) printf '\033[38;5;15m' ;; # white
         esac
     }
 
@@ -124,6 +124,7 @@ __init_style() {
     _green2="$(_color 120 255 100 2)" # secondary green
     _orange="$(_color 255 190 60 3)"  # orange/yellow
     _blue="$(_color 85 170 255 4)"    # blue
+    _gray="$(_color 170 170 170 7)"   # gray
 
     # Underline on/off sequences (use tput if available for portability)
     _uline_on=$(tput smul 2>/dev/null || printf '\033[4m')
@@ -140,7 +141,7 @@ __init_style() {
     for ((i=0; i<_line_len; i++)); do _line+="─"; done # Generate line of specified length
 
     # Export variables for fzf subshells (unset __exit run)
-    export _print _break _line _reset _red _green _green2 _orange _blue
+    export _print _break _line _reset _red _green _green2 _orange _blue _gray _uline_on _uline_off
 }
 
 # =============================================================================
@@ -154,15 +155,15 @@ __init_style
 # Unified message function with automatic level detection
 __msg() {
     # If first arg is a known level, treat it as level, else default to plain
-    local _first="${1:-}" _level _msg
+    local _first="${1:-}" _level _msg # First argument (string)
     case "${_first,,}" in
         done|info|info2|warning|warn|error|err|prompt|plain|debug)
-            _level="${_first,,}"
+            _level="${_first,,}" # Level specified
             shift
             _msg="$*"
             ;;
         *)
-            _level="plain"
+            _level="plain" # Default level
             _msg="$*"
             ;;
     esac
@@ -183,10 +184,12 @@ __msg() {
             _color="${_orange}"; _prefix=""
             ;;
         warning|warn)
-            _color="${_orange}"; _prefix="WARNING: "
+            _color="${_orange}"
+            _prefix="${_uline_on}WARNING:${_uline_off}${_color} "
             ;;
         error|err)
-            _color="${_red}"; _prefix="ERROR: "
+            _color="${_red}"
+            _prefix="${_uline_on}ERROR:${_uline_off}${_color} "
             ;;
         debug)
             _color="${_blue}"; _prefix="DEBUG: "
@@ -219,12 +222,11 @@ if [[ "$(id -u)" -eq 0 ]]; then
     __msg_warning "You are running as root!${_break}"
     # Ask for user confirmation to continue as root
     __msg_prompt " Do you really want to continue as root? [y/N]: ${_reset}"
-    trap 'echo;echo; __msg_error "Aborted by user.\n";sleep 1.5s; exit 1' INT
+    trap 'echo;echo; __msg "${_red}Aborted by user.\n";sleep 1.5s; exit 1' INT
     read -r _user_answer
     trap - INT
     if [[ ! "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
-        __msg ""
-        __msg "Aborted by user.${_break}"
+        __msg "${_break}${_red}Aborted by user.${_break}"
         exit 1
     fi
 fi
@@ -284,7 +286,7 @@ if [[ -f "$_lock_file" ]]; then
             __msg ""
             __msg_warning "Script is already running (PID: $_old_pid). Exiting...${_break}"
             __msg " If the script was unexpectedly terminated before."
-            __msg " Remove $_lock_file manually run:${_break}"
+            __msg " Remove ${_reset}${_gray}$_lock_file${_reset} manually run:${_break}"
             __msg "tkginstaller clean${_break}"
             exit 1
         else
@@ -293,7 +295,7 @@ if [[ -f "$_lock_file" ]]; then
                 __msg ""
                 __msg_warning "Script is already running (PID: $_old_pid). Exiting...${_break}"
                 __msg " If the script was unexpectedly terminated before."
-                __msg " Remove $_lock_file manually run:${_break}"
+                __msg " Remove ${_reset}${_gray}$_lock_file${_reset} manually run:${_break}"
                 __msg "tkginstaller clean${_break}"
                 exit 1
             }
@@ -323,7 +325,7 @@ __prepare() {
 
     # Welcome message and pre-checks
     __msg_done "${_break}TKG-Installer starting..."
-    __msg "Version: ${_tkg_version}${_break}"
+    __msg "${_reset}${_gray}Version: ${_tkg_version}${_reset}${_break}"
     __msg_info2 "Preparation..."
 
     # Check required dependencies based on mode (interactive/direct)
@@ -439,7 +441,7 @@ __done() {
     local _seconds=$((_duration % 60)) # Calculate remaining seconds part
 
     # Finalizing message display
-    __msg_info2 "Action completed: $(date '+%Y-%m-%d %H:%M:%S')" # Display completion message with timestamp
+    __msg_info2 "${_break}Action completed: $(date '+%Y-%m-%d %H:%M:%S')" # Display completion message with timestamp
     # Display done or failure status based on exit code
     if [[ $_status -eq 0 ]]; then
         __msg_done "Status: Successfully completed!"
@@ -489,7 +491,7 @@ __clean() {
 
     # Unset exported variables for fzf subshells
     unset _tmp_dir _choice_file _config_dir _tkg_repo_url _tkg_raw_url _frog_repo_url _frog_raw_url
-    unset _print _break _line _reset _red _green _orange _blue
+    unset _print _break _line _reset _red _green _orange _blue _gray _uline_on _uline_off
     unset _preview_linux _preview_nvidia _preview_mesa _preview_wine _preview_proton
     unset _preview_config _preview_clean _preview_help _preview_return _preview_exit _glow_style
     unset _distro_name _distro_id _distro_like
@@ -521,7 +523,7 @@ __fzf_menu() {
     fzf \
         --with-shell='bash -c' \
         --style default \
-        --color='header:#00ff00,pointer:#00ff00,marker:#00ff00' \
+        --color='header:#66ff66,footer:#66aa66,pointer:#bbffbb,label:#66aa66,current-fg:#bbffbb,gutter:#667766' \
         --border=none \
         --layout=reverse \
         --highlight-line \
@@ -534,7 +536,6 @@ __fzf_menu() {
         --no-input \
         --no-multi \
         --no-multi-line \
-        --pointer='⯈' \
         --header="${_header_text}" \
         --header-border=line \
         --header-label="${_border_label_text}" \
@@ -731,7 +732,7 @@ __linux_install() {
     __msg " You can download all missing configuration files from the menu or run 'tkginstaller linux config'."
     __msg " The installer will only download the configuration files if they are missing."
     __msg " Refer to the customization.cfg documentation for detailed configuration options."
-    __msg " Location: ${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
+    __msg " Location:${_reset}${_gray} ${_frog_repo_url}/linux-tkg/blob/master/customization.cfg${_reset}"
 
     # Determine build command based on distribution. Arch-based distributions use makepkg, others use install.sh
     local _build_command # Build command variable
@@ -760,7 +761,7 @@ __nvidia_install() {
     __msg " You can download all missing configuration files from the menu or run 'tkginstaller nvidia config'."
     __msg " The installer will only download the configuration files if they are missing."
     __msg " Refer to the customization.cfg documentation for detailed configuration options."
-    __msg " Location: ${_frog_repo_url}/nvidia-all/blob/master/customization.cfg"
+    __msg " Location:${_reset}${_gray} ${_frog_repo_url}/nvidia-all/blob/master/customization.cfg${_reset}"
 
     # Execute installation process for Nvidia-TKG
     __install_package "${_frog_repo_url}/nvidia-all.git" "nvidia-all" "makepkg -si"
@@ -777,7 +778,7 @@ __mesa_install() {
     __msg " You can download all missing configuration files from the menu or run 'tkginstaller mesa config'."
     __msg " The installer will only download the configuration files if they are missing."
     __msg " Refer to the customization.cfg documentation for detailed configuration options."
-    __msg " Location: ${_frog_repo_url}/mesa-git/blob/master/customization.cfg"
+    __msg " Location:${_reset}${_gray} ${_frog_repo_url}/mesa-git/blob/master/customization.cfg${_reset}"
 
     # Execute installation process for Mesa-TKG
     __install_package "${_frog_repo_url}/mesa-git.git" "mesa-git" "makepkg -si"
@@ -795,7 +796,7 @@ __wine_install() {
     __msg " You can download all missing configuration files from the menu or run 'tkginstaller wine config'."
     __msg " The installer will only download the configuration files if they are missing."
     __msg " Refer to the customization.cfg documentation for detailed configuration options."
-    __msg " Location: ${_frog_repo_url}/wine-tkg-git/blob/master/wine-tkg-git/customization.cfg."
+    __msg " Location:${_reset}${_gray} ${_frog_repo_url}/wine-tkg-git/blob/master/wine-tkg-git/customization.cfg${_reset}"
 
     # Determine build command based on distribution
     local _build_command
@@ -804,13 +805,13 @@ __wine_install() {
     if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
         # Arch-based distributions: Ask user which build system to use
         __msg_done "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Which build system do you want to use?${_break}"
-        __msg " Detected distribution:${_reset} ${_distro_name}${_break}"
-        __msg " 1) makepkg -si (recommended for Arch-based distros)"
-        __msg " 2) ./non-makepkg-build.sh (use if you want a custom build script)${_break}"
+        __msg " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
+        __msg " 1) makepkg -si${_reset} ${_gray} (recommended for Arch-based distros)"
+        __msg " 2) ./non-makepkg-build.sh${_reset} ${_gray} (use if you want a custom build script)${_break}"
         _old_trap_int=$(trap -p INT 2>/dev/null || true)
         trap '__exit 130' INT
         __msg_prompt " Select [1/2] (default: 1): ${_reset}"
-        trap 'echo;echo; __msg_error "Aborted by user.";sleep 1.5s; __exit 130' INT
+        trap 'echo;echo; __msg "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
         read -r _user_answer
         _user_answer=${_user_answer:-1} # Default to option 1 if no input provided
         case "$_user_answer" in
@@ -849,7 +850,7 @@ __proton_install() {
     __msg " You can download all missing configuration files from the menu or run 'tkginstaller proton config'."
     __msg " The installer will only download the configuration files if they are missing."
     __msg " Refer to the customization.cfg documentation for detailed configuration options."
-    __msg " Location:${_reset}  ${_config_dir}/proton-tkg.cfg"
+    __msg " Location:${_reset}${_gray} ${_frog_repo_url}/wine-tkg-git/blob/master/proton-tkg/proton-tkg.cfg${_reset}"
 
     # Determine build command for proton-tkg
     local _build_command="./proton-tkg.sh" # Build command for proton-tkg
@@ -863,13 +864,13 @@ __proton_install() {
     # Build and install and ask for cleaning after build process
     if __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"; then
         # Ask user if clean command should be executed after build
-        __msg_prompt "Do you want to run './proton-tkg.sh clean' after building Proton-TKG? [y/N]: ${_reset}"
-        trap 'echo;echo; __msg_error "Aborted by user.";sleep 1.5s; return 0' INT
+        __msg_prompt "Do you want to run ${_reset} ${_gray}'./proton-tkg.sh clean'${_reset} after building Proton-TKG? [y/N]: ${_reset}"
+        trap 'echo;echo; __msg "${_red}Aborted by user.";sleep 1.5s; return 0' INT
         read -r _user_answer
         trap - INT
         if [[ "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
             if __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_clean_command" "proton-tkg"; then
-                __msg_done "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Cleaning completed donefully: $_package_name${_reset}${_break}"
+                __msg_done "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Cleaning completed successfully: $_package_name${_reset}${_break}"
             else
                 __msg_error "${_break}${_red}Cleaning failed: $_package_name${_reset}${_break}"
             fi
@@ -911,7 +912,7 @@ __editor() {
         else
             __msg ""
             __msg_error "No editor found!${_break}"
-            __msg " Please set \$EDITOR environment or install 'nano', 'micro', or 'vim' as fallback.${_break}"
+            __msg " Please set \$EDITOR environment or install${_reset}${_gray} 'nano'${_reset},${_reset}${_gray} 'micro'${_reset}, or${_reset}${_gray} 'vim'${_reset} as fallback.${_break}"
             __msg_prompt " Press any key to continue...${_reset}${_break}"
             read -n 1 -s -r -p "" # Wait for user input before exiting
             return 1
@@ -942,7 +943,7 @@ __edit_config() {
             __msg_warning "Configuration directory not found.${_break}"
             __msg " Creating directory:${_reset} ${_config_dir}${_break}"
             __msg_prompt " Do you want to create the configuration directory? [y/N]: ${_reset}"
-            trap 'echo;echo; __msg_error "Aborted by user.";sleep 1.5; clear; return 0' INT
+            trap 'echo;echo; __msg "${_red}Aborted by user.${_reset}";sleep 1.5; clear; return 0' INT
             read -r _user_answer
             trap - INT
             # Handle user response for directory creation prompt with case statement
@@ -980,21 +981,21 @@ __edit_config() {
 
         # Function to handle configuration file editing and downloading if missing
         local _menu_options=(
-            "linux-tkg  |🐧 Linux   ─  ${_orange}linux-tkg.cfg${_reset}   -  Customize to your needs"
+            "linux-tkg  |🐧 Linux   ─${_orange} linux-tkg.cfg${_reset}   ─${_gray} Customize to your needs${_reset}"
         )
 
         # Only show Nvidia and Mesa config if Arch-based distro is detected
         if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
             _menu_options+=(
-                "nvidia-all |💻 Nvidia  ─  ${_orange}nvidia-all.cfg${_reset}  -  ..."
-                "mesa-git   |🧩 Mesa    ─  ${_orange}mesa-git.cfg${_reset}    -  ..."
+                "nvidia-all |💻 Nvidia  ─${_orange} nvidia-all.cfg${_reset}  ─${_gray} ...${_reset}"
+                "mesa-git   |🧩 Mesa    ─${_orange} mesa-git.cfg${_reset}    ─${_gray} ...${_reset}"
             )
         fi
 
         # Always show Wine and Proton config options
         _menu_options+=(
-            "wine-tkg   |🍷 Wine    ─  ${_orange}wine-tkg.cfg${_reset}    -  ..."
-            "proton-tkg |🎮 Proton  ─  ${_orange}proton-tkg.cfg${_reset}  -  ..."
+            "wine-tkg   |🍷 Wine    ─${_orange} wine-tkg.cfg${_reset}    ─${_gray} ...${_reset}"
+            "proton-tkg |🎮 Proton  ─${_orange} proton-tkg.cfg${_reset}  ─${_gray} ...${_reset}"
             "return     |⏪ Return"
         )
 
@@ -1122,7 +1123,7 @@ __handle_config() {
     local _config_url="${3}" # Configuration file URL (string)
 
     # Notify user about opening the configuration file editor
-    __msg_info2 "${_break}Opening external configuration file: $_config_name${_break}"
+    __msg_info2 "${_break}Opening external configuration file:${_reset}${_gray} $_config_name${_reset}${_break}"
     sleep 1.5s
     clear
 
@@ -1131,8 +1132,8 @@ __handle_config() {
         # Edit existing configuration file in the editor if it exists
         __editor "${_config_path}" || {
             __msg ""
-            __msg_error "Opening external configuration failed: ${_config_path}${_break}"
-            __msg " Please check if the file exists and is accessible."
+            __msg_error "Opening external configuration failed:${_reset}${_gray} ${_config_path}${_reset}${_break}"
+            __msg " Please check if the file exists and is accessible.${_break}"
             __msg_prompt " Press any key to continue...${_reset}"
             read -n 1 -s -r -p "" # Wait for user input before exiting
             clear
@@ -1142,12 +1143,12 @@ __handle_config() {
         # Download and create new configuration file if it does not exist
         __msg ""
         __msg_warning "External configuration file does not exist.${_break}"
-        __msg " Saving as:${_reset} ${_config_path}"
-        __msg " Download:${_reset} ${_config_url}${_break}"
+        __msg " Saving as: ${_gray}${_config_path}${_reset}"
+        __msg " Download: ${_gray}${_config_url}${_reset}${_break}"
 
         # Prompt user for download confirmation
         __msg_prompt " Do you want to download the default configuration? [y/N]: ${_reset}"
-        trap 'echo;echo; __msg_error "Aborted by user.";sleep 1.5s; clear; return 0' INT
+        trap 'echo;echo; __msg "${_red}Aborted by user.";sleep 1.5s; clear; return 0' INT
         read -r _user_answer
         trap - INT
         if [[ -z "${_user_answer}" ]]; then
@@ -1179,8 +1180,9 @@ __handle_config() {
                     clear
                     # Open the downloaded configuration file in the editor
                     __editor "${_config_path}" || {
-                        __msg_error "Opening external configuration ${_config_path} failed!${_break}"
-                        __msg " Please check if the file exists and is accessible."
+                        __msg ""
+                        __msg_error "Opening external configuration file:${_reset}${_gray} $_config_name${_reset}${_break}"
+                        __msg " Please check if the file exists and is accessible.${_break}"
                         __msg_prompt " Press any key to continue...${_reset}"
                         read -n 1 -s -r -p "" # Wait for user input before exiting
                         clear
@@ -1226,24 +1228,24 @@ __handle_config() {
 __menu() {
     # Define menu options and preview commands for fzf menu display using glow command for dynamic content based on selection
     local _menu_options=(
-        "Linux  |🐧 Linux   ─  Linux-TKG custom kernels (highly customizable to your needs)"
+        "Linux  |🐧 Linux   ─${_gray} Linux-TKG custom kernels (highly customizable to your needs)${_reset}"
     )
 
     # Only show Nvidia and Mesa options if Arch-based distribution is detected 
     if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
         _menu_options+=(
-            "Nvidia |💻 Nvidia  ─  Nvidia Open-Source or proprietary graphics driver"
-            "Mesa   |🧩 Mesa    ─  Open-Source graphics driver for AMD and Intel"
+            "Nvidia |💻 Nvidia  ─${_gray} Nvidia Open-Source or proprietary graphics driver${_reset}"
+            "Mesa   |🧩 Mesa    ─${_gray} Open-Source graphics driver for AMD and Intel${_reset}"
         )
     fi
 
     # Always show Wine, Proton, Config, and Clean options
     _menu_options+=(
-        "Wine   |🍷 Wine    ─  Windows compatibility layer (run Windows apps on Linux)"
-        "Proton |🎮 Proton  ─  Run Windows games on Linux via Steam (Proton)"
-        "Config |🔧 Config  ─  Edit external TKG configuration files (Expert)"
-        "Clean  |🧹 Clean   ─  Clean all downloaded files and restart the installer"
-        "Help   |❓ Help    ─  Displays all available usage commands"
+        "Wine   |🍷 Wine    ─${_gray} Windows compatibility layer (run Windows apps on Linux)${_reset}"
+        "Proton |🎮 Proton  ─${_gray} Run Windows games on Linux via Steam (Proton)${_reset}"
+        "Config |🔧 Config  ─${_gray} Edit external TKG configuration files (Expert)${_reset}"
+        "Clean  |🧹 Clean   ─${_gray} Clean all downloaded files and restart the installer${_reset}"
+        "Help   |❓ Help    ─${_gray} Displays all available usage commands${_reset}"
         "Exit   |❎ Exit"
     )
 
