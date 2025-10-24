@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.20.3"
+_tkg_version="v0.20.4"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -726,11 +726,11 @@ __install_package() {
 # Linux-TKG installation
 __linux_install() {
     # Inform user about external configuration usage for Linux-TKG build options customization
-    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} You can create an external configuration file to skip prompted options during build!${_break}"
-    __msg " Create or edit the configuration file to customize Linux-TKG build options automatically."
-    __msg " Many options are available to tailor the kernel to your needs."
-    __msg " You can download all missing configuration files from the menu or run 'tkginstaller linux config'."
-    __msg " The installer will only download the configuration files if they are missing."
+    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Create an external configuration file to customize the package according to your needs and automate the installation as much as possible!${_break}"
+    __msg " A wide range of options are available."
+    __msg " When configured correctly, this will increase stability and performance."
+    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with ‘tkginstaller linux config’."
+    __msg " You can then make the adjustments in the editor."
     __msg " Refer to the customization.cfg documentation for detailed configuration options."
     __msg " Location:${_reset}${_gray} ${_frog_repo_url}/linux-tkg/blob/master/customization.cfg${_reset}"
 
@@ -756,10 +756,11 @@ __linux_install() {
 # Nvidia-TKG installation
 __nvidia_install() {
     # Inform user about external configuration usage for Nvidia-TKG build options customization
-    __msg "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} You can create an external configuration file to skip prompted options during build!${_break}"
-    __msg " Create or edit the configuration file to customize Nvidia-TKG build options automatically."
-    __msg " You can download all missing configuration files from the menu or run 'tkginstaller nvidia config'."
-    __msg " The installer will only download the configuration files if they are missing."
+    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Create an external configuration file to customize the package according to your needs and automate the installation as much as possible!${_break}"
+    __msg " A wide range of options are available."
+    __msg " When configured correctly, this will increase stability and performance."
+    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with ‘tkginstaller linux config’."
+    __msg " You can then make the adjustments in the editor."
     __msg " Refer to the customization.cfg documentation for detailed configuration options."
     __msg " Location:${_reset}${_gray} ${_frog_repo_url}/nvidia-all/blob/master/customization.cfg${_reset}"
 
@@ -773,10 +774,11 @@ __nvidia_install() {
 # Mesa-TKG installation
 __mesa_install() {
     # Inform user about external configuration usage for Mesa-TKG build options customization
-    __msg "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} You can create an external configuration file to skip prompted options during build!${_break}"
-    __msg " Create or edit the configuration file to customize Mesa-TKG build options automatically."
-    __msg " You can download all missing configuration files from the menu or run 'tkginstaller mesa config'."
-    __msg " The installer will only download the configuration files if they are missing."
+    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Create an external configuration file to customize the package according to your needs and automate the installation as much as possible!${_break}"
+    __msg " A wide range of options are available."
+    __msg " When configured correctly, this will increase stability and performance."
+    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with ‘tkginstaller linux config’."
+    __msg " You can then make the adjustments in the editor."
     __msg " Refer to the customization.cfg documentation for detailed configuration options."
     __msg " Location:${_reset}${_gray} ${_frog_repo_url}/mesa-git/blob/master/customization.cfg${_reset}"
 
@@ -790,11 +792,11 @@ __mesa_install() {
 # Wine-TKG installation
 __wine_install() {
     # Inform user about external configuration usage for Wine-TKG build options customization
-    __msg_done "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} You can create an external configuration file to skip prompted options during build!${_break}"
-    __msg " Create or edit the configuration file to customize Wine-TKG build options automatically."
-    __msg " Many options are available to tailor the Wine experience to your needs."
-    __msg " You can download all missing configuration files from the menu or run 'tkginstaller wine config'."
-    __msg " The installer will only download the configuration files if they are missing."
+    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Create an external configuration file to customize the package according to your needs and automate the installation as much as possible!${_break}"
+    __msg " A wide range of options are available."
+    __msg " When configured correctly, this will increase stability and performance."
+    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with ‘tkginstaller linux config’."
+    __msg " You can then make the adjustments in the editor."
     __msg " Refer to the customization.cfg documentation for detailed configuration options."
     __msg " Location:${_reset}${_gray} ${_frog_repo_url}/wine-tkg-git/blob/master/wine-tkg-git/customization.cfg${_reset}"
 
@@ -844,11 +846,11 @@ __wine_install() {
 # Proton-TKG installation
 __proton_install() {
     # Inform user about external configuration usage for Proton-TKG build options customization
-    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} You can create an external configuration file to skip prompted options during build!${_reset}${_break}"
-    __msg " Create or edit the configuration file to customize Proton-TKG build options automatically."
-    __msg " Many options are available to tailor the Proton gaming experience to your needs."
-    __msg " You can download all missing configuration files from the menu or run 'tkginstaller proton config'."
-    __msg " The installer will only download the configuration files if they are missing."
+    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Create an external configuration file to customize the package according to your needs and automate the installation as much as possible!${_break}"
+    __msg " A wide range of options are available."
+    __msg " When configured correctly, this will increase stability and performance."
+    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with ‘tkginstaller linux config’."
+    __msg " You can then make the adjustments in the editor."
     __msg " Refer to the customization.cfg documentation for detailed configuration options."
     __msg " Location:${_reset}${_gray} ${_frog_repo_url}/wine-tkg-git/blob/master/proton-tkg/proton-tkg.cfg${_reset}"
 
