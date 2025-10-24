@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.20.8"
+_tkg_version="v0.20.9"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -122,6 +122,7 @@ __init_style() {
     _red="$(_color 220 60 60 1)"    # warm red
     _green="$(_color 80 255 140 2)"  # light green
     _green2="$(_color 120 255 100 2)" # secondary green
+    _green3="$(_color 152 255 200 6)" # mint-gray
     _orange="$(_color 255 190 60 3)"  # orange/yellow
     _blue="$(_color 85 170 255 4)"    # blue
     _gray="$(_color 200 250 200 7)"   # muted gray
@@ -141,7 +142,7 @@ __init_style() {
     for ((i=0; i<_line_len; i++)); do _line+="─"; done # Generate line of specified length
 
     # Export variables for fzf subshells (unset __exit run)
-    export _print _break _line _reset _red _green _green2 _orange _blue _gray _uline_on _uline_off
+    export _print _break _line _reset _red _green _green2 _green3 _orange _blue _gray _uline_on _uline_off
 }
 
 # =============================================================================
@@ -321,11 +322,18 @@ __prepare() {
     #   __prepare false # Skip preview content for direct mode
     # Example:
     #   __prepare true
-    local _load_preview="${1:-false}" # Default to false if not provided (for direct mode)
+    _load_preview="${1:-false}" # Default to false if not provided (for direct mode)
 
     # Welcome message and pre-checks
     __msg_done "${_break}TKG-Installer starting..."
-    __msg "${_reset}${_gray}Version: ${_tkg_version}${_reset}${_break}"
+    echo -e "$_green3"
+    cat <<EOF
+░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
+░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
+░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
+──  ${_tkg_version}  ──
+EOF
+    echo -e "$_reset"
     __msg_info2 "Preparation..."
 
     # Check required dependencies based on mode (interactive/direct)
@@ -678,6 +686,18 @@ __install_package() {
     local _build_command="$3" # Build command (string)
     local _work_directory="${4:-}" # Optional working directory relative to cloned repo (string)
 
+    # Display banner with package name and version
+    if [[ "${_load_preview:-false}" == "true" ]]; then
+        echo -e "$_green3"
+        cat <<EOF
+░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
+░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
+░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
+──  ${_tkg_version}  ──
+EOF
+        echo -e "$_reset"
+    fi
+
     # Navigate to temporary directory for cloning and building process
     cd "${_tmp_dir}" > /dev/null 2>&1 || return 1
 
@@ -707,12 +727,8 @@ __install_package() {
         }
     fi
 
-    # Fetch git repository information if available (using onefetch tool)
-    __onefetch() {
-        # Prefix every output line with a single space (preserves color escapes).
-        onefetch --no-bold --no-title --no-art --no-color-palette --http-url --email --nerd-fonts --text-colors 15 15 15 15 15 8 2>/dev/null | sed -u 's/^/ /' || true
-    }
-    __onefetch
+    # Prefix every output line with a single space (preserves color escapes).
+    onefetch --no-bold --no-title --no-art --no-color-palette --http-url --email --nerd-fonts --text-colors 15 15 15 15 15 8 2>/dev/null | sed -u 's/^/ /' || true
     sleep 1.5s # Short delay for better UX (( :P ))
 
     # Build and install the package using the provided build command
