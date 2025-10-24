@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.21.0"
+_tkg_version="v0.21.1"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -325,7 +325,7 @@ __prepare() {
     _load_preview="${1:-false}" # Default to false if not provided (for direct mode)
 
     # Welcome message and pre-checks
-    __msg_done "${_break}TKG-Installer starting..."
+    __msg_done "${_break}Starting..."
     echo -e "$_green3"
     cat <<EOF
 ░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
