@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.20.6"
+_tkg_version="v0.20.7"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -726,11 +726,14 @@ __install_package() {
 # Linux-TKG installation
 __linux_install() {
     # Inform user about external configuration usage for Linux-TKG build options customization
-    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Create an external configuration file to customize the package according to your needs and automate the installation as much as possible!${_break}"
+    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} This script is intended to simplify the installation and configuration of the powerful TKG packages.${_break}"
     __msg " A wide range of options are available."
-    __msg " When configured correctly, this will increase stability and performance."
-    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with ‘tkginstaller linux config’."
-    __msg " You can then make the adjustments in the editor."
+    __msg " Thanks to their flexible configuration and powerful settings functions, TKG packages"
+    __msg " can be precisely tailored to different systems and personal requirements. This versatility"
+    __msg " makes them an indispensable part of any Linux system."
+    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with${_reset}${_gray} ‘tkginstaller linux config’${_reset}."
+    __msg " The tool then offers you the option to make the adjustments in your preferred text editor."
+    __msg " Please make sure to adjust the settings correctly."
     __msg " Refer to the customization.cfg documentation for detailed configuration options."
     __msg " Location:${_reset}${_gray} ${_frog_repo_url}/linux-tkg/blob/master/customization.cfg${_reset}"
 
@@ -756,11 +759,14 @@ __linux_install() {
 # Nvidia-TKG installation
 __nvidia_install() {
     # Inform user about external configuration usage for Nvidia-TKG build options customization
-    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Create an external configuration file to customize the package according to your needs and automate the installation as much as possible!${_break}"
+    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} This script is intended to simplify the installation and configuration of the powerful TKG packages.${_break}"
     __msg " A wide range of options are available."
-    __msg " When configured correctly, this will increase stability and performance."
-    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with ‘tkginstaller nvidia config’."
-    __msg " You can then make the adjustments in the editor."
+    __msg " Thanks to their flexible configuration and powerful settings functions, TKG packages"
+    __msg " can be precisely tailored to different systems and personal requirements. This versatility"
+    __msg " makes them an indispensable part of any Linux system."
+    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with${_reset}${_gray} ‘tkginstaller nvidia config’${_reset}."
+    __msg " The tool then offers you the option to make the adjustments in your preferred text editor."
+    __msg " Please make sure to adjust the settings correctly."
     __msg " Refer to the customization.cfg documentation for detailed configuration options."
     __msg " Location:${_reset}${_gray} ${_frog_repo_url}/nvidia-all/blob/master/customization.cfg${_reset}"
 
@@ -774,11 +780,14 @@ __nvidia_install() {
 # Mesa-TKG installation
 __mesa_install() {
     # Inform user about external configuration usage for Mesa-TKG build options customization
-    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Create an external configuration file to customize the package according to your needs and automate the installation as much as possible!${_break}"
+    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} This script is intended to simplify the installation and configuration of the powerful TKG packages.${_break}"
     __msg " A wide range of options are available."
-    __msg " When configured correctly, this will increase stability and performance."
-    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with ‘tkginstaller mesa config’."
-    __msg " You can then make the adjustments in the editor."
+    __msg " Thanks to their flexible configuration and powerful settings functions, TKG packages"
+    __msg " can be precisely tailored to different systems and personal requirements. This versatility"
+    __msg " makes them an indispensable part of any Linux system."
+    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with${_reset}${_gray} ‘tkginstaller mesa config’${_reset}."
+    __msg " The tool then offers you the option to make the adjustments in your preferred text editor."
+    __msg " Please make sure to adjust the settings correctly."
     __msg " Refer to the customization.cfg documentation for detailed configuration options."
     __msg " Location:${_reset}${_gray} ${_frog_repo_url}/mesa-git/blob/master/customization.cfg${_reset}"
 
@@ -792,11 +801,14 @@ __mesa_install() {
 # Wine-TKG installation
 __wine_install() {
     # Inform user about external configuration usage for Wine-TKG build options customization
-    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Create an external configuration file to customize the package according to your needs and automate the installation as much as possible!${_break}"
+    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} This script is intended to simplify the installation and configuration of the powerful TKG packages.${_break}"
     __msg " A wide range of options are available."
-    __msg " When configured correctly, this will increase stability and performance."
-    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with ‘tkginstaller wine config’."
-    __msg " You can then make the adjustments in the editor."
+    __msg " Thanks to their flexible configuration and powerful settings functions, TKG packages"
+    __msg " can be precisely tailored to different systems and personal requirements. This versatility"
+    __msg " makes them an indispensable part of any Linux system."
+    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with${_reset}${_gray} ‘tkginstaller wine config’${_reset}."
+    __msg " The tool then offers you the option to make the adjustments in your preferred text editor."
+    __msg " Please make sure to adjust the settings correctly."
     __msg " Refer to the customization.cfg documentation for detailed configuration options."
     __msg " Location:${_reset}${_gray} ${_frog_repo_url}/wine-tkg-git/blob/master/wine-tkg-git/customization.cfg${_reset}"
 
@@ -846,11 +858,14 @@ __wine_install() {
 # Proton-TKG installation
 __proton_install() {
     # Inform user about external configuration usage for Proton-TKG build options customization
-    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Create an external configuration file to customize the package according to your needs and automate the installation as much as possible!${_break}"
+    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} This script is intended to simplify the installation and configuration of the powerful TKG packages.${_break}"
     __msg " A wide range of options are available."
-    __msg " When configured correctly, this will increase stability and performance."
-    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with ‘tkginstaller proton config’."
-    __msg " You can then make the adjustments in the editor."
+    __msg " Thanks to their flexible configuration and powerful settings functions, TKG packages"
+    __msg " can be precisely tailored to different systems and personal requirements. This versatility"
+    __msg " makes them an indispensable part of any Linux system."
+    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with${_reset}${_gray} ‘tkginstaller proton config’${_reset}."
+    __msg " The tool then offers you the option to make the adjustments in your preferred text editor."
+    __msg " Please make sure to adjust the settings correctly."
     __msg " Refer to the customization.cfg documentation for detailed configuration options."
     __msg " Location:${_reset}${_gray} ${_frog_repo_url}/wine-tkg-git/blob/master/proton-tkg/proton-tkg.cfg${_reset}"
 

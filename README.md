@@ -10,13 +10,13 @@
 
 # TKG-Installer 🐸
 
-### Easily build the TKG packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
+#### Command line tool with optional TUI interface to support the creation of TKG packages from the repositories of the [Frogging family](https://github.com/Frogging-Family).
 
 ---
 
 ###### This script is intended to simplify the installation and configuration of the powerful TKG packages.
 
-###### With flexible configuration and powerful adjustment features, the TKG packages can be tailored precisely to different systems and personal needs. This versatility has made them an indispensable part of my daily routine for a long time. 
+###### Thanks to their flexible configuration and powerful settings functions, TKG packages can be precisely tailored to different systems and personal requirements. This versatility makes them an indispensable part of any Linux system.
 
 ###### I've been using this script successfully for quite a while—maybe it will help you too!
 
@@ -25,7 +25,7 @@
 ## Features
 
 - **Dual Mode Operation**: Use either an interactive `fzf`-menu or fast direct `command-line` mode.
-- **Advanced Package Configuration**: This script can create external configuration files for all TKG packages and tools supporting the feature.
+- **Advanced Package Configuration**: This script can create and manage external configuration files for all TKG packages and tools.
 - **Multi-Distro Support**: Works seamlessly on Arch-based systems and most other Linux distributions support by the Frogging-Family.
 
 [![tkginstaller-fzf](images/fzf.png)](images/fzf.png)
@@ -33,6 +33,7 @@
 [![tkginstaller-c](images/config.png)](images/config.png)
 [![tkginstaller-l](images/linux.png)](images/linux.png)
 [![tkginstaller-w](images/wine.png)](images/wine.png)
+[![tkginstaller-w](images/proton.png)](images/proton.png)
 [![tkginstaller-help](images/help.png)](images/help.png)
 
 ---
