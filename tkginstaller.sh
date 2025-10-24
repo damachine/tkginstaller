@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.21.3"
+_tkg_version="v0.21.4"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -888,7 +888,7 @@ __proton_install() {
     # Determine clean command for proton-tkg (after build process)
     local _clean_command="./proton-tkg.sh clean" # Clean command for proton-tkg
 
-    _install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"
+    #__install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"
 
     # Build and install and ask for cleaning after build process
     if __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"; then
@@ -1548,6 +1548,5 @@ __main() {
 # SCRIPT EXECUTION
 # =============================================================================
 
-# Run main function with all command line arguments
 # Pass all command line arguments to main function
 __main "$@" 
