@@ -28,11 +28,8 @@
 - **Advanced Package Configuration**: This script can create external configuration files for all TKG packages and tools supporting the feature.
 - **Multi-Distro Support**: Works seamlessly on Arch-based systems and most other Linux distributions support by the Frogging-Family.
 
-[![tkginstaller-start](images/start.png)](images/start.png)
 [![tkginstaller-fzf](images/fzf.png)](images/fzf.png)
 [![tkginstaller-c](images/config.png)](images/config.png)
-[![tkginstaller-c1](images/config1.png)](images/config1.png)
-[![tkginstaller-c2](images/config2.png)](images/config2.png)
 [![tkginstaller-l](images/linux.png)](images/linux.png)
 [![tkginstaller-w](images/wine.png)](images/wine.png)
 [![tkginstaller-help](images/help.png)](images/help.png)
