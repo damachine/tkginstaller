@@ -10,15 +10,11 @@
 
 # TKG-Installer 🐸
 
-#### A Frog pond command line tool to assist with the installation of TKG packages from the repositories of the [Frogging-Family](https://github.com/Frogging-Family).
+#### A Frogpond command line tool to assist with the installation and configuration of the powerful of TKG packages from the repositories of the [Frogging-Family](https://github.com/Frogging-Family).
 
----
+##### Thanks to their flexible configuration and powerful settings functions, TKG packages can be precisely tailored to different systems and personal requirements. This versatility makes them an indispensable part of any Linux system.
 
-###### This script is intended to simplify the installation and configuration of the powerful TKG packages.
-
-###### Thanks to their flexible configuration and powerful settings functions, TKG packages can be precisely tailored to different systems and personal requirements. This versatility makes them an indispensable part of any Linux system.
-
-###### I've been using this script successfully for quite a while—maybe it will help you too!
+##### I've been using this script successfully for quite a while—maybe it will help you too!
 
 ---
 
