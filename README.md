@@ -29,6 +29,7 @@
 - **Multi-Distro Support**: Works seamlessly on Arch-based systems and most other Linux distributions support by the Frogging-Family.
 
 [![tkginstaller-fzf](images/fzf.png)](images/fzf.png)
+[![tkginstaller-fzf2](images/fzf2.png)](images/fzf2.png)
 [![tkginstaller-c](images/config.png)](images/config.png)
 [![tkginstaller-l](images/linux.png)](images/linux.png)
 [![tkginstaller-w](images/wine.png)](images/wine.png)
