@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.20.5"
+_tkg_version="v0.20.6"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -523,7 +523,7 @@ __fzf_menu() {
     fzf \
         --with-shell='bash -c' \
         --style default \
-        --color='header:#66ff66,footer:#66ff66,label:#667766,current-fg:#00ff00,current-bg:#336633,gutter:#336633,pointer:#336633' \
+        --color='border:#224422,header:#66ff66:bold,footer:#66ff66:dim,label:#667766,current-fg:#00ff00,current-bg:#336633,gutter:#336633,pointer:#336633' \
         --border=none \
         --layout=reverse \
         --highlight-line \
