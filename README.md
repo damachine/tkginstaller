@@ -10,7 +10,7 @@
 
 # TKG-Installer 🐸
 
-#### Command line tool with optional TUI interface to support the creation of TKG packages from the repositories of the [Frogging family](https://github.com/Frogging-Family).
+#### A Frog pond command line tool to assist with the installation of TKG packages from the repositories of the [Frogging-Family](https://github.com/Frogging-Family).
 
 ---
 

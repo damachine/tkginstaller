@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.20.7"
+_tkg_version="v0.20.8"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -1047,7 +1047,7 @@ __edit_config() {
         '
 
         # Define header and footer texts for fzf menu display with TKG version info
-        local _header_text="🐸 TKG-Installer ─ Editor menu${_break}${_break}   Edit external configuration file${_break}   Default directory: ~/.config/frogminer/"
+        local _header_text="🐸 TKG-Installer ─ Editor menu${_break}${_break}   Edit/Create external configuration file${_break}   Default directory: ~/.config/frogminer/"
         local _footer_text="📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}🔄 Press Ctrl+P to toggle preview window${_break}🐸 Frogging-Family: https://github.com/Frogging-Family${_break}🌐 About: https://github.com/damachine/tkginstaller"
         local _border_label_text="${_tkg_version}"
         local _preview_window_settings='right:wrap:70%'
@@ -1287,7 +1287,7 @@ __menu() {
     '
 
     # Define header and footer texts for fzf menu display with TKG version info and instructions
-    local _header_text="🐸 TKG-Installer${_break}${_break}   Easily build the TKG packages from the Frogging-Family repositories."
+    local _header_text="🐸 TKG-Installer ─ Main menu${_break}${_break}   Customize, clone, build, and install TKG packages${_break}   CHOOSE: Select an option"
     local _footer_text="📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}🔄 Press Ctrl+P to toggle preview window${_break}🐸 Frogging-Family: https://github.com/Frogging-Family${_break}🌐 About: https://github.com/damachine/tkginstaller"
     local _border_label_text="${_tkg_version}"
     local _preview_window_settings='right:wrap:60%:hidden'
