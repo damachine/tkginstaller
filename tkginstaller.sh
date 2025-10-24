@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.21.2"
+_tkg_version="v0.21.3"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -145,6 +145,18 @@ __init_style() {
     export _print _break _line _reset _red _green _green2 _green3 _orange _blue _gray _uline_on _uline_off
 }
 
+# Display banner with TKG-Installer version information
+__print_banner() {
+    echo -e "$_green3"
+    cat <<EOF
+░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
+░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
+░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
+──  ${_tkg_version}  ──
+EOF
+    echo -e "$_reset"
+}
+
 # =============================================================================
 # INITIALIZATION AND PRE-CHECKS
 # =============================================================================
@@ -216,6 +228,25 @@ __msg_info2()   { __msg 'info2' "$@"; }
 __msg_warning() { __msg 'warning' "$@"; }
 __msg_error()   { __msg 'error' "$@"; }
 __msg_prompt()  { __msg 'prompt' "$@"; }
+
+# Display package information and configuration location notice
+__pkg_info() {
+    # $1 = friendly package name (e.g. "Linux-TKG")
+    # $2 = config URL (full URL shown in Location:)
+    local _pkg_name="${1:-TKG package}"
+    local _config_url="${2:-${_frog_repo_url}}"
+
+    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} This script is intended to simplify the installation and configuration of the powerful TKG packages.${_break}"
+    __msg " A wide range of options are available."
+    __msg " Thanks to their flexible configuration and powerful settings functions, TKG packages"
+    __msg " can be precisely tailored to different systems and personal requirements. This versatility"
+    __msg " makes them an indispensable part of any Linux system."
+    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with${_reset}${_gray} ‘tkginstaller ${_pkg_name,,} config’${_reset}."
+    __msg " The tool then offers you the option to make the adjustments in your preferred text editor."
+    __msg " Please make sure to adjust the settings correctly."
+    __msg " Refer to the customization.cfg documentation for detailed configuration options."
+    __msg " Location:${_reset}${_gray} ${_config_url}${_reset}"
+}
 
 # Check for root execution and warn the user (if running as root)
 if [[ "$(id -u)" -eq 0 ]]; then
@@ -326,14 +357,7 @@ __prepare() {
 
     # Welcome message and pre-checks
     __msg_done "${_break}Starting..."
-    echo -e "$_green3"
-    cat <<EOF
-░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
-░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
-░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
-──  ${_tkg_version}  ──
-EOF
-    echo -e "$_reset"
+    __print_banner
     __msg_info2 "Preparation..."
 
     # Check required dependencies based on mode (interactive/direct)
@@ -686,18 +710,6 @@ __install_package() {
     local _build_command="$3" # Build command (string)
     local _work_directory="${4:-}" # Optional working directory relative to cloned repo (string)
 
-    # Display banner with package name and version
-    if [[ "${_load_preview:-false}" == "true" ]]; then
-        echo -e "$_green3"
-        cat <<EOF
-░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
-░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
-░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
-──  ${_tkg_version}  ──
-EOF
-        echo -e "$_reset"
-    fi
-
     # Navigate to temporary directory for cloning and building process
     cd "${_tmp_dir}" > /dev/null 2>&1 || return 1
 
@@ -741,17 +753,14 @@ EOF
 
 # Linux-TKG installation
 __linux_install() {
-    # Inform user about external configuration usage for Linux-TKG build options customization
-    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} This script is intended to simplify the installation and configuration of the powerful TKG packages.${_break}"
-    __msg " A wide range of options are available."
-    __msg " Thanks to their flexible configuration and powerful settings functions, TKG packages"
-    __msg " can be precisely tailored to different systems and personal requirements. This versatility"
-    __msg " makes them an indispensable part of any Linux system."
-    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with${_reset}${_gray} ‘tkginstaller linux config’${_reset}."
-    __msg " The tool then offers you the option to make the adjustments in your preferred text editor."
-    __msg " Please make sure to adjust the settings correctly."
-    __msg " Refer to the customization.cfg documentation for detailed configuration options."
-    __msg " Location:${_reset}${_gray} ${_frog_repo_url}/linux-tkg/blob/master/customization.cfg${_reset}"
+    # Display banner with package name and version
+    if [[ "${_load_preview:-false}" == "true" ]]; then
+        __msg ""
+        __print_banner
+    fi
+
+    # Inform user (globalized)
+    __pkg_info "linux" "${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
 
     # Determine build command based on distribution. Arch-based distributions use makepkg, others use install.sh
     local _build_command # Build command variable
@@ -774,17 +783,14 @@ __linux_install() {
 
 # Nvidia-TKG installation
 __nvidia_install() {
+    # Display banner with package name and version
+    if [[ "${_load_preview:-false}" == "true" ]]; then
+        __msg ""
+        __print_banner
+    fi
+
     # Inform user about external configuration usage for Nvidia-TKG build options customization
-    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} This script is intended to simplify the installation and configuration of the powerful TKG packages.${_break}"
-    __msg " A wide range of options are available."
-    __msg " Thanks to their flexible configuration and powerful settings functions, TKG packages"
-    __msg " can be precisely tailored to different systems and personal requirements. This versatility"
-    __msg " makes them an indispensable part of any Linux system."
-    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with${_reset}${_gray} ‘tkginstaller nvidia config’${_reset}."
-    __msg " The tool then offers you the option to make the adjustments in your preferred text editor."
-    __msg " Please make sure to adjust the settings correctly."
-    __msg " Refer to the customization.cfg documentation for detailed configuration options."
-    __msg " Location:${_reset}${_gray} ${_frog_repo_url}/nvidia-all/blob/master/customization.cfg${_reset}"
+    __pkg_info "nvidia" "${_frog_repo_url}/nvidia-all/blob/master/customization.cfg"
 
     # Execute installation process for Nvidia-TKG
     __install_package "${_frog_repo_url}/nvidia-all.git" "nvidia-all" "makepkg -si"
@@ -795,17 +801,14 @@ __nvidia_install() {
 
 # Mesa-TKG installation
 __mesa_install() {
+    # Display banner with package name and version
+    if [[ "${_load_preview:-false}" == "true" ]]; then
+        __msg ""
+        __print_banner
+    fi
+
     # Inform user about external configuration usage for Mesa-TKG build options customization
-    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} This script is intended to simplify the installation and configuration of the powerful TKG packages.${_break}"
-    __msg " A wide range of options are available."
-    __msg " Thanks to their flexible configuration and powerful settings functions, TKG packages"
-    __msg " can be precisely tailored to different systems and personal requirements. This versatility"
-    __msg " makes them an indispensable part of any Linux system."
-    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with${_reset}${_gray} ‘tkginstaller mesa config’${_reset}."
-    __msg " The tool then offers you the option to make the adjustments in your preferred text editor."
-    __msg " Please make sure to adjust the settings correctly."
-    __msg " Refer to the customization.cfg documentation for detailed configuration options."
-    __msg " Location:${_reset}${_gray} ${_frog_repo_url}/mesa-git/blob/master/customization.cfg${_reset}"
+    __pkg_info "mesa" "${_frog_repo_url}/mesa-git/blob/master/customization.cfg"
 
     # Execute installation process for Mesa-TKG
     __install_package "${_frog_repo_url}/mesa-git.git" "mesa-git" "makepkg -si"
@@ -816,17 +819,14 @@ __mesa_install() {
 
 # Wine-TKG installation
 __wine_install() {
+    # Display banner with package name and version
+    if [[ "${_load_preview:-false}" == "true" ]]; then
+        __msg ""
+        __print_banner
+    fi
+
     # Inform user about external configuration usage for Wine-TKG build options customization
-    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} This script is intended to simplify the installation and configuration of the powerful TKG packages.${_break}"
-    __msg " A wide range of options are available."
-    __msg " Thanks to their flexible configuration and powerful settings functions, TKG packages"
-    __msg " can be precisely tailored to different systems and personal requirements. This versatility"
-    __msg " makes them an indispensable part of any Linux system."
-    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with${_reset}${_gray} ‘tkginstaller wine config’${_reset}."
-    __msg " The tool then offers you the option to make the adjustments in your preferred text editor."
-    __msg " Please make sure to adjust the settings correctly."
-    __msg " Refer to the customization.cfg documentation for detailed configuration options."
-    __msg " Location:${_reset}${_gray} ${_frog_repo_url}/wine-tkg-git/blob/master/wine-tkg-git/customization.cfg${_reset}"
+    __pkg_info "wine" "${_frog_repo_url}/wine-tkg-git/blob/master/wine-tkg-git/customization.cfg"
 
     # Determine build command based on distribution
     local _build_command
@@ -873,26 +873,22 @@ __wine_install() {
 
 # Proton-TKG installation
 __proton_install() {
+    # Display banner with package name and version
+    if [[ "${_load_preview:-false}" == "true" ]]; then
+        __msg ""
+        __print_banner
+    fi
+
     # Inform user about external configuration usage for Proton-TKG build options customization
-    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} This script is intended to simplify the installation and configuration of the powerful TKG packages.${_break}"
-    __msg " A wide range of options are available."
-    __msg " Thanks to their flexible configuration and powerful settings functions, TKG packages"
-    __msg " can be precisely tailored to different systems and personal requirements. This versatility"
-    __msg " makes them an indispensable part of any Linux system."
-    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with${_reset}${_gray} ‘tkginstaller proton config’${_reset}."
-    __msg " The tool then offers you the option to make the adjustments in your preferred text editor."
-    __msg " Please make sure to adjust the settings correctly."
-    __msg " Refer to the customization.cfg documentation for detailed configuration options."
-    __msg " Location:${_reset}${_gray} ${_frog_repo_url}/wine-tkg-git/blob/master/proton-tkg/proton-tkg.cfg${_reset}"
+    __pkg_info "proton" "${_frog_repo_url}/wine-tkg-git/blob/master/proton-tkg/proton-tkg.cfg"
 
     # Determine build command for proton-tkg
     local _build_command="./proton-tkg.sh" # Build command for proton-tkg
 
-    # Installation status message display
-    __done $?
-
     # Determine clean command for proton-tkg (after build process)
     local _clean_command="./proton-tkg.sh clean" # Clean command for proton-tkg
+
+    _install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"
 
     # Build and install and ask for cleaning after build process
     if __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"; then
@@ -909,6 +905,9 @@ __proton_install() {
             fi
         fi
     fi
+
+    # Installation status message display
+    __done $?
 }
 
 # =============================================================================
