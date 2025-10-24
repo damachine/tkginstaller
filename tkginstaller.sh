@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.20.2"
+_tkg_version="v0.20.3"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -804,7 +804,7 @@ __wine_install() {
     # Determine build command based on distribution
     if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
         # Arch-based distributions: Ask user which build system to use
-        __msg_done "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Which build system do you want to use?${_break}"
+        __msg_done "${_break}${_green2}${_uline_on}CHOICE:${_uline_off}${_reset}${_green} Which build system do you want to use?${_break}"
         __msg " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
         __msg " 1) makepkg -si${_reset} ${_gray} (recommended for Arch-based distros)"
         __msg " 2) ./non-makepkg-build.sh${_reset} ${_gray} (use if you want a custom build script)${_break}"
