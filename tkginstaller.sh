@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.21.5"
+_tkg_version="v0.21.6"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -146,7 +146,7 @@ __init_style() {
 }
 
 # Display banner with TKG-Installer version information
-__print_banner() {
+__banner() {
     echo -e "$_green_mint"
     cat <<EOF
 ░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
@@ -358,7 +358,7 @@ __prepare() {
 
     # Welcome message and pre-checks
     __msg_info "${_break}Starting..."
-    __print_banner
+    __banner
     __msg_info_orange "Preparation..."
 
     # Check required dependencies based on mode (interactive/direct)
@@ -556,12 +556,13 @@ __fzf_menu() {
     fzf \
         --with-shell='bash -c' \
         --style default \
-        --color='border:#224422,header:#66ff66:bold,footer:#66ff66:regular,label:#667766,current-fg:#00ff00,current-bg:#336633,gutter:#336633,pointer:#336633' \
+        --color='header:#66ff66:bold,footer:#66bb66:dim,label:#667766,border:#224422' \
+        --color='current-fg:#00ff00,current-bg:#336633,gutter:#336633,pointer:#336633' \
         --border=sharp \
         --layout=reverse \
         --highlight-line \
         --height='-1' \
-        --padding=0 \
+        --padding='0' \
         --ansi \
         --delimiter='|' \
         --with-nth='2' \
@@ -759,7 +760,7 @@ __linux_install() {
     # Display banner with package name and version
     if [[ "${_load_preview:-false}" == "true" ]]; then
         __msg ""
-        __print_banner
+        __banner
     fi
 
     # Inform user (globalized)
@@ -790,7 +791,7 @@ __nvidia_install() {
     # Display banner with package name and version
     if [[ "${_load_preview:-false}" == "true" ]]; then
         __msg ""
-        __print_banner
+        __banner
     fi
 
     # Inform user about external configuration usage for Nvidia-TKG build options customization
@@ -809,7 +810,7 @@ __mesa_install() {
     # Display banner with package name and version
     if [[ "${_load_preview:-false}" == "true" ]]; then
         __msg ""
-        __print_banner
+        __banner
     fi
 
     # Inform user about external configuration usage for Mesa-TKG build options customization
@@ -828,7 +829,7 @@ __wine_install() {
     # Display banner with package name and version
     if [[ "${_load_preview:-false}" == "true" ]]; then
         __msg ""
-        __print_banner
+        __banner
     fi
 
     # Inform user about external configuration usage for Wine-TKG build options customization
@@ -883,7 +884,7 @@ __proton_install() {
     # Display banner with package name and version
     if [[ "${_load_preview:-false}" == "true" ]]; then
         __msg ""
-        __print_banner
+        __banner
     fi
 
     # Inform user about external configuration usage for Proton-TKG build options customization
@@ -1078,7 +1079,7 @@ __edit_config() {
 
         # Define header and footer texts for fzf menu display with TKG version info
         local _header_text="🐸 TKG-Installer ─ Editor menu${_break}${_break}   Edit/Create external configuration file${_break}   Default directory: ~/.config/frogminer/"
-        local _footer_text="📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}🔄 Press Ctrl+P to toggle preview window${_break}🐸 Frogging-Family: https://github.com/Frogging-Family${_break}🌐 About: https://github.com/damachine/tkginstaller"
+        local _footer_text="📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}🔄 Press Ctrl+P to toggle the editor preview window${_break}🐸 Frogging-Family: https://github.com/Frogging-Family${_break}🌐 About: https://github.com/damachine/tkginstaller"
         local _border_label_text="${_tkg_version}"
         local _preview_window_settings='right:wrap:70%'
 
@@ -1317,8 +1318,8 @@ __menu() {
     '
 
     # Define header and footer texts for fzf menu display with TKG version info and instructions
-    local _header_text="🐸 TKG-Installer ─ Main menu${_break}${_break}   Customize, clone, build, and install TKG packages${_break}   CHOOSE: Select an option"
-    local _footer_text="📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}🔄 Press Ctrl+P to toggle preview window${_break}🐸 Frogging-Family: https://github.com/Frogging-Family${_break}🌐 About: https://github.com/damachine/tkginstaller"
+    local _header_text="🐸 TKG-Installer ─ Main menu${_break}${_break}   Customize, clone, build, and install TKG packages${_break}   Select an option below"
+    local _footer_text="📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}🔄 Press Ctrl+P to toggle the help preview window${_break}🐸 Frogging-Family: https://github.com/Frogging-Family${_break}🌐 About: https://github.com/damachine/tkginstaller"
     local _border_label_text="${_tkg_version}"
     local _preview_window_settings='right:wrap:60%:hidden'
 
