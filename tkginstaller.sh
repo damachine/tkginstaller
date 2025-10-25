@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.21.4"
+_tkg_version="v0.21.5"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -121,11 +121,11 @@ __init_style() {
     # Define colors: prefer TrueColor values, fallback to tput/256-color
     _red="$(_color 220 60 60 1)"    # warm red
     _green="$(_color 80 255 140 2)"  # light green
-    _green2="$(_color 120 255 100 2)" # secondary green
-    _green3="$(_color 152 255 200 6)" # mint-gray
+    _green_dark="$(_color 120 255 100 2)" # dark green
+    _green_mint="$(_color 152 255 200 6)" # mint green
     _orange="$(_color 255 190 60 3)"  # orange/yellow
     _blue="$(_color 85 170 255 4)"    # blue
-    _gray="$(_color 200 250 200 7)"   # muted gray
+    _gray="$(_color 200 250 200 7)"   # gray
 
     # Underline on/off sequences (use tput if available for portability)
     _uline_on=$(tput smul 2>/dev/null || printf '\033[4m')
@@ -142,12 +142,12 @@ __init_style() {
     for ((i=0; i<_line_len; i++)); do _line+="─"; done # Generate line of specified length
 
     # Export variables for fzf subshells (unset __exit run)
-    export _print _break _line _reset _red _green _green2 _green3 _orange _blue _gray _uline_on _uline_off
+    export _print _break _line _reset _red _green _green_dark _green_mint _orange _blue _gray _uline_on _uline_off
 }
 
 # Display banner with TKG-Installer version information
 __print_banner() {
-    echo -e "$_green3"
+    echo -e "$_green_mint"
     cat <<EOF
 ░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
@@ -170,7 +170,7 @@ __msg() {
     # If first arg is a known level, treat it as level, else default to plain
     local _first="${1:-}" _level _msg # First argument (string)
     case "${_first,,}" in
-        done|info|info2|warning|warn|error|err|prompt|plain|debug)
+        info|info_orange|warning|warn|error|err|prompt|plain)
             _level="${_first,,}" # Level specified
             shift # Remove first argument
             _msg="$*" # Remaining arguments as message
@@ -182,18 +182,21 @@ __msg() {
     esac
 
     # Ensure colors exist (fallback to empty strings if not set)
-    : "${_reset:=''}" "${_red:=''}" "${_green:=''}" "${_orange:=''}" "${_blue:=''}"
+    : "${_reset:=''}" "${_red:=''}" "${_green:=''}" "${_green_dark:=''}" "${_green_mint:=''}" "${_orange:=''}" "${_blue:=''}"
 
     # Map level -> color + prefix; prompt handled specially (no newline)
     local _color="" _prefix=""
     case "${_level}" in
-        done)
-            _color="${_green}"; _prefix=""
-            ;;
         info)
             _color="${_green}"; _prefix=""
             ;;
-        info2)
+        info_dark)
+            _color="${_green_dark}"; _prefix=""
+            ;;
+        info_mint)
+            _color="${_green_mint}"; _prefix=""
+            ;;
+        info_orange)
             _color="${_orange}"; _prefix=""
             ;;
         warning|warn)
@@ -203,9 +206,6 @@ __msg() {
         error|err)
             _color="${_red}"
             _prefix="${_uline_on}ERROR:${_uline_off}${_color} "
-            ;;
-        debug)
-            _color="${_blue}"; _prefix="DEBUG: "
             ;;
         prompt)
             # prompt: do not add newline, do not append reset so user input appears after prompt
@@ -222,21 +222,22 @@ __msg() {
 }
 
 # Level-specific message functions for convenience
-__msg_done()    { __msg 'done' "$@"; }
 __msg_info()    { __msg 'info' "$@"; }
-__msg_info2()   { __msg 'info2' "$@"; }
+__msg_info_dark()   { __msg 'info_dark' "$@"; }
+__msg_info_mint()   { __msg 'info_mint' "$@"; }
+__msg_info_orange()   { __msg 'info_orange' "$@"; }
 __msg_warning() { __msg 'warning' "$@"; }
 __msg_error()   { __msg 'error' "$@"; }
 __msg_prompt()  { __msg 'prompt' "$@"; }
 
 # Display package information and configuration location notice
-__pkg_info() {
+__msg_pkg() {
     # $1 = friendly package name (e.g. "Linux-TKG")
     # $2 = config URL (full URL shown in Location:)
     local _pkg_name="${1:-TKG package}"
     local _config_url="${2:-${_frog_repo_url}}"
 
-    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} This script is intended to simplify the installation and configuration of the powerful TKG packages.${_break}"
+    __msg_info "${_break}${_green_dark}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} This script is intended to simplify the installation and configuration of the powerful TKG packages.${_break}"
     __msg " A wide range of options are available."
     __msg " Thanks to their flexible configuration and powerful settings functions, TKG packages"
     __msg " can be precisely tailored to different systems and personal requirements. This versatility"
@@ -356,9 +357,9 @@ __prepare() {
     _load_preview="${1:-false}" # Default to false if not provided (for direct mode)
 
     # Welcome message and pre-checks
-    __msg_done "${_break}Starting..."
+    __msg_info "${_break}Starting..."
     __print_banner
-    __msg_info2 "Preparation..."
+    __msg_info_orange "Preparation..."
 
     # Check required dependencies based on mode (interactive/direct)
     local _dep=(git onefetch)
@@ -432,10 +433,10 @@ __prepare() {
     fi
 
     # Setup temporary directory and files for installation process
-    __msg_info2 "Cleaning old temporary files..."
+    __msg_info_orange "Cleaning old temporary files..."
     # Remove old temporary files and directories if they exist
     rm -rf "$_tmp_dir" "$_choice_file" 2>/dev/null || true
-    __msg_info2 "Creating temporary directory..."
+    __msg_info_orange "Creating temporary directory..."
     # Create necessary subdirectories for temporary files
     mkdir -p "$_tmp_dir" 2>/dev/null || {
         __msg_error "Creating temporary directory failed: ${_tmp_dir}"
@@ -444,7 +445,7 @@ __prepare() {
 
     # Load preview content only for interactive mode (if requested)
     if [[ "$_load_preview" == "true" ]]; then
-        __msg_info2 "Retrieving preview content..."
+        __msg_info_orange "Retrieving preview content..."
         __init_preview || {
             __msg "${_red}Initializing preview content failed! Continuing...${_reset}"
             return 0
@@ -453,11 +454,11 @@ __prepare() {
 
     # Final message before starting TKG-Installer process
     if [[ "$_load_preview" == "true" ]]; then
-        __msg_done "${_break}Preparation done!"
-        __msg_done "Entering interactive menu"
+        __msg_info "${_break}Preparation done!"
+        __msg_info "Entering interactive menu"
     else
-        __msg_done "${_break}Preparation done!"
-        __msg_done "Starting direct installation"
+        __msg_info "${_break}Preparation done!"
+        __msg_info "Starting direct installation"
     fi
 
     # Short delay for better UX (( :P ))
@@ -466,21 +467,21 @@ __prepare() {
 }
 
 # Display completion status with timestamp and duration of the action performed
-__done() {
+__finish() {
     local _status=${1:-$?} # Use passed status, fallback to $? for compatibility
     local _duration="${SECONDS:-0}" # Total duration in seconds (since script start)
     local _minutes=$((_duration / 60)) # Calculate minutes part
     local _seconds=$((_duration % 60)) # Calculate remaining seconds part
 
     # Finalizing message display
-    __msg_info2 "${_break}Action completed: $(date '+%Y-%m-%d %H:%M:%S')" # Display completion message with timestamp
+    __msg_info_orange "${_break}Action completed: $(date '+%Y-%m-%d %H:%M:%S')" # Display completion message with timestamp
     # Display done or failure status based on exit code
     if [[ $_status -eq 0 ]]; then
-        __msg_done "Status: Successfully completed!"
+        __msg_info "Status: Successfully completed!"
     else
         __msg_error "Failed process (Code: $_status)"
     fi
-    __msg_info2 "Duration: ${_minutes} min ${_seconds} sec" # Display duration message with minutes and seconds
+    __msg_info_orange "Duration: ${_minutes} min ${_seconds} sec" # Display duration message with minutes and seconds
 
     # Return status code
     return "$_status"
@@ -500,7 +501,7 @@ __exit() {
         __msg_error "Aborting status: $_exit_code${_break}"
         __msg "${_red} Exiting TKG-Installer due to errors. Please check the messages above for details.${_break}"
     else
-        __msg_done "${_break}Closing TKG-Installer! Goodbye!${_break}"
+        __msg_info "${_break}Closing TKG-Installer! Goodbye!${_break}"
     fi
 
     # Perform cleanup actions before exiting the script
@@ -555,8 +556,8 @@ __fzf_menu() {
     fzf \
         --with-shell='bash -c' \
         --style default \
-        --color='border:#224422,header:#66ff66:bold,footer:#66ff66:dim,label:#667766,current-fg:#00ff00,current-bg:#336633,gutter:#336633,pointer:#336633' \
-        --border=none \
+        --color='border:#224422,header:#66ff66:bold,footer:#66ff66:regular,label:#667766,current-fg:#00ff00,current-bg:#336633,gutter:#336633,pointer:#336633' \
+        --border=sharp \
         --layout=reverse \
         --highlight-line \
         --height='-1' \
@@ -564,14 +565,16 @@ __fzf_menu() {
         --ansi \
         --delimiter='|' \
         --with-nth='2' \
+        --gap='0' \
         --no-extended \
         --no-input \
         --no-multi \
         --no-multi-line \
+        --cycle \
         --header="${_header_text}" \
         --header-border=line \
         --header-label="${_border_label_text}" \
-        --header-label-pos=1024 \
+        --header-label-pos=2048 \
         --header-first \
         --footer="${_footer_text}" \
         --footer-border=line \
@@ -714,7 +717,7 @@ __install_package() {
     cd "${_tmp_dir}" > /dev/null 2>&1 || return 1
 
     # Clone repository from provided URL
-    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Fetching $_package_name from Frogging-Family repository...${_break}"
+    __msg_info "${_break}${_green_dark}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Fetching $_package_name from Frogging-Family repository...${_break}"
     git clone "$_repo_url" > /dev/null 2>&1 || {
         __msg_error "Cloning failed for: $_package_name${_break}"
         __msg " Please check your internet connection and try again.${_break}"
@@ -744,7 +747,7 @@ __install_package() {
     sleep 1.5s # Short delay for better UX (( :P ))
 
     # Build and install the package using the provided build command
-    __msg_info "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Cloning, building and installing $_package_name for $_distro_name, this may take a while...${_break}"
+    __msg_info "${_break}${_green_dark}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Cloning, building and installing $_package_name for $_distro_name, this may take a while...${_break}"
     eval "$_build_command" || {
         __msg_error "Building failed: $_package_name for $_distro_name${_break}"
         return 1
@@ -760,7 +763,7 @@ __linux_install() {
     fi
 
     # Inform user (globalized)
-    __pkg_info "linux" "${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
+    __msg_pkg "linux" "${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
 
     # Determine build command based on distribution. Arch-based distributions use makepkg, others use install.sh
     local _build_command # Build command variable
@@ -778,7 +781,8 @@ __linux_install() {
     __install_package "${_frog_repo_url}/linux-tkg.git" "linux-tkg" "$_build_command"
 
     # Installation status message display
-    __done $?
+    local _status=$?
+    __finish "$_status"
 }
 
 # Nvidia-TKG installation
@@ -790,13 +794,14 @@ __nvidia_install() {
     fi
 
     # Inform user about external configuration usage for Nvidia-TKG build options customization
-    __pkg_info "nvidia" "${_frog_repo_url}/nvidia-all/blob/master/customization.cfg"
+    __msg_pkg "nvidia" "${_frog_repo_url}/nvidia-all/blob/master/customization.cfg"
 
     # Execute installation process for Nvidia-TKG
     __install_package "${_frog_repo_url}/nvidia-all.git" "nvidia-all" "makepkg -si"
 
     # Installation status message display
-    __done $?
+    local _status=$?
+    __finish "$_status"
 }
 
 # Mesa-TKG installation
@@ -808,13 +813,14 @@ __mesa_install() {
     fi
 
     # Inform user about external configuration usage for Mesa-TKG build options customization
-    __pkg_info "mesa" "${_frog_repo_url}/mesa-git/blob/master/customization.cfg"
+    __msg_pkg "mesa" "${_frog_repo_url}/mesa-git/blob/master/customization.cfg"
 
     # Execute installation process for Mesa-TKG
     __install_package "${_frog_repo_url}/mesa-git.git" "mesa-git" "makepkg -si"
 
     # Installation status message display
-    __done $?
+    local _status=$?
+    __finish "$_status"
 }
 
 # Wine-TKG installation
@@ -826,7 +832,7 @@ __wine_install() {
     fi
 
     # Inform user about external configuration usage for Wine-TKG build options customization
-    __pkg_info "wine" "${_frog_repo_url}/wine-tkg-git/blob/master/wine-tkg-git/customization.cfg"
+    __msg_pkg "wine" "${_frog_repo_url}/wine-tkg-git/blob/master/wine-tkg-git/customization.cfg"
 
     # Determine build command based on distribution
     local _build_command
@@ -834,7 +840,7 @@ __wine_install() {
     # Determine build command based on distribution
     if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
         # Arch-based distributions: Ask user which build system to use
-        __msg_done "${_break}${_green2}${_uline_on}CHOICE:${_uline_off}${_reset}${_green} Which build system do you want to use?${_break}"
+        __msg_info "${_break}${_green_dark}${_uline_on}CHOICE:${_uline_off}${_reset}${_green} Which build system do you want to use?${_break}"
         __msg " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
         __msg " 1) makepkg -si${_reset} ${_gray} (recommended for Arch-based distros)"
         __msg " 2) ./non-makepkg-build.sh${_reset} ${_gray} (use if you want a custom build script)${_break}"
@@ -868,7 +874,8 @@ __wine_install() {
     __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "wine-tkg-git"
 
     # Installation status message display
-    __done $?
+    local _status=$?
+    __finish "$_status"
 }
 
 # Proton-TKG installation
@@ -880,7 +887,7 @@ __proton_install() {
     fi
 
     # Inform user about external configuration usage for Proton-TKG build options customization
-    __pkg_info "proton" "${_frog_repo_url}/wine-tkg-git/blob/master/proton-tkg/proton-tkg.cfg"
+    __msg_pkg "proton" "${_frog_repo_url}/wine-tkg-git/blob/master/proton-tkg/proton-tkg.cfg"
 
     # Determine build command for proton-tkg
     local _build_command="./proton-tkg.sh" # Build command for proton-tkg
@@ -891,23 +898,31 @@ __proton_install() {
     #__install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"
 
     # Build and install and ask for cleaning after build process
-    if __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"; then
+     __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"
+    local _status=$?  # capture status immediately
+
+    if [[ $_status -eq 0 ]]; then
         # Ask user if clean command should be executed after build
-        __msg_prompt "Do you want to run ${_reset} ${_gray}'./proton-tkg.sh clean'${_reset} after building Proton-TKG? [y/N]: ${_reset}"
-        trap 'echo;echo; __msg "${_red}Aborted by user.";sleep 1.5s; return 0' INT
-        read -r _user_answer
-        trap - INT
-        if [[ "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
-            if __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_clean_command" "proton-tkg"; then
-                __msg_done "${_break}${_green2}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Cleaning completed successfully: $_package_name${_reset}${_break}"
+        __msg_prompt "Do you want to run ${_reset}${_gray}'./proton-tkg.sh clean'${_reset} after building Proton-TKG? [y/N]: ${_reset}"
+        _old_trap_int=$(trap -p INT 2>/dev/null || true)
+        trap '__exit 130' INT
+        read -r _user_answer || { eval "$_old_trap_int"; trap - INT; __exit 130; }
+        # restore previous trap
+        if [[ -n "$_old_trap_int" ]]; then eval "$_old_trap_int"; else trap - INT; fi
+
+        if [[ "${_user_answer,,}" =~ ^(y|yes)$ ]]; then
+            __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_clean_command" "proton-tkg"
+            local _clean_status=$?
+            if [[ $_clean_status -eq 0 ]]; then
+                __msg_info "${_break}${_green_dark}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Cleaning completed successfully.${_reset}${_break}"
             else
-                __msg_error "${_break}${_red}Cleaning failed: $_package_name${_reset}${_break}"
+                __msg_error "${_break}${_red}Cleaning failed (code: ${_clean_status}).${_reset}${_break}"
             fi
         fi
     fi
 
-    # Installation status message display
-    __done $?
+    # Installation status message display — use the captured status
+    __finish "$_status"
 }
 
 # =============================================================================
@@ -994,14 +1009,14 @@ __edit_config() {
                         clear
                         return 1
                     }
-                    __msg_done "Configuration directory created: ${_config_dir}${_break}"
+                    __msg_info "Configuration directory created: ${_config_dir}${_break}"
                     __msg_prompt " Press any key to continue...${_reset}"
                     read -n 1 -s -r -p "" # Wait for user input before exiting
                     clear
                     return 0
                     ;;
                 *)
-                    __msg_info2 "${_break}Directory creation cancelled.${_break}"
+                    __msg_info_orange "${_break}Directory creation cancelled.${_break}"
                     __msg " No changes were made.${_break}"
                     __msg_prompt " Press any key to continue...${_reset}"
                     read -n 1 -s -r -p "" # Wait for user input before exiting
@@ -1072,8 +1087,8 @@ __edit_config() {
 
         # Handle cancelled selection (ESC key) or empty choice to exit editor menu gracefully
         if [[ -z "$_config_choice" ]]; then
-            __msg_done "${_break}Applying changes..."
-            __msg_done "Returning to main menu...${_break}"
+            __msg_info "${_break}Applying changes..."
+            __msg_info "Returning to main menu...${_break}"
             sleep 1.5s
             clear
             return 0
@@ -1116,8 +1131,8 @@ __edit_config() {
                     "${_frog_raw_url}/wine-tkg-git/master/proton-tkg/proton-tkg.cfg"
                 ;;
             return)
-                __msg_done "${_break}Applying changes..."
-                __msg_done "Returning...${_break}"
+                __msg_info "${_break}Applying changes..."
+                __msg_info "Returning...${_break}"
                 sleep 1.5s
                 clear
                 return 0
@@ -1155,7 +1170,7 @@ __handle_config() {
     local _config_url="${3}" # Configuration file URL (string)
 
     # Notify user about opening the configuration file editor
-    __msg_info2 "${_break}Opening external configuration file:${_reset}${_gray} $_config_name${_reset}${_break}"
+    __msg_info_orange "${_break}Opening external configuration file:${_reset}${_gray} $_config_name${_reset}${_break}"
     sleep 1.5s
     clear
 
@@ -1207,7 +1222,7 @@ __handle_config() {
                     return 1
                 fi
                 if curl -fsSL "${_config_url}" -o "${_config_path}" 2>/dev/null; then
-                    __msg_done "${_break}External configuration ready at ${_config_path}${_break}"
+                    __msg_info "${_break}External configuration ready at ${_config_path}${_break}"
                     sleep 1.5s
                     clear
                     # Open the downloaded configuration file in the editor
@@ -1232,7 +1247,7 @@ __handle_config() {
                 ;;
             *)
                 # User chose not to download the configuration file
-                __msg_info2 "${_break}Download cancelled. No configuration file created.${_break}"
+                __msg_info_orange "${_break}Download cancelled. No configuration file created.${_break}"
                 __msg " No changes were made.${_break}"
                 __msg_prompt " Press any key to continue...${_reset}"
                 read -n 1 -s -r -p "" # Wait for user input before exiting
@@ -1246,7 +1261,7 @@ __handle_config() {
     fi
 
     # Notify user about closing the configuration file editor and remind to save changes
-    __msg_done "${_break}Closing external $_config_name configuration file...${_break}"
+    __msg_info "${_break}Closing external $_config_name configuration file...${_break}"
     sleep 1.5s
     clear
     return 0
@@ -1313,7 +1328,7 @@ __menu() {
 
     # Handle cancelled selection (ESC pressed) or empty choice to exit TKG-Installer gracefully
     if [[ -z "${_main_choice:-}" ]]; then
-        __msg_done "${_break}TKG-Installer - Exiting...${_break}"
+        __msg_info "${_break}TKG-Installer - Exiting...${_break}"
         sleep 1.5s
         clear
         __exit 0
@@ -1407,7 +1422,7 @@ __main_direct_mode() {
         __handle_config "$_config_name" "$_config_path" "$_config_url"
 
         # Display exit messages after editing config file and before exiting script gracefully
-        __msg_done "${_break}TKG-Installer closed! Goodbye!${_break}"
+        __msg_info "${_break}TKG-Installer closed! Goodbye!${_break}"
 
         # Clean exit without triggering __exit cleanup messages. Unset exported all variables
         __clean
@@ -1438,8 +1453,8 @@ __main_direct_mode() {
             ;;
         clean|--clean)
             # Clean temporary files and restart script
-            __msg_done "${_break}Cleaning all temporary files..."
-            __msg_done "Location: ${_tmp_dir}${_break}"
+            __msg_info "${_break}Cleaning all temporary files..."
+            __msg_info "Location: ${_tmp_dir}${_break}"
             __prepare >/dev/null 2>&1 || true
             rm -f "$_lock_file" 2>&1 || true
             sleep 1.5s
@@ -1524,7 +1539,7 @@ __main_interactive_mode() {
             ;;
         Exit)
             # Exit the script gracefully with cleanup messages
-            __msg_done "${_break}TKG-Installer - Exiting...${_break}"
+            __msg_info "${_break}TKG-Installer - Exiting...${_break}"
             sleep 1.5s
             clear
             exit 0
