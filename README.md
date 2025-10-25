@@ -10,7 +10,7 @@
 
 # TKG-Installer 🐸
 
-#### A Frogpond command line tool to assist with the installation and configuration of the powerful of TKG packages from the repositories of the [Frogging-Family](https://github.com/Frogging-Family).
+#### Commandline tool to assist with the installation and configuration of the powerful TKG packages from the repositories of the [Frogging-Family](https://github.com/Frogging-Family).
 
 ##### Thanks to their flexible configuration and powerful settings functions, TKG packages can be precisely tailored to different systems and personal requirements. This versatility makes them an indispensable part of any Linux system.
 
@@ -26,11 +26,10 @@
 
 [![tkginstaller-fzf](images/fzf.png)](images/fzf.png)
 [![tkginstaller-fzf2](images/fzf2.png)](images/fzf2.png)
-[![tkginstaller-c](images/config.png)](images/config.png)
-[![tkginstaller-l](images/linux.png)](images/linux.png)
-[![tkginstaller-w](images/wine.png)](images/wine.png)
-[![tkginstaller-w](images/proton.png)](images/proton.png)
-[![tkginstaller-help](images/help.png)](images/help.png)
+[![tkginstaller-fzfconfig](images/config.png)](images/config.png)
+[![tkginstaller-linuxdirect](images/linux.png)](images/linux.png)
+[![tkginstaller-winedirect](images/wine.png)](images/wine.png)
+[![tkginstaller-protondirect](images/proton.png)](images/proton.png)
 
 ---
 
