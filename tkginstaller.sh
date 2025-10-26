@@ -360,7 +360,7 @@ __prepare() {
     #   __prepare true  # Load preview content for interactive mode
     #   __prepare false # Skip preview content for direct mode
     # Example:
-    #   __prepare true
+    #   see above
     _load_preview="${1:-false}" # Default to false if not provided (for direct mode)
 
     # Welcome message and pre-checks
