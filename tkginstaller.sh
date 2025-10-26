@@ -56,10 +56,10 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.21.6"
+export _tkg_version="v0.21.7"
 
 # Lock file to prevent concurrent execution of the script
-_lock_file="/tmp/tkginstaller.lock"
+export _lock_file="/tmp/tkginstaller.lock"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -120,9 +120,10 @@ __init_style() {
 
     # Define colors: prefer TrueColor values, fallback to tput/256-color
     _red="$(_color 220 60 60 1)"    # warm red
-    _green="$(_color 80 255 140 2)"  # light green
-    _green_dark="$(_color 120 255 100 2)" # dark green
+    _green_light="$(_color 80 255 140 2)"  # light green
+    _green_neon="$(_color 120 255 100 2)" # neon green
     _green_mint="$(_color 152 255 200 6)" # mint green
+    _green_dark="$(_color 34 68 34 2)"    # dark green (#224422)
     _orange="$(_color 255 190 60 3)"  # orange/yellow
     _blue="$(_color 85 170 255 4)"    # blue
     _gray="$(_color 200 250 200 7)"   # gray
@@ -142,7 +143,7 @@ __init_style() {
     for ((i=0; i<_line_len; i++)); do _line+="─"; done # Generate line of specified length
 
     # Export variables for fzf subshells (unset __exit run)
-    export _print _break _line _reset _red _green _green_dark _green_mint _orange _blue _gray _uline_on _uline_off
+    export _print _echo _break _reset _red _green_light _green_neon _green_mint _orange _blue _gray _uline_on _uline_off _line
 }
 
 # Display banner with TKG-Installer version information
@@ -168,30 +169,30 @@ __init_style
 # Unified message function with automatic level detection
 __msg() {
     # If first arg is a known level, treat it as level, else default to plain
-    local _first="${1:-}" _level _msg # First argument (string)
-    case "${_first,,}" in
-        info|info_orange|warning|warn|error|err|prompt|plain)
-            _level="${_first,,}" # Level specified
+    local _msg_first="${1:-}" _msg_level _msg # First argument (string)
+    case "${_msg_first,,}" in
+        info_green|info_orange|info_neon|info_mint|info_blue|warning|error|prompt|plain)
+            _msg_level="${_msg_first,,}" # Level specified
             shift # Remove first argument
             _msg="$*" # Remaining arguments as message
             ;;
         *)
-            _level="plain" # Default level
+            _msg_level="plain" # Default level
             _msg="$*" # All arguments as message
             ;;
     esac
 
     # Ensure colors exist (fallback to empty strings if not set)
-    : "${_reset:=''}" "${_red:=''}" "${_green:=''}" "${_green_dark:=''}" "${_green_mint:=''}" "${_orange:=''}" "${_blue:=''}"
+    : "${_reset:=''}" "${_red:=''}" "${_green_light:=''}" "${_green_neon:=''}" "${_green_mint:=''}" "${_green_dark:=''}" "${_orange:=''}" "${_blue:=''}" "${_gray:=''}" "${_uline_on:=''}" "${_uline_off:=''}"
 
     # Map level -> color + prefix; prompt handled specially (no newline)
     local _color="" _prefix=""
-    case "${_level}" in
-        info)
-            _color="${_green}"; _prefix=""
+    case "${_msg_level}" in
+        info_green)
+            _color="${_green_light}"; _prefix=""
             ;;
-        info_dark)
-            _color="${_green_dark}"; _prefix=""
+        info_neon)
+            _color="${_green_neon}"; _prefix=""
             ;;
         info_mint)
             _color="${_green_mint}"; _prefix=""
@@ -199,11 +200,14 @@ __msg() {
         info_orange)
             _color="${_orange}"; _prefix=""
             ;;
-        warning|warn)
+        info_blue)
+            _color="${_blue}"; _prefix=""
+            ;;
+        warning)
             _color="${_orange}"
             _prefix="${_uline_on}WARNING:${_uline_off}${_color} "
             ;;
-        error|err)
+        error)
             _color="${_red}"
             _prefix="${_uline_on}ERROR:${_uline_off}${_color} "
             ;;
@@ -222,10 +226,11 @@ __msg() {
 }
 
 # Level-specific message functions for convenience
-__msg_info()    { __msg 'info' "$@"; }
-__msg_info_dark()   { __msg 'info_dark' "$@"; }
+__msg_info()    { __msg 'info_green' "$@"; }
+__msg_info_neon()   { __msg 'info_neon' "$@"; }
 __msg_info_mint()   { __msg 'info_mint' "$@"; }
 __msg_info_orange()   { __msg 'info_orange' "$@"; }
+__msg_info_blue() { __msg 'info_blue' "$@"; }
 __msg_warning() { __msg 'warning' "$@"; }
 __msg_error()   { __msg 'error' "$@"; }
 __msg_prompt()  { __msg 'prompt' "$@"; }
@@ -237,7 +242,7 @@ __msg_pkg() {
     local _pkg_name="${1:-TKG package}"
     local _config_url="${2:-${_frog_repo_url}}"
 
-    __msg_info "${_break}${_green_dark}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} This script is intended to simplify the installation and configuration of the powerful TKG packages.${_break}"
+    __msg_info "${_break}${_green_neon}${_uline_on}NOTICE:${_uline_off}${_reset}${_green_light} This script is intended to simplify the installation and configuration of the powerful TKG packages.${_break}"
     __msg " A wide range of options are available."
     __msg " Thanks to their flexible configuration and powerful settings functions, TKG packages"
     __msg " can be precisely tailored to different systems and personal requirements. This versatility"
@@ -280,11 +285,12 @@ fi
 # Help information display
 __help() {
     # Display help information with usage examples and shortcuts
-    __msg "${_break}${_green}TKG-Installer Help${_break}"
+    __banner
+    __msg "${_green_light}Help and Usage${_break}"
     __msg "${_blue}Run interactive fzf finder menu."
-    __msg "${_green}Interactive run:${_reset} $0${_break}"
+    __msg "${_green_light}Interactive run:${_reset} $0${_break}"
     __msg "${_blue}Run directly without entering the menu."
-    __msg "${_green}Direct syntax:${_reset} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
+    __msg "${_green_light}Direct syntax:${_reset} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
     __msg "${_orange}Example:${_reset}"
     __msg " $0 linux    # Install Linux-TKG"
     __msg " $0 l        # Install Linux-TKG (shortcut)"
@@ -293,13 +299,14 @@ __help() {
     __msg " $0 wine     # Install Wine-TKG"
     __msg " $0 proton   # Install Proton-TKG${_break}"
     __msg "${_blue}Access configuration files directly without entering the menu.${_reset}"
-    __msg "${_green}Direct syntax:${_reset} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p] [config|c|edit|e]"
-    __msg "${_green}              ${_reset} $0 [config|c|edit|e] [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
+    __msg "${_green_light}Direct syntax:${_reset} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p] [config|c|edit|e]"
+    __msg "${_green_light}              ${_reset} $0 [config|c|edit|e] [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
     __msg "${_orange}Example:${_reset}"
     __msg " $0 linux config  # Edit Linux-TKG config"
     __msg " $0 l c           # Edit Linux-TKG config (shortcut)"
     __msg " $0 config linux  # Edit Linux-TKG config (alternate syntax)${_break}"
-    __msg "${_orange}Shortcuts:${_reset} l=linux, n=nvidia, m=mesa, w=wine, p=proton, c=config, e=edit${_break}"
+    __msg "${_orange}Shortcuts:${_reset} l=linux, n=nvidia, m=mesa, w=wine, p=proton, c=config, e=edit"
+    __msg "${_green_light}${_line}${_break}"
 }
 
 # Help can show always!
@@ -375,6 +382,7 @@ __prepare() {
         [curl]=curl
         [glow]=glow
         [fzf]=fzf
+        [onefetch]=onefetch
     )
 
     # Set install command based on detected Linux distribution
@@ -395,6 +403,7 @@ __prepare() {
                 [curl]=net-misc/curl
                 [glow]=app-text/glow
                 [fzf]=app-misc/fzf
+                [onefetch]=app-misc/onefetch
             )
             _install_cmd_dep="emerge"
             ;;
@@ -524,10 +533,11 @@ __clean() {
 
     # Unset exported variables for fzf subshells
     unset _tmp_dir _choice_file _config_dir _tkg_repo_url _tkg_raw_url _frog_repo_url _frog_raw_url
-    unset _print _break _line _reset _red _green _orange _blue _gray _uline_on _uline_off
+    unset _print _break _echo _reset _red _green_light _green_neon _green_mint _orange _blue _gray _uline_on _uline_off _line
     unset _preview_linux _preview_nvidia _preview_mesa _preview_wine _preview_proton
     unset _preview_config _preview_clean _preview_help _preview_return _preview_exit _glow_style
     unset _distro_name _distro_id _distro_like
+    unset _tkg_version _lock_file
  }
 
 # Fuzzy finder menu wrapper function for consistent settings and usage
@@ -718,7 +728,7 @@ __install_package() {
     cd "${_tmp_dir}" > /dev/null 2>&1 || return 1
 
     # Clone repository from provided URL
-    __msg_info "${_break}${_green_dark}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Fetching $_package_name from Frogging-Family repository...${_break}"
+    __msg_info "${_break}${_green_neon}${_uline_on}NOTICE:${_uline_off}${_reset}${_green_light} Fetching $_package_name from Frogging-Family repository...${_break}"
     git clone "$_repo_url" > /dev/null 2>&1 || {
         __msg_error "Cloning failed for: $_package_name${_break}"
         __msg " Please check your internet connection and try again.${_break}"
@@ -748,7 +758,7 @@ __install_package() {
     sleep 1.5s # Short delay for better UX (( :P ))
 
     # Build and install the package using the provided build command
-    __msg_info "${_break}${_green_dark}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Cloning, building and installing $_package_name for $_distro_name, this may take a while...${_break}"
+    __msg_info "${_break}${_green_neon}${_uline_on}NOTICE:${_uline_off}${_reset}${_green_light} Cloning, building and installing $_package_name for $_distro_name, this may take a while...${_break}"
     eval "$_build_command" || {
         __msg_error "Building failed: $_package_name for $_distro_name${_break}"
         return 1
@@ -841,7 +851,7 @@ __wine_install() {
     # Determine build command based on distribution
     if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
         # Arch-based distributions: Ask user which build system to use
-        __msg_info "${_break}${_green_dark}${_uline_on}CHOICE:${_uline_off}${_reset}${_green} Which build system do you want to use?${_break}"
+        __msg_info "${_break}${_green_neon}${_uline_on}CHOICE:${_uline_off}${_reset}${_green_light} Which build system do you want to use?${_break}"
         __msg " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
         __msg " 1) makepkg -si${_reset} ${_gray} (recommended for Arch-based distros)"
         __msg " 2) ./non-makepkg-build.sh${_reset} ${_gray} (use if you want a custom build script)${_break}"
@@ -915,7 +925,7 @@ __proton_install() {
             __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_clean_command" "proton-tkg"
             local _clean_status=$?
             if [[ $_clean_status -eq 0 ]]; then
-                __msg_info "${_break}${_green_dark}${_uline_on}NOTICE:${_uline_off}${_reset}${_green} Cleaning completed successfully.${_reset}${_break}"
+                __msg_info "${_break}${_green_neon}${_uline_on}NOTICE:${_uline_off}${_reset}${_green_light} Cleaning completed successfully.${_reset}${_break}"
             else
                 __msg_error "${_break}${_red}Cleaning failed (code: ${_clean_status}).${_reset}${_break}"
             fi
@@ -1029,52 +1039,68 @@ __edit_config() {
 
         # Function to handle configuration file editing and downloading if missing
         local _menu_options=(
-            "linux-tkg  |🐧 ${_green}Linux   ${_orange} linux-tkg.cfg${_reset}   ─${_gray} Customize to your needs${_reset}"
+            "linux-tkg  |🐧 ${_green_light}Linux   ${_orange} linux-tkg.cfg${_reset}   ─${_gray} Customize to your needs${_reset}"
         )
 
         # Only show Nvidia and Mesa config if Arch-based distro is detected
         if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
             _menu_options+=(
-                "nvidia-all |💻 ${_green}Nvidia  ${_orange} nvidia-all.cfg${_reset}  ─${_gray} ...${_reset}"
-                "mesa-git   |🧩 ${_green}Mesa    ${_orange} mesa-git.cfg${_reset}    ─${_gray} ...${_reset}"
+                "nvidia-all |💻 ${_green_light}Nvidia  ${_orange} nvidia-all.cfg${_reset}  ─${_gray} ...${_reset}"
+                "mesa-git   |🧩 ${_green_light}Mesa    ${_orange} mesa-git.cfg${_reset}    ─${_gray} ...${_reset}"
             )
         fi
 
         # Always show Wine and Proton config options
         _menu_options+=(
-            "wine-tkg   |🍷 ${_green}Wine    ${_orange} wine-tkg.cfg${_reset}    ─${_gray} ...${_reset}"
-            "proton-tkg |🎮 ${_green}Proton  ${_orange} proton-tkg.cfg${_reset}  ─${_gray} ...${_reset}"
-            "return     |⏪ ${_green}Return"
+            "wine-tkg   |🍷 ${_green_light}Wine    ${_orange} wine-tkg.cfg${_reset}    ─${_gray} ...${_reset}"
+            "proton-tkg |🎮 ${_green_light}Proton  ${_orange} proton-tkg.cfg${_reset}  ─${_gray} ...${_reset}"
+            "return     |⏪ ${_green_light}Return"
         )
 
         # Prepare menu content string for fzf menu display from options array
-    local _menu_content
-    _menu_content=$(printf '%s\n' "${_menu_options[@]}")
+        local _menu_content
+        _menu_content=$(printf '%s\n' "${_menu_options[@]}")
+
+        # Define reusable info message for preview when showing config diffs
+        local _info_config="${_green_neon} Showing differences between remote default and your external configuration file${_reset}${_break}${_break}${_gray} Locale file: \$_config_file_path ${_break}${_gray} Remote file: \$_remote_url ${_reset}${_break}${_green_dark}${_line}${_break}${_reset}"
 
         # Define common error message for preview when config file is missing
-    local _error_config_not_exist="${_red}${_line}${_break} ❌ ERROR: No external configuration file found.${_break}${_break}${_reset} ⚠️ This configuration file is required for customizing TKG builds and options.${_break} ℹ️ You can download the default file now, or create your own later.${_break}${_break}    Click the selected option to ask for downloading the missing file.${_break}${_red}${_line}${_reset}"
+        local _error_config_not_exist="${_red} ERROR: No external configuration file found.${_reset}${_break}${_break}${_gray} This configuration file is required for customizing TKG builds and options.${_break}${_gray} You can download the default file now, or create your own later.${_break}${_gray} Click the selected option to ask for downloading the missing file.${_reset}${_break}${_green_dark}${_line}${_break}${_reset}"
 
         # Define a reusable bat command for the preview window
-    local _bat_cmd="bat --style=numbers --language=bash --wrap character --highlight-line 1 --force-colorization"
+        local _bat_cmd="bat --style=numbers --language=cfg --wrap character --highlight-line 1 --color=always --paging=never"
 
-        # Define preview command for fzf menu to show config file content or error message if missing
+        # Define a reusable diff command for the preview window
+        local _cols
+        _cols=$(tput cols 2>/dev/null || echo 120)
+        local _diff_cmd="git --no-pager diff --no-index --compact-summary --color=always --word-diff=color --unified=2 --ignore-all-space --ignore-blank-lines"
+        
+        # Define preview command for fzf menu to show config file content or diff vs remote default
+        # It fetches the remote default config file and compares it with the local one if it exists
         local _preview_command='
+            declare -A remote_urls=(
+                [linux-tkg]="'${_frog_raw_url}'/linux-tkg/master/customization.cfg"
+                [nvidia-all]="'${_frog_raw_url}'/nvidia-all/master/customization.cfg"
+                [mesa-git]="'${_frog_raw_url}'/mesa-git/master/customization.cfg"
+                [wine-tkg]="'${_frog_raw_url}'/wine-tkg-git/master/wine-tkg-git/customization.cfg"
+                [proton-tkg]="'${_frog_raw_url}'/wine-tkg-git/master/proton-tkg/proton-tkg.cfg"
+            )
             key=$(echo {} | cut -d"|" -f1 | xargs)
-            _config_file_path="'"${_config_dir}"'/${key}.cfg"
-
-            # For wine-tkg, the config file name is different
-            if [[ "$key" == "wine-tkg" ]]; then
-                _config_file_path="'"${_config_dir}"'/wine-tkg.cfg"
+            [[ "$key" == "return" ]] && { ${_print} "${_preview_return}"; exit 0; }
+            _config_file_path="'${_config_dir}'/${key}.cfg"
+            _remote_url="${remote_urls[$key]}"
+            if [[ -f "$_config_file_path" && -n "$_remote_url" ]]; then
+                _remote_tmp="${_tmp_dir}/${key}-remote.cfg"
+                if curl -fsSL "$_remote_url" -o "$_remote_tmp" 2>/dev/null; then
+                    ${_print} "'"${_info_config}"'"
+                    '"${_diff_cmd}"' "$_remote_tmp" "${_config_file_path}" 2>/dev/null | '"${_bat_cmd}"'
+                    rm -f "$_remote_tmp"
+                else
+                    ${_print} "'"${_error_config_not_exist}"'"
+                fi
+            else
+                ${_print} "'"${_error_config_not_exist}"'"
             fi
-            
-            case $key in
-                linux-tkg|nvidia-all|mesa-git|wine-tkg|proton-tkg)
-                    '"${_bat_cmd}"' "${_config_file_path}" 2>/dev/null || ${_print} "'"${_error_config_not_exist}"'"
-                    ;;
-                return)
-                    ${_print} "${_preview_return}"
-                    ;;
-            esac
         '
 
         # Define header and footer texts for fzf menu display with TKG version info
@@ -1096,11 +1122,11 @@ __edit_config() {
         fi
 
         # Extract selected configuration type and file path from choice string
-    local _config_file
-    _config_file=$(echo "${_config_choice}" | cut -d"|" -f1 | xargs)
+        local _config_file
+        _config_file=$(echo "${_config_choice}" | cut -d"|" -f1 | xargs)
 
-        # Handle configuration file editing based on selection using case statement
-    case ${_config_file} in
+            # Handle configuration file editing based on selection using case statement
+        case ${_config_file} in
             linux-tkg)
                 __handle_config \
                     "Linux-TKG" \
@@ -1276,25 +1302,25 @@ __handle_config() {
 __menu() {
     # Define menu options and preview commands for fzf menu display using glow command for dynamic content based on selection
     local _menu_options=(
-        "Linux  |🐧 ${_green}Linux   ${_gray} Linux-TKG custom kernels (highly customizable to your needs)${_reset}"
+        "Linux  |🐧 ${_green_light}Linux   ${_gray} Linux-TKG custom kernels (highly customizable to your needs)${_reset}"
     )
 
     # Only show Nvidia and Mesa options if Arch-based distribution is detected 
     if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
         _menu_options+=(
-            "Nvidia |💻 ${_green}Nvidia  ${_gray} Nvidia Open-Source or proprietary graphics driver${_reset}"
-            "Mesa   |🧩 ${_green}Mesa    ${_gray} Open-Source graphics driver for AMD and Intel${_reset}"
+            "Nvidia |💻 ${_green_light}Nvidia  ${_gray} Nvidia Open-Source or proprietary graphics driver${_reset}"
+            "Mesa   |🧩 ${_green_light}Mesa    ${_gray} Open-Source graphics driver for AMD and Intel${_reset}"
         )
     fi
 
     # Always show Wine, Proton, Config, and Clean options
     _menu_options+=(
-        "Wine   |🍷 ${_green}Wine    ${_gray} Windows compatibility layer (run Windows apps on Linux)${_reset}"
-        "Proton |🎮 ${_green}Proton  ${_gray} Run Windows games on Linux via Steam (Proton)${_reset}"
-        "Config |🔧 ${_green}Config  ${_gray} Edit external TKG configuration files (Expert)${_reset}"
-        "Clean  |🧹 ${_green}Clean   ${_gray} Clean all downloaded files and restart the installer${_reset}"
-        "Help   |❓ ${_green}Help    ${_gray} Displays all available usage commands${_reset}"
-        "Exit   |❎ ${_green}Exit"
+        "Wine   |🍷 ${_green_light}Wine    ${_gray} Windows compatibility layer (run Windows apps on Linux)${_reset}"
+        "Proton |🎮 ${_green_light}Proton  ${_gray} Run Windows games on Linux via Steam (Proton)${_reset}"
+        "Config |🔧 ${_green_light}Config  ${_gray} Edit external TKG configuration files (Expert)${_reset}"
+        "Clean  |🧹 ${_green_light}Clean   ${_gray} Clean all downloaded files and restart the installer${_reset}"
+        "Help   |❓ ${_green_light}Help    ${_gray} Displays all available usage commands${_reset}"
+        "Exit   |❎ ${_green_light}Exit"
     )
 
     # Prepare menu content for fzf menu display string from options array
@@ -1321,7 +1347,7 @@ __menu() {
     local _header_text="🐸 TKG-Installer ─ Main menu${_break}${_break}   Customize, clone, build, and install TKG packages${_break}   Select an option below"
     local _footer_text="📝 Use arrow keys or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}🔄 Press Ctrl+P to toggle the help preview window${_break}🐸 Frogging-Family: https://github.com/Frogging-Family${_break}🌐 About: https://github.com/damachine/tkginstaller"
     local _border_label_text="${_tkg_version}"
-    local _preview_window_settings='right:wrap:60%:hidden'
+    local _preview_window_settings='right:nowrap:70%:hidden'
 
     # Show fzf menu and get user selection for main menu options using defined parameters and preview command
     local _main_choice
