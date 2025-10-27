@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-export _tkg_version="v0.22.0"
+export _tkg_version="v0.22.1"
 
 # Lock file to prevent concurrent execution of the script
 export _lock_file="/tmp/tkginstaller.lock"
@@ -781,12 +781,49 @@ __linux_install() {
     __msg_pkg "linux" "${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
 
     # Determine build command based on distribution. Arch-based distributions use makepkg, others use install.sh
-    local _build_command # Build command variable
+    local _build_command
 
-    # Determine build command based on distribution
     if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
-        # Arch-based distributions
-        _build_command="makepkg -si"
+        # Arch-based distributions: Ask user which build system to use
+        __msg_info "${_break}${_green_neon}${_uline_on}CHOOSE:${_uline_off}${_reset}${_green_light} Which build system want to use?${_break}"
+        __msg " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
+        __msg " ${_uline_on}1${_uline_off}) makepkg -si${_reset} ${_gray} (recommended for Arch-based distros)"
+        __msg " 2) ./install.sh install${_reset} ${_gray} (use if you want the generic install script)${_break}"
+        _old_trap_int=$(trap -p INT 2>/dev/null || true)
+        trap '__exit 130' INT
+        SECONDS_LEFT=60
+        _user_answer=""
+        while [[ $SECONDS_LEFT -gt 0 ]]; do
+            printf "\r${_green_light}${_uline_on}Select:${_uline_off}${_reset} [${_uline_on}1${_uline_off}/2]${_gray} (auto select: 1)${_reset}${_orange} Waiting for input... %2ds${_reset}: " "$SECONDS_LEFT"
+            trap 'echo;echo; __msg "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
+            if read -r -t 1 _user_answer; then
+                printf "\r%*s\r\033[A" 80 ""
+                break
+            fi
+            ((SECONDS_LEFT--))
+        done
+        printf "\r%*s\r\033[A" 80 ""
+
+        if [[ -z "$_user_answer" ]]; then
+            _user_answer="1"
+        fi
+        _user_answer=${_user_answer:-1}
+
+        case "$_user_answer" in
+            2)
+                _build_command="chmod +x install.sh && ./install.sh install"
+                ;;
+            *)
+                _build_command="makepkg -si"
+                ;;
+        esac
+
+        # restore previous INT trap
+        if [[ -n "$_old_trap_int" ]]; then
+            eval "$_old_trap_int"
+        else
+            trap - INT
+        fi
     else
         # Non-Arch distributions
         _build_command="chmod +x install.sh && ./install.sh install"
@@ -857,17 +894,29 @@ __wine_install() {
         # Arch-based distributions: Ask user which build system to use
         __msg_info "${_break}${_green_neon}${_uline_on}CHOOSE:${_uline_off}${_reset}${_green_light} Which build system want to use?${_break}"
         __msg " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
-        __msg " 1) makepkg -si${_reset} ${_gray} (recommended for Arch-based distros)"
+        __msg " ${_uline_on}1${_uline_off}) makepkg -si${_reset} ${_gray} (recommended for Arch-based distros)"
         __msg " 2) ./non-makepkg-build.sh${_reset} ${_gray} (use if you want a custom build script)${_break}"
         _old_trap_int=$(trap -p INT 2>/dev/null || true)
         trap '__exit 130' INT
-        __msg_prompt "Select [1/2] (default: 1): "
-        trap 'echo;echo; __msg "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
-        if ! read -r -t 30 _user_answer; then
-            __msg ""
+        SECONDS_LEFT=60
+        _user_answer=""
+        while [[ $SECONDS_LEFT -gt 0 ]]; do
+            printf "\r${_green_light}${_uline_on}Select:${_uline_off}${_reset} [${_uline_on}1${_uline_off}/2]${_gray} (auto select: 1)${_reset}${_orange} Waiting for input... %2ds${_reset}: " "$SECONDS_LEFT"
+            trap 'echo;echo; __msg "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
+            if read -r -t 1 _user_answer; then
+                printf "\r%*s\r\033[A" 80 ""
+                break
+            fi
+            ((SECONDS_LEFT--))
+        done
+        printf "\r%*s\r\033[A" 80 ""
+
+
+        if [[ -z "$_user_answer" ]]; then
             _user_answer="1"
         fi
-        _user_answer=${_user_answer:-1} # Default to option 1 if no input provided
+        _user_answer=${_user_answer:-1}
+
         case "$_user_answer" in
             2)
                 _build_command="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
@@ -1232,8 +1281,8 @@ __handle_config() {
         # Download and create new configuration file if it does not exist
         __banner "$_orange"
         __msg_warning "External configuration file does not exist.${_break}"
-        __msg " Saving as: ${_gray}${_config_path}"
-        __msg " Download: ${_gray}${_config_url}${_break}"
+        __msg " Local path: ${_gray}file://${_config_path}"
+        __msg " Remote URL: ${_gray}${_config_url}${_break}"
 
         # Prompt user for download confirmation
         __msg_prompt "Do you want to download the default configuration? [y/N]: "
