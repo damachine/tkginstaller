@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-export _tkg_version="v0.22.1"
+export _tkg_version="v0.22.2"
 
 # Lock file to prevent concurrent execution of the script
 export _lock_file="/tmp/tkginstaller.lock"
@@ -1169,7 +1169,7 @@ __edit_config() {
         local _header_text="🐸${_green_neon} TKG-Installer ─ Config menu${_reset}${_break}${_break}${_green_light}   Adjust external configuration file${_break}   Default directory:${_reset}${_gray} ~/.config/frogminer/ "
         local _footer_text="${_green_light}  Use arrow keys ⌨️ or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}  Press${_reset}${_gray} Ctrl+P${_reset}${_green_light} to toggle the preview window${_break}${_green_light}  Info:${_reset}${_gray} https://github.com/Frogging-Family${_reset}${_break}${_gray}        https://github.com/damachine/tkginstaller"
         local _border_label_text="${_tkg_version}"
-        local _preview_window_settings='right:wrap:60%'
+        local _preview_window_settings='right:wrap:70%'
 
         # Show fzf menu and get user selection for configuration file editing
         _config_choice=$(__fzf_menu "$_menu_content" "$_preview_command" "$_header_text" "$_footer_text" "$_border_label_text" "$_preview_window_settings")
