@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-export _tkg_version="v0.21.9"
+export _tkg_version="v0.22.0"
 
 # Lock file to prevent concurrent execution of the script
 export _lock_file="/tmp/tkginstaller.lock"
@@ -227,14 +227,14 @@ __msg() {
 }
 
 # Level-specific message functions for convenience
-__msg_info()    { __msg 'info_green' "$@"; }
+__msg_info()        { __msg 'info_green' "$@"; }
 __msg_info_neon()   { __msg 'info_neon' "$@"; }
 __msg_info_mint()   { __msg 'info_mint' "$@"; }
-__msg_info_orange()   { __msg 'info_orange' "$@"; }
-__msg_info_blue() { __msg 'info_blue' "$@"; }
-__msg_warning() { __msg 'warning' "$@"; }
-__msg_error()   { __msg 'error' "$@"; }
-__msg_prompt()  { __msg 'prompt' "$@"; }
+__msg_info_orange() { __msg 'info_orange' "$@"; }
+__msg_info_blue()   { __msg 'info_blue' "$@"; }
+__msg_warning()     { __msg 'warning' "$@"; }
+__msg_error()       { __msg 'error' "$@"; }
+__msg_prompt()      { __msg 'prompt' "$@"; }
 
 # Display package information and configuration location notice
 __msg_pkg() {
@@ -259,8 +259,9 @@ __msg_pkg() {
 if [[ "$(id -u)" -eq 0 ]]; then
     __banner "$_orange"
     __msg_warning "You are running as root!${_break}"
+    __msg " Running this script as root is not recommended for security reasons.${_break}"
     # Ask for user confirmation to continue as root
-    __msg_prompt " Do you really want to continue as root? [y/N]: "
+    __msg_prompt "Do you really want to continue as root? [y/N]: "
     trap 'echo;echo; __msg "${_red}Aborted by user.\n";sleep 1.5s; exit 1' INT
     read -r _user_answer
     trap - INT
@@ -860,9 +861,12 @@ __wine_install() {
         __msg " 2) ./non-makepkg-build.sh${_reset} ${_gray} (use if you want a custom build script)${_break}"
         _old_trap_int=$(trap -p INT 2>/dev/null || true)
         trap '__exit 130' INT
-        __msg_prompt " Select [1/2] (default: 1): "
+        __msg_prompt "Select [1/2] (default: 1): "
         trap 'echo;echo; __msg "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
-        read -r _user_answer
+        if ! read -r -t 30 _user_answer; then
+            __msg ""
+            _user_answer="1"
+        fi
         _user_answer=${_user_answer:-1} # Default to option 1 if no input provided
         case "$_user_answer" in
             2)
@@ -972,7 +976,7 @@ __editor() {
             __banner "$_red"
             __msg_error "No editor found!${_break}"
             __msg " Please set \$EDITOR environment or install${_reset}${_gray} 'nano'${_reset},${_reset}${_gray} 'micro'${_reset}, or${_reset}${_gray} 'vim'${_reset} as fallback.${_break}"
-            __msg_prompt " Press any key to continue..."
+            __msg_prompt "Press any key to continue..."
             read -n 1 -s -r -p "" # Wait for user input before exiting
             return 1
         fi
@@ -1001,7 +1005,7 @@ __edit_config() {
             __banner "$_orange"
             __msg_warning "Configuration directory not found.${_break}"
             __msg " Creating directory:${_reset}${_gray} ${_config_dir}${_reset}${_break}"
-            __msg_prompt " Do you want to create the configuration directory? [y/N]: "
+            __msg_prompt "Do you want to create the configuration directory? [y/N]: "
             trap 'echo;echo; __msg "${_red}Aborted by user.${_reset}";sleep 1.5; clear; return 0' INT
             read -r _user_answer
             trap - INT
@@ -1017,7 +1021,7 @@ __edit_config() {
                         __banner "$_red"
                         __msg_error "Creating configuration directory failed: ${_config_dir}${_break}"
                         __msg " Please check the path and your permissions then try again.${_break}"
-                        __msg_prompt " Press any key to continue..."
+                        __msg_prompt "Press any key to continue..."
                         read -n 1 -s -r -p "" # Wait for user input before exiting
                         clear
                         return 1
@@ -1025,7 +1029,7 @@ __edit_config() {
                     clear
                     __banner
                     __msg_info "Configuration directory created:${_reset}${_gray} ${_config_dir}${_reset}${_break}"
-                    __msg_prompt " Press any key to continue..."
+                    __msg_prompt "Press any key to continue..."
                     read -n 1 -s -r -p "" # Wait for user input before exiting
                     clear
                     return 0
@@ -1035,7 +1039,7 @@ __edit_config() {
                     __banner "$_orange"
                     __msg_info_orange "Directory creation cancelled.${_break}"
                     __msg " No changes were made.${_break}"
-                    __msg_prompt " Press any key to continue..."
+                    __msg_prompt "Press any key to continue..."
                     read -n 1 -s -r -p "" # Wait for user input before exiting
                     clear
                     return 0
@@ -1116,7 +1120,7 @@ __edit_config() {
         local _header_text="🐸${_green_neon} TKG-Installer ─ Config menu${_reset}${_break}${_break}${_green_light}   Adjust external configuration file${_break}   Default directory:${_reset}${_gray} ~/.config/frogminer/ "
         local _footer_text="${_green_light}  Use arrow keys ⌨️ or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}  Press${_reset}${_gray} Ctrl+P${_reset}${_green_light} to toggle the preview window${_break}${_green_light}  Info:${_reset}${_gray} https://github.com/Frogging-Family${_reset}${_break}${_gray}        https://github.com/damachine/tkginstaller"
         local _border_label_text="${_tkg_version}"
-        local _preview_window_settings='right:wrap:75%'
+        local _preview_window_settings='right:wrap:60%'
 
         # Show fzf menu and get user selection for configuration file editing
         _config_choice=$(__fzf_menu "$_menu_content" "$_preview_command" "$_header_text" "$_footer_text" "$_border_label_text" "$_preview_window_settings")
@@ -1219,7 +1223,7 @@ __handle_config() {
             __banner "$_red"
             __msg_error "Opening external configuration failed:${_reset}${_gray} ${_config_path}${_break}"
             __msg " Please check if the file exists and is accessible.${_break}"
-            __msg_prompt " Press any key to continue..."
+            __msg_prompt "Press any key to continue..."
             read -n 1 -s -r -p "" # Wait for user input before exiting
             clear
             return 1
@@ -1232,7 +1236,7 @@ __handle_config() {
         __msg " Download: ${_gray}${_config_url}${_break}"
 
         # Prompt user for download confirmation
-        __msg_prompt " Do you want to download the default configuration? [y/N]: "
+        __msg_prompt "Do you want to download the default configuration? [y/N]: "
         trap 'echo;echo; __msg "${_red}Aborted by user.";sleep 1.5s; clear; return 0' INT
         read -r _user_answer
         trap - INT
@@ -1248,7 +1252,7 @@ __handle_config() {
                     __banner "$_red"
                     __msg_error "Creating configuration directory failed: ${_config_path}${_break}"
                     __msg " Please check the path and your permissions then try again.${_break}"
-                    __msg_prompt " Press any key to continue..."
+                    __msg_prompt "Press any key to continue..."
                     read -n 1 -s -r -p "" # Wait for user input before exiting
                     clear
                     return 1
@@ -1257,7 +1261,7 @@ __handle_config() {
                     clear
                     __banner "$_red"
                     __msg_error "curl is not installed. Please install curl to download configuration files.${_break}"
-                    __msg_prompt " Press any key to continue..."
+                    __msg_prompt "Press any key to continue..."
                     read -n 1 -s -r -p ""
                     clear
                     return 1
@@ -1274,7 +1278,7 @@ __handle_config() {
                         __banner "$_orange"
                         __msg_error "Opening external configuration file:${_reset}${_gray} $_config_name${_break}"
                         __msg " Please check if the file exists and is accessible.${_break}"
-                        __msg_prompt " Press any key to continue..."
+                        __msg_prompt "Press any key to continue..."
                         read -n 1 -s -r -p "" # Wait for user input before exiting
                         clear
                         return 1
@@ -1285,7 +1289,7 @@ __handle_config() {
                     __banner "$_red"
                     __msg_error "Downloading external configuration from ${_config_url} failed!${_break}"
                     __msg " Please check your internet connection and try again.${_break}"
-                    __msg_prompt " Press any key to continue..."
+                    __msg_prompt "Press any key to continue..."
                     read -n 1 -s -r -p "" # Wait for user input before exiting
                     clear
                     return 1
@@ -1297,7 +1301,7 @@ __handle_config() {
                 __banner "$_orange"
                 __msg_info_orange "Download cancelled. No configuration file created.${_break}"
                 __msg " No changes were made.${_break}"
-                __msg_prompt " Press any key to continue..."
+                __msg_prompt "Press any key to continue..."
                 read -n 1 -s -r -p "" # Wait for user input before exiting
                 clear
                 return 1
@@ -1370,7 +1374,7 @@ __menu() {
     local _header_text="🐸${_green_neon} TKG-Installer ─ Main menu${_reset}${_break}${_break}${_green_light}   Adjust, download, build, and install -TKG- packages${_break}   Select an option below"
     local _footer_text="${_green_light}  Use arrow keys ⌨️ or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}  Press${_reset}${_gray} Ctrl+P${_reset}${_green_light} to toggle the preview window${_break}${_green_light}  Info:${_reset}${_gray} https://github.com/Frogging-Family${_reset}${_break}${_gray}        https://github.com/damachine/tkginstaller"
     local _border_label_text="${_tkg_version}"
-    local _preview_window_settings='right:wrap:50%' #:hidden
+    local _preview_window_settings='right:wrap:60%' #:hidden
 
     # Show fzf menu and get user selection for main menu options using defined parameters and preview command
     local _main_choice
