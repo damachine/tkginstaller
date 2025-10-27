@@ -56,7 +56,7 @@
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-export _tkg_version="v0.21.8"
+export _tkg_version="v0.21.9"
 
 # Lock file to prevent concurrent execution of the script
 export _lock_file="/tmp/tkginstaller.lock"
@@ -247,7 +247,7 @@ __msg_pkg() {
     __msg " A wide range of options are available."
     __msg " Thanks to their flexible configuration and powerful settings functions, TKG packages"
     __msg " can be precisely tailored to different systems and personal requirements. This versatility"
-    __msg " makes them an indispensable part of any Linux system."
+    __msg " makes them an indispensable component when building a customized Linux system."
     __msg " The configuration files can be set up using a short setup guide via the interactive menu or with${_reset}${_gray} ‘tkginstaller ${_pkg_name,,} config’${_reset}."
     __msg " The tool then offers you the option to make the adjustments in your preferred text editor."
     __msg " Please make sure to adjust the settings correctly."
@@ -444,8 +444,8 @@ __prepare() {
     # Setup temporary directory and files for installation process
     __msg_info_orange "Cleaning old temporary files..."
     # Remove old temporary files and directories if they exist
-    rm -f "$_choice_file" 2>/dev/null || true # Remove temporary choice file
-    #rm -rf "$_tmp_dir" 2>/dev/null || true # Remove temporary directory
+    rm -f "$_choice_file" 2>/dev/null || true
+    rm -rf "$_tmp_dir" 2>/dev/null || true
     __msg_info_orange "Creating temporary directory..."
     # Create necessary subdirectories for temporary files
     mkdir -p "$_tmp_dir" 2>/dev/null || {
@@ -531,15 +531,15 @@ __clean() {
     # Remove temporary files and directories created during execution
     rm -f "$_lock_file" 2>/dev/null || true # Remove lock file
     rm -f "$_choice_file" 2>/dev/null || true # Remove temporary choice file
-    #rm -rf "$_tmp_dir" 2>/dev/null || true # Remove temporary directory
+    rm -rf "$_tmp_dir" 2>/dev/null || true # Remove temporary directory
 
     # Unset exported variables for fzf subshells
+    unset _tkg_version _lock_file
     unset _tmp_dir _choice_file _config_dir _tkg_repo_url _tkg_raw_url _frog_repo_url _frog_raw_url
     unset _print _break _echo _reset _red _green_light _green_neon _green_mint _orange _blue _gray _uline_on _uline_off _line
     unset _preview_linux _preview_nvidia _preview_mesa _preview_wine _preview_proton
     unset _preview_config _preview_clean _preview_help _preview_return _preview_exit _glow_style
     unset _distro_name _distro_id _distro_like
-    unset _tkg_version _lock_file
  }
 
 # Fuzzy finder menu wrapper function for consistent settings and usage
@@ -854,7 +854,7 @@ __wine_install() {
     # Determine build command based on distribution
     if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
         # Arch-based distributions: Ask user which build system to use
-        __msg_info "${_break}${_green_neon}${_uline_on}CHOICE:${_uline_off}${_reset}${_green_light} Which build system do you want to use?${_break}"
+        __msg_info "${_break}${_green_neon}${_uline_on}CHOOSE:${_uline_off}${_reset}${_green_light} Which build system want to use?${_break}"
         __msg " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
         __msg " 1) makepkg -si${_reset} ${_gray} (recommended for Arch-based distros)"
         __msg " 2) ./non-makepkg-build.sh${_reset} ${_gray} (use if you want a custom build script)${_break}"
@@ -909,10 +909,8 @@ __proton_install() {
     # Determine clean command for proton-tkg (after build process)
     local _clean_command="./proton-tkg.sh clean" # Clean command for proton-tkg
 
-    #__install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"
-
     # Build and install and ask for cleaning after build process
-     __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"
+    __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"
     local _status=$?  # capture status immediately
 
     if [[ $_status -eq 0 ]]; then
@@ -1115,10 +1113,10 @@ __edit_config() {
         '
 
         # Define header, footer, border label, and preview window settings for fzf menu
-        local _header_text="🐸${_green_neon} TKG-Installer ─ Editor menu${_reset}${_break}${_break}${_green_light}   Edit/Create external configuration file${_break}   Default directory:${_reset}${_gray} ~/.config/frogminer/ "
-        local _footer_text="${_green_light}  Use arrow keys ⌨️ or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}  Press${_reset}${_gray} Ctrl+P${_reset}${_green_light} to toggle the preview window${_break}🌐${_green_light}Info:${_reset}${_gray} https://github.com/Frogging-Family${_reset}${_break}${_gray}        https://github.com/damachine/tkginstaller"
+        local _header_text="🐸${_green_neon} TKG-Installer ─ Config menu${_reset}${_break}${_break}${_green_light}   Adjust external configuration file${_break}   Default directory:${_reset}${_gray} ~/.config/frogminer/ "
+        local _footer_text="${_green_light}  Use arrow keys ⌨️ or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}  Press${_reset}${_gray} Ctrl+P${_reset}${_green_light} to toggle the preview window${_break}${_green_light}  Info:${_reset}${_gray} https://github.com/Frogging-Family${_reset}${_break}${_gray}        https://github.com/damachine/tkginstaller"
         local _border_label_text="${_tkg_version}"
-        local _preview_window_settings='right:wrap:80%'
+        local _preview_window_settings='right:wrap:75%'
 
         # Show fzf menu and get user selection for configuration file editing
         _config_choice=$(__fzf_menu "$_menu_content" "$_preview_command" "$_header_text" "$_footer_text" "$_border_label_text" "$_preview_window_settings")
@@ -1369,10 +1367,10 @@ __menu() {
     '
 
     # Define header and footer texts for fzf menu display with TKG version info and instructions
-    local _header_text="🐸${_green_neon} TKG-Installer ─ Main menu${_reset}${_break}${_break}${_green_light}   Customize, clone, build, and install TKG packages${_break}   Select an option below"
-    local _footer_text="${_green_light}  Use arrow keys ⌨️ or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}  Press${_reset}${_gray} Ctrl+P${_reset}${_green_light} to toggle the preview window${_break}🌐${_green_light}Info:${_reset}${_gray} https://github.com/Frogging-Family${_reset}${_break}${_gray}        https://github.com/damachine/tkginstaller"
+    local _header_text="🐸${_green_neon} TKG-Installer ─ Main menu${_reset}${_break}${_break}${_green_light}   Adjust, download, build, and install -TKG- packages${_break}   Select an option below"
+    local _footer_text="${_green_light}  Use arrow keys ⌨️ or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}  Press${_reset}${_gray} Ctrl+P${_reset}${_green_light} to toggle the preview window${_break}${_green_light}  Info:${_reset}${_gray} https://github.com/Frogging-Family${_reset}${_break}${_gray}        https://github.com/damachine/tkginstaller"
     local _border_label_text="${_tkg_version}"
-    local _preview_window_settings='right:wrap:60%:hidden'
+    local _preview_window_settings='right:wrap:50%' #:hidden
 
     # Show fzf menu and get user selection for main menu options using defined parameters and preview command
     local _main_choice
