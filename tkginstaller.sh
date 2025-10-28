@@ -53,10 +53,11 @@
 
 # Fuzzy finder run in a separate shell (subshell) - export variables for fzf subshells
 # shellcheck disable=SC2016
+# shellcheck disable=SC2059
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-export _tkg_version="v0.22.2"
+export _tkg_version="v0.22.3"
 
 # Lock file to prevent concurrent execution of the script
 export _lock_file="/tmp/tkginstaller.lock"
@@ -85,6 +86,7 @@ __init_style() {
     _echo=$"echo -en" # Echo without newline and interpret escape sequences
     _break=$'\n' # Line break
     _reset=$'\033[0m' # Reset color/formatting
+    _clear="\r%*s\r\033[A" # Clear line and move one line up
 
     # Helper to return TrueColor escape if supported, otherwise fallback to tput setaf <n> if available, else to a 256-color ESC as last resort
     _color() {
@@ -243,15 +245,14 @@ __msg_pkg() {
     local _pkg_name="${1:-TKG package}"
     local _config_url="${2:-${_frog_repo_url}}"
 
-    __msg_info "${_break}${_green_neon}${_uline_on}NOTICE:${_uline_off}${_reset}${_green_light} This script is intended to simplify the installation and configuration of the powerful TKG packages.${_break}"
+    __msg_info "${_break}${_green_neon}${_uline_on}NOTICE:${_uline_off}${_reset}${_green_light} customization.cfg${_reset}${_break}"
     __msg " A wide range of options are available."
     __msg " Thanks to their flexible configuration and powerful settings functions, TKG packages"
-    __msg " can be precisely tailored to different systems and personal requirements. This versatility"
-    __msg " makes them an indispensable component when building a customized Linux system."
-    __msg " The configuration files can be set up using a short setup guide via the interactive menu or with${_reset}${_gray} ‘tkginstaller ${_pkg_name,,} config’${_reset}."
+    __msg " can be precisely tailored to different systems and personal requirements."
+    __msg " The${_gray} customization.cfg${_reset} files can be set up using a short setup guide via the interactive menu or with${_reset}${_gray} ‘tkginstaller ${_pkg_name,,} config’${_reset}."
     __msg " The tool then offers you the option to make the adjustments in your preferred text editor."
     __msg " Please make sure to adjust the settings correctly."
-    __msg " Refer to the customization.cfg documentation for detailed configuration options."
+    __msg " Refer to the${_gray} customization.cfg${_reset} documentation for detailed configuration options."
     __msg " Location:${_reset}${_gray} ${_config_url}"
 }
 
@@ -288,27 +289,17 @@ fi
 __help() {
     # Display help information with usage examples and shortcuts
     __banner
-    __msg "${_green_light}Help and Usage${_break}"
-    __msg "${_blue}Run interactive fzf finder menu."
-    __msg "${_green_light}Interactive run:${_reset} $0${_break}"
-    __msg "${_blue}Run directly without entering the menu."
-    __msg "${_green_light}Direct syntax:${_reset} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
-    __msg "${_orange}Example:"
-    __msg " $0 linux    # Install Linux-TKG"
-    __msg " $0 l        # Install Linux-TKG (shortcut)"
-    __msg " $0 nvidia   # Install Nvidia-TKG"
-    __msg " $0 mesa     # Install Mesa-TKG"
-    __msg " $0 wine     # Install Wine-TKG"
-    __msg " $0 proton   # Install Proton-TKG${_break}"
-    __msg "${_blue}Access configuration files directly without entering the menu."
-    __msg "${_green_light}Direct syntax:${_reset} $0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p] [config|c|edit|e]"
-    __msg "${_green_light}              ${_reset} $0 [config|c|edit|e] [linux|l|nvidia|n|mesa|m|wine|w|proton|p]"
-    __msg "${_orange}Example:"
-    __msg " $0 linux config  # Edit Linux-TKG config"
-    __msg " $0 l c           # Edit Linux-TKG config (shortcut)"
-    __msg " $0 config linux  # Edit Linux-TKG config (alternate syntax)${_break}"
-    __msg "${_orange}Shortcuts:${_reset} l=linux, n=nvidia, m=mesa, w=wine, p=proton, c=config, e=edit"
-    __msg "${_green_light}${_line}${_break}"
+    __msg "${_green_mint}Help and Usage${_break}"
+    __msg "${_orange}1) Run ${_uline_on}interactive${_uline_off} command${_break}"
+    __msg " To run the script in interactive menu mode, simply execute:${_break}"
+    __msg "$0${_break}${_break}"
+    __msg "${_orange}2) Run ${_uline_on}direct${_uline_off} command${_break}"
+    __msg " To run the script with a specific package, use the following command:${_break}"
+    __msg "$0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p]${_break}${_break}"
+    __msg "${_orange}3) Run direct command for ${_uline_on}customization.cfg${_uline_off}${_break}"
+    __msg " To edit the configuration file for a specific package, use the following command:${_break}"
+    __msg "$0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p] [config|c|edit|e]${_break}${_break}"
+    __msg "${_orange}${_uline_on}Shortcuts${_uline_off}:${_reset} l=linux, n=nvidia, m=mesa, w=wine, p=proton, c=config, e=edit${_break}"
 }
 
 # Help can show always!
@@ -364,10 +355,16 @@ __prepare() {
     # Example:
     #   see above
     _load_preview="${1:-false}" # Default to false if not provided (for direct mode)
-
+    _cols=$(tput cols 2>/dev/null || echo 80) # Get terminal width, default to 80 if tput fails
+   
     # Welcome message and pre-checks
     __banner
-    __msg_info_orange "Preparation..."
+    printf "%s" "${_green_mint}Starting"
+    for i in {1..10}; do
+        printf " ."
+        sleep 0.15s
+    done
+    printf "%b\n" "${_reset}"
 
     # Check required dependencies based on mode (interactive/direct)
     local _dep=(git onefetch)
@@ -426,6 +423,10 @@ __prepare() {
 
     # Exit if any dependencies are missing with installation instructions
     if [[ ${#_missing_dep[@]} -gt 0 ]]; then
+        for i in {1..7}; do
+            printf "${_clear}" 80 ""
+        done
+        __banner "$_red"
         __msg_error "Missing dependencies detected.${_break}"
         __msg " Please install the following dependencies first:${_break}"
 
@@ -436,27 +437,29 @@ __prepare() {
         done
 
         # Display installation command with missing packages
-        __msg "${_install_cmd_dep} ${_pkg_name_dep[*]}"
+        __msg "${_install_cmd_dep} ${_pkg_name_dep[*]}${_break}"
 
         # Exit with error code
-        exit 1
+        exit 0 >/dev/null 2>&1
     fi
 
     # Setup temporary directory and files for installation process
-    __msg_info_orange "Cleaning old temporary files..."
     # Remove old temporary files and directories if they exist
     rm -f "$_choice_file" 2>/dev/null || true
     rm -rf "$_tmp_dir" 2>/dev/null || true
-    __msg_info_orange "Creating temporary directory..."
     # Create necessary subdirectories for temporary files
     mkdir -p "$_tmp_dir" 2>/dev/null || {
-        __msg_error "Creating temporary directory failed: ${_tmp_dir}"
-        return 1
+        for i in {1..7}; do
+            printf "${_clear}" 80 ""
+        done
+        __banner "$_red"
+        __msg_error "Creating temporary directory failed: ${_tmp_dir}${_break}"
+        __msg " Please check your permissions and try again.${_break}"
+        exit 0 >/dev/null 2>&1
     }
 
     # Load preview content only for interactive mode (if requested)
     if [[ "$_load_preview" == "true" ]]; then
-        __msg_info_orange "Retrieving preview content..."
         __init_preview || {
             __msg "${_red}Initializing preview content failed! Continuing..."
             return 0
@@ -465,15 +468,12 @@ __prepare() {
 
     # Final message before starting TKG-Installer process
     if [[ "$_load_preview" == "true" ]]; then
-        __msg_info "${_break}Preparation done!"
-        __msg_info "Entering interactive menu"
+        __msg "${_green_mint}Entering interactive menu${_reset}"
     else
-        __msg_info "${_break}Preparation done!"
-        __msg_info "Starting direct installation"
+        __msg "${_green_mint}Running direct installation${_reset}"
     fi
 
     # Short delay for better UX (( :P ))
-    wait
     sleep 1.5s
 }
 
@@ -513,7 +513,7 @@ __exit() {
         __msg "${_red} Exiting due to errors. Please check the messages above for details.${_break}"
     else
         __banner
-        __msg_info "Closed.${_break}"
+        __msg "${_green_mint}Closed.${_break}"
     fi
 
     # Perform cleanup actions before exiting the script
@@ -602,109 +602,6 @@ __fzf_menu() {
 }
 
 # =============================================================================
-# PREVIEW FUNCTIONS
-# =============================================================================
-
-# Dynamic preview content generator for fzf menus using glow command
-__get_preview() {
-    # Parameters:
-    #   $1 = preview choice (string)
-    # Returns:
-    #   Displays preview content using glow command based on choice provided
-    # Usage:
-    #   __get_preview "linux"  # For Linux-TKG preview
-    # Example:
-    #   __get_preview "nvidia" # For Nvidia-TKG preview
-    local _preview_choice="$1" # Preview choice (string)
-    local _frogging_family_preview_url="" # Frogging-Family preview URL
-    local _tkg_installer_preview_url="" # TKG-Installer preview URL
-
-    # Define repository URLs and static previews for each TKG package and action type
-    case "$_preview_choice" in
-        linux)
-            _tkg_installer_preview_url="${_tkg_raw_url}/linux.md"
-            _frogging_family_preview_url="${_frog_raw_url}/linux-tkg/refs/heads/master/README.md"
-            ;;
-        nvidia)
-            _tkg_installer_preview_url="${_tkg_raw_url}/nvidia.md"
-            _frogging_family_preview_url="${_frog_raw_url}/nvidia-all/refs/heads/master/README.md"
-            ;;
-        mesa)
-            _tkg_installer_preview_url="${_tkg_raw_url}/mesa.md"
-            _frogging_family_preview_url="${_frog_raw_url}/mesa-git/refs/heads/master/README.md"
-            ;;
-        wine)
-            _tkg_installer_preview_url="${_tkg_raw_url}/wine.md"
-            _frogging_family_preview_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/README.md"
-            ;;
-        proton)
-            _tkg_installer_preview_url="${_tkg_raw_url}/proton.md"
-            _frogging_family_preview_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/README.md"
-            ;;
-        config)
-            _tkg_installer_preview_url="${_tkg_raw_url}/config.md"
-            ;;
-        clean)
-            _tkg_installer_preview_url="${_tkg_raw_url}/clean.md"
-            ;;
-        help)
-            _tkg_installer_preview_url="${_tkg_raw_url}/help.md"
-            ;;
-        exit)
-            _tkg_installer_preview_url="${_tkg_raw_url}/exit.md"
-            ;;
-        return)
-            _tkg_installer_preview_url="${_tkg_raw_url}/return.md"
-            ;;
-    esac
-
-    # I DONT KNOW THIS WORKS BUT IT SHOULD. NOT TESTED YET.
-    # Glow style detection (auto-detect based on COLORTERM/TERM, or use env override)
-    if [[ -z "${_glow_style:-}" ]]; then
-        # Detect terminal color scheme for glow style (auto)
-        case "${COLORTERM:-}${TERM:-}" in
-            *light*|*xterm*|*rxvt*|*konsole*)
-                _glow_style="light"
-                ;;
-            *)
-                _glow_style="dark"
-                ;;
-        esac
-    fi
-
-   # Display TKG-INSTALLER remote preview content
-    if [[ -n "$_tkg_installer_preview_url" ]]; then
-        # Display preview content using glow command for TKG-Installer docs
-        glow --pager --width 80 --style "${_glow_style:-dark}" "$_tkg_installer_preview_url"
-    fi
-
-    # Display FROGGING-FAMILY remote preview content
-    if [[ -n "$_frogging_family_preview_url" ]]; then
-        # Display preview content using glow command for Frogging-Family repos (TKG packages)
-        glow --pager --width 80 --style "${_glow_style:-dark}" "$_frogging_family_preview_url"
-    fi
-}
-
-# Preview content is initialized only for interactive mode (using glow command)
-__init_preview() {
-    # Dynamic previews from remote Markdown files using glow command for fzf menus
-    _preview_linux=$(__get_preview linux)
-    _preview_nvidia=$(__get_preview nvidia)
-    _preview_mesa=$(__get_preview mesa)
-    _preview_wine=$(__get_preview wine)
-    _preview_proton=$(__get_preview proton)
-    _preview_config=$(__get_preview config)
-    _preview_clean=$(__get_preview clean)
-    _preview_help=$(__get_preview help)
-    _preview_return=$(__get_preview return)
-    _preview_exit=$(__get_preview exit)
-
-    # Export all preview variables for fzf subshells (unset __exit run)
-    export _preview_linux _preview_nvidia _preview_mesa _preview_wine _preview_proton
-    export _preview_config _preview_clean _preview_help _preview_return _preview_exit _glow_style
-}
-
-# =============================================================================
 # INSTALLATION FUNCTIONS
 # =============================================================================
 
@@ -773,8 +670,8 @@ __install_package() {
 __linux_install() {
     # Display banner with package name and version
     if [[ "${_load_preview:-false}" == "true" ]]; then
-        __msg ""
         __banner
+        printf "${_clear}" 80 ""
     fi
 
     # Inform user (globalized)
@@ -794,15 +691,15 @@ __linux_install() {
         SECONDS_LEFT=60
         _user_answer=""
         while [[ $SECONDS_LEFT -gt 0 ]]; do
-            printf "\r${_green_light}${_uline_on}Select:${_uline_off}${_reset} [${_uline_on}1${_uline_off}/2]${_gray} (auto select: 1)${_reset}${_orange} Waiting for input... %2ds${_reset}: " "$SECONDS_LEFT"
+            printf "\r${_green_neon}${_uline_on}Select:${_uline_off}${_reset} [${_uline_on}1${_uline_off}/2]${_gray} (auto select: 1)${_reset}${_orange} Waiting for input... %2ds${_reset}: " "$SECONDS_LEFT"
             trap 'echo;echo; __msg "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
             if read -r -t 1 _user_answer; then
-                printf "\r%*s\r\033[A" 80 ""
+                printf "${_clear}" 80 ""
                 break
             fi
             ((SECONDS_LEFT--))
         done
-        printf "\r%*s\r\033[A" 80 ""
+        printf "${_clear}" 80 ""
 
         if [[ -z "$_user_answer" ]]; then
             _user_answer="1"
@@ -841,8 +738,8 @@ __linux_install() {
 __nvidia_install() {
     # Display banner with package name and version
     if [[ "${_load_preview:-false}" == "true" ]]; then
-        __msg ""
         __banner
+        printf "${_clear}" 80 ""
     fi
 
     # Inform user about external configuration usage for Nvidia-TKG build options customization
@@ -860,8 +757,8 @@ __nvidia_install() {
 __mesa_install() {
     # Display banner with package name and version
     if [[ "${_load_preview:-false}" == "true" ]]; then
-        __msg ""
         __banner
+        printf "\r%*s\r\033[A" 80 ""
     fi
 
     # Inform user about external configuration usage for Mesa-TKG build options customization
@@ -879,8 +776,8 @@ __mesa_install() {
 __wine_install() {
     # Display banner with package name and version
     if [[ "${_load_preview:-false}" == "true" ]]; then
-        __msg ""
         __banner
+        printf "${_clear}" 80 ""
     fi
 
     # Inform user about external configuration usage for Wine-TKG build options customization
@@ -901,15 +798,15 @@ __wine_install() {
         SECONDS_LEFT=60
         _user_answer=""
         while [[ $SECONDS_LEFT -gt 0 ]]; do
-            printf "\r${_green_light}${_uline_on}Select:${_uline_off}${_reset} [${_uline_on}1${_uline_off}/2]${_gray} (auto select: 1)${_reset}${_orange} Waiting for input... %2ds${_reset}: " "$SECONDS_LEFT"
+            printf "\r${_green_neon}${_uline_on}Select:${_uline_off}${_reset} [${_uline_on}1${_uline_off}/2]${_gray} (auto select: 1)${_reset}${_orange} Waiting for input... %2ds${_reset}: " "$SECONDS_LEFT"
             trap 'echo;echo; __msg "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
             if read -r -t 1 _user_answer; then
-                printf "\r%*s\r\033[A" 80 ""
+                printf "${_clear}" 80 ""
                 break
             fi
             ((SECONDS_LEFT--))
         done
-        printf "\r%*s\r\033[A" 80 ""
+        printf "${_clear}" 80 ""
 
 
         if [[ -z "$_user_answer" ]]; then
@@ -949,8 +846,8 @@ __wine_install() {
 __proton_install() {
     # Display banner with package name and version
     if [[ "${_load_preview:-false}" == "true" ]]; then
-        __msg ""
         __banner
+        printf "\r%*s\r\033[A" 80 ""
     fi
 
     # Inform user about external configuration usage for Proton-TKG build options customization
@@ -1376,6 +1273,29 @@ __handle_config() {
 
 # Interactive main menu with fzf preview for TKG-Installer
 __menu() {
+    # Parameters:
+    #   None
+    # Returns:
+    #   Displays an interactive main menu using fzf with preview window and captures user selection for processing
+    # Usage:
+    #   __menu
+    # Example:
+    #   __menu
+
+    # I DONT KNOW THIS WORKS BUT IT SHOULD. NOT TESTED YET.
+    # Glow style detection (auto-detect based on COLORTERM/TERM, or use env override)
+    if [[ -z "${_glow_style:-}" ]]; then
+        # Detect terminal color scheme for glow style (auto)
+        case "${COLORTERM:-}${TERM:-}" in
+            *light*|*xterm*|*rxvt*|*konsole*)
+                _glow_style="light"
+                ;;
+            *)
+                _glow_style="dark"
+                ;;
+        esac
+    fi
+
     # Define menu options and preview commands for fzf menu display using glow command for dynamic content based on selection
     local _menu_options=(
         "Linux  |🐧 ${_green_neon}Linux   ${_gray} Linux-TKG custom kernels (highly customizable to your needs)"
@@ -1407,15 +1327,15 @@ __menu() {
     local _preview_command='
         key=$(echo {} | cut -d"|" -f1 | xargs)
         case $key in
-            Linux*) $_print "$_preview_linux" ;;
-            Nvidia*) $_print "$_preview_nvidia" ;;
-            Mesa*) $_print "$_preview_mesa" ;;
-            Wine*) $_print "$_preview_wine" ;;
-            Proton*) $_print "$_preview_proton" ;;
-            Config*) $_print "$_preview_config" ;;
-            Clean*) $_print "$_preview_clean" ;;
-            Help*) $_print "$_preview_help" ;;
-            Close*) $_print "$_preview_exit" ;;
+            Linux*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/linux.md" ;;
+            Nvidia*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/nvidia.md" ;;
+            Mesa*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/mesa.md" ;;
+            Wine*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/wine.md" ;;
+            Proton*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/proton.md" ;;
+            Config*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/config.md" ;;
+            Clean*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/clean.md" ;;
+            Help*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/help.md" ;;
+            Close*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/exit.md" ;;
         esac
     '
 
@@ -1524,7 +1444,7 @@ __main_direct_mode() {
 
         # Display exit messages after editing config file and before exiting script gracefully
         __banner
-        __msg_info "Closed.${_break}"
+        __msg "${_green_mint}Closed.${_break}"
 
         # Clean exit without triggering __exit cleanup messages. Unset exported all variables
         __clean
@@ -1562,7 +1482,7 @@ __main_direct_mode() {
             rm -f "$_lock_file" 2>&1 || true
             rm -rf "$_tmp_dir" 2>&1 || true
             sleep 1.5s
-            __msg_info "Done.${_break}"
+            __msg "${_green_mint}Done.${_break}"
             exit 0 >/dev/null 2>&1
             ;;
         help|h|--help|-h)
@@ -1641,7 +1561,7 @@ __main_interactive_mode() {
             rm -f "$_lock_file" 2>&1 || true
             rm -rf "$_tmp_dir" 2>&1 || true
             sleep 1.5s
-            __msg_info "Done.${_break}"
+            __msg "${_green_mint}Done.${_break}"
             exit 0 >/dev/null 2>&1
             ;;
         Close)
