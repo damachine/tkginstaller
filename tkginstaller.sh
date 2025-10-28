@@ -66,7 +66,7 @@ export _lock_file="/tmp/tkginstaller.lock"
 # ENVIRONMENT SETUP
 # =============================================================================
 
-# Initialize global variables, paths, and configurations for the script
+# Initialize global variables, paths, and configurations for the script operations
 __init_globals() {
     _tmp_dir=${HOME}/.cache/tkginstaller # Temporary directory for script operations
     _choice_file=${_tmp_dir}/choice.tmp # Temporary file to store user choices
