@@ -53,11 +53,10 @@
 
 # Fuzzy finder run in a separate shell (subshell) - export variables for fzf subshells
 # shellcheck disable=SC2016
-# shellcheck disable=SC2059
 # shellcheck disable=SC2218
 
 # TKG-Installer VERSION definition
-export _tkg_version="v0.22.3"
+export _tkg_version="v0.22.4"
 
 # Lock file to prevent concurrent execution of the script
 export _lock_file="/tmp/tkginstaller.lock"
@@ -82,7 +81,6 @@ __init_globals() {
 
 # Initialize color and formatting definitions for output messages and prompts
 __init_style() {
-    _print=$"printf %b\n" # Print formatted strings with escape sequences
     _echo=$"echo -en" # Echo without newline and interpret escape sequences
     _break=$'\n' # Line break
     _reset=$'\033[0m' # Reset color/formatting
@@ -151,14 +149,14 @@ __init_style() {
 # Display banner with TKG-Installer version information
 __banner() {
     local _color="${1:-$_green_mint}"
-    echo -e "${_color}"
+    printf "%b\n" "${_color}"
     cat <<EOF
 ░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
 ──  ${_tkg_version}  ──
 EOF
-    echo -e "$_reset"
+    printf "%b\n" "$_reset"
 }
 
 # =============================================================================
@@ -237,6 +235,7 @@ __msg_info_blue()   { __msg 'info_blue' "$@"; }
 __msg_warning()     { __msg 'warning' "$@"; }
 __msg_error()       { __msg 'error' "$@"; }
 __msg_prompt()      { __msg 'prompt' "$@"; }
+__msg_plain()       { __msg 'plain' "$@"; }
 
 # Display package information and configuration location notice
 __msg_pkg() {
@@ -246,28 +245,28 @@ __msg_pkg() {
     local _config_url="${2:-${_frog_repo_url}}"
 
     __msg_info "${_break}${_green_neon}${_uline_on}NOTICE:${_uline_off}${_reset}${_green_light} customization.cfg${_reset}${_break}"
-    __msg " A wide range of options are available."
-    __msg " Thanks to their flexible configuration and powerful settings functions, TKG packages"
-    __msg " can be precisely tailored to different systems and personal requirements."
-    __msg " The${_gray} customization.cfg${_reset} files can be set up using a short setup guide via the interactive menu or with${_reset}${_gray} ‘tkginstaller ${_pkg_name,,} config’${_reset}."
-    __msg " The tool then offers you the option to make the adjustments in your preferred text editor."
-    __msg " Please make sure to adjust the settings correctly."
-    __msg " Refer to the${_gray} customization.cfg${_reset} documentation for detailed configuration options."
-    __msg " Location:${_reset}${_gray} ${_config_url}"
+    __msg_plain " A wide range of options are available."
+    __msg_plain " Thanks to their flexible configuration and powerful settings functions, TKG packages"
+    __msg_plain " can be precisely tailored to different systems and personal requirements."
+    __msg_plain " The${_gray} customization.cfg${_reset} files can be set up using a short setup guide via the interactive menu or with${_reset}${_gray} ‘tkginstaller ${_pkg_name,,} config’${_reset}."
+    __msg_plain " The tool then offers you the option to make the adjustments in your preferred text editor."
+    __msg_plain " Please make sure to adjust the settings correctly."
+    __msg_plain " Refer to the${_gray} customization.cfg${_reset} documentation for detailed configuration options."
+    __msg_plain " Location:${_reset}${_gray} ${_config_url}"
 }
 
 # Check for root execution and warn the user (if running as root)
 if [[ "$(id -u)" -eq 0 ]]; then
     __banner "$_orange"
     __msg_warning "You are running as root!${_break}"
-    __msg " Running this script as root is not recommended for security reasons.${_break}"
+    __msg_plain " Running this script as root is not recommended for security reasons.${_break}"
     # Ask for user confirmation to continue as root
     __msg_prompt "Do you really want to continue as root? [y/N]: "
-    trap 'echo;echo; __msg "${_red}Aborted by user.\n";sleep 1.5s; exit 1' INT
+    trap 'echo;echo; __msg_plain "${_red}Aborted by user.\n";sleep 1.5s; exit 1' INT
     read -r _user_answer
     trap - INT
     if [[ ! "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
-        __msg "${_break}${_red}Aborted by user.${_break}"
+        __msg_plain "${_break}${_red}Aborted by user.${_break}"
         exit 1
     fi
 fi
@@ -289,17 +288,17 @@ fi
 __help() {
     # Display help information with usage examples and shortcuts
     __banner
-    __msg "${_green_mint}Help and Usage${_break}"
-    __msg "${_orange}1) Run ${_uline_on}interactive${_uline_off} command${_break}"
-    __msg " To run the script in interactive menu mode, simply execute:${_break}"
-    __msg "$0${_break}${_break}"
-    __msg "${_orange}2) Run ${_uline_on}direct${_uline_off} command${_break}"
-    __msg " To run the script with a specific package, use the following command:${_break}"
-    __msg "$0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p]${_break}${_break}"
-    __msg "${_orange}3) Run direct command for ${_uline_on}customization.cfg${_uline_off}${_break}"
-    __msg " To edit the configuration file for a specific package, use the following command:${_break}"
-    __msg "$0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p] [config|c|edit|e]${_break}${_break}"
-    __msg "${_orange}${_uline_on}Shortcuts${_uline_off}:${_reset} l=linux, n=nvidia, m=mesa, w=wine, p=proton, c=config, e=edit${_break}"
+    __msg_plain "${_green_mint}Help and Usage${_break}"
+    __msg_plain "${_orange}1) Run ${_uline_on}interactive${_uline_off} command${_break}"
+    __msg_plain " To run the script in interactive menu mode, simply execute:${_break}"
+    __msg_plain "$0${_break}${_break}"
+    __msg_plain "${_orange}2) Run ${_uline_on}direct${_uline_off} command${_break}"
+    __msg_plain " To run the script with a specific package, use the following command:${_break}"
+    __msg_plain "$0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p]${_break}${_break}"
+    __msg_plain "${_orange}3) Run direct command for ${_uline_on}customization.cfg${_uline_off}${_break}"
+    __msg_plain " To edit the configuration file for a specific package, use the following command:${_break}"
+    __msg_plain "$0 [linux|l|nvidia|n|mesa|m|wine|w|proton|p] [config|c|edit|e]${_break}${_break}"
+    __msg_plain "${_orange}${_uline_on}Shortcuts${_uline_off}:${_reset} l=linux, n=nvidia, m=mesa, w=wine, p=proton, c=config, e=edit${_break}"
 }
 
 # Help can show always!
@@ -318,18 +317,18 @@ if [[ -f "$_lock_file" ]]; then
         if [[ -n "$_old_pid" ]] && kill -0 "$_old_pid" 2>/dev/null; then
             __banner "$_orange"
             __msg_warning "Script is already running (PID: $_old_pid). Exiting...${_break}"
-            __msg " If the script was unexpectedly terminated before."
-            __msg " Remove ${_reset}${_gray}$_lock_file${_reset} manually run:${_break}"
-            __msg "tkginstaller clean${_break}"
+            __msg_plain " If the script was unexpectedly terminated before."
+            __msg_plain " Remove ${_reset}${_gray}$_lock_file${_reset} manually run:${_break}"
+            __msg_plain "tkginstaller clean${_break}"
             exit 1
         else
             # Stale lock file found, remove it safely and continue
             rm -f "$_lock_file" 2>/dev/null || {
                 __banner "$_orange"
                 __msg_warning "Script is already running (PID: $_old_pid). Exiting...${_break}"
-                __msg " If the script was unexpectedly terminated before."
-                __msg " Remove ${_reset}${_gray}$_lock_file${_reset} manually run:${_break}"
-                __msg "tkginstaller clean${_break}"
+                __msg_plain " If the script was unexpectedly terminated before."
+                __msg_plain " Remove ${_reset}${_gray}$_lock_file${_reset} manually run:${_break}"
+                __msg_plain "tkginstaller clean${_break}"
                 exit 1
             }
         fi
@@ -360,9 +359,9 @@ __prepare() {
     # Welcome message and pre-checks
     __banner
     printf "%s" "${_green_mint}Starting"
-    for i in {1..10}; do
+    for i in {1..3}; do
         printf " ."
-        sleep 0.15s
+        sleep 0.33s
     done
     printf "%b\n" "${_reset}"
 
@@ -428,7 +427,7 @@ __prepare() {
         done
         __banner "$_red"
         __msg_error "Missing dependencies detected.${_break}"
-        __msg " Please install the following dependencies first:${_break}"
+        __msg_plain " Please install the following dependencies first:${_break}"
 
         # Map dependencies to package names for installation command display
         local _pkg_name_dep=()
@@ -437,7 +436,7 @@ __prepare() {
         done
 
         # Display installation command with missing packages
-        __msg "${_install_cmd_dep} ${_pkg_name_dep[*]}${_break}"
+        __msg_plain "${_install_cmd_dep} ${_pkg_name_dep[*]}${_break}"
 
         # Exit with error code
         exit 0 >/dev/null 2>&1
@@ -450,27 +449,19 @@ __prepare() {
     # Create necessary subdirectories for temporary files
     mkdir -p "$_tmp_dir" 2>/dev/null || {
         for i in {1..7}; do
-            printf "${_clear}" 80 ""
+            printf $_clear 80 ""
         done
         __banner "$_red"
         __msg_error "Creating temporary directory failed: ${_tmp_dir}${_break}"
-        __msg " Please check your permissions and try again.${_break}"
+        __msg_plain " Please check your permissions and try again.${_break}"
         exit 0 >/dev/null 2>&1
     }
 
-    # Load preview content only for interactive mode (if requested)
-    if [[ "$_load_preview" == "true" ]]; then
-        __init_preview || {
-            __msg "${_red}Initializing preview content failed! Continuing..."
-            return 0
-        }
-    fi
-
     # Final message before starting TKG-Installer process
     if [[ "$_load_preview" == "true" ]]; then
-        __msg "${_green_mint}Entering interactive menu${_reset}"
+        __msg_plain "${_green_mint}Entering interactive menu${_reset}"
     else
-        __msg "${_green_mint}Running direct installation${_reset}"
+        __msg_plain "${_green_mint}Running direct installation${_reset}"
     fi
 
     # Short delay for better UX (( :P ))
@@ -510,10 +501,10 @@ __exit() {
     if [[ $_exit_code -ne 0 ]]; then
         __banner "$_red"
         __msg_error "Aborting status: $_exit_code${_break}"
-        __msg "${_red} Exiting due to errors. Please check the messages above for details.${_break}"
+        __msg_plain "${_red} Exiting due to errors. Please check the messages above for details.${_break}"
     else
         __banner
-        __msg "${_green_mint}Closed.${_break}"
+        __msg_plain "${_green_mint}Closed.${_break}"
     fi
 
     # Perform cleanup actions before exiting the script
@@ -537,7 +528,7 @@ __clean() {
     # Unset exported variables for fzf subshells
     unset _tkg_version _lock_file
     unset _tmp_dir _choice_file _config_dir _tkg_repo_url _tkg_raw_url _frog_repo_url _frog_raw_url
-    unset _print _break _echo _reset _red _green_light _green_neon _green_mint _orange _blue _gray _uline_on _uline_off _line
+    unset _break _echo _reset _red _green_light _green_neon _green_mint _orange _blue _gray _uline_on _uline_off _line
     unset _preview_linux _preview_nvidia _preview_mesa _preview_wine _preview_proton
     unset _preview_config _preview_clean _preview_help _preview_return _preview_exit _glow_style
     unset _distro_name _distro_id _distro_like
@@ -632,7 +623,7 @@ __install_package() {
     __msg_info "${_break}${_green_neon}${_uline_on}NOTICE:${_uline_off}${_reset}${_green_light} Fetching $_package_name from Frogging-Family repository...${_break}"
     git clone "$_repo_url" > /dev/null 2>&1 || {
         __msg_error "Cloning failed for: $_package_name${_break}"
-        __msg " Please check your internet connection and try again."
+        __msg_plain " Please check your internet connection and try again."
         return 1
     }
 
@@ -641,7 +632,7 @@ __install_package() {
     _repo_dir=$(basename "${_repo_url}" .git)
     cd "${_repo_dir}" > /dev/null 2>&1 || {
         __msg_error "Cloned repository directory not found: ${_repo_dir}${_break}"
-        __msg " Please check your path or permissions and try again."
+        __msg_plain " Please check your path or permissions and try again."
         return 1
     }
 
@@ -649,7 +640,7 @@ __install_package() {
     if [[ -n "${_work_directory}" ]]; then
         cd "${_work_directory}" > /dev/null 2>&1 || {
             __msg_error "Working directory not found: ${_work_directory}${_break}"
-            __msg " Please check your path or permissions and try again."
+            __msg_plain " Please check your path or permissions and try again."
             return 1
         }
     fi
@@ -683,16 +674,16 @@ __linux_install() {
     if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
         # Arch-based distributions: Ask user which build system to use
         __msg_info "${_break}${_green_neon}${_uline_on}CHOOSE:${_uline_off}${_reset}${_green_light} Which build system want to use?${_break}"
-        __msg " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
-        __msg " ${_uline_on}1${_uline_off}) makepkg -si${_reset} ${_gray} (recommended for Arch-based distros)"
-        __msg " 2) ./install.sh install${_reset} ${_gray} (use if you want the generic install script)${_break}"
+        __msg_plain " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
+        __msg_plain " ${_uline_on}1${_uline_off}) makepkg -si${_reset} ${_gray} (recommended for Arch-based distros)"
+        __msg_plain " 2) ./install.sh install${_reset} ${_gray} (use if you want the generic install script)${_break}"
         _old_trap_int=$(trap -p INT 2>/dev/null || true)
         trap '__exit 130' INT
         SECONDS_LEFT=60
         _user_answer=""
         while [[ $SECONDS_LEFT -gt 0 ]]; do
             printf "\r${_green_neon}${_uline_on}Select:${_uline_off}${_reset} [${_uline_on}1${_uline_off}/2]${_gray} (auto select: 1)${_reset}${_orange} Waiting for input... %2ds${_reset}: " "$SECONDS_LEFT"
-            trap 'echo;echo; __msg "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
+            trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
             if read -r -t 1 _user_answer; then
                 printf "${_clear}" 80 ""
                 break
@@ -790,16 +781,16 @@ __wine_install() {
     if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
         # Arch-based distributions: Ask user which build system to use
         __msg_info "${_break}${_green_neon}${_uline_on}CHOOSE:${_uline_off}${_reset}${_green_light} Which build system want to use?${_break}"
-        __msg " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
-        __msg " ${_uline_on}1${_uline_off}) makepkg -si${_reset} ${_gray} (recommended for Arch-based distros)"
-        __msg " 2) ./non-makepkg-build.sh${_reset} ${_gray} (use if you want a custom build script)${_break}"
+        __msg_plain " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
+        __msg_plain " ${_uline_on}1${_uline_off}) makepkg -si${_reset} ${_gray} (recommended for Arch-based distros)"
+        __msg_plain " 2) ./non-makepkg-build.sh${_reset} ${_gray} (use if you want a custom build script)${_break}"
         _old_trap_int=$(trap -p INT 2>/dev/null || true)
         trap '__exit 130' INT
         SECONDS_LEFT=60
         _user_answer=""
         while [[ $SECONDS_LEFT -gt 0 ]]; do
             printf "\r${_green_neon}${_uline_on}Select:${_uline_off}${_reset} [${_uline_on}1${_uline_off}/2]${_gray} (auto select: 1)${_reset}${_orange} Waiting for input... %2ds${_reset}: " "$SECONDS_LEFT"
-            trap 'echo;echo; __msg "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
+            trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
             if read -r -t 1 _user_answer; then
                 printf "${_clear}" 80 ""
                 break
@@ -921,7 +912,7 @@ __editor() {
         else
             __banner "$_red"
             __msg_error "No editor found!${_break}"
-            __msg " Please set \$EDITOR environment or install${_reset}${_gray} 'nano'${_reset},${_reset}${_gray} 'micro'${_reset}, or${_reset}${_gray} 'vim'${_reset} as fallback.${_break}"
+            __msg_plain " Please set \$EDITOR environment or install${_reset}${_gray} 'nano'${_reset},${_reset}${_gray} 'micro'${_reset}, or${_reset}${_gray} 'vim'${_reset} as fallback.${_break}"
             __msg_prompt "Press any key to continue..."
             read -n 1 -s -r -p "" # Wait for user input before exiting
             return 1
@@ -950,9 +941,9 @@ __edit_config() {
         if [[ ! -d "${_config_dir}" ]]; then
             __banner "$_orange"
             __msg_warning "Configuration directory not found.${_break}"
-            __msg " Creating directory:${_reset}${_gray} ${_config_dir}${_reset}${_break}"
+            __msg_plain " Creating directory:${_reset}${_gray} ${_config_dir}${_reset}${_break}"
             __msg_prompt "Do you want to create the configuration directory? [y/N]: "
-            trap 'echo;echo; __msg "${_red}Aborted by user.${_reset}";sleep 1.5; clear; return 0' INT
+            trap 'echo;echo; __msg_plain "${_red}Aborted by user.${_reset}";sleep 1.5; clear; return 0' INT
             read -r _user_answer
             trap - INT
             # Handle user response for directory creation prompt with case statement
@@ -966,7 +957,7 @@ __edit_config() {
                         clear
                         __banner "$_red"
                         __msg_error "Creating configuration directory failed: ${_config_dir}${_break}"
-                        __msg " Please check the path and your permissions then try again.${_break}"
+                        __msg_plain " Please check the path and your permissions then try again.${_break}"
                         __msg_prompt "Press any key to continue..."
                         read -n 1 -s -r -p "" # Wait for user input before exiting
                         clear
@@ -984,7 +975,7 @@ __edit_config() {
                     clear
                     __banner "$_orange"
                     __msg_info_orange "Directory creation cancelled.${_break}"
-                    __msg " No changes were made.${_break}"
+                    __msg_plain " No changes were made.${_break}"
                     __msg_prompt "Press any key to continue..."
                     read -n 1 -s -r -p "" # Wait for user input before exiting
                     clear
@@ -1045,20 +1036,20 @@ __edit_config() {
                 [proton-tkg]="'${_frog_raw_url}'/wine-tkg-git/master/proton-tkg/proton-tkg.cfg"
             )
             key=$(echo {} | cut -d"|" -f1 | xargs)
-            [[ "$key" == "return" ]] && { ${_print} "${_preview_return}"; exit 0; }
+            [[ "$key" == "return" ]] && { printf "%b\n" "${_preview_return}"; exit 0; }
             _config_file_path="'${_config_dir}'/${key}.cfg"
             _remote_url="${remote_urls[$key]}"
             if [[ -f "$_config_file_path" && -n "$_remote_url" ]]; then
                 _remote_tmp="${_tmp_dir}/${key}-remote.cfg"
                 if curl -fsSL "$_remote_url" -o "$_remote_tmp" 2>/dev/null; then
-                    ${_print} "'"${_info_config}"'"
+                    printf "%b\n" "${_info_config}"
                     '"${_diff_cmd}"' "$_remote_tmp" "${_config_file_path}" | '"${_bat_cmd}"'
                     rm -f "$_remote_tmp"
                 else
-                    ${_print} "'"${_error_config_not_exist}"'"
+                    printf "%b\n" "${_error_config_not_exist}"
                 fi
             else
-                ${_print} "'"${_error_config_not_exist}"'"
+                printf "%b\n" "${_error_config_not_exist}"
             fi
         '
 
@@ -1126,9 +1117,9 @@ __edit_config() {
             *)
                 __banner "$_red"
                 __msg_error "Invalid option:${_reset} $_config_file${_break}"
-                __msg " The option is either invalid or incomplete."
-                __msg " All available options run:${_break}"
-                __msg "$0 help${_break}"
+                __msg_plain " The option is either invalid or incomplete."
+                __msg_plain " All available options run:${_break}"
+                __msg_plain "$0 help${_break}"
 
                 # Disable exit trap before cleanup and exit to avoid duplicate cleanup messages on exit
                 trap - INT TERM EXIT HUP
@@ -1168,7 +1159,7 @@ __handle_config() {
             clear
             __banner "$_red"
             __msg_error "Opening external configuration failed:${_reset}${_gray} ${_config_path}${_break}"
-            __msg " Please check if the file exists and is accessible.${_break}"
+            __msg_plain " Please check if the file exists and is accessible.${_break}"
             __msg_prompt "Press any key to continue..."
             read -n 1 -s -r -p "" # Wait for user input before exiting
             clear
@@ -1178,12 +1169,12 @@ __handle_config() {
         # Download and create new configuration file if it does not exist
         __banner "$_orange"
         __msg_warning "External configuration file does not exist.${_break}"
-        __msg " Local path: ${_gray}file://${_config_path}"
-        __msg " Remote URL: ${_gray}${_config_url}${_break}"
+        __msg_plain " Local path: ${_gray}file://${_config_path}"
+        __msg_plain " Remote URL: ${_gray}${_config_url}${_break}"
 
         # Prompt user for download confirmation
         __msg_prompt "Do you want to download the default configuration? [y/N]: "
-        trap 'echo;echo; __msg "${_red}Aborted by user.";sleep 1.5s; clear; return 0' INT
+        trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; clear; return 0' INT
         read -r _user_answer
         trap - INT
         if [[ -z "${_user_answer}" ]]; then
@@ -1197,7 +1188,7 @@ __handle_config() {
                     clear
                     __banner "$_red"
                     __msg_error "Creating configuration directory failed: ${_config_path}${_break}"
-                    __msg " Please check the path and your permissions then try again.${_break}"
+                    __msg_plain " Please check the path and your permissions then try again.${_break}"
                     __msg_prompt "Press any key to continue..."
                     read -n 1 -s -r -p "" # Wait for user input before exiting
                     clear
@@ -1223,7 +1214,7 @@ __handle_config() {
                         clear
                         __banner "$_orange"
                         __msg_error "Opening external configuration file:${_reset}${_gray} $_config_name${_break}"
-                        __msg " Please check if the file exists and is accessible.${_break}"
+                        __msg_plain " Please check if the file exists and is accessible.${_break}"
                         __msg_prompt "Press any key to continue..."
                         read -n 1 -s -r -p "" # Wait for user input before exiting
                         clear
@@ -1234,7 +1225,7 @@ __handle_config() {
                     clear
                     __banner "$_red"
                     __msg_error "Downloading external configuration from ${_config_url} failed!${_break}"
-                    __msg " Please check your internet connection and try again.${_break}"
+                    __msg_plain " Please check your internet connection and try again.${_break}"
                     __msg_prompt "Press any key to continue..."
                     read -n 1 -s -r -p "" # Wait for user input before exiting
                     clear
@@ -1246,7 +1237,7 @@ __handle_config() {
                 clear
                 __banner "$_orange"
                 __msg_info_orange "Download cancelled. No configuration file created.${_break}"
-                __msg " No changes were made.${_break}"
+                __msg_plain " No changes were made.${_break}"
                 __msg_prompt "Press any key to continue..."
                 read -n 1 -s -r -p "" # Wait for user input before exiting
                 clear
@@ -1327,15 +1318,24 @@ __menu() {
     local _preview_command='
         key=$(echo {} | cut -d"|" -f1 | xargs)
         case $key in
-            Linux*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/linux.md" ;;
-            Nvidia*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/nvidia.md" ;;
-            Mesa*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/mesa.md" ;;
-            Wine*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/wine.md" ;;
-            Proton*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/proton.md" ;;
-            Config*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/config.md" ;;
-            Clean*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/clean.md" ;;
-            Help*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/help.md" ;;
-            Close*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/exit.md" ;;
+            Linux*)
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/linux.md" ;;
+            Nvidia*)
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/nvidia.md" ;;
+            Mesa*)
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/mesa.md" ;;
+            Wine*)
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/wine.md" ;;
+            Proton*)
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/proton.md" ;;
+            Config*)
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/config.md" ;;
+            Clean*)
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/clean.md" ;;
+            Help*)
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/help.md" ;;
+            Close*)
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/exit.md" ;;
         esac
     '
 
@@ -1444,7 +1444,7 @@ __main_direct_mode() {
 
         # Display exit messages after editing config file and before exiting script gracefully
         __banner
-        __msg "${_green_mint}Closed.${_break}"
+        __msg_plain "${_green_mint}Closed.${_break}"
 
         # Clean exit without triggering __exit cleanup messages. Unset exported all variables
         __clean
@@ -1477,12 +1477,12 @@ __main_direct_mode() {
             # Clean temporary files and restart script
             __banner
             __msg_info_orange "Cleaning all temporary files...${_break}"
-            __msg " Location:${_reset}${_gray} ${_tmp_dir}${_reset}${_break}"
+            __msg_plain " Location:${_reset}${_gray} ${_tmp_dir}${_reset}${_break}"
             rm -f "$_choice_file" 2>&1 || true
             rm -f "$_lock_file" 2>&1 || true
             rm -rf "$_tmp_dir" 2>&1 || true
             sleep 1.5s
-            __msg "${_green_mint}Done.${_break}"
+            __msg_plain "${_green_mint}Done.${_break}"
             exit 0 >/dev/null 2>&1
             ;;
         help|h|--help|-h)
@@ -1492,9 +1492,9 @@ __main_direct_mode() {
             # Invalid argument handling and usage instructions display
             __banner "$_orange"
             __msg_warning "Invalid argument:${_reset}${_gray} ${1:-} ${2:-}${_reset}${_break}"
-            __msg " The argument is either invalid or incomplete."
-            __msg " All available arguments run:${_break}"
-            __msg "$0 help${_break}"
+            __msg_plain " The argument is either invalid or incomplete."
+            __msg_plain " All available arguments run:${_break}"
+            __msg_plain "$0 help${_break}"
 
             # Disable exit trap before cleanup and exit to avoid duplicate cleanup messages on exit
             trap - INT TERM EXIT HUP
@@ -1556,12 +1556,12 @@ __main_interactive_mode() {
             # Clean temporary files and restart script
             __banner
             __msg_info_orange "Cleaning all temporary files...${_break}"
-            __msg " Location:${_reset}${_gray} ${_tmp_dir}${_reset}${_break}"
+            __msg_plain " Location:${_reset}${_gray} ${_tmp_dir}${_reset}${_break}"
             rm -f "$_choice_file" 2>&1 || true
             rm -f "$_lock_file" 2>&1 || true
             rm -rf "$_tmp_dir" 2>&1 || true
             sleep 1.5s
-            __msg "${_green_mint}Done.${_break}"
+            __msg_plain "${_green_mint}Done.${_break}"
             exit 0 >/dev/null 2>&1
             ;;
         Close)
