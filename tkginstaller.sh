@@ -52,8 +52,9 @@
 #export LC_ALL=C # Uncomment if locale issues arise
 
 # Fuzzy finder run in a separate shell (subshell) - export variables for fzf subshells
-# shellcheck disable=SC2016
-# shellcheck disable=SC2218
+# shellcheck disable=SC2016 # Allow variable expansion in strings
+# shellcheck disable=SC2059 # Disable SC2059 for printf with variable format string
+# shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
 export _tkg_version="v0.22.4"
@@ -449,7 +450,7 @@ __prepare() {
     # Create necessary subdirectories for temporary files
     mkdir -p "$_tmp_dir" 2>/dev/null || {
         for i in {1..7}; do
-            printf $_clear 80 ""
+            printf "${_clear}" 80 ""
         done
         __banner "$_red"
         __msg_error "Creating temporary directory failed: ${_tmp_dir}${_break}"
