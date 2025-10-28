@@ -987,21 +987,21 @@ __edit_config() {
 
         # Function to handle configuration file editing and downloading if missing
         local _menu_options=(
-            "linux-tkg  |🐧 ${_green_neon}Linux   ${_gray} linux-tkg.cfg${_reset}   ${_orange} Customize to your needs"
+            "linux-tkg  |🐧 ${_green_neon}Linux   ${_gray} Create/Edit ${_reset}${_orange} 'linux-tkg.cfg'  "
         )
 
         # Only show Nvidia and Mesa config if Arch-based distro is detected
         if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
             _menu_options+=(
-                "nvidia-all |💻 ${_green_neon}Nvidia  ${_gray} nvidia-all.cfg${_reset}  ${_gray} ..."
-                "mesa-git   |🧩 ${_green_neon}Mesa    ${_gray} mesa-git.cfg${_reset}    ${_gray} ..."
+                "nvidia-all |💻 ${_green_neon}Nvidia  ${_gray} . . .       ${_reset}${_orange} 'nvidia-all.cfg'"
+                "mesa-git   |🧩 ${_green_neon}Mesa    ${_gray} . . .       ${_reset}${_orange} 'mesa-git.cfg'"
             )
         fi
 
         # Always show Wine and Proton config options
         _menu_options+=(
-            "wine-tkg   |🍷 ${_green_neon}Wine    ${_gray} wine-tkg.cfg${_reset}    ${_gray} ..."
-            "proton-tkg |🎮 ${_green_neon}Proton  ${_gray} proton-tkg.cfg${_reset}  ${_gray} ..."
+            "wine-tkg   |🍷 ${_green_neon}Wine    ${_gray} . . .       ${_reset}${_orange} 'wine-tkg.cfg'"
+            "proton-tkg |🎮 ${_green_neon}Proton  ${_gray} . . .       ${_reset}${_orange} 'proton-tkg.cfg'"
             "return     |⏪ ${_green_neon}Return"
         )
 
@@ -1036,21 +1036,25 @@ __edit_config() {
                 [wine-tkg]="'${_frog_raw_url}'/wine-tkg-git/master/wine-tkg-git/customization.cfg"
                 [proton-tkg]="'${_frog_raw_url}'/wine-tkg-git/master/proton-tkg/proton-tkg.cfg"
             )
+            # Extract selected key from fzf choice string for preview handling
             key=$(echo {} | cut -d"|" -f1 | xargs)
+            # Handle preview content based on selected key
             [[ "$key" == "return" ]] && { printf "%b\n" "${_preview_return}"; exit 0; }
             _config_file_path="'${_config_dir}'/${key}.cfg"
             _remote_url="${remote_urls[$key]}"
+            # Show config diff if local file exists, otherwise show error message for missing file
             if [[ -f "$_config_file_path" && -n "$_remote_url" ]]; then
                 _remote_tmp="${_tmp_dir}/${key}-remote.cfg"
+                # Fetch remote config file to temporary location and show diff with local file if successful
                 if curl -fsSL "$_remote_url" -o "$_remote_tmp" 2>/dev/null; then
-                    printf "%b\n" "${_info_config}"
+                    printf "%b\n" "'"${_info_config}"'"
                     '"${_diff_cmd}"' "$_remote_tmp" "${_config_file_path}" | '"${_bat_cmd}"'
                     rm -f "$_remote_tmp"
                 else
-                    printf "%b\n" "${_error_config_not_exist}"
+                    printf "%b\n" "'"${_error_config_not_exist}"'"
                 fi
             else
-                printf "%b\n" "${_error_config_not_exist}"
+                printf "%b\n" "'"${_error_config_not_exist}"'"
             fi
         '
 
@@ -1058,7 +1062,7 @@ __edit_config() {
         local _header_text="🐸${_green_neon} TKG-Installer ─ Config menu${_reset}${_break}${_break}${_green_light}   Adjust external configuration file${_break}   Default directory:${_reset}${_gray} ~/.config/frogminer/ "
         local _footer_text="${_green_light}  Use arrow keys ⌨️ or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}  Press${_reset}${_gray} Ctrl+P${_reset}${_green_light} to toggle the preview window${_break}${_green_light}  Info:${_reset}${_gray} https://github.com/Frogging-Family${_reset}${_break}${_gray}        https://github.com/damachine/tkginstaller"
         local _border_label_text="${_tkg_version}"
-        local _preview_window_settings='right:wrap:70%'
+        local _preview_window_settings='right:nowrap:70%'
 
         # Show fzf menu and get user selection for configuration file editing
         _config_choice=$(__fzf_menu "$_menu_content" "$_preview_command" "$_header_text" "$_footer_text" "$_border_label_text" "$_preview_window_settings")
