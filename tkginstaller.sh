@@ -57,7 +57,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-export _tkg_version="v0.22.4"
+export _tkg_version="v0.22.5"
 
 # Lock file to prevent concurrent execution of the script
 export _lock_file="/tmp/tkginstaller.lock"
@@ -1035,11 +1035,12 @@ __edit_config() {
                 [mesa-git]="'${_frog_raw_url}'/mesa-git/master/customization.cfg"
                 [wine-tkg]="'${_frog_raw_url}'/wine-tkg-git/master/wine-tkg-git/customization.cfg"
                 [proton-tkg]="'${_frog_raw_url}'/wine-tkg-git/master/proton-tkg/proton-tkg.cfg"
+
             )
             # Extract selected key from fzf choice string for preview handling
             key=$(echo {} | cut -d"|" -f1 | xargs)
             # Handle preview content based on selected key
-            [[ "$key" == "return" ]] && { printf "%b\n" "${_preview_return}"; exit 0; }
+            [[ "$key" == "return" ]] && { glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/return.md"; exit 0; }
             _config_file_path="'${_config_dir}'/${key}.cfg"
             _remote_url="${remote_urls[$key]}"
             # Show config diff if local file exists, otherwise show error message for missing file
