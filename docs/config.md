@@ -1,4 +1,4 @@
-## 🛠️ TKG-Installer - Config menu
+## TKG-Installer - Config menu
 
 ---
 

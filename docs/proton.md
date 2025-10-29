@@ -1,4 +1,4 @@
-## 🎮 Proton-TKG ─ Windows compatibility layer for Steam / Gaming
+## Proton-TKG ─ Windows compatibility layer for Steam / Gaming
 
 ---
 

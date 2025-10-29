@@ -1,4 +1,4 @@
-## 🖥️ Nvidia-TKG ─ Open-Source or proprietary graphics driver
+## Nvidia-TKG ─ Open-Source or proprietary graphics driver
 
 ---
 

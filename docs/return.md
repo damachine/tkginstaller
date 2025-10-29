@@ -1,4 +1,4 @@
-## ⏪ Return - Exit editor menu
+## Return - Exit editor menu
 
 ---
 
