@@ -250,7 +250,7 @@ __msg_pkg() {
     __msg_plain " Thanks to their flexible configuration and powerful settings, TKG packages"
     __msg_plain " can be precisely tailored to different systems and personal preferences.${_break}"
     __msg_plain " The${_gray} customization.cfg${_reset} files can be set up by using a short process:"
-    __msg_plain "  1) ${_gray} Interactive menu -> Config -> ${_pkg_name,,}"
+    __msg_plain "  1) ${_gray} tkginstaller -> Config -> ${_pkg_name,,}"
     __msg_plain "  2) ${_gray} tkginstaller ${_pkg_name,,} config${_break}"
     __msg_plain " The file(s) are saved in the ${_gray} ~/.config/frogminer/${_reset} directory according to the standard specifications."
     __msg_plain " Once the setup is complete, the configs are immediately ready to be edited and compared"
