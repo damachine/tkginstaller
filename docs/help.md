@@ -1,4 +1,4 @@
-## ❓ TKG-Installer - Help
+## TKG-Installer - Help
 
 ---
 
