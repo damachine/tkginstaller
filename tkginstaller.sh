@@ -57,7 +57,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-export _tkg_version="v0.23.4"
+export _tkg_version="v0.23.5"
 
 # Lock file to prevent concurrent execution of the script
 export _lock_file="/tmp/tkginstaller.lock"
@@ -251,7 +251,7 @@ __msg_pkg() {
     __msg_plain " can be precisely tailored to different systems and personal preferences.${_break}"
     __msg_plain " The${_gray} customization.cfg${_reset} files can be set up using one of the two short methods listed:"
     __msg_plain "  1) ${_gray} tkginstaller -> Config -> ${_pkg_name,,}${_reset} (interactive menu)"
-    __msg_plain "  2) ${_gray} tkginstaller ${_pkg_name,,} config${_break}${_reset} (direct command)${_break}"
+    __msg_plain "  2) ${_gray} tkginstaller ${_pkg_name,,} config${_reset} (direct command)${_break}"
     __msg_plain " The file(s) are saved in the ${_gray} ~/.config/frogminer/${_reset} directory according to the standard specifications."
     __msg_plain " Now the files can be adjusted and compared using one of the above-mentioned steps."
     __msg_plain " ${_uline_on}Please make sure to adjust the settings correctly!${_uline_off}"
