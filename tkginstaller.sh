@@ -256,7 +256,7 @@ __msg_pkg() {
     __msg_plain " Once the setup is complete, the configs are immediately ready to be edited and compared"
     __msg_plain " The tool offers the option to make the adjustments in your preferred text editor."
     __msg_plain " ${_uline_on}Please make sure to adjust the settings correctly.${_uline_off}"
-    __msg_plain " Location: ${_gray}${_config_url}${_reset}${_break}"
+    __msg_plain " Location: ${_gray}${_config_url}${_reset}"
 }
 
 # Check for root execution and warn the user (if running as root)
