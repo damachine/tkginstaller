@@ -10,9 +10,9 @@
 
 # TKG-Installer 🐸
 
-#### Commandline tool to assist with the installation and configuration of the powerful TKG packages from the repositories of the [Frogging-Family](https://github.com/Frogging-Family).
+#### All-in one build of the powerful TKG packages from the repositories of the [Frogging-Family](https://github.com/Frogging-Family).
 
-##### Thanks to their flexible configuration and powerful settings functions, TKG packages can be precisely tailored to different systems and personal requirements.
+##### Thanks to their flexible configuration and powerful settings, TKG packages can be precisely tailored to different systems and personal preferences.
 
 ##### I've been using this script successfully for quite a while—maybe it will help you too!
 
@@ -20,16 +20,12 @@
 
 ## Features
 
-- **Dual Mode Operation**: Use either an interactive `fzf`-menu or fast direct `command-line` mode.
-- **Advanced Package Configuration**: This script can create and manage external configuration files for all TKG packages and tools.
-- **Multi-Distro Support**: Works seamlessly on Arch-based systems and most other Linux distributions support by the Frogging-Family.
+- **Dual-Mode**: Use either an interactive `fzf` menu or a fast, direct command-line mode.
+- **Manage `customization.cfg`**: Create, edit, and compare `customization.cfg` files.
+- **Multi-Distribution**: Works seamlessly on Arch-based systems and on most other Linux distributions supported by the Frogging-Family.
 
 [![tkginstaller-fzf](images/fzf.png)](images/fzf.png)
 [![tkginstaller-fzf2](images/fzf2.png)](images/fzf2.png)
-[![tkginstaller-fzfconfig](images/config.png)](images/config.png)
-[![tkginstaller-linuxdirect](images/linux.png)](images/linux.png)
-[![tkginstaller-winedirect](images/wine.png)](images/wine.png)
-[![tkginstaller-protondirect](images/proton.png)](images/proton.png)
 
 ---
 
@@ -97,6 +93,7 @@
 > - **`fzf`**: Powers the interactive menu.
 > - **`glow`**: For preview markdown files in the terminal.
 > - **`nano`, `micro`, `vim`, etc.** The script uses the `$EDITOR` environment variable.
+> - **`wdiff`** For comparing `customization.cfg` files.
 
 #### Individual TKG packages have their own dependencies: [https://github.com/Frogging-Family](https://github.com/Frogging-Family)
 

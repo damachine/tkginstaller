@@ -1,4 +1,4 @@
-## 🧹 TKG-Installer - Cleaning
+## TKG-Installer - Cleaning
 
 ---
 

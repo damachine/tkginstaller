@@ -1,4 +1,4 @@
-## 🧩 Mesa-TKG ─ Open-Source graphics driver for AMD and Intel
+## Mesa-TKG ─ Open-Source graphics driver for AMD and Intel
 
 ---
 

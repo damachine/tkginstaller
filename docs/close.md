@@ -1,4 +1,4 @@
-## 👋 TKG-Installer - Exit
+## TKG-Installer - Close
 
 ---
 

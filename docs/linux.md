@@ -1,4 +1,4 @@
-## 🧠 Linux-TKG ─ Custom Linux kernels
+## Linux-TKG ─ Custom Linux kernels
 
 ---
 

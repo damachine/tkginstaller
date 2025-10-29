@@ -1,4 +1,4 @@
-## 🍷 Wine-TKG ─ Windows compatibility layer
+## Wine-TKG ─ Windows compatibility layer
 
 ---
 
