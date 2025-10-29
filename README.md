@@ -21,7 +21,7 @@
 ## Features
 
 - **Dual-Mode**: Use either an interactive `fzf` menu or a fast, direct command-line mode.
-- **Manage: Create, edit, and compare `customization.cfg` files.
+- **Manage**: Create, edit, and compare `customization.cfg` files.
 - **Multi-Distribution**: Works seamlessly on Arch-based systems and on most other Linux distributions supported by the Frogging-Family.
 
 [![tkginstaller-fzf](images/fzf.png)](images/fzf.png)
