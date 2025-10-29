@@ -57,7 +57,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-export _tkg_version="v0.22.8"
+export _tkg_version="v0.22.9"
 
 # Lock file to prevent concurrent execution of the script
 export _lock_file="/tmp/tkginstaller.lock"
@@ -256,6 +256,7 @@ __msg_pkg() {
     __msg_plain " Once the setup is complete, the configs are immediately ready to be edited and compared"
     __msg_plain " The tool offers the option to make the adjustments in your preferred text editor."
     __msg_plain " ${_uline_on}Please make sure to adjust the settings correctly.${_uline_off}"
+    __msg_plain " Location: ${_blue}${_config_url}${_reset}${_break}"
 }
 
 # Check for root execution and warn the user (if running as root)
