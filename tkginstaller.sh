@@ -256,6 +256,17 @@ __msg_pkg() {
     __msg_plain " Once the setup is complete, the configs are immediately ready to be edited and compared"
     __msg_plain " The tool offers the option to make the adjustments in your preferred text editor."
     __msg_plain " ${_uline_on}Please make sure to adjust the settings correctly.${_uline_off}"
+    __msg_info "${_break}${_green_neon}${_uline_on}NOTICE:${_uline_off}${_reset}${_green_light} Create, edit, and compare${_gray} customization.cfg${_reset}${_green_light} files${_reset}${_break}"
+    __msg_plain " A wide range of options are available!"
+    __msg_plain " Thanks to their flexible configuration and powerful settings, TKG packages"
+    __msg_plain " can be precisely tailored to different systems and personal preferences.${_break}"
+    __msg_plain " The${_gray} customization.cfg${_reset} files can be set up by using a short process:"
+    __msg_plain "  1) ${_gray} Interactive menu -> Config -> ${_pkg_name,,}"
+    __msg_plain "  2) ${_gray} tkginstaller ${_pkg_name,,} config${_break}"
+    __msg_plain " The file(s) are saved in the ${_gray} ~/.config/frogminer/${_reset} directory according to the standard specifications."
+    __msg_plain " Once the setup is complete, the configs are immediately ready to be edited and compared"
+    __msg_plain " The tool offers the option to make the adjustments in your preferred text editor."
+    __msg_plain " ${_uline_on}Please make sure to adjust the settings correctly.${_uline_off}"
     __msg_plain " Refer to the${_gray} customization.cfg${_reset} documentation for detailed configuration options."
     __msg_plain " Location:${_reset}${_gray} ${_config_url}"
 }
@@ -375,6 +386,7 @@ __prepare() {
     if [[ "$_load_preview" == "true" ]]; then
         # Add optional dependencies for interactive mode
         _dep+=(bat curl glow fzf wdiff)
+        _dep+=(bat curl glow fzf wdiff)
     fi
 
     # Define package names per distro for missing dependencies installation mapping
@@ -385,6 +397,7 @@ __prepare() {
         [glow]=glow
         [fzf]=fzf
         [onefetch]=onefetch
+        [wdiff]=wdiff
         [wdiff]=wdiff
     )
 
@@ -407,6 +420,7 @@ __prepare() {
                 [glow]=app-text/glow
                 [fzf]=app-misc/fzf
                 [onefetch]=app-misc/onefetch
+                [wdiff]=app-text/wdiff
                 [wdiff]=app-text/wdiff
             )
             _install_cmd_dep="emerge"
@@ -561,6 +575,8 @@ __fzf_menu() {
     local _header_text="$3" # Header text (string)
     local _footer_text="$4" # Footer text (string)
     local _border_label_text="${5:-$_tkg_version}" # Border label text (string, optional)
+    local _preview_window_settings="${6:-right:wrap:60%,right:wrap:90%}" # start: 60%, then 90%, then hidden
+    local _fzf_bind="${7:-ctrl-p:toggle-preview}" # Key binding for fzf (optional)
     local _preview_window_settings="${6:-right:wrap:60%,right:wrap:90%}" # start: 60%, then 90%, then hidden
     local _fzf_bind="${7:-ctrl-p:toggle-preview}" # Key binding for fzf (optional)
 
@@ -1022,6 +1038,12 @@ __edit_config() {
 
         # Define a reusable bat command for the preview window
         local _bat_cmd="LC_ALL=C bat --style=plain --language=cfg --wrap character --terminal-width ${_cols} --force-colorization --theme='Visual Studio Dark+'"
+        local _bat_cmd="LC_ALL=C bat --style=plain --language=cfg --wrap character --terminal-width ${_cols} --force-colorization --theme='Visual Studio Dark+'"
+
+        #local _diff_cmd="LC_ALL=C git diff --compact-summary --color=always --word-diff=color --unified=3 --ignore-all-space --ignore-blank-lines"
+        #local _diff_cmd="LC_ALL=C colordiff --color=yes --side-by-side"
+        #local _diff_cmd="LC_ALL=C diff --color=always --side-by-side"
+        local _diff_cmd="LC_ALL=C wdiff --terminal --start-delete='${_red}' --end-delete='${_reset}' --start-insert='${_green_light}' --end-insert='${_reset}'"
 
         #local _diff_cmd="LC_ALL=C git diff --compact-summary --color=always --word-diff=color --unified=3 --ignore-all-space --ignore-blank-lines"
         #local _diff_cmd="LC_ALL=C colordiff --color=yes --side-by-side"
@@ -1064,10 +1086,13 @@ __edit_config() {
         # Define header, footer, border label, and preview window settings for fzf menu
         local _header_text="🐸${_green_neon} TKG-Installer ─ Config menu${_reset}${_break}${_break}${_green_light}   Adjust external configuration file${_break}   Default directory:${_reset}${_gray} ~/.config/frogminer/ "
         local _footer_text="${_green_light}  Use arrow keys ⌨️ or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}  Press${_reset}${_gray} [Ctrl+P]${_reset}${_green_light} to toggle the preview window${_break}${_green_light}  Info:${_reset}${_gray} https://github.com/Frogging-Family${_reset}${_break}${_gray}        https://github.com/damachine/tkginstaller"
+        local _footer_text="${_green_light}  Use arrow keys ⌨️ or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}  Press${_reset}${_gray} [Ctrl+P]${_reset}${_green_light} to toggle the preview window${_break}${_green_light}  Info:${_reset}${_gray} https://github.com/Frogging-Family${_reset}${_break}${_gray}        https://github.com/damachine/tkginstaller"
         local _border_label_text="${_tkg_version}"
+        local _preview_window_settings='right:wrap:75%'
         local _preview_window_settings='right:wrap:75%'
 
         # Show fzf menu and get user selection for configuration file editing
+        _config_choice=$(__fzf_menu "$_menu_content" "$_preview_command" "$_header_text" "$_footer_text" "$_border_label_text" "$_preview_window_settings" "$_fzf_bind" )
         _config_choice=$(__fzf_menu "$_menu_content" "$_preview_command" "$_header_text" "$_footer_text" "$_border_label_text" "$_preview_window_settings" "$_fzf_bind" )
 
         # Handle cancelled selection (ESC key) or empty choice to exit editor menu gracefully
@@ -1330,7 +1355,13 @@ __menu() {
                 glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/linux.md"
                 glow --pager --width 80 --style "${_glow_style:-dark}" "${_frog_raw_url}/linux-tkg/refs/heads/master/README.md"
                 ;;
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/linux.md"
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_frog_raw_url}/linux-tkg/refs/heads/master/README.md"
+                ;;
             Nvidia*)
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/nvidia.md"
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_frog_raw_url}/nvidia-all/refs/heads/master/README.md"
+                ;;
                 glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/nvidia.md"
                 glow --pager --width 80 --style "${_glow_style:-dark}" "${_frog_raw_url}/nvidia-all/refs/heads/master/README.md"
                 ;;
@@ -1338,7 +1369,13 @@ __menu() {
                 glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/mesa.md"
                 glow --pager --width 80 --style "${_glow_style:-dark}" "${_frog_raw_url}/mesa-git/refs/heads/master/README.md"
                 ;;
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/mesa.md"
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_frog_raw_url}/mesa-git/refs/heads/master/README.md"
+                ;;
             Wine*)
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/wine.md"
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/README.md"
+                ;;
                 glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/wine.md"
                 glow --pager --width 80 --style "${_glow_style:-dark}" "${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/README.md"
                 ;;
@@ -1346,7 +1383,13 @@ __menu() {
                 glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/proton.md"
                 glow --pager --width 80 --style "${_glow_style:-dark}" "${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/README.md"
                 ;;
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/proton.md"
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/README.md"
+                ;;
             Config*)
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/config.md"
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_frog_raw_url}/config-tkg/refs/heads/master/README.md"
+                ;;
                 glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/config.md"
                 glow --pager --width 80 --style "${_glow_style:-dark}" "${_frog_raw_url}/config-tkg/refs/heads/master/README.md"
                 ;;
@@ -1356,13 +1399,16 @@ __menu() {
                 glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/help.md" ;;
             Close*)
                 glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/close.md" ;;
+                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/close.md" ;;
         esac
     '
 
     # Define header and footer texts for fzf menu display with TKG version info and instructions
     local _header_text="🐸${_green_neon} TKG-Installer ─ Main menu${_reset}${_break}${_break}${_green_light}   Adjust, download, build, and install -TKG- packages${_break}   Select an option below"
     local _footer_text="${_green_light}  Use arrow keys ⌨️ or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}  Press${_reset}${_gray} [Ctrl+P]${_reset}${_green_light} to toggle the preview window${_break}${_green_light}  Info:${_reset}${_gray} https://github.com/Frogging-Family${_reset}${_break}${_gray}        https://github.com/damachine/tkginstaller"
+    local _footer_text="${_green_light}  Use arrow keys ⌨️ or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}  Press${_reset}${_gray} [Ctrl+P]${_reset}${_green_light} to toggle the preview window${_break}${_green_light}  Info:${_reset}${_gray} https://github.com/Frogging-Family${_reset}${_break}${_gray}        https://github.com/damachine/tkginstaller"
     local _border_label_text="${_tkg_version}"
+    local _preview_window_settings='right:nowrap:55%'
     local _preview_window_settings='right:nowrap:55%'
 
     # Show fzf menu and get user selection for main menu options using defined parameters and preview command
