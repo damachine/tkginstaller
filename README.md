@@ -24,8 +24,15 @@
 - **Manage: Create, edit, and compare `customization.cfg` files.
 - **Multi-Distribution**: Works seamlessly on Arch-based systems and on most other Linux distributions supported by the Frogging-Family.
 
-[![tkginstaller-fzf](images/fzf.png)](images/fzf.png)
+***Menu:***
 [![tkginstaller-fzf2](images/fzf2.png)](images/fzf2.png)
+[![tkginstaller-fzf](images/fzf.png)](images/fzf.png)
+
+***Config:***
+[![tkginstaller-fzf2](images/config.png)](images/config.png)
+
+***Example process:***
+[![tkginstaller-fzf2](images/wine.png)](images/wine.png)
 
 ---
 
