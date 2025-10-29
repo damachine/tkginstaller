@@ -10,7 +10,7 @@
 
 # TKG-Installer 🐸
 
-#### All-in one build of the powerful TKG packages from the repositories of the [Frogging-Family](https://github.com/Frogging-Family).
+#### Manage the powerful TKG packages from the repositories of the [Frogging-Family](https://github.com/Frogging-Family).
 
 ##### Thanks to their flexible configuration and powerful settings, TKG packages can be precisely tailored to different systems and personal preferences.
 
@@ -20,7 +20,7 @@
 
 ## Features
 
-- **Dual-Mode**: Use either an interactive `fzf` menu or a fast, direct command-line mode.
+- **Build**: Use either an interactive `fzf` menu or a quick, direct `terminal` command to create system-specific TKG packets.
 - **Manage**: Create, edit, and compare `customization.cfg` files.
 - **Multi-Distribution**: Works seamlessly on Arch-based systems and on most other Linux distributions supported by the Frogging-Family.
 
