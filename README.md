@@ -8,30 +8,30 @@
 
 ---
 
-# TKG-Installer 🐸
+# 🐸 TKG-Installer
 
-#### Manage the powerful TKG packages from the repositories of the [Frogging-Family](https://github.com/Frogging-Family).
+#### Manage the TKG packages (Linux, Wine, Proton, Nvidia and Mesa) from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
 
-##### Thanks to their flexible configuration and powerful settings, TKG packages can be precisely tailored to different systems and personal preferences.
+##### The flexible configuration and powerful settings allow TKG packages to be tailored precisely to different systems and personal preferences.
 
-##### I've been using this script successfully for quite a while—maybe it will help you too!
+##### I've been using this script for quite a while now – maybe it will be useful to someone else too!💚
 
 ---
 
 ## Features
 
-- **Build**: Use either an interactive `fzf` menu or a quick, direct `terminal` command to create system-specific TKG packets.
-- **Manage**: Create, edit, and compare `customization.cfg` files.
+- **Buildes**: Use either an interactive `fzf` menu or a quick, direct `terminal` command to building system-specific TKG packets.
+- **Manages**: Create, adjust, and compare `customization.cfg` files.
 - **Multi-Distribution**: Works seamlessly on Arch-based systems and on most other Linux distributions supported by the Frogging-Family.
 
-***Menu:***
+##### Menu
 [![tkginstaller-fzf2](images/fzf2.png)](images/fzf2.png)
 [![tkginstaller-fzf](images/fzf.png)](images/fzf.png)
 
-***Config:***
+##### Config `customization.cfg`
 [![tkginstaller-fzf2](images/config.png)](images/config.png)
 
-***Example process:***
+##### Building
 [![tkginstaller-fzf2](images/wine.png)](images/wine.png)
 
 ---
