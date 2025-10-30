@@ -57,7 +57,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-export _tkg_version="v0.23.6"
+export _tkg_version="v0.23.7"
 
 # Lock file to prevent concurrent execution of the script
 export _lock_file="/tmp/tkginstaller.lock"
@@ -245,15 +245,13 @@ __msg_pkg() {
     local _pkg_name="${1:-TKG package}"
     local _config_url="${2:-${_frog_repo_url}}"
 
-    __msg_info "${_break}${_green_neon}${_uline_on}NOTICE:${_uline_off}${_reset}${_green_light} Create, edit, and compare${_gray} customization.cfg${_reset}${_green_light} files${_reset}${_break}"
+    __msg_info "${_break}${_green_neon}${_uline_on}NOTICE${_uline_off}:${_reset}${_green_light} Create, edit, and compare${_gray} customization.cfg${_reset}${_green_light} files${_reset}${_break}"
     __msg_plain " A wide range of options are available!"
-    __msg_plain " Thanks to their flexible configuration and powerful settings, TKG packages"
+    __msg_plain " Thanks to their flexible configuration and powerful settings, -TKG- packages"
     __msg_plain " can be precisely tailored to different systems and personal preferences.${_break}"
     __msg_plain " The${_gray} customization.cfg${_reset} files can be set up using one of the two short methods listed:"
     __msg_plain "  1) ${_gray} tkginstaller -> Config -> ${_pkg_name,,}${_reset} (interactive menu)"
     __msg_plain "  2) ${_gray} tkginstaller ${_pkg_name,,} config${_reset} (direct command)${_break}"
-    __msg_plain " The file(s) are saved in the ${_gray} ~/.config/frogminer/${_reset} directory according to the default specifications."
-    __msg_plain " Now the files can be adjusted and compared using one of the above-mentioned steps."
     __msg_plain " ${_uline_on}Please make sure to adjust the settings correctly!${_uline_off}"
     __msg_plain " See: ${_gray}${_config_url}${_reset}"
 }
@@ -627,7 +625,7 @@ __install_package() {
     cd "${_tmp_dir}" > /dev/null 2>&1 || return 1
 
     # Clone repository from provided URL
-    __msg_info "${_break}${_green_neon}${_uline_on}NOTICE:${_uline_off}${_reset}${_green_light} Fetching $_package_name from Frogging-Family repository...${_break}"
+    __msg_info "${_break}${_green_neon}${_uline_on}NOTICE${_uline_off}:${_reset}${_green_light} Fetching $_package_name from Frogging-Family repository...${_break}"
     git clone "$_repo_url" > /dev/null 2>&1 || {
         __msg_error "Cloning failed for: $_package_name${_break}"
         __msg_plain " Please check your internet connection and try again."
@@ -657,7 +655,7 @@ __install_package() {
     sleep 1.5s # Short delay for better UX (( :P ))
 
     # Build and install the package using the provided build command
-    __msg_info "${_break}${_green_neon}${_uline_on}NOTICE:${_uline_off}${_reset}${_green_light} Cloning, building and installing $_package_name for $_distro_name, this may take a while...${_break}"
+    __msg_info "${_break}${_green_neon}${_uline_on}NOTICE${_uline_off}:${_reset}${_green_light} Cloning, building and installing $_package_name for $_distro_name, this may take a while...${_break}"
     eval "$_build_command" || {
         __msg_error "Building failed: $_package_name for $_distro_name"
         return 1
@@ -680,16 +678,16 @@ __linux_install() {
 
     if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
         # Arch-based distributions: Ask user which build system to use
-        __msg_info "${_break}${_green_neon}${_uline_on}CHOOSE:${_uline_off}${_reset}${_green_light} Which build system want to use?${_break}"
+        __msg_info "${_break}${_green_neon}${_uline_on}CHOOSE${_uline_off}:${_reset}${_green_light} Which build system want to use?${_break}"
         __msg_plain " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
-        __msg_plain " ${_uline_on}1${_uline_off}) makepkg -si${_reset} ${_gray} (recommended for Arch-based distros)"
-        __msg_plain " 2) ./install.sh install${_reset} ${_gray} (use if you want the generic install script)${_break}"
+        __msg_plain " ${_uline_on}1${_uline_off}) makepkg -si${_reset}${_gray} (recommended for Arch-based distros) (${_uline_on}selected${_uline_off})"
+        __msg_plain " 2) install.sh install${_reset} ${_gray} (use if you want the generic install script)${_break}"
         _old_trap_int=$(trap -p INT 2>/dev/null || true)
         trap '__exit 130' INT
         SECONDS_LEFT=60
         _user_answer=""
         while [[ $SECONDS_LEFT -gt 0 ]]; do
-            printf "\r${_green_neon}${_uline_on}Select:${_uline_off}${_reset} [${_uline_on}1${_uline_off}/2]${_gray} (auto select: 1)${_reset}${_orange} Waiting for input... %2ds${_reset}: " "$SECONDS_LEFT"
+            printf "\r${_green_neon}${_uline_on}SELECT${_uline_off}:${_reset} [${_uline_on}1${_uline_off}/2]${_orange} Waiting for input... %2ds:${_reset} " "$SECONDS_LEFT"
             trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
             if read -r -t 1 _user_answer; then
                 printf "${_clear}" 80 ""
@@ -787,22 +785,22 @@ __wine_install() {
     # Determine build command based on distribution
     if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
         # Arch-based distributions: Ask user which build system to use
-        __msg_info "${_break}${_green_neon}${_uline_on}CHOOSE:${_uline_off}${_reset}${_green_light} Which build system want to use?${_break}"
+        __msg_info "${_break}${_green_neon}${_uline_on}CHOOSE${_uline_off}:${_reset}${_green_light} Which build system want to use?${_break}"
         __msg_plain " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
-        __msg_plain " ${_uline_on}1${_uline_off}) makepkg -si${_reset} ${_gray} (recommended for Arch-based distros)"
-        __msg_plain " 2) ./non-makepkg-build.sh${_reset} ${_gray} (use if you want a custom build script)${_break}"
+        __msg_plain " ${_uline_on}1${_uline_off}) makepkg -si${_reset}${_gray} (recommended for Arch-based distros) (${_uline_on}selected${_uline_off})"
+        __msg_plain " 2) non-makepkg-build.sh${_reset}${_gray} (use if you want a custom build script)${_break}"
         _old_trap_int=$(trap -p INT 2>/dev/null || true)
         trap '__exit 130' INT
         SECONDS_LEFT=60
         _user_answer=""
         while [[ $SECONDS_LEFT -gt 0 ]]; do
-            printf "\r${_green_neon}${_uline_on}Select:${_uline_off}${_reset} [${_uline_on}1${_uline_off}/2]${_gray} (auto select: 1)${_reset}${_orange} Waiting for input... %2ds${_reset}: " "$SECONDS_LEFT"
+            printf "\r${_green_neon}${_uline_on}SELECT${_uline_off}:${_reset} [${_uline_on}1${_uline_off}/2]${_orange} Waiting for input... %2ds:${_reset} " "$SECONDS_LEFT"
             trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
             if read -r -t 1 _user_answer; then
                 printf "${_clear}" 80 ""
                 break
             fi
-            ((SECONDS_LEFT--))
+            ((SECONDS_LEFT--))  
         done
         printf "${_clear}" 80 ""
 
@@ -1016,10 +1014,10 @@ __edit_config() {
         _menu_content=$(printf '%s\n' "${_menu_options[@]}")
 
         # Define reusable info message for preview when showing config diffs
-        local _info_config="${_green_neon} Differences between remote and local${_reset}${_gray} customization.cfg${_reset}${_green_neon} file, [ENTER] to edit and adjust ${_reset}${_break}${_break}${_green_light} Remote:${_reset}${_gray} \$_remote_url ${_reset}${_break}${_orange}≠${_reset}${_green_light} Local:${_reset}${_gray} file://\$_config_file_path ${_reset}${_break}${_green_dark}${_line}${_break}"
+        local _info_config="${_green_neon} Differences between remote and local${_reset}${_gray} customization.cfg${_reset}${_green_neon} file, press [Enter] to open with editor ${_reset}${_break}${_break}${_green_light} Remote:${_reset}${_gray} \$_remote_url ${_reset}${_break}${_orange}≠${_reset}${_green_light} Local:${_reset}${_gray} file://\$_config_file_path ${_reset}${_break}${_green_dark}${_line}${_break}"
 
         # Define common error message for preview when config file is missing
-        local _error_config_not_exist="${_orange} No external configuration file found.${_reset}${_break}${_break}${_green_light} This configuration file is required for customizing TKG builds and options.${_break}${_green_light} Select and confirm a option to download the missing${_reset}${_gray} customization.cfg${_reset}${_green_light} file now, or create your own later.${_reset}${_break}${_green_dark}${_line}${_break}"
+        local _error_config_not_exist="${_orange} No external configuration file found.${_reset}${_break}${_break}${_green_light} This configuration file is required for customizing TKG builds and options.${_break}${_green_light} Press [Enter] to select and confirm a option to download the missing${_reset}${_gray} customization.cfg${_reset}${_green_light} file now, or create your own later.${_reset}${_break}${_green_dark}${_line}${_break}"
 
         # Define a reusable bat command for the preview window
         local _bat_cmd="LC_ALL=C bat --style=plain --language=cfg --wrap character --terminal-width ${_cols} --force-colorization --theme='Visual Studio Dark+'"
@@ -1061,8 +1059,8 @@ __edit_config() {
         '
 
         # Define header, footer, border label, and preview window settings for fzf menu
-        local _header_text="🐸${_green_neon} TKG-Installer ─ Config menu (Beta)${_reset}${_break}${_break}${_green_light}   Create, adjust and compare external configuration file${_break}   Files according to TKG package standards${_break}   ${_uline_on}Stored in:${_uline_off}${_reset}${_gray} file://$HOME/.config/frogminer/ "
-        local _footer_text="${_green_light}  Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}  Press [Ctrl+P]${_green_light} to toggle the preview window, [Enter] to select, [ESC] to exit${_break}${_break}${_green_light}  Website:${_reset}${_gray} https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family"
+        local _header_text="🐸${_green_neon} TKG-Installer ─ Config menu (Beta)${_reset}${_break}${_break}${_green_light}   Create, edit and compare external configuration file${_break}   Files according to TKG package standards${_break}   ${_uline_on}Stored in:${_uline_off}${_reset}${_gray} file://$HOME/.config/frogminer/ "
+        local _footer_text="${_green_light}  Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}  Press [Enter] to select, [Ctrl+P]${_green_light} to toggle the preview window, [ESC] to exit${_break}${_break}${_green_light}  Website:${_reset}${_gray} https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family"
         local _border_label_text="${_tkg_version}"
         local _preview_window_settings='right:wrap:75%'
 
@@ -1357,8 +1355,8 @@ __menu() {
     '
 
     # Define header and footer texts for fzf menu display with TKG version info and instructions
-    local _header_text="🐸${_green_neon} TKG-Installer ─ Main menu${_reset}${_break}${_break}${_green_light}   Download, build, install and adjust -TKG- packages${_break}   Aiming is a better Linux experience${_break}   Select an option below:"
-    local _footer_text="${_green_light}  Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}  Press [Ctrl+P]${_green_light} to toggle the preview window, [Enter] to select, [ESC] to exit${_break}${_break}${_green_light}  Website:${_reset}${_gray} https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family"
+    local _header_text="🐸${_green_neon} TKG-Installer ─ Main menu${_reset}${_break}${_break}${_green_light}   Clone, build, install and customize -TKG- packages${_break}${_break}   Select an option below:"
+    local _footer_text="${_green_light}  Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}  Press [Enter] to select, [Ctrl+P]${_green_light} to toggle the preview window, [ESC] to exit${_break}${_break}${_green_light}  Website:${_reset}${_gray} https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family"
     local _border_label_text="${_tkg_version}"
     local _preview_window_settings='right:wrap:55%:hidden'
 
