@@ -57,7 +57,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-export _tkg_version="v0.23.7"
+export _tkg_version="v0.23.8"
 
 # Lock file to prevent concurrent execution of the script
 export _lock_file="/tmp/tkginstaller.lock"
@@ -240,8 +240,7 @@ __msg_plain()       { __msg 'plain' "$@"; }
 
 # Display package information and configuration location notice
 __msg_pkg() {
-    # $1 = friendly package name (e.g. "Linux-TKG")
-    # $2 = config URL (full URL shown in Location:)
+    # $1: Paketname, $2: Config-URL
     local _pkg_name="${1:-TKG package}"
     local _config_url="${2:-${_frog_repo_url}}"
 
@@ -249,9 +248,9 @@ __msg_pkg() {
     __msg_plain " A wide range of options are available!"
     __msg_plain " Thanks to their flexible configuration and powerful settings, -TKG- packages"
     __msg_plain " can be precisely tailored to different systems and personal preferences.${_break}"
-    __msg_plain " The${_gray} customization.cfg${_reset} files can be set up using one of the two short methods listed:"
-    __msg_plain "  1) ${_gray} tkginstaller -> Config -> ${_pkg_name,,}${_reset} (interactive menu)"
-    __msg_plain "  2) ${_gray} tkginstaller ${_pkg_name,,} config${_reset} (direct command)${_break}"
+    __msg_plain " Set up and use the${_gray} customization.cfg${_reset} ffiles with one of the two methods listed below:"
+    __msg_plain "  1)${_gray} tkginstaller -> Config -> ${_pkg_name,,}${_reset} (interactive menu)"
+    __msg_plain "  2)${_gray} tkginstaller ${_pkg_name,,} config${_reset} (direct command)${_break}"
     __msg_plain " ${_uline_on}Please make sure to adjust the settings correctly!${_uline_off}"
     __msg_plain " See: ${_gray}${_config_url}${_reset}"
 }
@@ -345,15 +344,7 @@ echo $$ > "$_lock_file"
 
 # Pre-installation checks and preparation for installation process
 __prepare() {
-    # Parameters:
-    #   $1 = load preview content (boolean, optional, default: false)
-    # Returns:
-    #   Performs pre-checks and setup for installation process
-    # Usage:
-    #   __prepare true  # Load preview content for interactive mode
-    #   __prepare false # Skip preview content for direct mode
-    # Example:
-    #   see above
+    # $1: (optional) true für interaktiven Modus, sonst false
     _load_preview="${1:-false}" # Default to false if not provided (for direct mode)
     _cols=$(tput cols 2>/dev/null || echo 80) # Get terminal width, default to 80 if tput fails
    
@@ -371,7 +362,6 @@ __prepare() {
     if [[ "$_load_preview" == "true" ]]; then
         # Add optional dependencies for interactive mode
         _dep+=(bat curl glow fzf wdiff)
-        _dep+=(bat curl glow fzf wdiff)
     fi
 
     # Define package names per distro for missing dependencies installation mapping
@@ -382,7 +372,6 @@ __prepare() {
         [glow]=glow
         [fzf]=fzf
         [onefetch]=onefetch
-        [wdiff]=wdiff
         [wdiff]=wdiff
     )
 
@@ -542,19 +531,7 @@ __clean() {
 
 # Fuzzy finder menu wrapper function for consistent settings and usage
 __fzf_menu() {
-    # Parameters:
-    #   $1 = menu content (string with options)
-    #   $2 = preview command (string)
-    #   $3 = header text (string)
-    #   $4 = footer text (string)
-    #   $5 = border label text (string, optional, default: TKG version)
-    #   $6 = preview window settings (string, optional, default: right:wrap:55%)
-    # Returns:
-    #   Selected menu option from fzf menu (run in subshell)
-    # Usage:
-    #   __fzf_menu "$menu_content" "$preview_command" "$header_text" "$footer_text" "[border_label_text]" "[preview_window_settings]"
-    # Example:
-    #   selected_option=$(__fzf_menu "$menu_content" "$preview_command" "$header_text" "$footer_text" "Custom Label" "right:nowrap:70%")
+    # $1: Menü-Inhalt, $2: Preview-Command, $3: Header, $4: Footer, $5: Label (optional), $6: Preview-Window-Settings (optional)
     local _menu_content="$1" # Menu options content (string)
     local _preview_command="$2" # Preview command (string)
     local _header_text="$3" # Header text (string)
@@ -603,18 +580,7 @@ __fzf_menu() {
 
 # Generic package installation helper function for TKG packages from Frogging-Family repos
 __install_package() {
-    # Parameters:
-    #   $1 = repository URL (string)
-    #   $2 = package name (string)
-    #   $3 = build command (string)
-    #   $4 = clean command (string, optional, only for proton-tkg)
-    #   $5 = working directory (string, optional, relative to cloned repo)
-    # Returns:
-    #   Clones, builds, and installs the specified package from the provided repository URL
-    # Usage:
-    #   __install_package "repo_url" "package_name" "build_command" ["clean_command"] ["work_directory"]
-    # Example:
-    #   __install_package "https://github.com/username/repo.git" "my_package" "makepkg -si" "makepkg -C" "subdir"
+    # $1: Repo-URL, $2: Paketname, $3: Build-Command, $4: Clean-Command (optional), $5: Workdir (optional)
     SECONDS=0 # Reset duration timer
     local _repo_url="$1" # Repository URL (string)
     local _package_name="$2" # Package name (string)
@@ -889,14 +855,7 @@ __proton_install() {
 
 # Text editor wrapper with fallback support to nano editor
 __editor() {
-    # Parameters:
-    #   1 = target file to edit (string)
-    # Returns:
-    #   Opens the specified file in the configured text editor or falls back to nano if none is set or executable
-    # Usage:
-    #   __editor "/path/to/file"
-    # Example:
-    #   __editor "$HOME/.config/frogminer/linux-tkg.cfg"
+    # $1: Datei zum Bearbeiten
     local _target_file="${1}" # Target file to edit (string)
 
     # Parse $EDITOR variable (may contain arguments)
@@ -930,14 +889,7 @@ __editor() {
 
 # Configuration file editor with interactive menu using fzf finder
 __edit_config() {
-    # Parameters:
-    #   None
-    # Returns:
-    #   Opens an interactive menu to select and edit configuration files using fzf finder and the configured text editor
-    # Usage:
-    #   __edit_config
-    # Example:
-    #   __edit_config
+    # Interaktive Konfigurationsbearbeitung
     while true; do
         # Show configuration options using fzf menu and capture user choice
         local _config_choice # User's configuration choice (string)
@@ -1014,7 +966,7 @@ __edit_config() {
         _menu_content=$(printf '%s\n' "${_menu_options[@]}")
 
         # Define reusable info message for preview when showing config diffs
-        local _info_config="${_green_neon} Differences between remote and local${_reset}${_gray} customization.cfg${_reset}${_green_neon} file, press [Enter] to open with editor ${_reset}${_break}${_break}${_green_light} Remote:${_reset}${_gray} \$_remote_url ${_reset}${_break}${_orange}≠${_reset}${_green_light} Local:${_reset}${_gray} file://\$_config_file_path ${_reset}${_break}${_green_dark}${_line}${_break}"
+        local _info_config="${_green_neon} Comparing remote and local${_reset}${_gray}customization.cfg${_reset}${_green_neon}, press [Enter] to open and edit ${_reset}${_break}${_break}${_green_light} Remote:${_reset}${_gray} \$_remote_url ${_reset}${_break}${_orange}≠${_reset}${_green_light} Local:${_reset}${_gray} file://\$_config_file_path ${_reset}${_break}${_green_dark}${_line}${_break}"
 
         # Define common error message for preview when config file is missing
         local _error_config_not_exist="${_orange} No external configuration file found.${_reset}${_break}${_break}${_green_light} This configuration file is required for customizing TKG builds and options.${_break}${_green_light} Press [Enter] to select and confirm a option to download the missing${_reset}${_gray} customization.cfg${_reset}${_green_light} file now, or create your own later.${_reset}${_break}${_green_dark}${_line}${_break}"
@@ -1137,16 +1089,7 @@ __edit_config() {
 
 # Helper function to handle individual config file editing and downloading if missing
 __handle_config() {
-    # Arguments:
-    #   $1 - Configuration name
-    #   $2 - Configuration file path
-    #   $3 - Configuration file URL
-    # Returns:
-    #   Opens or downloads and opens the specified configuration file in the configured text editor
-    # Usage:
-    #   __handle_config "Linux-TKG" "/path/to/linux-tkg.cfg" "https://example.com/linux-tkg.cfg"
-    # Example:
-    #   __handle_config "Linux-TKG" "$HOME/.config/frogminer/linux-tkg.cfg" "https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/customization.cfg"
+    # $1: Name, $2: Pfad, $3: URL
     local _config_name="${1}" # Configuration name (string)
     local _config_path="${2}" # Configuration file path (string)
     local _config_url="${3}" # Configuration file URL (string)
@@ -1269,14 +1212,7 @@ __handle_config() {
 
 # Interactive main menu with fzf preview for TKG-Installer
 __menu() {
-    # Parameters:
-    #   None
-    # Returns:
-    #   Displays an interactive main menu using fzf with preview window and captures user selection for processing
-    # Usage:
-    #   __menu
-    # Example:
-    #   __menu
+    # Interaktives Hauptmenü
 
     # I DONT KNOW THIS WORKS BUT IT SHOULD. NOT TESTED YET.
     # Glow style detection (auto-detect based on COLORTERM/TERM, or use env override)
@@ -1380,15 +1316,7 @@ __menu() {
 
 # Handle direct command-line arguments for quick execution mode without interactive menu
 __main_direct_mode() {
-    # Parameters:
-    #   $1 = first argument (string)
-    #   $2 = second argument (string, optional)
-    # Returns:
-    #   Processes command-line arguments for direct installation or config editing without interactive menu
-    # Usage:
-    #   __main_direct_mode "linux" "config"
-    # Example:
-    #   __main_direct_mode "nvidia" "edit"
+    # Direkter Modus für CLI-Argumente
     local _arg1="${1,,}"  # Convert to lowercase (optional)
     local _arg2="${2,,}"  # Convert to lowercase (optional)
 
@@ -1521,7 +1449,7 @@ __main_direct_mode() {
 
 # Main function for interactive mode with menu selection handling loop
 __main_interactive_mode() {
-    # Interactive mode - show menu and handle user selection loop until exit chosen
+    # Interaktiver Modus mit Menü
     __prepare true
     clear
 
@@ -1588,7 +1516,7 @@ __main_interactive_mode() {
 
 # Main function - handles command line arguments and menu interaction
 __main() {
-    # Handle direct command line arguments for automation or show interactive menu otherwise
+    # Hauptfunktion
     if [[ $# -gt 0 ]]; then
         # Direct mode - bypass menu and execute commands directly based on arguments
         __main_direct_mode "$@"
