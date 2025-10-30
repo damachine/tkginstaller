@@ -57,7 +57,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-export _tkg_version="v0.23.5"
+export _tkg_version="v0.23.6"
 
 # Lock file to prevent concurrent execution of the script
 export _lock_file="/tmp/tkginstaller.lock"
@@ -252,7 +252,7 @@ __msg_pkg() {
     __msg_plain " The${_gray} customization.cfg${_reset} files can be set up using one of the two short methods listed:"
     __msg_plain "  1) ${_gray} tkginstaller -> Config -> ${_pkg_name,,}${_reset} (interactive menu)"
     __msg_plain "  2) ${_gray} tkginstaller ${_pkg_name,,} config${_reset} (direct command)${_break}"
-    __msg_plain " The file(s) are saved in the ${_gray} ~/.config/frogminer/${_reset} directory according to the standard specifications."
+    __msg_plain " The file(s) are saved in the ${_gray} ~/.config/frogminer/${_reset} directory according to the default specifications."
     __msg_plain " Now the files can be adjusted and compared using one of the above-mentioned steps."
     __msg_plain " ${_uline_on}Please make sure to adjust the settings correctly!${_uline_off}"
     __msg_plain " See: ${_gray}${_config_url}${_reset}"
@@ -550,7 +550,7 @@ __fzf_menu() {
     #   $3 = header text (string)
     #   $4 = footer text (string)
     #   $5 = border label text (string, optional, default: TKG version)
-    #   $6 = preview window settings (string, optional, default: right:nowrap:60%)
+    #   $6 = preview window settings (string, optional, default: right:wrap:55%)
     # Returns:
     #   Selected menu option from fzf menu (run in subshell)
     # Usage:
@@ -562,7 +562,7 @@ __fzf_menu() {
     local _header_text="$3" # Header text (string)
     local _footer_text="$4" # Footer text (string)
     local _border_label_text="${5:-$_tkg_version}" # Border label text (string, optional)
-    local _preview_window_settings="${6:-right:wrap:60%,right:wrap:90%}" # start: 60%, then 90%, then hidden
+    local _preview_window_settings="${6:-right:wrap:55%}" # Preview window settings (string, optional)
     local _fzf_bind="${7:-ctrl-p:toggle-preview}" # Key binding for fzf (optional)
 
     # Run fzf with provided parameters and predefined settings
@@ -993,21 +993,21 @@ __edit_config() {
 
         # Function to handle configuration file editing and downloading if missing
         local _menu_options=(
-            "linux-tkg  |🐧 ${_green_neon}Linux   ${_gray} Create/Edit ${_reset}${_orange} 'linux-tkg.cfg'  "
+            "linux-tkg  |🐧 ${_green_neon}Linux   ${_gray} customization.cfg ${_reset}->${_orange} 'linux-tkg.cfg'  "
         )
 
         # Only show Nvidia and Mesa config if Arch-based distro is detected
         if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
             _menu_options+=(
-                "nvidia-all |💻 ${_green_neon}Nvidia  ${_gray} . . .       ${_reset}${_orange} 'nvidia-all.cfg'"
-                "mesa-git   |🧩 ${_green_neon}Mesa    ${_gray} . . .       ${_reset}${_orange} 'mesa-git.cfg'"
+                "nvidia-all |💻 ${_green_neon}Nvidia  ${_gray} customization.cfg ${_reset}->${_orange} 'nvidia-all.cfg'"
+                "mesa-git   |🧩 ${_green_neon}Mesa    ${_gray} customization.cfg ${_reset}->${_orange} 'mesa-git.cfg'"
             )
         fi
 
         # Always show Wine and Proton config options
         _menu_options+=(
-            "wine-tkg   |🍷 ${_green_neon}Wine    ${_gray} . . .       ${_reset}${_orange} 'wine-tkg.cfg'"
-            "proton-tkg |🎮 ${_green_neon}Proton  ${_gray} . . .       ${_reset}${_orange} 'proton-tkg.cfg'"
+            "wine-tkg   |🍷 ${_green_neon}Wine    ${_gray} customization.cfg ${_reset}->${_orange} 'wine-tkg.cfg'"
+            "proton-tkg |🎮 ${_green_neon}Proton  ${_gray} customization.cfg ${_reset}->${_orange} 'proton-tkg.cfg'"
             "return     |⏪ ${_green_neon}Return"
         )
 
@@ -1016,7 +1016,7 @@ __edit_config() {
         _menu_content=$(printf '%s\n' "${_menu_options[@]}")
 
         # Define reusable info message for preview when showing config diffs
-        local _info_config="${_green_neon} Showing differences between remote default and your external configuration file${_reset}${_break}${_break}${_green_light} Remote:${_reset}${_gray} \$_remote_url ${_reset}${_break}${_orange}≠${_reset}${_green_light} Local:${_reset}${_gray} file://\$_config_file_path ${_reset}${_break}${_green_dark}${_line}${_break}"
+        local _info_config="${_green_neon} Differences between remote and local${_reset}${_gray} customization.cfg${_reset}${_green_neon} file, [ENTER] to edit and adjust ${_reset}${_break}${_break}${_green_light} Remote:${_reset}${_gray} \$_remote_url ${_reset}${_break}${_orange}≠${_reset}${_green_light} Local:${_reset}${_gray} file://\$_config_file_path ${_reset}${_break}${_green_dark}${_line}${_break}"
 
         # Define common error message for preview when config file is missing
         local _error_config_not_exist="${_orange} No external configuration file found.${_reset}${_break}${_break}${_green_light} This configuration file is required for customizing TKG builds and options.${_break}${_green_light} Select and confirm a option to download the missing${_reset}${_gray} customization.cfg${_reset}${_green_light} file now, or create your own later.${_reset}${_break}${_green_dark}${_line}${_break}"
@@ -1061,8 +1061,8 @@ __edit_config() {
         '
 
         # Define header, footer, border label, and preview window settings for fzf menu
-        local _header_text="🐸${_green_neon} TKG-Installer ─ Config menu${_reset}${_break}${_break}${_green_light}   Adjust external configuration file${_break}   Default directory:${_reset}${_gray} ~/.config/frogminer/ "
-        local _footer_text="${_green_light}  Use arrow keys ⌨️ or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}  Press${_reset}${_gray} [Ctrl+P]${_reset}${_green_light} to toggle the preview window${_break}${_green_light}  Info:${_reset}${_gray} https://github.com/Frogging-Family${_reset}${_break}${_gray}        https://github.com/damachine/tkginstaller"
+        local _header_text="🐸${_green_neon} TKG-Installer ─ Config menu (Beta)${_reset}${_break}${_break}${_green_light}   Create, adjust and compare external configuration file${_break}   Files according to TKG package standards${_break}   ${_uline_on}Stored in:${_uline_off}${_reset}${_gray} file://$HOME/.config/frogminer/ "
+        local _footer_text="${_green_light}  Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}  Press [Ctrl+P]${_green_light} to toggle the preview window, [Enter] to select, [ESC] to exit${_break}${_break}${_green_light}  Website:${_reset}${_gray} https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family"
         local _border_label_text="${_tkg_version}"
         local _preview_window_settings='right:wrap:75%'
 
@@ -1296,24 +1296,24 @@ __menu() {
 
     # Define menu options and preview commands for fzf menu display using glow command for dynamic content based on selection
     local _menu_options=(
-        "Linux  |🐧 ${_green_neon}Linux   ${_gray} Linux-TKG custom kernels (highly customizable to your needs)"
+        "Linux  |🐧 ${_green_neon}Linux   ${_gray} Linux custom kernels for better desktop and gaming experience"
     )
 
     # Only show Nvidia and Mesa options if Arch-based distribution is detected 
     if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
         _menu_options+=(
-            "Nvidia |💻 ${_green_neon}Nvidia  ${_gray} Nvidia Open-Source or proprietary graphics driver"
-            "Mesa   |🧩 ${_green_neon}Mesa    ${_gray} Open-Source graphics driver for AMD and Intel"
+            "Nvidia |💻 ${_green_neon}Nvidia  ${_gray} Nvidia open-source or proprietary graphics drivers"
+            "Mesa   |🧩 ${_green_neon}Mesa    ${_gray} AMD and Intel open-source graphics driver"
         )
     fi
 
     # Always show Wine, Proton, Config, and Clean options
     _menu_options+=(
-        "Wine   |🍷 ${_green_neon}Wine    ${_gray} Windows compatibility layer (run Windows apps on Linux)"
-        "Proton |🎮 ${_green_neon}Proton  ${_gray} Run Windows games on Linux via Steam (Proton)"
-        "Config |🔧 ${_green_neon}Config  ${_gray} Edit external TKG configuration files (Expert)"
-        "Clean  |🧹 ${_green_neon}Clean   ${_gray} Clean all downloaded files and restart the installer"
-        "Help   |❓ ${_green_neon}Help    ${_gray} Displays all available usage commands"
+        "Wine   |🍷 ${_green_neon}Wine    ${_gray} Windows compatibility layer to run Windows apps on Linux"
+        "Proton |🎮 ${_green_neon}Proton  ${_gray} Run Windows games on the Linux system via Steam"
+        "Config |🔧 ${_green_neon}Config  ${_gray} Enter external configuration files menu (Expert)"
+        "Clean  |🧹 ${_green_neon}Clean   ${_gray} Removes all temporary files for a clean installation"
+        "Help   |❓ ${_green_neon}Help    ${_gray} Displays help and usage information about TKG-Installer"
         "Close  |❎ ${_green_neon}Close"
     )
 
@@ -1357,10 +1357,10 @@ __menu() {
     '
 
     # Define header and footer texts for fzf menu display with TKG version info and instructions
-    local _header_text="🐸${_green_neon} TKG-Installer ─ Main menu${_reset}${_break}${_break}${_green_light}   Adjust, download, build, and install -TKG- packages${_break}   Select an option below"
-    local _footer_text="${_green_light}  Use arrow keys ⌨️ or 🖱️ mouse to navigate, Enter to select, ESC to exit${_break}  Press${_reset}${_gray} [Ctrl+P]${_reset}${_green_light} to toggle the preview window${_break}${_green_light}  Info:${_reset}${_gray} https://github.com/Frogging-Family${_reset}${_break}${_gray}        https://github.com/damachine/tkginstaller"
+    local _header_text="🐸${_green_neon} TKG-Installer ─ Main menu${_reset}${_break}${_break}${_green_light}   Download, build, install and adjust -TKG- packages${_break}   Aiming is a better Linux experience${_break}   Select an option below:"
+    local _footer_text="${_green_light}  Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}  Press [Ctrl+P]${_green_light} to toggle the preview window, [Enter] to select, [ESC] to exit${_break}${_break}${_green_light}  Website:${_reset}${_gray} https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family"
     local _border_label_text="${_tkg_version}"
-    local _preview_window_settings='right:nowrap:55%'
+    local _preview_window_settings='right:wrap:55%:hidden'
 
     # Show fzf menu and get user selection for main menu options using defined parameters and preview command
     local _main_choice
