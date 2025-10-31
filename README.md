@@ -8,7 +8,7 @@
 
 ---
 
-# 🐸 TKG-Installer
+# TKG-Installer 🐸
 
 #### Manage the TKG packages (Linux, Wine, Proton, Nvidia and Mesa) from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
 
