@@ -47,11 +47,10 @@
 
 # Fuzzy finder run in a separate shell (subshell) - export variables for fzf subshells
 # shellcheck disable=SC2016 # Allow variable expansion in strings
-# shellcheck disable=SC2059 # Disable SC2059 for printf with variable format string
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-export _tkg_version="v0.24.3"
+export _tkg_version="v0.24.4"
 
 # Lock file to prevent concurrent execution of the script
 export _lock_file="/tmp/tkginstaller.lock"
@@ -79,6 +78,7 @@ __init_style() {
     _break=$'\n'
     _reset=$'\033[0m'
     _clear=$'\r%*s\r\033[A' # Clear line and move one line up
+    __clear_line() { printf '\r%*s\r\033[A' "$@"; } # Helper function to clear lines
 
     # Helper to return TrueColor escape if supported
     _color() {
@@ -382,7 +382,6 @@ __prepare() {
                 [fzf]=app-misc/fzf
                 [onefetch]=app-misc/onefetch
                 [wdiff]=app-text/wdiff
-                [wdiff]=app-text/wdiff
             )
             _install_cmd_dep="emerge"
             ;;
@@ -404,7 +403,7 @@ __prepare() {
 
     if [[ ${#_missing_dep[@]} -gt 0 ]]; then
         for i in {1..7}; do
-            printf "$_clear" 80 ""
+            __clear_line 80 ""
         done
         __banner "$_red"
         __msg_error "Missing dependencies detected.${_break}"
@@ -419,7 +418,7 @@ __prepare() {
         __msg_plain "${_install_cmd_dep} ${_pkg_name_dep[*]}${_break}"
 
         # Exit with error code
-        exit 0 >/dev/null 2>&1
+        exit 1 >/dev/null 2>&1
     fi
 
     # Setup temporary directory
@@ -427,12 +426,12 @@ __prepare() {
     rm -rf "$_tmp_dir" 2>/dev/null || true
     mkdir -p "$_tmp_dir" 2>/dev/null || {
         for i in {1..7}; do
-            printf "$_clear" 80 ""
+            __clear_line 80 ""
         done
         __banner "$_red"
         __msg_error "Creating temporary directory failed: ${_tmp_dir}${_break}"
         __msg_plain " Please check your permissions and try again.${_break}"
-        exit 0 >/dev/null 2>&1
+        exit 1 >/dev/null 2>&1
     }
 
     # Entering TKG-Installer
@@ -566,7 +565,7 @@ __install_package() {
     local _build_command="$3"
     local _work_directory="${4:-}"
 
-    # Navigate to temporary directory
+    # Enter temporary directory
     cd "${_tmp_dir}" > /dev/null 2>&1 || return 1
 
     # Clone repository
@@ -577,7 +576,7 @@ __install_package() {
         return 1
     }
 
-    # Navigate to the correct directory
+    # Enter repository directory
     local _repo_dir
     _repo_dir=$(basename "${_repo_url}" .git)
     cd "${_repo_dir}" > /dev/null 2>&1 || {
@@ -597,7 +596,7 @@ __install_package() {
 
     # Display onefetch
     onefetch --no-bold --no-title --no-art --no-color-palette --http-url --email --nerd-fonts --text-colors 15 15 15 15 15 8 2>/dev/null | sed -u 's/^/ /' || true
-    sleep 1.5s # Short delay for better UX (( :P ))
+    sleep 1.5s # Short delay
 
     # Build and install the package
     __msg_info "${_break}${_green_neon}${_uline_on}NOTICE${_uline_off}:${_reset}${_green_light} Cloning, building and installing $_package_name for $_distro_name, this may take a while...${_break}"
@@ -612,17 +611,17 @@ __linux_install() {
     # Display banner
     if [[ "${_load_preview:-false}" == "true" ]]; then
         __banner
-        printf "$_clear" 80 ""
+        __clear_line 80 ""
     fi
 
-    # Inform user about external configuration usage
+    # Inform user about external configuration
     __msg_pkg "linux" "${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
 
     # Determine build command
     local _build_command
 
     if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
-        # Arch-based distributions: Ask user which build system to use
+        # Arch-based distributions build system to use
         __msg_info "${_break}${_green_neon}${_uline_on}CHOOSE${_uline_off}:${_reset}${_green_light} Which build system want to use?${_break}"
         __msg_plain " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
         __msg_plain " ${_uline_on}1${_uline_off}) makepkg -si${_reset}${_gray} (recommended for Arch-based distros) (${_uline_on}selected${_uline_off})"
@@ -635,12 +634,12 @@ __linux_install() {
             printf "\r${_green_neon}${_uline_on}SELECT${_uline_off}:${_reset} [${_uline_on}1${_uline_off}/2]${_orange} Waiting for input... %2ds:${_reset} " "$SECONDS_LEFT"
             trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
             if read -r -t 1 _user_answer; then
-                printf "$_clear" 80 ""
+                __clear_line 80 ""
                 break
             fi
             ((SECONDS_LEFT--))
         done
-        printf "$_clear" 80 ""
+        __clear_line 80 ""
 
         if [[ -z "$_user_answer" ]]; then
             _user_answer="1"
@@ -680,10 +679,10 @@ __nvidia_install() {
     # Display banner
     if [[ "${_load_preview:-false}" == "true" ]]; then
         __banner
-        printf "$_clear" 80 ""
+        __clear_line 80 ""
     fi
 
-    # Inform user about external configuration usage
+    # Inform user about external configuration
     __msg_pkg "nvidia" "${_frog_repo_url}/nvidia-all/blob/master/customization.cfg"
 
     # Execute installation process
@@ -699,10 +698,10 @@ __mesa_install() {
     # Display banner
     if [[ "${_load_preview:-false}" == "true" ]]; then
         __banner
-        printf "$_clear" 80 ""
+        __clear_line 80 ""
     fi
 
-    # Inform user about external configuration usage
+    # Inform user about external configuration
     __msg_pkg "mesa" "${_frog_repo_url}/mesa-git/blob/master/customization.cfg"
 
     # Execute installation process
@@ -718,7 +717,7 @@ __wine_install() {
     # Display banner 
     if [[ "${_load_preview:-false}" == "true" ]]; then
         __banner
-        printf "$_clear" 80 ""
+        __clear_line 80 ""
     fi
 
     # Inform user about external configuration usage
@@ -729,7 +728,7 @@ __wine_install() {
 
     # Determine build command
     if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
-        # Arch-based distributions: Ask user which build system to use
+        # Arch-based distributions build system to use
         __msg_info "${_break}${_green_neon}${_uline_on}CHOOSE${_uline_off}:${_reset}${_green_light} Which build system want to use?${_break}"
         __msg_plain " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
         __msg_plain " ${_uline_on}1${_uline_off}) makepkg -si${_reset}${_gray} (recommended for Arch-based distros) (${_uline_on}selected${_uline_off})"
@@ -742,12 +741,12 @@ __wine_install() {
             printf "\r${_green_neon}${_uline_on}SELECT${_uline_off}:${_reset} [${_uline_on}1${_uline_off}/2]${_orange} Waiting for input... %2ds:${_reset} " "$SECONDS_LEFT"
             trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
             if read -r -t 1 _user_answer; then
-                printf "$_clear" 80 ""
+                __clear_line 80 ""
                 break
             fi
             ((SECONDS_LEFT--))  
         done
-        printf "$_clear" 80 ""
+        __clear_line 80 ""
 
 
         if [[ -z "$_user_answer" ]]; then
@@ -805,7 +804,7 @@ __proton_install() {
     local _status=$?
 
     if [[ $_status -eq 0 ]]; then
-        # Ask user if clean command executed after build
+        # Ask user if clean command executed
         __msg_prompt "Do you want to run ${_reset}${_gray}'./proton-tkg.sh clean'${_reset} after building Proton-TKG? [y/N]: "
         _old_trap_int=$(trap -p INT 2>/dev/null || true)
         trap '__exit 130' INT
@@ -824,7 +823,7 @@ __proton_install() {
         fi
     fi
 
-    # Installation status message
+    # Status message
     __finish "$_status"
 }
 
@@ -905,7 +904,7 @@ __edit_config() {
                     __msg_prompt "Press any key to continue...${_break}"
                     read -n 1 -s -r -p ""
                     clear
-                    return 0
+                    continue
                     ;;
                 *)
                     clear
@@ -925,7 +924,7 @@ __edit_config() {
             "linux-tkg  |🐧 ${_green_neon}Linux   ${_gray} customization.cfg ${_reset}->${_orange} 'linux-tkg.cfg'  "
         )
 
-        # Only show Nvidia and Mesa config if Arch-based distro is detected
+        # Only show Nvidia and Mesa config if Arch-based distrobutions
         if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
             _menu_options+=(
                 "nvidia-all |💻 ${_green_neon}Nvidia  ${_gray} customization.cfg ${_reset}->${_orange} 'nvidia-all.cfg'"
@@ -1005,7 +1004,7 @@ __edit_config() {
             return 0
         fi
 
-        # Extract selected configuration type and file path from choice string
+        # Extract selected configuration type and file path from choice
         local _config_file
         _config_file=$(echo "${_config_choice}" | cut -d"|" -f1 | xargs)
 
@@ -1188,7 +1187,6 @@ __handle_config() {
 
 # Interactive main menu
 __menu() {
-    # I DONT KNOW THIS WORKS BUT IT SHOULD. NOT TESTED YET.
     # Glow style detection
     if [[ -z "${_glow_style:-}" ]]; then
         case "${COLORTERM:-}${TERM:-}" in
@@ -1206,7 +1204,7 @@ __menu() {
         "Linux  |🐧 ${_green_neon}Linux   ${_gray} Linux custom kernels for better desktop and gaming experience"
     )
 
-    # Only show Nvidia and Mesa options if Arch-based distribution is detected 
+    # Only show Nvidia and Mesa options if Arch-based distribution
     if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
         _menu_options+=(
             "Nvidia |💻 ${_green_neon}Nvidia  ${_gray} Nvidia open-source or proprietary graphics drivers"
@@ -1449,7 +1447,6 @@ __main_interactive_mode() {
         Config)
             __edit_config || true
             rm -f "$_lock_file"
-            # Restart the script
             clear
             exec "$0"
             ;;
@@ -1461,7 +1458,7 @@ __main_interactive_mode() {
             exit 0
             ;;
         Clean)
-            # Clean temporary files and restart script
+            # Clean temporary files and restart
             __banner
             __msg_info_orange "Cleaning all temporary files...${_break}"
             __msg_plain " Location:${_reset}${_gray} ${_tmp_dir}${_reset}${_break}"
@@ -1478,7 +1475,7 @@ __main_interactive_mode() {
     esac
 }
 
-# Main function - handles command line arguments and menu interaction
+# Main function handles command line arguments and menu interaction
 __main() {
     if [[ $# -gt 0 ]]; then
         __main_direct_mode "$@"
