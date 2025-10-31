@@ -50,41 +50,42 @@
 # shellcheck disable=SC2059 # Disable SC2059 for printf with variable format string
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
-# TKG-Installer VERSION
-export _tkg_version="v0.24.0"
+# TKG-Installer VERSION definition
+export _tkg_version="v0.23.9"
 
-# Lock file
+# Lock file to prevent concurrent execution of the script
 export _lock_file="/tmp/tkginstaller.lock"
 
 # =============================================================================
 # ENVIRONMENT SETUP
 # =============================================================================
 
-# Initialize global variables, paths, and configurations
+# Initialize global variables, paths, and configurations for the script operations
 __init_globals() {
-    _tmp_dir=${HOME}/.cache/tkginstaller # Temporary directory for TKG-Installer
+    _tmp_dir=${HOME}/.cache/tkginstaller # Temporary directory for script operations
     _choice_file=${_tmp_dir}/choice.tmp # Temporary file to store user choices
     _config_dir=${HOME}/.config/frogminer # Configuration directory for Frogminer/TKG packages
-    _tkg_repo_url=https://github.com/damachine/tkginstaller
-    _tkg_raw_url=https://raw.githubusercontent.com/damachine/tkginstaller/refs/heads/master/docs
-    _frog_repo_url=https://github.com/Frogging-Family
-    _frog_raw_url=https://raw.githubusercontent.com/Frogging-Famil
+    _tkg_repo_url=https://github.com/damachine/tkginstaller # TKG-Installer GitHub repository URL
+    _tkg_raw_url=https://raw.githubusercontent.com/damachine/tkginstaller/refs/heads/master/docs # TKG-Installer raw content URL
+    _frog_repo_url=https://github.com/Frogging-Family # Frogging-Family GitHub repository URL
+    _frog_raw_url=https://raw.githubusercontent.com/Frogging-Family # Frogging-Family raw content URL
     
     # Export variables for fzf subshells (unset __exit run)
     export _tmp_dir _choice_file _config_dir _tkg_repo_url _tkg_raw_url _frog_repo_url _frog_raw_url
 }
 
-# Initialize color and formatting
+# Initialize color and formatting definitions for output messages and prompts
 __init_style() {
-    _break=$'\n'
+    _break=$'\n' # Line break
     _reset=$'\033[0m' # Reset color/formatting
     _clear=$'\r%*s\r\033[A' # Clear line and move one line up
 
-    # Helper to return TrueColor
+    # Helper to return TrueColor escape if supported, otherwise fallback to tput setaf
     _color() {
+        # $1 = r, $2 = g, $3 = b, $4 = fallback tput color index (0-7)
         local r=${1:-255} g=${2:-255} b=${3:-255} idx=${4:-7}
 
-        # Detect basic TrueColor support
+        # Detect basic TrueColor support: COLORTERM usually set to truecolor or 24bit
         if [[ "${COLORTERM,,}" == *truecolor* || "${COLORTERM,,}" == *24bit* ]]; then
             printf '\033[38;2;%d;%d;%dm' "$r" "$g" "$b"
             return 0
@@ -98,7 +99,7 @@ __init_style() {
             return 0
         fi
 
-        # Fallback to 256-color
+        # Fallback to 256-color approx
         # idx: 1=red, 2=green, 3=yellow, 4=blue
         local _idx256
         case "$idx" in
@@ -128,20 +129,19 @@ __init_style() {
     # Calculate terminal width
     _cols="$(tput cols 2>/dev/null || echo 130)"
 
-    # Calculate terminal width
+    # Calculate terminal width for dynamic line generation
     local _line_len=$(( _cols / 2 ))
-    if [[ "$_line_len" -lt 130 ]]; then
+    if [[ "$_line_len" -lt 130 ]]; then # Minimum line length
         _line_len=130
     fi
-    # Generate line
     _line=""
-    for ((i=0; i<"$_line_len"; i++)); do _line+="─"; done
+    for ((i=0; i<"$_line_len"; i++)); do _line+="─"; done # Generate line of specified length
 
-    # Export variables
+    # Export variables for fzf subshells (unset __exit run)
     export _print _break _reset _red _green_light _green_neon _green_mint _orange _blue _gray _uline_on _uline_off _cols _line
 }
 
-# Display banner
+# Display banner with TKG-Installer version information
 __banner() {
     local _color="${1:-$_green_mint}"
     printf "%b\n" "${_color}"
@@ -164,6 +164,7 @@ __init_style
 
 # Unified message function with automatic level detection
 __msg() {
+    # If first arg is a known level, treat it as level, else default to plain
     local _msg_first="${1:-}" _msg_level _msg
     case "${_msg_first,,}" in
         info_green|info_orange|info_neon|info_mint|info_blue|warning|error|prompt|plain)
@@ -177,9 +178,10 @@ __msg() {
             ;;
     esac
 
-    # Ensure colors exist
+    # Ensure colors exist (fallback to empty strings if not set)
     : "${_reset:=''}" "${_red:=''}" "${_green_light:=''}" "${_green_neon:=''}" "${_green_mint:=''}" "${_green_dark:=''}" "${_orange:=''}" "${_blue:=''}" "${_gray:=''}" "${_uline_on:=''}" "${_uline_off:=''}"
 
+    # Map level -> color + prefix; prompt handled specially (no newline)
     local _color="" _prefix=""
     case "${_msg_level}" in
         info_green)
@@ -214,11 +216,11 @@ __msg() {
             ;;
     esac
 
-    # Print formatted line
+    # Print formatted line with color and reset
     printf '%b\n' "${_color}${_prefix}${_msg}${_reset}"
 }
 
-# Level-specific message
+# Level-specific message functions for convenience
 __msg_info()        { __msg 'info_green' "$@"; }
 __msg_info_neon()   { __msg 'info_neon' "$@"; }
 __msg_info_mint()   { __msg 'info_mint' "$@"; }
@@ -229,7 +231,7 @@ __msg_error()       { __msg 'error' "$@"; }
 __msg_prompt()      { __msg 'prompt' "$@"; }
 __msg_plain()       { __msg 'plain' "$@"; }
 
-# Display information and configuration notice
+# Display package information and configuration location notice
 __msg_pkg() {
     local _pkg_name="${1:-TKG package}"
     local _config_url="${2:-${_frog_repo_url}}"
@@ -262,7 +264,7 @@ fi
 
 # Detect Linux Distribution
 if [[ -f /etc/os-release ]]; then
-    # shellcheck disable=SC1091 # Source file is system-dependent
+    # shellcheck disable=SC1091 # Source file is system-dependent and may not exist on all systems
     . /etc/os-release
     export _distro_name="$NAME".
     export _distro_id="${ID:-unknown}"
@@ -292,7 +294,7 @@ __help() {
 # Help can show always!
 if [[ $# -gt 0 && "${1:-}" =~ ^(help|h|--help|-h)$ ]]; then
     __help
-    trap - INT TERM EXIT HUP
+    trap - INT TERM EXIT HUP # Remove trap on exit
     exit 0
 fi
 
@@ -300,7 +302,7 @@ fi
 if [[ -f "$_lock_file" ]]; then
     # Check if the process is still running from the lock file
     if [[ -r "$_lock_file" ]]; then
-        # Get old PID from lock file
+        # Get old PID from lock file and check if process is running
         _old_pid=$(cat "$_lock_file" 2>/dev/null || echo "")
         if [[ -n "$_old_pid" ]] && kill -0 "$_old_pid" 2>/dev/null; then
             __banner "$_orange"
@@ -310,7 +312,7 @@ if [[ -f "$_lock_file" ]]; then
             __msg_plain "tkginstaller clean${_break}"
             exit 1
         else
-            # Stale lock file found
+            # Stale lock file found, remove it safely and continue
             rm -f "$_lock_file" 2>/dev/null || {
                 __banner "$_orange"
                 __msg_warning "Script is already running (PID: $_old_pid). Exiting...${_break}"
@@ -323,14 +325,14 @@ if [[ -f "$_lock_file" ]]; then
     fi
 fi
 
-# Create lock file with current PID
+# Create lock file with current PID to prevent concurrent execution
 echo $$ > "$_lock_file"
 
 # =============================================================================
 # CORE UTILITY FUNCTIONS
 # =============================================================================
 
-# Pre-installation checks and preparation
+# Pre-installation checks and preparation for installation process
 __prepare() {
     _load_preview="${1:-false}"
    
@@ -343,14 +345,14 @@ __prepare() {
     done
     printf "%b\n" "${_reset}"
 
-    # Check required dependencies
-    local _dep=(git onefetch) # Base dependencies
+    # Check required dependencies based on mode (interactive/direct)
+    local _dep=(git onefetch) # Base dependencies for both modes
     if [[ "$_load_preview" == "true" ]]; then
-        # Add optional dependencies
+        # Add optional dependencies for interactive mode
         _dep+=(bat curl glow fzf wdiff)
     fi
 
-    # Define package names per distro 
+    # Define package names per distro for missing dependencies installation mapping
     declare -A _pkg_map_dep=(
         [git]=git
         [bat]=bat
@@ -361,7 +363,7 @@ __prepare() {
         [wdiff]=wdiff
     )
 
-    # Set install command
+    # Set install command based on detected Linux distribution
     case "${_distro_id,,}" in
         arch|manjaro|endeavouros|cachyos)
             _install_cmd_dep="pacman -S"
@@ -393,7 +395,7 @@ __prepare() {
             ;;
     esac
 
-    # Check for missing dependencies
+    # Check for missing dependencies and collect them for installation instructions
     local _missing_dep=()
     for _required_dep in "${_dep[@]}"; do
         if ! command -v "$_required_dep" >/dev/null; then
@@ -416,14 +418,14 @@ __prepare() {
             _pkg_name_dep+=("${_pkg_map_dep[$_dependency]:-$_dependency}")
         done
 
-        # Display installation command
+        # Display installation command with missing packages
         __msg_plain "${_install_cmd_dep} ${_pkg_name_dep[*]}${_break}"
 
         # Exit with error code
         exit 0 >/dev/null 2>&1
     fi
 
-    # Setup temporary directory
+    # Setup temporary directory and files for installation process
     rm -f "$_choice_file" 2>/dev/null || true
     rm -rf "$_tmp_dir" 2>/dev/null || true
     mkdir -p "$_tmp_dir" 2>/dev/null || {
@@ -447,7 +449,7 @@ __prepare() {
     sleep 1.5s
 }
 
-# Display completion status
+# Display completion status with timestamp and duration of the action performed
 __finish() {
     local _status=${1:-$?}
     local _duration="${SECONDS:-0}"
@@ -455,13 +457,13 @@ __finish() {
     local _seconds=$((_duration % 60))
 
     # Finisher message display
-    __msg_info_orange "${_break}Action completed: $(date '+%Y-%m-%d %H:%M:%S')"
+    __msg_info_orange "${_break}Action completed: $(date '+%Y-%m-%d %H:%M:%S')" # Display completion message with timestamp
     if [[ $_status -eq 0 ]]; then
         __msg_info "Status: Successfully completed!"
     else
         __msg_error "Failed process (Code: $_status)"
     fi
-    __msg_info_orange "Duration: ${_minutes} min ${_seconds} sec"
+    __msg_info_orange "Duration: ${_minutes} min ${_seconds} sec" # Display duration message with minutes and seconds
 
     # Return status code
     return "$_status"
@@ -469,11 +471,11 @@ __finish() {
 
 # Setup exit trap for cleanup on script termination and errors
 __exit() {
-    # Remove exit trap
+    # Remove exit trap to avoid recursion during cleanup
     local _exit_code=${1:-$?}
     trap - INT TERM EXIT HUP
 
-    # Message handling on exit
+    # Message handling on exit based on exit code (0=done, non-0=failure)
     if [[ $_exit_code -ne 0 ]]; then
         __banner "$_red"
         __msg_error "Aborting status: $_exit_code${_break}"
@@ -483,7 +485,7 @@ __exit() {
         __msg_plain "${_green_mint}Closed.${_break}"
     fi
 
-    # Perform cleanup actions
+    # Perform cleanup actions before exiting the script
     __clean
     wait
     exit "$_exit_code"
@@ -559,15 +561,16 @@ __fzf_menu() {
 # INSTALLATION FUNCTIONS
 # =============================================================================
 
-# Generic package installation helper function
+# Generic package installation helper function for TKG packages from Frogging-Family repos
 __install_package() {
+    # $1: Repo-URL, $2: Paketname, $3: Build-Command, $4: Clean-Command (optional), $5: Workdir (optional)
     SECONDS=0
     local _repo_url="$1"
     local _package_name="$2"
     local _build_command="$3"
     local _work_directory="${4:-}"
 
-    # Navigate to temporary directory
+    # Navigate to temporary directory for cloning and building process
     cd "${_tmp_dir}" > /dev/null 2>&1 || return 1
 
     # Clone repository from provided URL
@@ -587,7 +590,7 @@ __install_package() {
         return 1
     }
 
-    # Navigate to working directory
+    # Navigate to working directory if specified (for proton-tkg)
     if [[ -n "${_work_directory}" ]]; then
         cd "${_work_directory}" > /dev/null 2>&1 || {
             __msg_error "Working directory not found: ${_work_directory}${_break}"
@@ -598,9 +601,9 @@ __install_package() {
 
     # Prefix every output line with a single space
     onefetch --no-bold --no-title --no-art --no-color-palette --http-url --email --nerd-fonts --text-colors 15 15 15 15 15 8 2>/dev/null | sed -u 's/^/ /' || true
-    sleep 1.5s
+    sleep 1.5s # Short delay for better UX (( :P ))
 
-    # Build and install
+    # Build and install the package using the provided build command
     __msg_info "${_break}${_green_neon}${_uline_on}NOTICE${_uline_off}:${_reset}${_green_light} Cloning, building and installing $_package_name for $_distro_name, this may take a while...${_break}"
     eval "$_build_command" || {
         __msg_error "Building failed: $_package_name for $_distro_name"
@@ -619,7 +622,7 @@ __linux_install() {
     # Inform user about external configuration usage
     __msg_pkg "linux" "${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
 
-    # Determine build command
+    # Determine build command based on distribution
     local _build_command
 
     if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
@@ -725,10 +728,10 @@ __wine_install() {
     # Inform user about external configuration usage
     __msg_pkg "wine" "${_frog_repo_url}/wine-tkg-git/blob/master/wine-tkg-git/customization.cfg"
 
-    # Determine build command
+    # Determine build command based on distribution
     local _build_command
 
-    # Determine build command
+    # Determine build command based on distribution
     if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
         # Arch-based distributions: Ask user which build system to use
         __msg_info "${_break}${_green_neon}${_uline_on}CHOOSE${_uline_off}:${_reset}${_green_light} Which build system want to use?${_break}"
@@ -776,7 +779,7 @@ __wine_install() {
         trap - INT
     fi
 
-    # Set appropriate build command
+    # Set appropriate build command for installation process
     __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "wine-tkg-git"
 
     # Installation status message
@@ -792,7 +795,7 @@ __proton_install() {
         printf "\r%*s\r\033[A" 80 ""
     fi
 
-    # Inform user about external configuration usage    
+    # Inform user about external configuration usage for Proton-TKG build options customization
     __msg_pkg "proton" "${_frog_repo_url}/wine-tkg-git/blob/master/proton-tkg/proton-tkg.cfg"
 
     # Determine build command
@@ -801,12 +804,12 @@ __proton_install() {
     # Determine clean command
     local _clean_command="./proton-tkg.sh clean" # Clean command for proton-tkg
 
-    # Build and install
+    # Build and install and ask for cleaning after build process
     __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"
     local _status=$?  # capture status immediately
 
     if [[ $_status -eq 0 ]]; then
-        # Ask user if clean command
+        # Ask user if clean command should be executed after build
         __msg_prompt "Do you want to run ${_reset}${_gray}'./proton-tkg.sh clean'${_reset} after building Proton-TKG? [y/N]: "
         _old_trap_int=$(trap -p INT 2>/dev/null || true)
         trap '__exit 130' INT
@@ -833,16 +836,20 @@ __proton_install() {
 # EDITOR MANAGEMENT FUNCTION
 # =============================================================================
 
-# Text editor wrapper with fallback
+# Text editor wrapper with fallback support to nano editor
 __editor() {
+    # Target file to edit (string)
     local _target_file="${1}"
+
+    # Parse $EDITOR variable (may contain arguments)
     local _editor_raw="${EDITOR-}"
+    # Array to hold parsed editor command parts (array)
     local _editor_parts=()
 
-    # Split editor command into parts
+    # Split editor command into parts (array) by spaces while respecting quoted arguments
     IFS=' ' read -r -a _editor_parts <<< "${_editor_raw}" || true
 
-    # Fallback to nano, micro, or vim if no editor configured
+    # Fallback to nano, micro, or vim if no editor configured or not executable
     if [[ -z "${_editor_parts[0]:-}" ]] || ! command -v "${_editor_parts[0]}" >/dev/null 2>&1; then
         if command -v nano >/dev/null 2>&1; then
             _editor_parts=(nano)
@@ -866,10 +873,12 @@ __editor() {
 
 # Configuration file editor with interactive menu using fzf finder
 __edit_config() {
+        # Show configuration options using fzf menu and capture user choice
     while true; do
+        # User's configuration choice (string)
         local _config_choice
 
-        # Ensure configuration directory exists
+        # Ensure configuration directory exists before proceeding (with user prompt to create if missing)
         if [[ ! -d "${_config_dir}" ]]; then
             __banner "$_orange"
             __msg_warning "Configuration directory not found.${_break}"
@@ -878,12 +887,13 @@ __edit_config() {
             trap 'echo;echo; __msg_plain "${_red}Aborted by user.${_reset}";sleep 1.5; clear; return 0' INT
             read -r _user_answer
             trap - INT
-            # Handle user response for directory
+            # Handle user response for directory creation prompt with case statement
             if [[ -z "$_user_answer" ]]; then
-                _user_answer="n"
+                _user_answer="n" # Default to 'no' if no input provided
             fi
             case "${_user_answer,,}" in
                 y|yes)
+                    # Create the configuration directory with error handling
                     mkdir -p "${_config_dir}" || {
                         clear
                         __banner "$_red"
@@ -928,29 +938,30 @@ __edit_config() {
             )
         fi
 
+        # Always show Wine and Proton config options
         _menu_options+=(
             "wine-tkg   |🍷 ${_green_neon}Wine    ${_gray} customization.cfg ${_reset}->${_orange} 'wine-tkg.cfg'"
             "proton-tkg |🎮 ${_green_neon}Proton  ${_gray} customization.cfg ${_reset}->${_orange} 'proton-tkg.cfg'"
             "return     |⏪ ${_green_neon}Return"
         )
 
-        # Prepare menu content
+        # Prepare menu content string for fzf menu display from options array
         local _menu_content
         _menu_content=$(printf '%s\n' "${_menu_options[@]}")
 
-        # Define info message
+        # Define reusable info message for preview when showing config diffs
         local _info_config="${_green_neon}Comparing remote and local ${_reset}${_gray}customization.cfg${_reset}${_green_neon}, press [Enter] to open and edit ${_reset}${_break}${_break}${_green_light} Remote:${_reset}${_gray} \$_remote_url ${_reset}${_break}${_orange}≠${_reset}${_green_light} Local:${_reset}${_gray} file://\$_config_file_path ${_reset}${_break}${_green_dark}${_line}${_break}"
 
-        # Define error message
+        # Define common error message for preview when config file is missing
         local _error_config_not_exist="${_orange}No external configuration file found.${_reset}${_break}${_break}${_green_light} This configuration file is required for customizing the -TKG- package.${_break}${_green_light} Press [Enter] to download the missing${_reset}${_gray} customization.cfg${_reset}${_green_light} file, according to -TKG- package standards.${_reset}${_break}${_green_dark}${_line}${_break}"
 
-        # Define bat command
+        # Define a reusable bat command for the preview window
         local _bat_cmd="bat --style=plain --language=cfg --wrap character --terminal-width ${_cols} --force-colorization --theme='Visual Studio Dark+'"
         
-        # Define wdiff command
+        # Define a reusable wdiff command for showing diffs in preview window
         local _diff_cmd="wdiff --terminal --statistics --start-delete='${_red}' --end-delete='${_reset}' --start-insert='${_green_light}' --end-insert='${_reset}'"
 
-        # Define preview command for fzf menu
+        # Define preview command for fzf menu to show config file content or diff vs remote default
         local _preview_command='
             declare -A remote_urls=(
                 [linux-tkg]="'${_frog_raw_url}'/linux-tkg/master/customization.cfg"
@@ -988,10 +999,10 @@ __edit_config() {
         local _border_label_text="${_tkg_version}"
         local _preview_window_settings='right:wrap:75%'
 
-        # Show fzf menu and get user selection
+        # Show fzf menu and get user selection for configuration file editing
         _config_choice=$(__fzf_menu "$_menu_content" "$_preview_command" "$_header_text" "$_footer_text" "$_border_label_text" "$_preview_window_settings" "$_fzf_bind" )
 
-        # Handle cancelled selection
+        # Handle cancelled selection (ESC key) or empty choice to exit editor menu gracefully
         if [[ -z "$_config_choice" ]]; then
             __banner
             __msg_info_orange " Applying${_reset}${_gray} customization.cfg${_reset}${_orange} changes...${_break}"
@@ -1000,11 +1011,11 @@ __edit_config() {
             return 0
         fi
 
-        # Extract selected configuration
+        # Extract selected configuration type and file path from choice string
         local _config_file
         _config_file=$(echo "${_config_choice}" | cut -d"|" -f1 | xargs)
 
-        # Handle configuration file editing
+            # Handle configuration file editing based on selection using case statement
         case ${_config_file} in
             linux-tkg)
                 __handle_config \
@@ -1061,9 +1072,10 @@ __edit_config() {
 
 # Helper function to handle individual config file editing and downloading if missing
 __handle_config() {
-    local _config_name="${1}"
-    local _config_path="${2}"
-    local _config_url="${3}"
+    # $1: Name, $2: Pfad, $3: URL
+    local _config_name="${1}" # Configuration name (string)
+    local _config_path="${2}" # Configuration file path (string)
+    local _config_url="${3}" # Configuration file URL (string)
 
     # Notify user about opening the configuration file editor
     __banner
@@ -1071,21 +1083,21 @@ __handle_config() {
     sleep 1.5s
     clear
 
-    # Check if configuration file exists
+    # Check if configuration file exists and open or download accordingly
     if [[ -f "${_config_path}" ]]; then
-        # Edit existing configuration
+        # Edit existing configuration file in the editor if it exists
         __editor "${_config_path}" || {
             clear
             __banner "$_red"
             __msg_error "Opening external configuration failed:${_reset}${_gray} ${_config_path}${_break}"
             __msg_plain " Please check if the file exists and is accessible.${_break}"
             __msg_prompt "Press any key to continue...${_break}"
-            read -n 1 -s -r -p ""
+            read -n 1 -s -r -p "" # Wait for user input before exiting
             clear
             return 1
         }
     else
-        # Download and create new configuration
+        # Download and create new configuration file if it does not exist
         __banner "$_orange"
         __msg_warning "External configuration file does not exist.${_break}"
         __msg_plain " Local path: ${_gray}file://${_config_path}"
@@ -1097,12 +1109,12 @@ __handle_config() {
         read -r _user_answer
         trap - INT
         if [[ -z "${_user_answer}" ]]; then
-            _user_answer="n"
+            _user_answer="n" # Default to 'no' if no input provided
         fi
-        # Handle user response for downloading
+        # Handle user response for downloading the config file using case statement
         case "${_user_answer,,}" in
             y|yes)
-                # Create the configuration directory
+                # Create the configuration directory if it doesn't exist and download the file using curl with error handling
                 mkdir -p "$(dirname "${_config_path}")" || {
                     clear
                     __banner "$_red"
@@ -1128,7 +1140,7 @@ __handle_config() {
                     __msg_info "External configuration ready at:${_reset}${_gray} ${_config_path}"
                     sleep 1.5s
                     clear
-                    # Open the downloaded
+                    # Open the downloaded configuration file in the editor
                     __editor "${_config_path}" || {
                         clear
                         __banner "$_orange"
@@ -1140,7 +1152,7 @@ __handle_config() {
                         return 1
                     }
                 else
-                    # Failed to download
+                    # Failed to download configuration file from URL with error handling
                     clear
                     __banner "$_red"
                     __msg_error "Downloading external configuration from ${_config_url} failed!${_break}"
@@ -1152,7 +1164,7 @@ __handle_config() {
                 fi
                 ;;
             *)
-                # Cancel download process
+                # User chose not to download the configuration file
                 clear
                 __banner "$_orange"
                 __msg_info_orange "Download cancelled. No configuration file created.${_break}"
@@ -1164,11 +1176,11 @@ __handle_config() {
                 ;;
         esac
 
-        # Clear screen process
+        # Clear screen after download process
         clear
     fi
 
-    # Notify user about closing the configuration file editor
+    # Notify user about closing the configuration file editor and remind to save changes
     clear
     __banner
     __msg_info_orange "Closing external configuration file:${_reset}${_gray} $_config_name${_reset}${_break}"
@@ -1181,11 +1193,12 @@ __handle_config() {
 # FZF MAIN MENU FUNCTIONS
 # =============================================================================
 
-# Interactive main menu with fzf preview
+# Interactive main menu with fzf preview for TKG-Installer
 __menu() {
     # I DONT KNOW THIS WORKS BUT IT SHOULD. NOT TESTED YET.
-    # Glow style detection
+    # Glow style detection (auto-detect based on COLORTERM/TERM, or use env override)
     if [[ -z "${_glow_style:-}" ]]; then
+        # Detect terminal color scheme for glow style (auto)
         case "${COLORTERM:-}${TERM:-}" in
             *light*|*xterm*|*rxvt*|*konsole*)
                 _glow_style="light"
@@ -1196,12 +1209,12 @@ __menu() {
         esac
     fi
 
-    # Define menu options and preview commands for fzf menu
+    # Define menu options and preview commands for fzf menu display using glow command for dynamic content based on selection
     local _menu_options=(
         "Linux  |🐧 ${_green_neon}Linux   ${_gray} Linux custom kernels for better desktop and gaming experience"
     )
 
-    # Only show Nvidia and Mesa options if Arch-based distribution
+    # Only show Nvidia and Mesa options if Arch-based distribution is detected 
     if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
         _menu_options+=(
             "Nvidia |💻 ${_green_neon}Nvidia  ${_gray} Nvidia open-source or proprietary graphics drivers"
@@ -1209,6 +1222,7 @@ __menu() {
         )
     fi
 
+    # Always show Wine, Proton, Config, and Clean options
     _menu_options+=(
         "Wine   |🍷 ${_green_neon}Wine    ${_gray} Windows compatibility layer to run Windows apps on Linux"
         "Proton |🎮 ${_green_neon}Proton  ${_gray} Run Windows games on the Linux system via Steam"
@@ -1218,11 +1232,11 @@ __menu() {
         "Close  |❎ ${_green_neon}Close"
     )
 
-    # Prepare menu content for fzf menu
+    # Prepare menu content for fzf menu display string from options array
     local _menu_content
     _menu_content=$(printf '%s\n' "${_menu_options[@]}")
 
-    # Define preview command for fzf menu to show relevant markdown documentation using glow based on selection
+    # Define preview command for fzf menu with dynamic content based on selection using glow command
     local _preview_command='
         key=$(echo {} | cut -d"|" -f1 | xargs)
         case $key in
@@ -1257,23 +1271,23 @@ __menu() {
         esac
     '
 
-    # Define header and footer texts, border label, and preview window
+    # Define header and footer texts for fzf menu display with TKG version info and instructions
     local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Main menu${_uline_off}${_reset}${_break}${_break}    ${_green_light}Install (clone, build) and customize -TKG- packages${_break}${_break}${_break}   Select an option below:"
     local _footer_text="  ${_green_light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}  Press [Enter] to select, [Ctrl+P] ${_green_light}to toggle the preview window, [ESC] to exit${_break}${_break}  ${_green_light}Website:${_reset} ${_gray}https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family"
     local _border_label_text="${_tkg_version}"
     local _preview_window_settings='right:wrap:55%:hidden'
 
-    # Show fzf menu and get user selection
+    # Show fzf menu and get user selection for main menu options using defined parameters and preview command
     local _main_choice
     _main_choice=$(__fzf_menu "$_menu_content" "$_preview_command" "$_header_text" "$_footer_text" "$_border_label_text" "$_preview_window_settings" "$_fzf_bind")
 
-    # Handle cancelled selection (ESC pressed)
+    # Handle cancelled selection (ESC pressed) or empty choice to exit TKG-Installer gracefully
     if [[ -z "${_main_choice:-}" ]]; then
         clear
         __exit 0
     fi
 
-    # Save selection to temporary file
+    # Save selection to temporary file for processing in main program loop
     echo "$_main_choice" | cut -d"|" -f1 | xargs > "$_choice_file"
 }
 
@@ -1281,18 +1295,21 @@ __menu() {
 # MAIN PROGRAM ENTRY POINT
 # =============================================================================
 
-# Handle direct command-line arguments
+# Handle direct command-line arguments for quick execution mode without interactive menu
 __main_direct_mode() {
+    # Convert to lowercase (optional)
     local _arg1="${1,,}"  
     local _arg2="${2,,}"
 
-    # Accept both [package] [config] and [config] [package]
+    # Accept both [package] [config] and [config] [package] order for arguments flexibility
     local _package=""
     local _config_arg=""
 
-    # Check for config argument
+    # Check for config argument in either position and set package accordingly
     if [[ "$_arg1" =~ ^(config|c|edit|e)$ ]]; then
+        # Set config argument
         _config_arg="$_arg1"
+        # Set package argument
         case "$_arg2" in
             linux|l|--linux|-l) _package="linux-tkg" ;;
             nvidia|n|--nvidia|-n) _package="nvidia-all" ;;
@@ -1301,7 +1318,9 @@ __main_direct_mode() {
             proton|p|--proton|-p) _package="proton-tkg" ;;
         esac
     elif [[ "$_arg2" =~ ^(config|c|edit|e)$ ]]; then
+        # Set config argument
         _config_arg="$_arg2"
+        # Set package argument
         case "$_arg1" in
             linux|l|--linux|-l) _package="linux-tkg" ;;
             nvidia|n|--nvidia|-n) _package="nvidia-all" ;;
@@ -1311,8 +1330,9 @@ __main_direct_mode() {
         esac
     fi
 
-    # Handle config editing
+    # Handle config editing if both package and config arguments are provided
     if [[ -n "$_package" && -n "$_config_arg" ]]; then
+        # Determine config file path and URL based on package using case statement
         local _config_path="${_config_dir}/${_package}.cfg"
         local _config_url=""
         local _config_name=""
@@ -1340,10 +1360,10 @@ __main_direct_mode() {
                 ;;
         esac
 
-        # Disable exit trap
+        # Disable exit trap before editing config to avoid duplicate cleanup messages on exit
         trap - INT TERM EXIT HUP
 
-        # Handle config file editing
+        # Handle config file editing directly using helper function
         __handle_config "$_config_name" "$_config_path" "$_config_url"
 
         # Display exit messages
@@ -1355,7 +1375,7 @@ __main_direct_mode() {
         exit 0
     fi
 
-    # Handle regular install commands
+    # Handle regular install commands based on first argument using case statement
     case "$_arg1" in
         linux|l|--linux|-l)
             __prepare
@@ -1400,7 +1420,7 @@ __main_direct_mode() {
             __msg_plain " All available arguments run:${_break}"
             __msg_plain "$0 help${_break}"
 
-            # Disable exit trap before cleanup
+            # Disable exit trap before cleanup and exit to avoid duplicate cleanup messages on exit
             trap - INT TERM EXIT HUP
             __clean
             exit 1
@@ -1408,8 +1428,9 @@ __main_direct_mode() {
     esac
 }
 
-# Main function for interactive mode
+# Main function for interactive mode with menu selection handling loop
 __main_interactive_mode() {
+    # Initialize dynamic preview content for fzf menus
     __prepare true
     clear
     __menu
@@ -1418,10 +1439,10 @@ __main_interactive_mode() {
     local _user_choice
     _user_choice=$(< "$_choice_file")
 
-    # Remove temporary choice file after reading user choice
+    # Remove temporary choice file after reading user choice to avoid stale data on next menu display
     rm -f "$_choice_file" 2>&1 || true
 
-    # Handle user choice from menu using case statement
+    # Handle user choice from menu using case statement and call corresponding prompt functions
     case $_user_choice in
         Linux)
             __linux_install
@@ -1441,12 +1462,12 @@ __main_interactive_mode() {
         Config)
             __edit_config || true
             rm -f "$_lock_file"
-            # Restart the script after editing config
+            # Restart the script after editing config file to refresh state and menu options
             clear
             exec "$0"
             ;;
         Help)
-            # Remove exit trap to avoid cleanup
+            # Remove exit trap to avoid cleanup during help display
             trap - INT TERM EXIT HUP
             __help
             __clean
