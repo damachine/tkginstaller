@@ -50,7 +50,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-export _tkg_version="v0.24.5"
+export _tkg_version="v0.24.6"
 
 # Lock file to prevent concurrent execution of the script
 export _lock_file="/tmp/tkginstaller.lock"
@@ -1250,14 +1250,10 @@ __menu() {
                 glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/proton.md"
                 glow --pager --width 80 --style "${_glow_style:-dark}" "${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/README.md"
                 ;;
-            Config*)
-                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/config.md" ;;
-            Clean*)
-                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/clean.md" ;;
-            Help*)
-                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/help.md" ;;
-            Close*)
-                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/close.md" ;;
+            Config*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/config.md" ;;
+            Clean*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/clean.md" ;;
+            Help*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/help.md" ;;
+            Close*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/close.md" ;;
         esac
     '
 
