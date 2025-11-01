@@ -50,7 +50,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-export _tkg_version="v0.24.4"
+export _tkg_version="v0.24.5"
 
 # Lock file to prevent concurrent execution of the script
 export _lock_file="/tmp/tkginstaller.lock"
@@ -75,10 +75,10 @@ __init_globals() {
 
 # Initialize color and formatting
 __init_style() {
+    __clear_line() { printf '\r%*s\r\033[A' "$@"; } # Helper function to clear lines
     _break=$'\n'
     _reset=$'\033[0m'
     _clear=$'\r%*s\r\033[A' # Clear line and move one line up
-    __clear_line() { printf '\r%*s\r\033[A' "$@"; } # Helper function to clear lines
 
     # Helper to return TrueColor escape if supported
     _color() {
@@ -127,18 +127,16 @@ __init_style() {
     _uline_off=$(tput rmul 2>/dev/null || printf '\033[24m')
 
     # Calculate terminal width
-    _cols="$(tput cols 2>/dev/null || echo 130)"
-
-    # Calculate terminal width for dynamic line generation
+    _cols="$(tput cols 2>/dev/null || echo 80)"
     local _line_len=$(( _cols / 2 ))
-    if [[ "$_line_len" -lt 130 ]]; then
-        _line_len=130
+    if [[ "$_line_len" -lt 80 ]]; then
+        _line_len=80
     fi
     _line=""
     for ((i=0; i<"$_line_len"; i++)); do _line+="─"; done
 
     # Export variables for fzf subshells
-    export _print _break _reset _red _green_light _green_neon _green_mint _orange _blue _gray _uline_on _uline_off _cols _line
+    export _break _reset _red _green_light _green_neon _green_mint _orange _blue _gray _uline_on _uline_off _cols _line
 }
 
 # Display banner
@@ -265,7 +263,7 @@ fi
 if [[ -f /etc/os-release ]]; then
     # shellcheck disable=SC1091 # Source file is system-dependent and may not exist on all systems
     . /etc/os-release
-    export _distro_name="$NAME".
+    export _distro_name="$NAME"
     export _distro_id="${ID:-unknown}"
     export _distro_like="${ID_LIKE:-}"
 else
@@ -304,19 +302,20 @@ if [[ -f "$_lock_file" ]]; then
         # Get old PID from lock file and check if process is running
         _old_pid=$(cat "$_lock_file" 2>/dev/null || echo "")
         if [[ -n "$_old_pid" ]] && kill -0 "$_old_pid" 2>/dev/null; then
+            # Process is still running
             __banner "$_orange"
             __msg_warning "Script is already running (PID: $_old_pid). Exiting...${_break}"
             __msg_plain " If the script was unexpectedly terminated before."
-            __msg_plain " Remove ${_reset}${_gray}$_lock_file${_reset} manually run:${_break}"
+            __msg_plain " Remove ${_reset}${_gray}$_lock_file${_reset} manually by running:${_break}"
             __msg_plain "tkginstaller clean${_break}"
             exit 1
         else
-            # Stale lock file found
+            # Stale lock file found, try to remove it
             rm -f "$_lock_file" 2>/dev/null || {
+                # Failed to remove stale lock file
                 __banner "$_orange"
-                __msg_warning "Script is already running (PID: $_old_pid). Exiting...${_break}"
-                __msg_plain " If the script was unexpectedly terminated before."
-                __msg_plain " Remove ${_reset}${_gray}$_lock_file${_reset} manually run:${_break}"
+                __msg_warning "Cannot remove stale lock file. Exiting...${_break}"
+                __msg_plain " Remove ${_reset}${_gray}$_lock_file${_reset} manually by running:${_break}"
                 __msg_plain "tkginstaller clean${_break}"
                 exit 1
             }
@@ -585,7 +584,7 @@ __install_package() {
         return 1
     }
 
-    # Navigate to working directory
+    # Navigate to working directory (wine/proton)
     if [[ -n "${_work_directory}" ]]; then
         cd "${_work_directory}" > /dev/null 2>&1 || {
             __msg_error "Working directory not found: ${_work_directory}${_break}"
@@ -601,6 +600,7 @@ __install_package() {
     # Build and install the package
     __msg_info "${_break}${_green_neon}${_uline_on}NOTICE${_uline_off}:${_reset}${_green_light} Cloning, building and installing $_package_name for $_distro_name, this may take a while...${_break}"
     eval "$_build_command" || {
+        __msg_plain ""
         __msg_error "Building failed: $_package_name for $_distro_name"
         return 1
     }
@@ -721,7 +721,7 @@ __wine_install() {
     fi
 
     # Inform user about external configuration usage
-    __msg_pkg "wine" "${_frog_repo_url}/wine-tkg-git/blob/master/wine-tkg-git/customization.cfg"
+    __msg_pkg "wine" "${_frog_repo_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
 
     # Determine build command
     local _build_command
@@ -791,7 +791,7 @@ __proton_install() {
     fi
 
     # Inform user about external configuration usage
-    __msg_pkg "proton" "${_frog_repo_url}/wine-tkg-git/blob/master/proton-tkg/proton-tkg.cfg"
+    __msg_pkg "proton" "${_frog_repo_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
 
     # Determine build command
     local _build_command="./proton-tkg.sh" # Build command for proton-tkg
@@ -960,8 +960,8 @@ __edit_config() {
                 [linux-tkg]="'${_frog_raw_url}'/linux-tkg/master/customization.cfg"
                 [nvidia-all]="'${_frog_raw_url}'/nvidia-all/master/customization.cfg"
                 [mesa-git]="'${_frog_raw_url}'/mesa-git/master/customization.cfg"
-                [wine-tkg]="'${_frog_raw_url}'/wine-tkg-git/master/wine-tkg-git/customization.cfg"
-                [proton-tkg]="'${_frog_raw_url}'/wine-tkg-git/master/proton-tkg/proton-tkg.cfg"
+                [wine-tkg]="'${_frog_raw_url}'/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
+                [proton-tkg]="'${_frog_raw_url}'/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
 
             )
             # Extract selected key from fzf choice string for preview handling
@@ -1032,13 +1032,13 @@ __edit_config() {
                 __handle_config \
                     "Wine-TKG" \
                     "${_config_dir}/wine-tkg.cfg" \
-                    "${_frog_raw_url}/wine-tkg-git/master/wine-tkg-git/customization.cfg"
+                    "${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
                 ;;
             proton-tkg)
                 __handle_config \
                     "Proton-TKG" \
                     "${_config_dir}/proton-tkg.cfg" \
-                    "${_frog_raw_url}/wine-tkg-git/master/proton-tkg/proton-tkg.cfg"
+                    "${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
                 ;;
             return)
                 __banner
@@ -1337,11 +1337,11 @@ __main_direct_mode() {
                 ;;
             wine-tkg)
                 _config_name="Wine-TKG"
-                _config_url="${_frog_raw_url}/wine-tkg-git/master/wine-tkg-git/customization.cfg"
+                _config_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
                 ;;
             proton-tkg)
                 _config_name="Proton-TKG"
-                _config_url="${_frog_raw_url}/wine-tkg-git/master/proton-tkg/proton-tkg.cfg"
+                _config_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
                 ;;
         esac
 
