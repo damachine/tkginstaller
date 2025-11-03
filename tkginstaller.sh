@@ -50,10 +50,10 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-export _tkg_version="v0.24.6"
+_tkg_version="v0.24.7"
 
 # Lock file to prevent concurrent execution of the script
-export _lock_file="/tmp/tkginstaller.lock"
+_lock_file="/tmp/tkginstaller.lock"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -69,8 +69,9 @@ __init_globals() {
     _frog_repo_url=https://github.com/Frogging-Family
     _frog_raw_url=https://raw.githubusercontent.com/Frogging-Family
     
-    # Export variables for fzf subshells
-    export _tmp_dir _choice_file _config_dir _tkg_repo_url _tkg_raw_url _frog_repo_url _frog_raw_url
+    # Export only variables used in fzf preview commands (subshells)
+    # Used in: __edit_config preview (config diff), __menu preview (glow rendering)
+    export _tmp_dir _config_dir _tkg_raw_url _frog_raw_url
 }
 
 # Initialize color and formatting
@@ -135,8 +136,9 @@ __init_style() {
     _line=""
     for ((i=0; i<"$_line_len"; i++)); do _line+="─"; done
 
-    # Export variables for fzf subshells
-    export _break _reset _red _green_light _green_neon _green_mint _orange _blue _gray _uline_on _uline_off _cols _line
+    # Export only variables used in fzf preview commands (subshells)
+    # Used in: __edit_config preview (formatting), __menu preview (formatting)
+    export _break _reset _green_light _green_neon _green_mint _green_dark _orange _gray _uline_on _uline_off _cols _line
 }
 
 # Display banner
@@ -163,17 +165,14 @@ __init_style
 # Unified message function
 __msg() {
     local _msg_first="${1:-}" _msg_level _msg
-    case "${_msg_first,,}" in
-        info_green|info_orange|info_neon|info_mint|info_blue|warning|error|prompt|plain)
-            _msg_level="${_msg_first,,}"
-            shift
-            _msg="$*"
-            ;;
-        *)
-            _msg_level="plain"
-            _msg="$*"
-            ;;
-    esac
+    if [[ "${_msg_first,,}" =~ ^(info_(green|orange|neon|mint|blue)|warning|error|prompt|plain)$ ]]; then
+        _msg_level="${_msg_first,,}"
+        shift
+        _msg="$*"
+    else
+        _msg_level="plain"
+        _msg="$*"
+    fi
 
     # Ensure colors exist
     : "${_reset:=''}" "${_red:=''}" "${_green_light:=''}" "${_green_neon:=''}" "${_green_mint:=''}" "${_green_dark:=''}" "${_orange:=''}" "${_blue:=''}" "${_gray:=''}" "${_uline_on:=''}" "${_uline_off:=''}"
@@ -263,13 +262,20 @@ fi
 if [[ -f /etc/os-release ]]; then
     # shellcheck disable=SC1091 # Source file is system-dependent and may not exist on all systems
     . /etc/os-release
-    export _distro_name="$NAME"
-    export _distro_id="${ID:-unknown}"
-    export _distro_like="${ID_LIKE:-}"
+    _distro_name="$NAME"
+    _distro_id="${ID:-unknown}"
+    _distro_like="${ID_LIKE:-}"
 else
-    export _distro_name="Unknown"
-    export _distro_id="unknown"
-    export _distro_like=""
+    _distro_name="Unknown"
+    _distro_id="unknown"
+    _distro_like=""
+fi
+
+# Check if distribution is Arch-based (for Nvidia/Mesa support)
+if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
+    _is_arch_based="true"
+else
+    _is_arch_based="false"
 fi
 
 # Help information display
@@ -295,11 +301,10 @@ if [[ $# -gt 0 && "${1:-}" =~ ^(help|h|--help|-h)$ ]]; then
     exit 0
 fi
 
-# Prevent concurrent execution
-if [[ -f "$_lock_file" ]]; then
-    # Check if the process is still running from the lock file
+# Prevent concurrent execution with atomic lock file creation
+if ! (set -o noclobber; echo $$ > "$_lock_file") 2>/dev/null; then
+    # Lock file exists, check if process is still running
     if [[ -r "$_lock_file" ]]; then
-        # Get old PID from lock file and check if process is running
         _old_pid=$(cat "$_lock_file" 2>/dev/null || echo "")
         if [[ -n "$_old_pid" ]] && kill -0 "$_old_pid" 2>/dev/null; then
             # Process is still running
@@ -310,7 +315,7 @@ if [[ -f "$_lock_file" ]]; then
             __msg_plain "tkginstaller clean${_break}"
             exit 1
         else
-            # Stale lock file found, try to remove it
+            # Stale lock file found, remove it and retry atomically
             rm -f "$_lock_file" 2>/dev/null || {
                 # Failed to remove stale lock file
                 __banner "$_orange"
@@ -319,12 +324,23 @@ if [[ -f "$_lock_file" ]]; then
                 __msg_plain "tkginstaller clean${_break}"
                 exit 1
             }
+            # Retry atomic lock creation after removing stale lock
+            if ! (set -o noclobber; echo $$ > "$_lock_file") 2>/dev/null; then
+                # Another process acquired lock between removal and creation
+                __banner "$_orange"
+                __msg_warning "Another instance started during cleanup. Exiting...${_break}"
+                exit 1
+            fi
         fi
+    else
+        # Lock file exists but not readable
+        __banner "$_red"
+        __msg_error "Lock file exists but is not readable. Exiting...${_break}"
+        __msg_plain " Remove ${_reset}${_gray}$_lock_file${_reset} manually by running:${_break}"
+        __msg_plain "tkginstaller clean${_break}"
+        exit 1
     fi
 fi
-
-# Create lock file with current PID
-echo $$ > "$_lock_file"
 
 # =============================================================================
 # CORE UTILITY FUNCTIONS
@@ -337,7 +353,7 @@ __prepare() {
     # Welcome message
     __banner
     printf "%s" "${_green_mint}Starting"
-    for i in {1..3}; do
+    for i in {1..5}; do
         printf " ."
         sleep 0.33s
     done
@@ -361,7 +377,7 @@ __prepare() {
         [wdiff]=wdiff
     )
 
-    # Set install command based
+    # Set install command based on distro
     case "${_distro_id,,}" in
         arch|manjaro|endeavouros|cachyos)
             _install_cmd_dep="pacman -S"
@@ -373,15 +389,19 @@ __prepare() {
             _install_cmd_dep="zypper install"
             ;;
         gentoo)
-            _pkg_map_dep=(
-                [git]=dev-vcs/git
-                [bat]=app-misc/bat
-                [curl]=net-misc/curl
-                [glow]=app-text/glow
-                [fzf]=app-misc/fzf
-                [onefetch]=app-misc/onefetch
-                [wdiff]=app-text/wdiff
+            # Gentoo uses category/package format
+            declare -A _gentoo_categories=(
+                [git]=dev-vcs
+                [bat]=app-misc
+                [curl]=net-misc
+                [glow]=app-text
+                [fzf]=app-misc
+                [onefetch]=app-misc
+                [wdiff]=app-text
             )
+            for pkg in "${!_pkg_map_dep[@]}"; do
+                _pkg_map_dep[$pkg]="${_gentoo_categories[$pkg]}/${pkg}"
+            done
             _install_cmd_dep="emerge"
             ;;
         ubuntu|debian|linuxmint|pop|elementary)
@@ -497,13 +517,12 @@ __clean() {
     rm -f "$_choice_file" 2>/dev/null || true
     rm -rf "$_tmp_dir" 2>/dev/null || true
 
-    # Unset exported variables
+    # Unset all variables (exported and non-exported)
     unset _tkg_version _lock_file
     unset _tmp_dir _choice_file _config_dir _tkg_repo_url _tkg_raw_url _frog_repo_url _frog_raw_url
-    unset _break _reset _red _green_light _green_neon _green_mint _orange _blue _gray _uline_on _uline_off _cols _line
-    unset _preview_linux _preview_nvidia _preview_mesa _preview_wine _preview_proton
-    unset _preview_config _preview_clean _preview_help _preview_return _preview_exit _glow_style
-    unset _distro_name _distro_id _distro_like
+    unset _break _reset _red _green_light _green_neon _green_mint _green_dark _orange _blue _gray _uline_on _uline_off _cols _line
+    unset _glow_style
+    unset _distro_name _distro_id _distro_like _is_arch_based
  }
 
 # Fuzzy finder menu wrapper function 
@@ -557,7 +576,7 @@ __fzf_menu() {
 
 # Generic package installation helper function
 __install_package() {
-    # $1: Repo-URL, $2: Paketname, $3: Build-Command, $4: Clean-Command (optional), $5: Workdir (optional)
+    # $1: Repo-URL, $2: Paketname, $3: Build-Command, $4: Workdir (optional)
     SECONDS=0
     local _repo_url="$1"
     local _package_name="$2"
@@ -606,45 +625,91 @@ __install_package() {
     }
 }
 
-# Linux-TKG installation
-__linux_install() {
-    # Display banner
+# Countdown prompt with timeout for user input
+# $1: Prompt options (e.g., "[1/2]")
+# $2: Timeout in seconds (default: 60)
+# Returns: User answer in _user_answer variable, defaults to "1" if timeout
+__countdown_prompt() {
+    local _prompt_options="${1:-[1/2]}"
+    local _timeout="${2:-60}"
+    local _old_trap_int
+    
+    _old_trap_int=$(trap -p INT 2>/dev/null || true)
+    trap '__exit 130' INT
+    
+    SECONDS_LEFT="$_timeout"
+    _user_answer=""
+    
+    while [[ $SECONDS_LEFT -gt 0 ]]; do
+        printf "\r${_green_neon}${_uline_on}SELECT${_uline_off}:${_reset} %s${_orange} Waiting for input... %2ds:${_reset} " "$_prompt_options" "$SECONDS_LEFT"
+        trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
+        if read -r -t 1 _user_answer; then
+            __clear_line 80 ""
+            break
+        fi
+        ((SECONDS_LEFT--))
+    done
+    __clear_line 80 ""
+    
+    # Default to "1" if no answer
+    : "${_user_answer:=1}"
+    
+    # Restore previous INT trap
+    if [[ -n "$_old_trap_int" ]]; then
+        eval "$_old_trap_int"
+    else
+        trap - INT
+    fi
+}
+
+# Prompt user with default value
+# Sets _user_answer variable with user input or default
+# $1: Default value (default: "n")
+__prompt_with_default() {
+    local _default="${1:-n}"
+    read -r _user_answer
+    : "${_user_answer:=$_default}"
+}
+
+# Common wrapper for installation functions
+# Handles banner display and status reporting
+# $1: Function to execute for installation
+__install_wrapper() {
+    local _install_func="$1"
+    
+    # Display banner if in preview mode
     if [[ "${_load_preview:-false}" == "true" ]]; then
         __banner
         __clear_line 80 ""
     fi
+    
+    # Execute installation function
+    "$_install_func"
+    local _status=$?
+    
+    # Display status
+    __finish "$_status"
+    return "$_status"
+}
 
+# =============================================================================
+# INSTALLATION FUNCTIONS
+# =============================================================================
+__linux_install() {
     # Inform user about external configuration
     __msg_pkg "linux" "${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
 
     # Determine build command
     local _build_command
 
-    if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
+    if [[ "${_is_arch_based}" == "true" ]]; then
         # Arch-based distributions build system to use
         __msg_info "${_break}${_green_neon}${_uline_on}CHOOSE${_uline_off}:${_reset}${_green_light} Which build system want to use?${_break}"
         __msg_plain " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
         __msg_plain " ${_uline_on}1${_uline_off}) makepkg -si${_reset}${_gray} (recommended for Arch-based distros) (${_uline_on}selected${_uline_off})"
-        __msg_plain " 2) install.sh install${_reset} ${_gray} (use if you want the generic install script)${_break}"
-        _old_trap_int=$(trap -p INT 2>/dev/null || true)
-        trap '__exit 130' INT
-        SECONDS_LEFT=60
-        _user_answer=""
-        while [[ $SECONDS_LEFT -gt 0 ]]; do
-            printf "\r${_green_neon}${_uline_on}SELECT${_uline_off}:${_reset} [${_uline_on}1${_uline_off}/2]${_orange} Waiting for input... %2ds:${_reset} " "$SECONDS_LEFT"
-            trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
-            if read -r -t 1 _user_answer; then
-                __clear_line 80 ""
-                break
-            fi
-            ((SECONDS_LEFT--))
-        done
-        __clear_line 80 ""
-
-        if [[ -z "$_user_answer" ]]; then
-            _user_answer="1"
-        fi
-        _user_answer=${_user_answer:-1}
+        __msg_plain " 2) install.sh install${_reset}${_gray} (use if you want the generic install script)${_break}"
+        
+        __countdown_prompt "[${_uline_on}1${_uline_off}/2]" 60
 
         case "$_user_answer" in
             2)
@@ -654,13 +719,6 @@ __linux_install() {
                 _build_command="makepkg -si"
                 ;;
         esac
-
-        # restore previous INT trap
-        if [[ -n "$_old_trap_int" ]]; then
-            eval "$_old_trap_int"
-        else
-            trap - INT
-        fi
     else
         # Non-Arch distributions
         _build_command="chmod +x install.sh && ./install.sh install"
@@ -668,91 +726,42 @@ __linux_install() {
 
     # Execute installation process
     __install_package "${_frog_repo_url}/linux-tkg.git" "linux-tkg" "$_build_command"
-
-    # Installation status message
-    local _status=$?
-    __finish "$_status"
 }
 
 # Nvidia-TKG installation
 __nvidia_install() {
-    # Display banner
-    if [[ "${_load_preview:-false}" == "true" ]]; then
-        __banner
-        __clear_line 80 ""
-    fi
-
     # Inform user about external configuration
     __msg_pkg "nvidia" "${_frog_repo_url}/nvidia-all/blob/master/customization.cfg"
 
     # Execute installation process
     __install_package "${_frog_repo_url}/nvidia-all.git" "nvidia-all" "makepkg -si"
-
-    # Installation status message
-    local _status=$?
-    __finish "$_status"
 }
 
 # Mesa-TKG installation
 __mesa_install() {
-    # Display banner
-    if [[ "${_load_preview:-false}" == "true" ]]; then
-        __banner
-        __clear_line 80 ""
-    fi
-
     # Inform user about external configuration
     __msg_pkg "mesa" "${_frog_repo_url}/mesa-git/blob/master/customization.cfg"
 
     # Execute installation process
     __install_package "${_frog_repo_url}/mesa-git.git" "mesa-git" "makepkg -si"
-
-    # Installation status message
-    local _status=$?
-    __finish "$_status"
 }
 
 # Wine-TKG installation
 __wine_install() {
-    # Display banner 
-    if [[ "${_load_preview:-false}" == "true" ]]; then
-        __banner
-        __clear_line 80 ""
-    fi
-
     # Inform user about external configuration usage
     __msg_pkg "wine" "${_frog_repo_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
 
     # Determine build command
     local _build_command
 
-    # Determine build command
-    if [[ "${_distro_id}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like}" == *"arch"* ]]; then
+    if [[ "${_is_arch_based}" == "true" ]]; then
         # Arch-based distributions build system to use
         __msg_info "${_break}${_green_neon}${_uline_on}CHOOSE${_uline_off}:${_reset}${_green_light} Which build system want to use?${_break}"
         __msg_plain " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
         __msg_plain " ${_uline_on}1${_uline_off}) makepkg -si${_reset}${_gray} (recommended for Arch-based distros) (${_uline_on}selected${_uline_off})"
         __msg_plain " 2) non-makepkg-build.sh${_reset}${_gray} (use if you want a custom build script)${_break}"
-        _old_trap_int=$(trap -p INT 2>/dev/null || true)
-        trap '__exit 130' INT
-        SECONDS_LEFT=60
-        _user_answer=""
-        while [[ $SECONDS_LEFT -gt 0 ]]; do
-            printf "\r${_green_neon}${_uline_on}SELECT${_uline_off}:${_reset} [${_uline_on}1${_uline_off}/2]${_orange} Waiting for input... %2ds:${_reset} " "$SECONDS_LEFT"
-            trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
-            if read -r -t 1 _user_answer; then
-                __clear_line 80 ""
-                break
-            fi
-            ((SECONDS_LEFT--))  
-        done
-        __clear_line 80 ""
-
-
-        if [[ -z "$_user_answer" ]]; then
-            _user_answer="1"
-        fi
-        _user_answer=${_user_answer:-1}
+        
+        __countdown_prompt "[${_uline_on}1${_uline_off}/2]" 60
 
         case "$_user_answer" in
             2)
@@ -767,49 +776,30 @@ __wine_install() {
         _build_command="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
     fi
 
-    # Restore previous INT trap
-    if [[ -n "$_old_trap_int" ]]; then
-        eval "$_old_trap_int"
-    else
-        trap - INT
-    fi
-
-    # Set appropriate build command
+    # Execute installation
     __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "wine-tkg-git"
-
-    # Installation status message
-    local _status=$?
-    __finish "$_status"
 }
 
 # Proton-TKG installation
 __proton_install() {
-    # Display banner
-    if [[ "${_load_preview:-false}" == "true" ]]; then
-        __banner
-        printf "\r%*s\r\033[A" 80 ""
-    fi
-
     # Inform user about external configuration usage
     __msg_pkg "proton" "${_frog_repo_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
 
     # Determine build command
-    local _build_command="./proton-tkg.sh" # Build command for proton-tkg
-
-    # Determine clean command
-    local _clean_command="./proton-tkg.sh clean" # Clean command for proton-tkg
+    local _build_command="./proton-tkg.sh"
+    local _clean_command="./proton-tkg.sh clean"
 
     # Build and install
     __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"
     local _status=$?
 
     if [[ $_status -eq 0 ]]; then
-        # Ask user if clean command executed
+        # Ask user if clean command should be executed
         __msg_prompt "Do you want to run ${_reset}${_gray}'./proton-tkg.sh clean'${_reset} after building Proton-TKG? [y/N]: "
         _old_trap_int=$(trap -p INT 2>/dev/null || true)
         trap '__exit 130' INT
         read -r _user_answer || { eval "$_old_trap_int"; trap - INT; __exit 130; }
-        # restore previous trap
+        # Restore previous trap
         if [[ -n "$_old_trap_int" ]]; then eval "$_old_trap_int"; else trap - INT; fi
 
         if [[ "${_user_answer,,}" =~ ^(y|yes)$ ]]; then
@@ -822,9 +812,6 @@ __proton_install() {
             fi
         fi
     fi
-
-    # Status message
-    __finish "$_status"
 }
 
 # =============================================================================
@@ -879,12 +866,9 @@ __edit_config() {
             __msg_plain " Creating directory:${_reset}${_gray} ${_config_dir}${_reset}${_break}"
             __msg_prompt "Do you want to create the configuration directory? [y/N]: "
             trap 'echo;echo; __msg_plain "${_red}Aborted by user.${_reset}";sleep 1.5; clear; return 0' INT
-            read -r _user_answer
+            __prompt_with_default "n"
             trap - INT
             # Handle user response
-            if [[ -z "$_user_answer" ]]; then
-                _user_answer="n"
-            fi
             case "${_user_answer,,}" in
                 y|yes)
                     # Create the configuration directory
@@ -924,8 +908,8 @@ __edit_config() {
             "linux-tkg  |🐧 ${_green_neon}Linux   ${_gray} customization.cfg ${_reset}->${_orange} 'linux-tkg.cfg'  "
         )
 
-        # Only show Nvidia and Mesa config if Arch-based distrobutions
-        if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
+        # Only show Nvidia and Mesa config if Arch-based distributions
+        if [[ "${_is_arch_based}" == "true" ]]; then
             _menu_options+=(
                 "nvidia-all |💻 ${_green_neon}Nvidia  ${_gray} customization.cfg ${_reset}->${_orange} 'nvidia-all.cfg'"
                 "mesa-git   |🧩 ${_green_neon}Mesa    ${_gray} customization.cfg ${_reset}->${_orange} 'mesa-git.cfg'"
@@ -987,8 +971,20 @@ __edit_config() {
         '
 
         # Define header, footer, border label, and preview window settings for fzf menu
-        local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Config menu (Beta)${_uline_off}${_reset}${_break}${_break}${_green_light}    ${_uline_on}Create${_uline_off}: ${_reset}${_gray}Download missing file(s)${_reset}${_break}${_green_light}    ${_uline_on}Edit${_uline_off}: ${_reset}${_gray}Customize to your preferred settings${_reset}${_break}    ${_green_light}${_uline_on}Compare${_uline_off}: ${_reset}${_gray}Show difference between remote and local${_reset}${_break}${_break}    ${_green_light}According to -TKG- package standards file(s)${_break}    stored in: ${_reset}${_gray}file://$HOME/.config/frogminer/${_break}${_break}    ${_green_light}Please make sure to adjust the settings correctly!${_break}    More visit: ${_reset}${_gray}https://github.com/Frogging-Family${_reset}${_break}${_break}${_break}   ${_green_light}Select an option below:"
-        local _footer_text="  ${_green_light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}  Press [Enter] to select, [Ctrl+P] ${_green_light}to toggle the preview window, [ESC] to exit${_break}${_break}  ${_green_light}Website:${_reset} ${_gray}https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family"
+        local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Config menu (Beta)${_uline_off}${_reset}${_break}${_break}\
+${_green_light}    ${_uline_on}Create${_uline_off}: ${_reset}${_gray}Download missing file(s)${_reset}${_break}\
+${_green_light}    ${_uline_on}Edit${_uline_off}: ${_reset}${_gray}Customize to your preferred settings${_reset}${_break}\
+    ${_green_light}${_uline_on}Compare${_uline_off}: ${_reset}${_gray}Show difference between remote and local${_reset}${_break}${_break}\
+    ${_green_light}According to -TKG- package standards file(s)${_break}\
+    stored in: ${_reset}${_gray}file://$HOME/.config/frogminer/${_break}${_break}\
+    ${_green_light}Please make sure to adjust the settings correctly!${_break}\
+    More visit: ${_reset}${_gray}https://github.com/Frogging-Family${_reset}${_break}${_break}${_break}\
+   ${_green_light}Select an option below:"
+        
+        local _footer_text="  ${_green_light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}\
+  Press [Enter] to select, [Ctrl+P] ${_green_light}to toggle the preview window, [ESC] to exit${_break}${_break}\
+  ${_green_light}Website:${_reset} ${_gray}https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family"
+        
         local _border_label_text="${_tkg_version}"
         local _preview_window_settings='right:wrap:75%'
 
@@ -1098,11 +1094,8 @@ __handle_config() {
         # Prompt user for download
         __msg_prompt "Do you want to download the default configuration? [y/N]: "
         trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; clear; return 0' INT
-        read -r _user_answer
+        __prompt_with_default "n"
         trap - INT
-        if [[ -z "${_user_answer}" ]]; then
-            _user_answer="n"
-        fi
         # Handle user response for downloading the config file
         case "${_user_answer,,}" in
             y|yes)
@@ -1205,7 +1198,7 @@ __menu() {
     )
 
     # Only show Nvidia and Mesa options if Arch-based distribution
-    if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_like,,}" == *"arch"* ]]; then
+    if [[ "${_is_arch_based}" == "true" ]]; then
         _menu_options+=(
             "Nvidia |💻 ${_green_neon}Nvidia  ${_gray} Nvidia open-source or proprietary graphics drivers"
             "Mesa   |🧩 ${_green_neon}Mesa    ${_gray} AMD and Intel open-source graphics driver"
@@ -1258,8 +1251,14 @@ __menu() {
     '
 
     # Define header and footer texts for fzf menu display
-    local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Main menu${_uline_off}${_reset}${_break}${_break}    ${_green_light}Install (clone, build) and customize -TKG- packages${_break}${_break}${_break}   Select an option below:"
-    local _footer_text="  ${_green_light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}  Press [Enter] to select, [Ctrl+P] ${_green_light}to toggle the preview window, [ESC] to exit${_break}${_break}  ${_green_light}Website:${_reset} ${_gray}https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family"
+    local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Main menu${_uline_off}${_reset}${_break}${_break}\
+    ${_green_light}Install (clone, build) and customize -TKG- packages${_break}${_break}${_break}\
+   Select an option below:"
+    
+    local _footer_text="  ${_green_light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}\
+  Press [Enter] to select, [Ctrl+P] ${_green_light}to toggle the preview window, [ESC] to exit${_break}${_break}\
+  ${_green_light}Website:${_reset} ${_gray}https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family"
+    
     local _border_label_text="${_tkg_version}"
     local _preview_window_settings='right:wrap:55%:hidden'
 
@@ -1360,23 +1359,23 @@ __main_direct_mode() {
     case "$_arg1" in
         linux|l|--linux|-l)
             __prepare
-            __linux_install
+            __install_wrapper __linux_install
             ;;
         nvidia|n|--nvidia|-n)
             __prepare
-            __nvidia_install
+            __install_wrapper __nvidia_install
             ;;
         mesa|m|--mesa|-m)
             __prepare
-            __mesa_install
+            __install_wrapper __mesa_install
             ;;
         wine|w|--wine|-w)
             __prepare
-            __wine_install
+            __install_wrapper __wine_install
             ;;
         proton|p|--proton|-p)
             __prepare
-            __proton_install
+            __install_wrapper __proton_install
             ;;
         clean|--clean)
             # Clean temporary files and restart script
@@ -1426,19 +1425,19 @@ __main_interactive_mode() {
     # Handle user choice from menu
     case $_user_choice in
         Linux)
-            __linux_install
+            __install_wrapper __linux_install
             ;;
         Nvidia)
-            __nvidia_install
+            __install_wrapper __nvidia_install
             ;;
         Mesa)
-            __mesa_install
+            __install_wrapper __mesa_install
             ;;
         Wine)
-            __wine_install
+            __install_wrapper __wine_install
             ;;
         Proton)
-            __proton_install
+            __install_wrapper __proton_install
             ;;
         Config)
             __edit_config || true
