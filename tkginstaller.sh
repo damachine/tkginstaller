@@ -50,7 +50,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.24.8"
+_tkg_version="v0.24.9"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -448,7 +448,7 @@ __prepare() {
 }
 
 # Display completion status
-__finish() {
+__status() {
     local _status=${1:-$?}
     local _duration="${SECONDS:-0}"
     local _minutes=$((_duration / 60))
@@ -559,7 +559,6 @@ __fzf_menu() {
 
 # Generic package installation helper function
 __install_package() {
-    # $1: Repo-URL, $2: Paketname, $3: Build-Command, $4: Workdir (optional)
     SECONDS=0
     local _repo_url="$1"
     local _package_name="$2"
@@ -608,11 +607,8 @@ __install_package() {
     }
 }
 
-# Countdown prompt with timeout for user input
-# $1: Prompt options (e.g., "[1/2]")
-# $2: Timeout in seconds (default: 60)
-# Returns: User answer in _user_answer variable, defaults to "1" if timeout
-__countdown_prompt() {
+# Countdown prompt with timeout
+__prompt_timer() {
     local _prompt_options="${1:-[1/2]}"
     local _timeout="${2:-60}"
     local _old_trap_int
@@ -646,17 +642,13 @@ __countdown_prompt() {
 }
 
 # Prompt user with default value
-# Sets _user_answer variable with user input or default
-# $1: Default value (default: "n")
-__prompt_with_default() {
+__prompt_answer() {
     local _default="${1:-n}"
     read -r _user_answer
     : "${_user_answer:=$_default}"
 }
 
 # Common wrapper for installation functions
-# Handles banner display and status reporting
-# $1: Function to execute for installation
 __install_wrapper() {
     local _install_func="$1"
     
@@ -671,13 +663,11 @@ __install_wrapper() {
     local _status=$?
     
     # Display status
-    __finish "$_status"
+    __status "$_status"
     return "$_status"
 }
 
-# =============================================================================
-# INSTALLATION FUNCTIONS
-# =============================================================================
+# Linux-TKG installation
 __linux_install() {
     # Inform user about external configuration
     __msg_pkg "linux" "${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
@@ -692,7 +682,7 @@ __linux_install() {
         __msg_plain " ${_uline_on}1${_uline_off}) makepkg -si${_reset}${_gray} (recommended for Arch-based distros) (${_uline_on}selected${_uline_off})"
         __msg_plain " 2) install.sh install${_reset}${_gray} (use if you want the generic install script)${_break}"
         
-        __countdown_prompt "[${_uline_on}1${_uline_off}/2]" 60
+        __prompt_timer "[${_uline_on}1${_uline_off}/2]" 60
 
         case "$_user_answer" in
             2)
@@ -744,7 +734,7 @@ __wine_install() {
         __msg_plain " ${_uline_on}1${_uline_off}) makepkg -si${_reset}${_gray} (recommended for Arch-based distros) (${_uline_on}selected${_uline_off})"
         __msg_plain " 2) non-makepkg-build.sh${_reset}${_gray} (use if you want a custom build script)${_break}"
         
-        __countdown_prompt "[${_uline_on}1${_uline_off}/2]" 60
+        __prompt_timer "[${_uline_on}1${_uline_off}/2]" 60
 
         case "$_user_answer" in
             2)
@@ -852,7 +842,7 @@ __edit_config() {
             local _old_trap_int
             _old_trap_int=$(trap -p INT 2>/dev/null || true)
             trap 'echo;echo; __msg_plain "${_red}Aborted by user.${_reset}";sleep 1.5; clear; return 0' INT
-            __prompt_with_default "n"
+            __prompt_answer "n"
             # Restore previous trap
             if [[ -n "$_old_trap_int" ]]; then eval "$_old_trap_int"; else trap - INT; fi
             
@@ -1048,9 +1038,9 @@ ${_green_light}    ${_uline_on}Edit${_uline_off}: ${_reset}${_gray}Customize to 
 
 # Helper function to handle individual config file editing and downloading if missing
 __handle_config() {
-    local _config_name="${1}" # Configuration name
-    local _config_path="${2}" # Configuration file path
-    local _config_url="${3}" # Configuration file URL
+    local _config_name="${1}"
+    local _config_path="${2}"
+    local _config_url="${3}"
 
     # Notify user
     __banner
@@ -1081,7 +1071,7 @@ __handle_config() {
         # Prompt user for download
         __msg_prompt "Do you want to download the default configuration? [y/N]: "
         trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; clear; return 0' INT
-        __prompt_with_default "n"
+        __prompt_answer "n"
         trap - INT
         # Handle user response for downloading the config file
         case "${_user_answer,,}" in
