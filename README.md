@@ -10,18 +10,14 @@
 
 # TKG-Installer 🐸
 
-#### Manage the TKG packages (Linux, Wine, Proton, Nvidia and Mesa) from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
-
-##### The flexible configuration and powerful settings allow TKG packages to be tailored precisely to different systems and personal preferences.
-
-##### I've been using this script for quite a while now – maybe it will be useful to someone else too!💚
+#### Build, install and customize TKG source packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories
 
 ---
 
 ## Features
 
-- **Buildes**: Use either an interactive `fzf` menu or a quick, direct `terminal` command to building system-specific TKG packets.
-- **Manages**: Create, adjust, and compare `customization.cfg` files.
+- **Build/Install**: Use either an interactive `fzf` menu or a quick, direct `terminal` command to building system-specific TKG packets.
+- **Customize**: Create, adjust, and compare `customization.cfg` files.
 - **Multi-Distribution**: Works seamlessly on Arch-based systems and on most other Linux distributions supported by the Frogging-Family.
 
 ##### Menu
