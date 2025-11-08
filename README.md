@@ -63,26 +63,26 @@
    cd /patch/to/tkginstaller
 
    # STEP 2: Download with curl
-   curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sh
+   curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller
 
    # STEP 3: Make script executable
-   chmod +x tkginstaller.sh
+   chmod +x tkginstaller
    ```
    ```bash
    # Optional: Make the installer available system-wide after manual installation
 
    # Method 1: Create a system link (Recommended)
-   sudo ln -s /path/to/tkginstaller.sh /usr/bin/tkginstaller
+   sudo ln -s /path/to/tkginstaller /usr/bin/tkginstaller
 
    # Method 2: Create a shell alias or function
    # Add one of this to your ~/.bashrc or ~/.zshrc:
 
    # As alias:
-   alias tkginstaller='bash -c "/path/to/tkginstaller.sh"'
+   alias tkginstaller='bash -c "/path/to/tkginstaller"'
 
    # OR as function:
    tkginstaller() {
-      bash -c '/path/to/tkginstaller.sh'
+      bash -c '/path/to/tkginstaller'
    }
 
    # Now you can run from anywhere:
