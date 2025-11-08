@@ -50,7 +50,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.24.9"
+_tkg_version="v0.25.0"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -123,7 +123,7 @@ __init_style() {
     _blue="$(_color 85 170 255 4)"         # blue
     _gray="$(_color 200 250 200 7)"        # gray
 
-    # Underline
+    # Draw underline
     _uline_on=$(tput smul 2>/dev/null || printf '\033[4m')
     _uline_off=$(tput rmul 2>/dev/null || printf '\033[24m')
 
@@ -136,8 +136,7 @@ __init_style() {
     _line=""
     for ((i=0; i<"$_line_len"; i++)); do _line+="─"; done
 
-    # Export only variables used in fzf preview commands (subshells)
-    # Used in: __edit_config preview (formatting), __menu preview (formatting)
+    # Export only variables must be used in fzf preview commands to work properly
     export _break _reset _green_light _green_neon _green_mint _green_dark _orange _gray _uline_on _uline_off _cols _line
 }
 
@@ -263,26 +262,28 @@ fi
 # Help information display
 __help() {
     __banner
-    __msg_info_neon "${_uline_on}HELP${_uline_off}:${_reset}${_green_light} TKG-Installer usage and commands${_break}"
-    __msg_plain "\
+    cat <<EOF
+${_green_neon}${_uline_on}HELP${_uline_off}:${_reset} ${_green_light}TKG-Installer usage and commands${_reset}
+
 ${_green_neon}1) Interactive mode${_reset}
    Run without arguments to enter the menu:
-   ${_gray}tkginstaller${_reset}${_break}
+   ${_gray}tkginstaller${_reset}
+
 ${_green_neon}2) Direct mode${_reset}
    Run specific packages directly:
-   ${_gray}tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p]${_reset}${_break}
+   ${_gray}tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p]${_reset}
+
 ${_green_neon}3) Config editing${_reset}
    Edit configuration files:
-   ${_gray}tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p] [config|c|edit|e]${_reset}${_break}
-${_orange}Shortcuts:${_reset} ${_gray}l${_reset}=linux, ${_gray}n${_reset}=nvidia, ${_gray}m${_reset}=mesa, ${_gray}w${_reset}=wine, ${_gray}p${_reset}=proton, ${_gray}c${_reset}=config, ${_gray}e${_reset}=edit${_break}"
+   ${_gray}tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p] [config|c|edit|e]${_reset}
+
+${_orange}Shortcuts:${_reset} ${_gray}l${_reset}=linux, ${_gray}n${_reset}=nvidia, ${_gray}m${_reset}=mesa, ${_gray}w${_reset}=wine, ${_gray}p${_reset}=proton, ${_gray}c${_reset}=config, ${_gray}e${_reset}=edit
+
+EOF
 }
 
 # Help can show always!
-if [[ $# -gt 0 && "${1:-}" =~ ^(help|h|--help|-h)$ ]]; then
-    __help
-    trap - INT TERM EXIT HUP # Remove trap on exit
-    exit 0
-fi
+[[ $# -gt 0 && "${1:-}" =~ ^(help|h|--help|-h)$ ]] && { __help; exit 0; }
 
 # Prevent concurrent execution with atomic lock file creation
 if ! (set -o noclobber; echo $$ > "$_lock_file") 2>/dev/null; then
@@ -336,9 +337,9 @@ __prepare() {
     # Welcome message
     __banner
     printf "%s" "${_green_mint}Starting"
-    for i in {1..5}; do
+    for i in {1..3}; do
         printf " ."
-        sleep 0.33s
+        sleep 0.3s
     done
     printf "%b\n" "${_reset}"
 
@@ -444,7 +445,7 @@ __prepare() {
     fi
 
     # Short delay for better UX (( :P ))
-    sleep 1.5s
+    sleep 0.5s
 }
 
 # Display completion status
@@ -483,7 +484,7 @@ __exit() {
     fi
 
     # Perform cleanup
-    __clean
+    __clean || true
     wait
     exit "$_exit_code"
 }
@@ -791,45 +792,68 @@ __proton_install() {
 # EDITOR MANAGEMENT FUNCTION
 # =============================================================================
 
+# Helper function to handle individual config file editing and downloading if missing
+__config_error() {
+    local _msg="$1"
+    clear
+    __banner "$_red"
+    __msg_error "$_msg"
+    __msg_prompt "Press any key to continue...${_break}"
+    read -n 1 -s -r
+    clear
+}
+
 # Text editor
 __editor() {
-    # Target file
     local _target_file="${1}"
-
-    # Parse $EDITOR variable
-    local _editor_raw="${EDITOR-}"
-    # Array to hold parsed editor
     local _editor_parts=()
 
-    # Split editor command into parts
-    IFS=' ' read -r -a _editor_parts <<< "${_editor_raw}" || true
+    # Parse $EDITOR variable and split into command + arguments
+    if [[ -n "${EDITOR-}" ]]; then
+        IFS=' ' read -r -a _editor_parts <<< "${EDITOR}" || true
+    fi
 
-    # Fallback to nano, micro, or vim if no editor configured
+    # Validate editor command exists, otherwise find fallback
     if [[ -z "${_editor_parts[0]:-}" ]] || ! command -v "${_editor_parts[0]}" >/dev/null 2>&1; then
-        if command -v nano >/dev/null 2>&1; then
-            _editor_parts=(nano)
-        elif command -v micro >/dev/null 2>&1; then
-            _editor_parts=(micro)
-        elif command -v vim >/dev/null 2>&1; then
-            _editor_parts=(vim)
-        else
-            __banner "$_red"
-            __msg_error "No editor found!${_break}"
-            __msg_plain " Please set \$EDITOR environment or install${_reset}${_gray} 'nano'${_reset},${_reset}${_gray} 'micro'${_reset}, or${_reset}${_gray} 'vim'${_reset} as fallback.${_break}"
-            __msg_prompt "Press any key to continue...${_break}"
-            read -n 1 -s -r
+        # Try common editors in order of preference
+        for editor in nano micro vim vi; do
+            if command -v "$editor" >/dev/null 2>&1; then
+                _editor_parts=("$editor")
+                break
+            fi
+        done
+        
+        # No editor found - show error
+        if [[ -z "${_editor_parts[0]:-}" ]]; then
+            __config_error "No editor found!${_break} Please set \$EDITOR environment variable or install one of:${_break} ${_gray}nano${_reset}, ${_gray}micro${_reset}, ${_gray}vim${_reset}, or ${_gray}vi${_reset}${_break}"
             return 1
         fi
     fi
 
-    # Execute the editor with the target _target_file as argument
+    # Execute editor with target file
     "${_editor_parts[@]}" "$_target_file"
 }
 
 # Configuration file editor
 __edit_config() {
+    # Define config mappings once (DRY principle)
+    declare -A _config_urls=(
+        [linux-tkg]="${_frog_raw_url}/linux-tkg/master/customization.cfg"
+        [nvidia-all]="${_frog_raw_url}/nvidia-all/master/customization.cfg"
+        [mesa-git]="${_frog_raw_url}/mesa-git/master/customization.cfg"
+        [wine-tkg]="${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
+        [proton-tkg]="${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
+    )
+    
+    declare -A _config_names=(
+        [linux-tkg]="Linux-TKG"
+        [nvidia-all]="Nvidia-TKG"
+        [mesa-git]="Mesa-TKG"
+        [wine-tkg]="Wine-TKG"
+        [proton-tkg]="Proton-TKG"
+    )
+
     while true; do
-        # User's configuration choice
         local _config_choice
 
         # Ensure configuration directory exists
@@ -843,26 +867,18 @@ __edit_config() {
             _old_trap_int=$(trap -p INT 2>/dev/null || true)
             trap 'echo;echo; __msg_plain "${_red}Aborted by user.${_reset}";sleep 1.5; clear; return 0' INT
             __prompt_answer "n"
-            # Restore previous trap
             if [[ -n "$_old_trap_int" ]]; then eval "$_old_trap_int"; else trap - INT; fi
             
-            # Handle user response
             case "${_user_answer,,}" in
                 y|yes)
-                    # Create the configuration directory
                     if ! mkdir -p "${_config_dir}" 2>/dev/null; then
-                        clear
-                        __banner "$_red"
-                        __msg_error "Creating configuration directory failed: ${_config_dir}${_break}"
-                        __msg_plain " Please check the path and your permissions then try again.${_break}"
-                        __msg_prompt "Press any key to continue...${_break}"
-                        read -n 1 -s -r
-                        clear
+                        __config_error "Creating configuration directory failed: ${_config_dir}${_break} Please check the path and your permissions then try again.${_break}"
                         return 1
                     fi
                     clear
                     __banner
                     __msg_info "Configuration directory created:${_reset}${_gray} ${_config_dir}${_reset}${_break}"
+                    __msg_plain " You can now manage your${_reset}${_gray} customization.cfg${_reset} files.${_break}"
                     __msg_prompt "Press any key to continue...${_break}"
                     read -n 1 -s -r
                     clear
@@ -886,7 +902,6 @@ __edit_config() {
             "linux-tkg  |🐧 ${_green_neon}Linux   ${_gray} customization.cfg ${_reset}->${_orange} 'linux-tkg.cfg'  "
         )
 
-        # Only show Nvidia and Mesa config if Arch-based distributions
         if [[ "${_is_arch_based}" == "true" ]]; then
             _menu_options+=(
                 "nvidia-all |💻 ${_green_neon}Nvidia  ${_gray} customization.cfg ${_reset}->${_orange} 'nvidia-all.cfg'"
@@ -900,38 +915,35 @@ __edit_config() {
             "return     |⏪ ${_green_neon}Return"
         )
 
-        # Prepare menu content string
         local _menu_content
         _menu_content=$(printf '%s\n' "${_menu_options[@]}")
 
-        # Define reusable messages
+        # Export config URLs for preview command
+        local _config_urls_json
+        _config_urls_json=$(printf '%s\n' \
+            "linux-tkg=${_config_urls[linux-tkg]}" \
+            "nvidia-all=${_config_urls[nvidia-all]}" \
+            "mesa-git=${_config_urls[mesa-git]}" \
+            "wine-tkg=${_config_urls[wine-tkg]}" \
+            "proton-tkg=${_config_urls[proton-tkg]}"
+            )
+        export _CONFIG_URLS_JSON="$_config_urls_json"
+
         local _info_config="${_green_neon}Comparing remote and local ${_reset}${_gray}customization.cfg${_reset}${_green_neon}, press [Enter] to open and edit ${_reset}${_break}${_break}${_green_light} Remote:${_reset}${_gray} \$_remote_url ${_reset}${_break}${_orange}≠${_reset}${_green_light} Local:${_reset}${_gray} file://\$_config_file_path ${_reset}${_break}${_green_dark}${_line}${_break}"
         
-        # Define common error message
         local _error_config_not_exist="${_orange}No external configuration file found.${_reset}${_break}${_break}${_green_light} This configuration file is required for customizing the -TKG- package.${_break}${_green_light} Press [Enter] to download the missing${_reset}${_gray} customization.cfg${_reset}${_green_light} file, according to -TKG- package standards.${_reset}${_break}${_green_dark}${_line}${_break}"
 
-        # Define a reusable bat command
         local _bat_cmd="bat --style=plain --language=cfg --wrap character --terminal-width ${_cols} --force-colorization --theme='Visual Studio Dark+'"
-        
-        # Define a reusable wdiff command
         local _diff_cmd="wdiff --terminal --statistics --start-delete='${_red}' --end-delete='${_reset}' --start-insert='${_green_light}' --end-insert='${_reset}'"
 
-        # Define preview command for fzf menu
+        # Simplified preview command using exported URLs
         local _preview_command='
-            declare -A remote_urls=(
-                [linux-tkg]="'"${_frog_raw_url}"'/linux-tkg/master/customization.cfg"
-                [nvidia-all]="'"${_frog_raw_url}"'/nvidia-all/master/customization.cfg"
-                [mesa-git]="'"${_frog_raw_url}"'/mesa-git/master/customization.cfg"
-                [wine-tkg]="'"${_frog_raw_url}"'/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
-                [proton-tkg]="'"${_frog_raw_url}"'/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
-            )
-            
             key=$(echo {} | cut -d"|" -f1 | xargs)
             
             [[ "$key" == "return" ]] && { glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_tkg_raw_url}"'/return.md"; exit 0; }
             
             _config_file_path="'"${_config_dir}"'/${key}.cfg"
-            _remote_url="${remote_urls[$key]}"
+            _remote_url=$(echo "$_CONFIG_URLS_JSON" | grep "^${key}=" | cut -d= -f2-)
             
             if [[ -f "$_config_file_path" && -n "$_remote_url" ]]; then
                 _remote_tmp="'"${_tmp_dir}"'/${key}-remote.cfg"
@@ -947,7 +959,6 @@ __edit_config() {
             fi
         '
 
-        # Define header, footer, border label, and preview window settings for fzf menu
         local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Config menu (Beta)${_uline_off}${_reset}${_break}${_break}\
 ${_green_light}    ${_uline_on}Create${_uline_off}: ${_reset}${_gray}Download missing file(s)${_reset}${_break}\
 ${_green_light}    ${_uline_on}Edit${_uline_off}: ${_reset}${_gray}Customize to your preferred settings${_reset}${_break}\
@@ -965,10 +976,10 @@ ${_green_light}    ${_uline_on}Edit${_uline_off}: ${_reset}${_gray}Customize to 
         local _border_label_text="${_tkg_version}"
         local _preview_window_settings='right:wrap:75%'
 
-        # Show fzf menu and get user selection
-        _config_choice=$(__fzf_menu "$_menu_content" "$_preview_command" "$_header_text" "$_footer_text" "$_border_label_text" "$_preview_window_settings" "$_fzf_bind" )
+        _config_choice=$(__fzf_menu "$_menu_content" "$_preview_command" "$_header_text" "$_footer_text" "$_border_label_text" "$_preview_window_settings" "$_fzf_bind")
 
-        # Handle cancelled selection
+        unset _CONFIG_URLS_JSON
+
         if [[ -z "$_config_choice" ]]; then
             __banner
             __msg_info_orange " Applying${_reset}${_gray} customization.cfg${_reset}${_orange} changes...${_break}"
@@ -977,62 +988,25 @@ ${_green_light}    ${_uline_on}Edit${_uline_off}: ${_reset}${_gray}Customize to 
             return 0
         fi
 
-        # Extract selected configuration type and file path from choice
         local _config_file
         _config_file=$(echo "${_config_choice}" | cut -d"|" -f1 | xargs)
 
-        # Handle configuration file editing
-        case ${_config_file} in
-            linux-tkg)
-                __handle_config \
-                    "Linux-TKG" \
-                    "${_config_dir}/linux-tkg.cfg" \
-                    "${_frog_raw_url}/linux-tkg/master/customization.cfg"
-                ;;
-            nvidia-all)
-                __handle_config \
-                    "Nvidia-TKG" \
-                    "${_config_dir}/nvidia-all.cfg" \
-                    "${_frog_raw_url}/nvidia-all/master/customization.cfg"
-                ;;
-            mesa-git)
-                __handle_config \
-                    "Mesa-TKG" \
-                    "${_config_dir}/mesa-git.cfg" \
-                    "${_frog_raw_url}/mesa-git/master/customization.cfg"
-                ;;
-            wine-tkg)
-                __handle_config \
-                    "Wine-TKG" \
-                    "${_config_dir}/wine-tkg.cfg" \
-                    "${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
-                ;;
-            proton-tkg)
-                __handle_config \
-                    "Proton-TKG" \
-                    "${_config_dir}/proton-tkg.cfg" \
-                    "${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
-                ;;
-            return)
-                __banner
-                __msg_info_orange "Applying${_reset}${_gray} customization.cfg${_reset}${_orange} changes...${_break}"
-                sleep 1.5s
-                clear
-                return 0
-                ;;
-            *)
-                __banner "$_red"
-                __msg_error "Invalid option:${_reset} $_config_file${_break}"
-                __msg_plain " The option is either invalid or incomplete."
-                __msg_plain " All available options run:${_break}"
-                __msg_plain "$0 help${_break}"
+        # Handle return
+        if [[ "$_config_file" == "return" ]]; then
+            __banner
+            __msg_info_orange "Applying${_reset}${_gray} customization.cfg${_reset}${_orange} changes...${_break}"
+            sleep 1.5s
+            clear
+            return 0
+        fi
 
-                # Disable exit trap avoid duplicate cleanup messages on exit
-                trap - INT TERM EXIT HUP
-                __clean
-                exit 1
-                ;;
-        esac
+        # Handle config editing using mappings
+        if [[ -n "${_config_urls[$_config_file]}" ]]; then
+            __handle_config \
+                "${_config_names[$_config_file]}" \
+                "${_config_dir}/${_config_file}.cfg" \
+                "${_config_urls[$_config_file]}"
+        fi
     done
 }
 
@@ -1052,13 +1026,7 @@ __handle_config() {
     if [[ -f "${_config_path}" ]]; then
         # Edit existing configuration file
         __editor "${_config_path}" || {
-            clear
-            __banner "$_red"
-            __msg_error "Opening external configuration failed:${_reset}${_gray} ${_config_path}${_break}"
-            __msg_plain " Please check if the file exists and is accessible.${_break}"
-            __msg_prompt "Press any key to continue...${_break}"
-            read -n 1 -s -r
-            clear
+            __config_error "Opening external configuration failed:${_reset}${_gray} ${_config_path}${_break} Please check if the file exists and is accessible.${_break}"
             return 1
         }
     else
@@ -1070,58 +1038,44 @@ __handle_config() {
 
         # Prompt user for download
         __msg_prompt "Do you want to download the default configuration? [y/N]: "
+        
+        local _old_trap_int
+        _old_trap_int=$(trap -p INT 2>/dev/null || true)
         trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; clear; return 0' INT
         __prompt_answer "n"
-        trap - INT
+        if [[ -n "$_old_trap_int" ]]; then eval "$_old_trap_int"; else trap - INT; fi
+        
         # Handle user response for downloading the config file
         case "${_user_answer,,}" in
             y|yes)
                 # Create the configuration directory
                 mkdir -p "$(dirname "${_config_path}")" || {
-                    clear
-                    __banner "$_red"
-                    __msg_error "Creating configuration directory failed: ${_config_path}${_break}"
-                    __msg_plain " Please check the path and your permissions then try again.${_break}"
-                    __msg_prompt "Press any key to continue...${_break}"
-                    read -n 1 -s -r
-                    clear
+                    __config_error "Creating configuration directory failed: ${_config_path}${_break} Please check the path and your permissions then try again.${_break}"
                     return 1
                 }
+                
+                # Check for curl availability
                 if ! command -v curl >/dev/null 2>&1; then
-                    clear
-                    __banner "$_red"
-                    __msg_error "curl is not installed. Please install curl to download configuration files.${_break}"
-                    __msg_prompt "Press any key to continue...${_break}"
-                    read -n 1 -s -r
-                    clear
+                    __config_error "curl is not installed. Please install curl to download configuration files.${_break}"
                     return 1
                 fi
-                if curl -fsSL "${_config_url}" -o "${_config_path}" 2>/dev/null; then
+                
+                # Download config with timeout (project guideline)
+                if curl --max-time 30 -fsSL "${_config_url}" -o "${_config_path}" 2>/dev/null; then
                     clear
                     __banner
                     __msg_info "External configuration ready at:${_reset}${_gray} ${_config_path}"
                     sleep 1.5s
                     clear
+                    
                     # Open the downloaded configuration file
                     __editor "${_config_path}" || {
-                        clear
-                        __banner "$_orange"
-                        __msg_error "Opening external configuration file:${_reset}${_gray} $_config_name${_break}"
-                        __msg_plain " Please check if the file exists and is accessible.${_break}"
-                        __msg_prompt "Press any key to continue...${_break}"
-                        read -n 1 -s -r
-                        clear
+                        __config_error "Opening external configuration file:${_reset}${_gray} $_config_name${_break} Please check if the file exists and is accessible.${_break}"
                         return 1
                     }
                 else
                     # Failed to download configuration file
-                    clear
-                    __banner "$_red"
-                    __msg_error "Downloading external configuration from ${_config_url} failed!${_break}"
-                    __msg_plain " Please check your internet connection and try again.${_break}"
-                    __msg_prompt "Press any key to continue...${_break}"
-                    read -n 1 -s -r
-                    clear
+                    __config_error "Downloading external configuration from ${_config_url} failed!${_break} Please check your internet connection and try again.${_break}"
                     return 1
                 fi
                 ;;
@@ -1137,13 +1091,9 @@ __handle_config() {
                 return 1
                 ;;
         esac
-
-        # Clear screen after process
-        clear
     fi
 
     # Notify user
-    clear
     __banner
     __msg_info_orange "Closing external configuration file:${_reset}${_gray} $_config_name${_reset}${_break}"
     sleep 1.5s
@@ -1169,12 +1119,11 @@ __menu() {
         esac
     fi
 
-    # Define menu options and preview commands
+    # Define menu options
     local _menu_options=(
         "Linux  |🐧 ${_green_neon}Linux   ${_gray} Linux custom kernels for better desktop and gaming experience"
     )
 
-    # Only show Nvidia and Mesa options if Arch-based distribution
     if [[ "${_is_arch_based}" == "true" ]]; then
         _menu_options+=(
             "Nvidia |💻 ${_green_neon}Nvidia  ${_gray} Nvidia open-source or proprietary graphics drivers"
@@ -1182,7 +1131,6 @@ __menu() {
         )
     fi
 
-    # Always show
     _menu_options+=(
         "Wine   |🍷 ${_green_neon}Wine    ${_gray} Windows compatibility layer to run Windows apps on Linux"
         "Proton |🎮 ${_green_neon}Proton  ${_gray} Run Windows games on the Linux system via Steam"
@@ -1192,42 +1140,70 @@ __menu() {
         "Close  |❎ ${_green_neon}Close"
     )
 
-    # Prepare menu content for fzf menu display string from options array
     local _menu_content
     _menu_content=$(printf '%s\n' "${_menu_options[@]}")
 
-    # Define preview command for fzf menu with dynamic content
+    # Define preview mappings
+    declare -A _preview_docs=(
+        [Linux]="linux"
+        [Nvidia]="nvidia"
+        [Mesa]="mesa"
+        [Wine]="wine"
+        [Proton]="proton"
+        [Config]="config"
+        [Clean]="clean"
+        [Help]="help"
+        [Close]="close"
+    )
+
+    declare -A _preview_repos=(
+        [Linux]="linux-tkg/master"
+        [Nvidia]="nvidia-all/master"
+        [Mesa]="mesa-git/master"
+        [Wine]="wine-tkg-git/master/wine-tkg-git"
+        [Proton]="wine-tkg-git/master/proton-tkg"
+    )
+
+    # Export preview mappings for subshell
+    local _preview_docs_json
+    _preview_docs_json=$(printf '%s\n' \
+        "Linux=${_preview_docs[Linux]}" \
+        "Nvidia=${_preview_docs[Nvidia]}" \
+        "Mesa=${_preview_docs[Mesa]}" \
+        "Wine=${_preview_docs[Wine]}" \
+        "Proton=${_preview_docs[Proton]}" \
+        "Config=${_preview_docs[Config]}" \
+        "Clean=${_preview_docs[Clean]}" \
+        "Help=${_preview_docs[Help]}" \
+        "Close=${_preview_docs[Close]}"
+    )
+    export _PREVIEW_DOCS_JSON="$_preview_docs_json"
+
+    local _preview_repos_json
+    _preview_repos_json=$(printf '%s\n' \
+        "Linux=${_preview_repos[Linux]}" \
+        "Nvidia=${_preview_repos[Nvidia]}" \
+        "Mesa=${_preview_repos[Mesa]}" \
+        "Wine=${_preview_repos[Wine]}" \
+        "Proton=${_preview_repos[Proton]}"
+    )
+    export _PREVIEW_REPOS_JSON="$_preview_repos_json"
+
+    # Simplified preview command using exported mappings
     local _preview_command='
         key=$(echo {} | cut -d"|" -f1 | xargs)
-        case $key in
-            Linux*)
-                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/linux.md"
-                glow --pager --width 80 --style "${_glow_style:-dark}" "${_frog_raw_url}/linux-tkg/refs/heads/master/README.md"
-                ;;
-            Nvidia*)
-                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/nvidia.md"
-                glow --pager --width 80 --style "${_glow_style:-dark}" "${_frog_raw_url}/nvidia-all/refs/heads/master/README.md"
-                ;;
-            Mesa*)
-                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/mesa.md"
-                glow --pager --width 80 --style "${_glow_style:-dark}" "${_frog_raw_url}/mesa-git/refs/heads/master/README.md"
-                ;;
-            Wine*)
-                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/wine.md"
-                glow --pager --width 80 --style "${_glow_style:-dark}" "${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/README.md"
-                ;;
-            Proton*)
-                glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/proton.md"
-                glow --pager --width 80 --style "${_glow_style:-dark}" "${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/README.md"
-                ;;
-            Config*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/config.md" ;;
-            Clean*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/clean.md" ;;
-            Help*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/help.md" ;;
-            Close*) glow --pager --width 80 --style "${_glow_style:-dark}" "${_tkg_raw_url}/close.md" ;;
-        esac
+        
+        # Get doc path
+        doc=$(echo "$_PREVIEW_DOCS_JSON" | grep "^${key}=" | cut -d= -f2-)
+        
+        # Show local doc
+        [[ -n "$doc" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_tkg_raw_url}"'/${doc}.md"
+        
+        # Show remote README if package has repo
+        repo=$(echo "$_PREVIEW_REPOS_JSON" | grep "^${key}=" | cut -d= -f2-)
+        [[ -n "$repo" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_frog_raw_url}"'/${repo}/README.md"
     '
 
-    # Define header and footer texts for fzf menu display
     local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Main menu${_uline_off}${_reset}${_break}${_break}\
     ${_green_light}Install (clone, build) and customize -TKG- packages${_break}${_break}${_break}\
    Select an option below:"
@@ -1239,17 +1215,16 @@ __menu() {
     local _border_label_text="${_tkg_version}"
     local _preview_window_settings='right:wrap:55%:hidden'
 
-    # Show fzf menu and get user selection for main menu options
     local _main_choice
     _main_choice=$(__fzf_menu "$_menu_content" "$_preview_command" "$_header_text" "$_footer_text" "$_border_label_text" "$_preview_window_settings" "$_fzf_bind")
 
-    # Handle cancelled selection
+    unset _PREVIEW_DOCS_JSON _PREVIEW_REPOS_JSON
+
     if [[ -z "${_main_choice:-}" ]]; then
         clear
         __exit 0
     fi
 
-    # Save selection to temporary file for processing in main program
     echo "$_main_choice" | cut -d"|" -f1 | xargs > "$_choice_file"
 }
 
@@ -1281,7 +1256,10 @@ __main_direct_mode() {
             exit 0 >/dev/null 2>&1
             ;;
         help|h|--help|-h)
-            return 0
+            __help
+            trap - INT TERM EXIT HUP
+            __clean || true
+            exit 0
             ;;
         *)
             __banner "$_orange"
@@ -1290,32 +1268,38 @@ __main_direct_mode() {
             __msg_plain " All available arguments run:${_break}"
             __msg_plain "$0 help${_break}"
             trap - INT TERM EXIT HUP
-            __clean
+            __clean || true
             exit 1
             ;;
     esac
 
     # Handle config editing if second argument is config/edit
     if [[ "$_arg2" =~ ^(config|c|edit|e)$ && -n "$_package" ]]; then
-        # Map package to config details
-        declare -A _config_map=(
-            [linux-tkg]="Linux-TKG|${_frog_raw_url}/linux-tkg/master/customization.cfg"
-            [nvidia-all]="Nvidia-TKG|${_frog_raw_url}/nvidia-all/master/customization.cfg"
-            [mesa-git]="Mesa-TKG|${_frog_raw_url}/mesa-git/master/customization.cfg"
-            [wine-tkg]="Wine-TKG|${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
-            [proton-tkg]="Proton-TKG|${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
+        # Map package to config details (DRY - same structure as __edit_config)
+        declare -A _config_urls=(
+            [linux-tkg]="${_frog_raw_url}/linux-tkg/master/customization.cfg"
+            [nvidia-all]="${_frog_raw_url}/nvidia-all/master/customization.cfg"
+            [mesa-git]="${_frog_raw_url}/mesa-git/master/customization.cfg"
+            [wine-tkg]="${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
+            [proton-tkg]="${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
+        )
+        
+        declare -A _config_names=(
+            [linux-tkg]="Linux-TKG"
+            [nvidia-all]="Nvidia-TKG"
+            [mesa-git]="Mesa-TKG"
+            [wine-tkg]="Wine-TKG"
+            [proton-tkg]="Proton-TKG"
         )
 
-        local _config_info="${_config_map[$_package]}"
-        local _config_name="${_config_info%%|*}"
-        local _config_url="${_config_info##*|}"
-        local _config_path="${_config_dir}/${_package}.cfg"
-
         trap - INT TERM EXIT HUP
-        __handle_config "$_config_name" "$_config_path" "$_config_url"
+        __handle_config \
+            "${_config_names[$_package]}" \
+            "${_config_dir}/${_package}.cfg" \
+            "${_config_urls[$_package]}"
         __banner
         __msg_plain "${_green_mint}Closed.${_break}"
-        __clean
+        __clean || true
         exit 0
     fi
 
@@ -1337,7 +1321,14 @@ __main_interactive_mode() {
     # Initialize dynamic preview content for fzf menus
     __prepare true
     clear
-    __menu
+    __menu || {
+        __banner "$_red"
+        __msg_error "Failed to initialize fzf menu!"
+        __msg_plain " Exiting..."
+        trap - INT TERM EXIT HUP
+        __clean || true
+        exit 1
+    }
 
     # Process user selection from menu
     local _user_choice
@@ -1352,15 +1343,15 @@ __main_interactive_mode() {
         Wine)    __install_wrapper __wine_install ;;
         Proton)  __install_wrapper __proton_install ;;
         Config)
-            __edit_config || true
-            rm -f "$_lock_file"
+            __edit_config
+            rm -f "$_lock_file" 2>&1 || true
             clear
             exec "$0"
             ;;
         Help)
             trap - INT TERM EXIT HUP
             __help
-            __clean
+            __clean || true
             exit 0
             ;;
         Clean)
@@ -1389,4 +1380,4 @@ __main() {
 }
 
 # SCRIPT EXECUTION ENTRY POINT
-__main "$@" 
+__main "$@"
