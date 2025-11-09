@@ -50,7 +50,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.25.2"
+_tkg_version="v0.25.3"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -69,17 +69,15 @@ __init_globals() {
     _frog_repo_url=https://github.com/Frogging-Family
     _frog_raw_url=https://raw.githubusercontent.com/Frogging-Family
     
-    # Export only variables used in fzf preview commands (subshells)
-    # Used in: __edit_config preview (config diff), __menu preview (glow rendering)
+    # Export only variables used in fzf preview commands
     export _tmp_dir _config_dir _tkg_raw_url _frog_raw_url
 }
 
 # Initialize color and formatting
 __init_style() {
-    __clear_line() { printf '\r%*s\r\033[A' "$@"; } # Helper function to clear lines
+    __clear_line() { printf '\r%*s\r\033[A' "$@"; }
     _break=$'\n'
     _reset=$'\033[0m'
-    _clear=$'\r%*s\r\033[A' # Clear line and move one line up
 
     # Helper to return TrueColor escape if supported
     _color() {
@@ -100,8 +98,7 @@ __init_style() {
             return 0
         fi
 
-        # Fallback to 256-color approx
-        # idx: 1=red, 2=green, 3=yellow, 4=blue
+        # Fallback to 256-color approx idx: 1=red, 2=green, 3=yellow, 4=blue
         local _idx256
         case "$idx" in
             1) _idx256=196 ;;  # bright red
@@ -503,10 +500,7 @@ __clean() {
 
     # Unset all variables
     unset _tkg_version _lock_file
-    unset _tmp_dir _choice_file _config_dir _tkg_repo_url _tkg_raw_url _frog_repo_url _frog_raw_url
-    unset _break _reset _red _green_light _green_neon _green_mint _green_dark _orange _blue _gray _uline_on _uline_off _cols _line
-    unset _glow_style
-    unset _distro_name _distro_id _distro_like _is_arch_based
+    unset _break _reset _green_light _green_neon _green_mint _green_dark _orange _gray _uline_on _uline_off _cols _line
  }
 
 # Fuzzy finder menu wrapper function 
@@ -927,7 +921,7 @@ __edit_config() {
             "wine-tkg=${_config_urls[wine-tkg]}" \
             "proton-tkg=${_config_urls[proton-tkg]}"
             )
-        export _CONFIG_URLS_JSON="$_config_urls_json"
+        export _config_urls_json
 
         local _info_config="${_green_neon}Comparing remote and local ${_reset}${_gray}customization.cfg${_reset}${_green_neon}, press [Enter] to open and edit ${_reset}${_break}${_break}${_green_light} Remote:${_reset}${_gray} \$_remote_url ${_reset}${_break}${_orange}≠${_reset}${_green_light} Local:${_reset}${_gray} file://\$_config_file_path ${_reset}${_break}${_green_dark}${_line}${_break}"
         
@@ -943,7 +937,7 @@ __edit_config() {
             [[ "$key" == "return" ]] && { glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_tkg_raw_url}"'/return.md"; exit 0; }
             
             _config_file_path="'"${_config_dir}"'/${key}.cfg"
-            _remote_url=$(echo "$_CONFIG_URLS_JSON" | grep "^${key}=" | cut -d= -f2-)
+            _remote_url=$(echo "$_config_urls_json" | grep "^${key}=" | cut -d= -f2-)
             
             if [[ -f "$_config_file_path" && -n "$_remote_url" ]]; then
                 _remote_tmp="'"${_tmp_dir}"'/${key}-remote.cfg"
@@ -960,14 +954,12 @@ __edit_config() {
         '
 
         local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Config menu (Beta)${_uline_off}${_reset}${_break}${_break}\
-${_green_light}    ${_uline_on}Create${_uline_off}: ${_reset}${_gray}Download missing file(s)${_reset}${_break}\
-${_green_light}    ${_uline_on}Edit${_uline_off}: ${_reset}${_gray}Customize to your preferred settings${_reset}${_break}\
-    ${_green_light}${_uline_on}Compare${_uline_off}: ${_reset}${_gray}Show difference between remote and local${_reset}${_break}${_break}\
-    ${_green_light}According to -TKG- package standards file(s)${_break}\
-    stored in: ${_reset}${_gray}file://$HOME/.config/frogminer/${_break}${_break}\
-    ${_green_light}Please make sure to adjust the settings correctly!${_break}\
-    More visit: ${_reset}${_gray}https://github.com/Frogging-Family${_reset}${_break}${_break}${_break}\
-   ${_green_light}Select an option below:"
+${_green_light}    - Customize to your preferred settings${_break}\
+${_green_light}    - Download missing file(s)${_break}\
+${_green_light}    - Show difference between remote and local${_break}${_break}\
+${_green_light}    According to -TKG- package standards file(s)${_break}    stored in: ${_reset}${_gray}file://$HOME/.config/frogminer/${_reset}${_break}${_break}\
+${_green_light}    Please make sure to adjust the settings correctly!${_break}    More visit: ${_reset}${_gray}https://github.com/Frogging-Family${_reset}${_break}${_break}${_break}\
+${_green_light}   Select an option below:"
         
         local _footer_text="  ${_green_light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}\
   Press [Enter] to select, [Ctrl+P] ${_green_light}to toggle the preview window, [ESC] to exit${_break}${_break}\
@@ -978,7 +970,7 @@ ${_green_light}    ${_uline_on}Edit${_uline_off}: ${_reset}${_gray}Customize to 
 
         _config_choice=$(__fzf_menu "$_menu_content" "$_preview_command" "$_header_text" "$_footer_text" "$_border_label_text" "$_preview_window_settings" "$_fzf_bind")
 
-        unset _CONFIG_URLS_JSON
+        unset _config_urls_json
 
         if [[ -z "$_config_choice" ]]; then
             __banner
@@ -1177,7 +1169,7 @@ __menu() {
         "Help=${_preview_docs[Help]}" \
         "Close=${_preview_docs[Close]}"
     )
-    export _PREVIEW_DOCS_JSON="$_preview_docs_json"
+    export _preview_docs_json
 
     local _preview_repos_json
     _preview_repos_json=$(printf '%s\n' \
@@ -1187,30 +1179,30 @@ __menu() {
         "Wine=${_preview_repos[Wine]}" \
         "Proton=${_preview_repos[Proton]}"
     )
-    export _PREVIEW_REPOS_JSON="$_preview_repos_json"
+    export _preview_repos_json
 
     # Simplified preview command using exported mappings
     local _preview_command='
         key=$(echo {} | cut -d"|" -f1 | xargs)
         
         # Get doc path
-        doc=$(echo "$_PREVIEW_DOCS_JSON" | grep "^${key}=" | cut -d= -f2-)
+        doc=$(echo "$_preview_docs_json" | grep "^${key}=" | cut -d= -f2-)
         
         # Show local doc
         [[ -n "$doc" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_tkg_raw_url}"'/${doc}.md"
         
         # Show remote README if package has repo
-        repo=$(echo "$_PREVIEW_REPOS_JSON" | grep "^${key}=" | cut -d= -f2-)
+        repo=$(echo "$_preview_repos_json" | grep "^${key}=" | cut -d= -f2-)
         [[ -n "$repo" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_frog_raw_url}"'/${repo}/README.md"
     '
 
     local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Main menu${_uline_off}${_reset}${_break}${_break}\
-    ${_green_light}Install (clone, build) and customize -TKG- packages${_break}${_break}${_break}\
+    ${_green_light}Build, install and customize -TKG- packages${_break}${_break}${_break}\
    Select an option below:"
     
     local _footer_text="  ${_green_light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}\
   Press [Enter] to select, [Ctrl+P] ${_green_light}to toggle the preview window, [ESC] to exit${_break}${_break}\
-  ${_green_light}Website:${_reset} ${_gray}https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family"
+  ${_green_light}Website:${_reset} ${_gray}https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family${_reset}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              "
     
     local _border_label_text="${_tkg_version}"
     local _preview_window_settings='right:wrap:55%:hidden'
@@ -1218,7 +1210,7 @@ __menu() {
     local _main_choice
     _main_choice=$(__fzf_menu "$_menu_content" "$_preview_command" "$_header_text" "$_footer_text" "$_border_label_text" "$_preview_window_settings" "$_fzf_bind")
 
-    unset _PREVIEW_DOCS_JSON _PREVIEW_REPOS_JSON
+    unset _preview_docs_json _preview_repos_json
 
     if [[ -z "${_main_choice:-}" ]]; then
         clear
