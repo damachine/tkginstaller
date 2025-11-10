@@ -50,7 +50,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.25.3"
+_tkg_version="v0.25.4"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -1002,11 +1002,56 @@ ${_green_light}   Select an option below:"
     done
 }
 
+# Helper function to detect deprecated config variables
+__old_config() {
+    local _config_file="$1"
+    local _upstream_url="$2"
+    
+    if [[ ! -f "$_config_file" ]]; then
+        return 0
+    fi
+    
+    # Download upstream config
+    local _tmp_upstream="/tmp/upstream_customization.cfg"
+    if ! curl -fsSL "$_upstream_url" -o "$_tmp_upstream" 2>/dev/null; then
+        __msg_warning "Could not download upstream config for comparison"
+        return 1
+    fi
+    
+    # Extract variable names from both files
+    local _local_vars
+    _local_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_config_file" | sort -u)
+    local _upstream_vars
+    _upstream_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_upstream" | sort -u)
+
+    # Find deprecated variables (in local but not in upstream)
+    local _deprecated_vars
+    _deprecated_vars=$(comm -23 <(echo "$_local_vars") <(echo "$_upstream_vars"))
+    
+    if [[ -n "$_deprecated_vars" ]]; then
+        __banner "$_orange"
+        __msg_warning "Found deprecated config variables in your local config: $_config_file ${_break}"
+        while IFS= read -r _var; do
+            __msg_plain "  ${_gray}${_var}${_reset}"
+        done <<< "$_deprecated_vars"
+        __msg_plain "${_break} These variables are no longer used in upstream and can be removed.${_break}"
+        __msg_prompt "Press any key to continue...${_break}"
+        read -n 1 -s -r
+    fi
+    
+    rm -f "$_tmp_upstream"
+}
+
 # Helper function to handle individual config file editing and downloading if missing
 __handle_config() {
     local _config_name="${1}"
     local _config_path="${2}"
     local _config_url="${3}"
+    
+    # Check for deprecated variables before editing
+    if [[ -f "${_config_path}" ]]; then
+        __old_config "${_config_path}" "${_config_url}"
+    fi
 
     # Notify user
     __banner
