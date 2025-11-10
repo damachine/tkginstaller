@@ -50,7 +50,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.25.5"
+_tkg_version="v0.25.6"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -1075,6 +1075,7 @@ __handle_config() {
     # Check for deprecated variables before editing
     if [[ -f "${_config_path}" ]]; then
         __old_config "${_config_path}" "${_config_url}" "${_config_name}"
+        clear
     fi
 
     # Notify user
