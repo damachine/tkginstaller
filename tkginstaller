@@ -50,7 +50,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.25.4"
+_tkg_version="v0.25.5"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -1006,6 +1006,7 @@ ${_green_light}   Select an option below:"
 __old_config() {
     local _config_file="$1"
     local _upstream_url="$2"
+    local _package_name="$3"
     
     if [[ ! -f "$_config_file" ]]; then
         return 0
@@ -1024,17 +1025,40 @@ __old_config() {
     local _upstream_vars
     _upstream_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_upstream" | sort -u)
 
+    # For linux-tkg, also check _deprecated_config_vars from prepare file
+    local _officially_deprecated=""
+    if [[ "$_package_name" == "Linux-TKG" ]]; then
+        local _prepare_url="https://raw.githubusercontent.com/Frogging-Family/linux-tkg/master/linux-tkg-config/prepare"
+        local _tmp_prepare="/tmp/linux-tkg-prepare"
+        
+        if curl -fsSL "$_prepare_url" -o "$_tmp_prepare" 2>/dev/null; then
+            # Extract deprecated variables from _deprecated_config_vars array
+            _officially_deprecated=$(sed -n '/_deprecated_config_vars=($/,/^)$/p' "$_tmp_prepare" | grep -oP '^\s*"_\K[^"]+' | sed 's/^/_/' || true)
+            rm -f "$_tmp_prepare"
+        fi
+    fi
+
     # Find deprecated variables (in local but not in upstream)
     local _deprecated_vars
     _deprecated_vars=$(comm -23 <(echo "$_local_vars") <(echo "$_upstream_vars"))
     
+    # Combine with officially deprecated variables for linux-tkg
+    if [[ -n "$_officially_deprecated" ]]; then
+        local _combined_deprecated
+        _combined_deprecated=$(echo "$_local_vars" | grep -F -x -f <(echo "$_officially_deprecated") | sort -u || true)
+        
+        if [[ -n "$_combined_deprecated" ]]; then
+            _deprecated_vars=$(printf "%s\n%s" "$_deprecated_vars" "$_combined_deprecated" | sort -u)
+        fi
+    fi
+    
     if [[ -n "$_deprecated_vars" ]]; then
         __banner "$_orange"
-        __msg_warning "Found deprecated config variables in your local config: $_config_file ${_break}"
+        __msg_warning "Found deprecated config variables in your local config:${_reset}${_gray} $_config_file ${_reset}${_break}"
         while IFS= read -r _var; do
             __msg_plain "  ${_gray}${_var}${_reset}"
         done <<< "$_deprecated_vars"
-        __msg_plain "${_break} These variables are no longer used in upstream and can be removed.${_break}"
+        __msg_plain "${_break}${_orange} These variables are no longer used in upstream and can be removed.${_reset}${_break}"
         __msg_prompt "Press any key to continue...${_break}"
         read -n 1 -s -r
     fi
@@ -1050,7 +1074,7 @@ __handle_config() {
     
     # Check for deprecated variables before editing
     if [[ -f "${_config_path}" ]]; then
-        __old_config "${_config_path}" "${_config_url}"
+        __old_config "${_config_path}" "${_config_url}" "${_config_name}"
     fi
 
     # Notify user
