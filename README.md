@@ -21,14 +21,15 @@
 - **Multi-Distribution**: Works seamlessly on Arch-based systems and on most other Linux distributions supported by the Frogging-Family.
 
 ##### Menu
-[![tkginstaller-fzf2](images/fzf2.png)](images/fzf2.png)
-[![tkginstaller-fzf](images/fzf.png)](images/fzf.png)
+[![tkginstaller](images/fzf2.png)](images/fzf2.png)
+[![tkginstaller](images/fzf.png)](images/fzf.png)
 
 ##### Config `customization.cfg`
-[![tkginstaller-fzf2](images/config.png)](images/config.png)
+[![tkginstaller](images/config.png)](images/config.png)
+[![tkginstaller](images/confi2.png)](images/config2.png)
 
 ##### Building
-[![tkginstaller-fzf2](images/wine.png)](images/wine.png)
+[![tkginstaller](images/wine.png)](images/wine.png)
 
 ---
 
