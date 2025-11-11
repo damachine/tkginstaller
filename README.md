@@ -26,7 +26,7 @@
 
 ##### Config `customization.cfg`
 [![tkginstaller](images/config.png)](images/config.png)
-[![tkginstaller](images/confi2.png)](images/config2.png)
+[![tkginstaller](images/config2.png)](images/config2.png)
 
 ##### Building
 [![tkginstaller](images/wine.png)](images/wine.png)
