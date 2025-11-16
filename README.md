@@ -11,13 +11,12 @@
 
 # TKG-Installer 🐸
 
-#### This installation wrapper allows you to build, install, and customize TKG source packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
+#### This installation wrapper allows you to build, install, and customize system-specifice -TKG- source packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
 
 ### Features
 
-- **Build/Install**: Use either an interactive `fzf` menu or a quick, direct `terminal` command to building system-specific TKG packets.
-- **Customize**: Create, adjust, and compare `customization.cfg` files.
-- **Multi-Distribution**: Works seamlessly on Arch-based systems and on most other Linux distributions supported by the Frogging-Family.
+- **Build/Install**: Use either an interactive `fzf` menu or a quick direct `terminal` command.
+- **Customize**: For maximum flexibility create, compare, and edit `customization.cfg` files.
 
 ### Installation
 
@@ -32,7 +31,7 @@
    tkginstaller
    ```
 
-- **All Distributions**
+- **All Distributions** *supported by the Frogging-Family*
 
    ```bash
    # STEP 1: Preparation
