@@ -4,43 +4,25 @@
   <img src="https://img.shields.io/badge/language-bash-blue?logo=gnu-bash">
   <a href="https://kernel.org/"><img src="https://img.shields.io/badge/Platform-Linux-green.svg"></a>
   <a href="https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21"></a>
+  <a href="https://github.com/damachine/tkginstaller/issues"><img src="https://img.shields.io/github/issues/damachine/tkginstaller?&logo=github&label=Issues"></a>
+  <a href="https://github.com/damachine/tkginstaller/discussions"><img src="https://img.shields.io/github/discussions/damachine/tkginstaller?&logo=github&label=Discussions"></a>
+  <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a>
 </p>
-
----
 
 # TKG-Installer 🐸
 
-#### Build, install and customize TKG source packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories
+#### This installation wrapper allows you to build, install, and customize TKG source packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
 
----
-
-## Features
+### Features
 
 - **Build/Install**: Use either an interactive `fzf` menu or a quick, direct `terminal` command to building system-specific TKG packets.
 - **Customize**: Create, adjust, and compare `customization.cfg` files.
 - **Multi-Distribution**: Works seamlessly on Arch-based systems and on most other Linux distributions supported by the Frogging-Family.
 
-##### Menu
-[![tkginstaller](images/fzf2.png)](images/fzf2.png)
-[![tkginstaller](images/fzf.png)](images/fzf.png)
+### Installation
 
-##### Config `customization.cfg`
-[![tkginstaller](images/config.png)](images/config.png)
-[![tkginstaller](images/config2.png)](images/config2.png)
+- **Arch Linux**
 
-##### Building
-[![tkginstaller](images/wine.png)](images/wine.png)
-
----
-
-## Installation
-
-#### Arch Linux
-
-[![AUR](https://img.shields.io/aur/version/tkginstaller-git?color=1793d1&label=AUR&logo=arch-linux)](https://aur.archlinux.org/packages/tkginstaller-git)
-
-- Using an AUR helper (Recommended):
-  
    ```bash
    # STEP 1: Install
    yay -S tkginstaller-git
@@ -50,9 +32,7 @@
    tkginstaller
    ```
 
-#### All Distributions
-
-- Manual installation:
+- **All Distributions**
 
    ```bash
    # STEP 1: Preparation
@@ -86,76 +66,48 @@
    tkginstaller
    ```
 
-#### Dependencies
--  Command-line mode need only:
-> - **`git`**: For cloning the TKG repositories.
-> - **`onefetch`**: To display Git repository information like fastfetch.
+### Usage
 
-- Interactive `fzf`-menu and Editor mode need:
-> - **`bat`**: For syntax highlighting.
-> - **`curl`**: Used to fetch configuration and markdown files.
-> - **`fzf`**: Powers the interactive menu.
-> - **`glow`**: For preview markdown files in the terminal.
-> - **`nano`, `micro`, `vim`, etc.** The script uses the `$EDITOR` environment variable.
-> - **`wdiff`** For comparing `customization.cfg` files.
+##### Interactive (Menu-mode)
 
-#### Individual TKG packages have their own dependencies: [https://github.com/Frogging-Family](https://github.com/Frogging-Family)
+- **For a user-friendly, menu-driven experience, simply run:**
 
----
+   ```bash
+   tkginstaller
+   ```
 
-## Usage
+##### Command-line (Direct-mode)
 
-- #### Interactive (Menu-mode)
+- **For quick, automated tasks, use direct commands. This mode skips the interactive menu.**
 
-> For a user-friendly, menu-driven experience, simply run:
+   ```bash
+   # Syntax: tkginstaller [package]
+   # Use full names or shortcuts (l, n, m, w, p)
 
->   ```bash
->   tkginstaller
->   ```
+   tkginstaller linux      # or 'tkginstaller l'
+   tkginstaller nvidia     # or 'tkginstaller n'
+   tkginstaller mesa       # or 'tkginstaller m'
+   tkginstaller wine       # or 'tkginstaller w'
+   tkginstaller proton     # or 'tkginstaller p'
 
-- #### Command-line (Direct-mode)
+   # Syntax: tkginstaller [package] [action]
+   # Use full names or shortcuts (c, e for config/edit)
 
-> For quick, automated tasks, use direct commands. This mode skips the interactive menu.
+   # Edit a package's configuration file:
+   tkginstaller linux config   # or 'tkginstaller l c'
+   tkginstaller config linux   # or 'tkginstaller c l'
+   tkginstaller mesa edit      # or 'tkginstaller m e'
 
->   ```bash
->   # Syntax: tkginstaller [package]
->   # Use full names or shortcuts (l, n, m, w, p)
->
->   tkginstaller linux      # or 'tkginstaller l'
->   tkginstaller nvidia     # or 'tkginstaller n'
->   tkginstaller mesa       # or 'tkginstaller m'
->   tkginstaller wine       # or 'tkginstaller w'
->   tkginstaller proton     # or 'tkginstaller p'
->
->   # Syntax: tkginstaller [package] [action]
->   # Use full names or shortcuts (c, e for config/edit)
->
->   # Edit a package's configuration file:
->   tkginstaller linux config   # or 'tkginstaller l c'
->   tkginstaller config linux   # or 'tkginstaller c l'
->   tkginstaller mesa edit      # or 'tkginstaller m e'
->
->   # Clean up all temporary files and restart installer:
->   tkginstaller clean
->
->   # Use 'help' or its shortcuts (h, --help, -h)
->   tkginstaller help
->   ```
+   # Clean up all temporary files and restart installer:
+   tkginstaller clean
+
+   # Use 'help' or its shortcuts (h, --help, -h)
+   tkginstaller help
+   ```
 
 ---
 
-> [!TIP]
-> ### Have a question or an idea?
-> - **Suggest improvements** or discuss new features in our **[Discussions](https://github.com/damachine/tkginstaller/discussions)**.
-> - **Report a bug** or request help by opening an **[Issue](https://github.com/damachine/tkginstaller/issues)**.
->
-> <a href="https://github.com/damachine/tkginstaller/discussions"><img src="https://img.shields.io/github/discussions/damachine/tkginstaller?style=flat-square&logo=github&label=Discussions"></a> <a href="https://github.com/damachine/tkginstaller/issues"><img src="https://img.shields.io/github/issues/damachine/tkginstaller?style=flat-square&logo=github&label=Issues"></a>
-
-## ⚠️ Disclaimer
-This software is provided "as is", without warranty of any kind, express or implied.
-I do not guarantee that it will work as intended on your system.
-
-## 📄 License
+#### 📄 License
 
 This installer script is released under the **MIT License**.
 
@@ -164,9 +116,7 @@ This installer script is released under the **MIT License**.
 Individual TKG packages have their own licenses:
 - See respective repositories at [https://github.com/Frogging-Family](https://github.com/Frogging-Family)
 
----
-
-## 💝 Support the Project
+#### 💝 Support the Project
 
 If you find TKG Installer useful and want to support its development:
 
@@ -178,7 +128,7 @@ If you find TKG Installer useful and want to support its development:
 
 > *🙏 Your support keeps this project alive and improving — thank you!.*
 
-#### ⭐ Stargazers over time
+##### ⭐ Stargazers over time
 [![Stargazers over time](https://starchart.cc/damachine/tkginstaller.svg?variant=adaptive)](https://starchart.cc/damachine/tkginstaller)
 
 ---
