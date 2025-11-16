@@ -50,7 +50,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.25.8"
+_tkg_version="v0.25.9"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -139,7 +139,7 @@ __init_style() {
 
 # Display banner
 __banner() {
-    local _color="${1:-$_green_mint}"
+    local _color="${1:-$_green_neon}"
     printf "%b\n" "${_color}"
     cat <<EOF
 ░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
@@ -184,8 +184,8 @@ __msg() {
         info_mint) _color="${_green_mint}"; _prefix="" ;;
         info_orange) _color="${_orange}"; _prefix="" ;;
         info_blue) _color="${_blue}"; _prefix="" ;;
-        warning) _color="${_orange}"; _prefix="${_uline_on}WARNING:${_uline_off}${_color} " ;;
-        error) _color="${_red}"; _prefix="${_uline_on}ERROR:${_uline_off}${_color} " ;;
+        warning) _color="${_orange}"; _prefix="${_uline_on}WARNING${_uline_off}:${_color} " ;;
+        error) _color="${_red}"; _prefix="${_uline_on}ERROR${_uline_off}:${_color} " ;;
         *) _color="${_reset}"; _prefix="" ;;
     esac
 
@@ -333,7 +333,7 @@ __prepare() {
    
     # Welcome message
     __banner
-    printf "%s" "${_green_mint}Starting"
+    printf "%s" "${_green_neon}Starting"
     for i in {1..3}; do
         printf " ."
         sleep 0.3s
@@ -436,9 +436,9 @@ __prepare() {
 
     # Entering TKG-Installer
     if [[ "$_load_preview" == "true" ]]; then
-        __msg_plain "${_green_mint}Entering interactive menu${_reset}"
+        __msg_plain "${_green_neon}Entering interactive menu${_reset}"
     else
-        __msg_plain "${_green_mint}Running direct installation${_reset}"
+        __msg_plain "${_green_neon}Running direct installation${_reset}"
     fi
 
     # Short delay for better UX (( :P ))
@@ -477,7 +477,7 @@ __exit() {
         __msg_plain "${_red} Exiting due to errors. Please check the messages above for details.${_break}"
     else
         __banner
-        __msg_plain "${_green_mint}Closed.${_break}"
+        __msg_plain "${_green_neon}Closed.${_break}"
     fi
 
     # Perform cleanup
@@ -787,7 +787,7 @@ __proton_install() {
 # =============================================================================
 
 # Helper function to handle individual config file editing and downloading if missing
-__config_error() {
+__error_config() {
     local _msg="$1"
     clear
     __banner "$_red"
@@ -797,7 +797,7 @@ __config_error() {
     clear
 }
 
-# Text editor
+# Text editor launcher
 __editor() {
     local _target_file="${1}"
     local _editor_parts=()
@@ -819,7 +819,7 @@ __editor() {
         
         # No editor found - show error
         if [[ -z "${_editor_parts[0]:-}" ]]; then
-            __config_error "No editor found!${_break} Please set \$EDITOR environment variable or install one of:${_break} ${_gray}nano${_reset}, ${_gray}micro${_reset}, ${_gray}vim${_reset}, or ${_gray}vi${_reset}${_break}"
+            __error_config "No editor found!${_break} Please set \$EDITOR environment variable or install one of:${_break} ${_gray}nano${_reset}, ${_gray}micro${_reset}, ${_gray}vim${_reset}, or ${_gray}vi${_reset}${_break}"
             return 1
         fi
     fi
@@ -828,9 +828,9 @@ __editor() {
     "${_editor_parts[@]}" "$_target_file"
 }
 
-# Configuration file editor
-__edit_config() {
-    # Define config mappings once (DRY principle)
+# Configuration file editor menu
+__menu_config() {
+    # Define config mappings and URLs
     declare -A _config_urls=(
         [linux-tkg]="${_frog_raw_url}/linux-tkg/master/customization.cfg"
         [nvidia-all]="${_frog_raw_url}/nvidia-all/master/customization.cfg"
@@ -866,7 +866,7 @@ __edit_config() {
             case "${_user_answer,,}" in
                 y|yes)
                     if ! mkdir -p "${_config_dir}" 2>/dev/null; then
-                        __config_error "Creating configuration directory failed: ${_config_dir}${_break} Please check the path and your permissions then try again.${_break}"
+                        __error_config "Creating configuration directory failed: ${_config_dir}${_break} Please check the path and your permissions then try again.${_break}"
                         return 1
                     fi
                     clear
@@ -896,6 +896,7 @@ __edit_config() {
             "linux-tkg  |🐧 ${_green_neon}Linux   ${_gray} customization.cfg ${_reset}->${_orange} 'linux-tkg.cfg'  "
         )
 
+        # Add Nvidia and Mesa options only for Arch-based distros
         if [[ "${_is_arch_based}" == "true" ]]; then
             _menu_options+=(
                 "nvidia-all |💻 ${_green_neon}Nvidia  ${_gray} customization.cfg ${_reset}->${_orange} 'nvidia-all.cfg'"
@@ -909,6 +910,7 @@ __edit_config() {
             "return     |⏪ ${_green_neon}Return"
         )
 
+        # Prepare menu content
         local _menu_content
         _menu_content=$(printf '%s\n' "${_menu_options[@]}")
 
@@ -923,10 +925,13 @@ __edit_config() {
             )
         export _config_urls_json
 
+        # Define preview command components
         local _info_config="${_green_neon}Comparing remote and local ${_reset}${_gray}customization.cfg${_reset}${_green_neon}, press [Enter] to open and edit ${_reset}${_break}${_break}${_green_light} Remote:${_reset}${_gray} \$_remote_url ${_reset}${_break}${_orange}≠${_reset}${_green_light} Local:${_reset}${_gray} file://\$_config_file_path ${_reset}${_break}${_green_dark}${_line}${_break}"
-        
+
+        # Define error message for missing config file
         local _error_config_not_exist="${_orange}No external configuration file found.${_reset}${_break}${_break}${_green_light} This configuration file is required for customizing the -TKG- package.${_break}${_green_light} Press [Enter] to download the missing${_reset}${_gray} customization.cfg${_reset}${_green_light} file, according to -TKG- package standards.${_reset}${_break}${_green_dark}${_line}${_break}"
 
+        # Define bat and wdiff commands for preview
         local _bat_cmd="bat --style=plain --language=cfg --wrap character --terminal-width ${_cols} --force-colorization --theme='Visual Studio Dark+'"
         local _diff_cmd="wdiff --terminal --statistics --start-delete='${_red}' --end-delete='${_reset}' --start-insert='${_green_light}' --end-insert='${_reset}'"
 
@@ -953,6 +958,7 @@ __edit_config() {
             fi
         '
 
+        # Define header texts
         local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Config menu (Beta)${_uline_off}${_reset}${_break}${_break}\
 ${_green_light}    - Customize to your preferred settings${_break}\
 ${_green_light}    - Download missing file(s)${_break}\
@@ -960,33 +966,40 @@ ${_green_light}    - Show difference between remote and local${_break}${_break}\
 ${_green_light}    According to -TKG- package standards file(s)${_break}    stored in: ${_reset}${_gray}file://$HOME/.config/frogminer/${_reset}${_break}${_break}\
 ${_green_light}    Please make sure to adjust the settings correctly!${_break}    More visit: ${_reset}${_gray}https://github.com/Frogging-Family${_reset}${_break}${_break}${_break}\
 ${_green_light}   Select an option below:"
-        
+
+        # Define footer texts
         local _footer_text="  ${_green_light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}\
   Press [Enter] to select, [Ctrl+P] ${_green_light}to toggle the preview window, [ESC] to exit${_break}${_break}\
   ${_green_light}Website:${_reset} ${_gray}https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family"
-        
+
+        # Define border label text
         local _border_label_text="${_tkg_version}"
         local _preview_window_settings='right:wrap:75%'
 
+        # Run fzf menu
+        local _config_choice
         _config_choice=$(__fzf_menu "$_menu_content" "$_preview_command" "$_header_text" "$_footer_text" "$_border_label_text" "$_preview_window_settings" "$_fzf_bind")
 
+        # Unset exported variables
         unset _config_urls_json
 
+        # Handle empty choice (ESC pressed)
         if [[ -z "$_config_choice" ]]; then
             __banner
-            __msg_info_orange " Applying${_reset}${_gray} customization.cfg${_reset}${_orange} changes...${_break}"
+            __msg_info "${_green_neon}${_uline_on}APPLY${_uline_off}:${_reset}${_gray} customization.cfg${_reset}${_green_light} changes...${_break}"
             sleep 1.5s
             clear
             return 0
         fi
 
+        # Extract config file key
         local _config_file
         _config_file=$(echo "${_config_choice}" | cut -d"|" -f1 | xargs)
 
-        # Handle return
+        # Handle return option
         if [[ "$_config_file" == "return" ]]; then
             __banner
-            __msg_info_orange "Applying${_reset}${_gray} customization.cfg${_reset}${_orange} changes...${_break}"
+            __msg_info "${_green_neon}${_uline_on}APPLY${_uline_off}:${_reset}${_gray} customization.cfg${_reset}${_green_light} changes...${_break}"
             sleep 1.5s
             clear
             return 0
@@ -1008,6 +1021,7 @@ __old_config() {
     local _upstream_url="$2"
     local _package_name="$3"
     
+    # Check if config file exists
     if [[ ! -f "$_config_file" ]]; then
         return 0
     fi
@@ -1018,10 +1032,12 @@ __old_config() {
         __msg_warning "Could not download upstream config for comparison"
         return 1
     fi
-    
-    # Extract variable names from both files
+
+    # Extract variable names from local file
     local _local_vars
     _local_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_config_file" | sort -u)
+
+    # Extract variable names from upstream file(s)
     local _upstream_vars
     _upstream_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_upstream" | sort -u)
 
@@ -1030,11 +1046,35 @@ __old_config() {
     if [[ "$_package_name" == "Linux-TKG" ]]; then
         local _prepare_url="${_frog_raw_url}/linux-tkg/master/linux-tkg-config/prepare"
         local _tmp_prepare="/tmp/linux-tkg-prepare"
-        
         if curl -fsSL "$_prepare_url" -o "$_tmp_prepare" 2>/dev/null; then
             # Extract deprecated variables from _deprecated_config_vars array
             _officially_deprecated=$(sed -n '/_deprecated_config_vars=($/,/^)$/p' "$_tmp_prepare" | grep -oP '^\s*"_\K[^"]+' | sed 's/^/_/' || true)
             rm -f "$_tmp_prepare"
+        fi
+    fi
+
+    # Check for advanced customization file variables for Wine-TKG and Proton-TKG (robust, dedupliziert)
+    if [[ "$_package_name" == "Wine-TKG" ]]; then
+        local _adv_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/advanced-customization.cfg"
+        local _tmp_adv="/tmp/upstream_advanced.cfg"
+        if curl -fsSL "$_adv_url" -o "$_tmp_adv" 2>/dev/null; then
+            local _adv_vars
+            _adv_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_adv" 2>/dev/null)
+            if [[ -n "$_adv_vars" ]]; then
+                _upstream_vars=$(printf "%s\n%s" "$_upstream_vars" "$_adv_vars" | sort -u | uniq)
+            fi
+            rm -f "$_tmp_adv"
+        fi
+    elif [[ "$_package_name" == "Proton-TKG" ]]; then
+        local _adv_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/advanced-customization.cfg"
+        local _tmp_adv="/tmp/upstream_advanced.cfg"
+        if curl -fsSL "$_adv_url" -o "$_tmp_adv" 2>/dev/null; then
+            local _adv_vars
+            _adv_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_adv" 2>/dev/null)
+            if [[ -n "$_adv_vars" ]]; then
+                _upstream_vars=$(printf "%s\n%s" "$_upstream_vars" "$_adv_vars" | sort -u | uniq)
+            fi
+            rm -f "$_tmp_adv"
         fi
     fi
 
@@ -1052,17 +1092,19 @@ __old_config() {
         fi
     fi
     
+    # Notify user if deprecated variables found
     if [[ -n "$_deprecated_vars" ]]; then
         __banner "$_orange"
         __msg_warning "Found deprecated config variables in your local config:${_reset}${_gray} $_config_file ${_reset}${_break}"
         while IFS= read -r _var; do
-            __msg_plain "  ${_gray}${_var}${_reset}"
+            __msg_plain " ${_gray}${_var}${_reset}"
         done <<< "$_deprecated_vars"
-        __msg_plain "${_break}${_orange} These variables are no longer used in upstream and can be removed.${_reset}${_break}"
+        __msg_plain "${_break} These variables are no longer used in upstream and can be removed.${_break}"
         __msg_prompt "Press any key to continue...${_break}"
         read -n 1 -s -r
     fi
     
+    # Cleanup tmp upstream files
     rm -f "$_tmp_upstream"
 }
 
@@ -1080,7 +1122,7 @@ __handle_config() {
 
     # Notify user
     __banner
-    __msg_info_orange "Opening external configuration file:${_reset}${_gray} $_config_name${_break}"
+    __msg_info "${_green_neon}${_uline_on}OPEN${_uline_off}:${_reset}${_gray} $_config_name${_reset}${_green_light} external configuration file${_break}"
     sleep 1.5s
     clear
 
@@ -1088,7 +1130,7 @@ __handle_config() {
     if [[ -f "${_config_path}" ]]; then
         # Edit existing configuration file
         __editor "${_config_path}" || {
-            __config_error "Opening external configuration failed:${_reset}${_gray} ${_config_path}${_break} Please check if the file exists and is accessible.${_break}"
+            __msg_info "${_green_neon}${_uline_on}OPEN${_uline_off}:${_reset}${_gray} $_config_name${_reset}${_green_light} external configuration file${_break}"
             return 1
         }
     else
@@ -1112,13 +1154,13 @@ __handle_config() {
             y|yes)
                 # Create the configuration directory
                 mkdir -p "$(dirname "${_config_path}")" || {
-                    __config_error "Creating configuration directory failed: ${_config_path}${_break} Please check the path and your permissions then try again.${_break}"
+                    __error_config "Creating configuration directory failed: ${_config_path}${_break} Please check the path and your permissions then try again.${_break}"
                     return 1
                 }
                 
                 # Check for curl availability
                 if ! command -v curl >/dev/null 2>&1; then
-                    __config_error "curl is not installed. Please install curl to download configuration files.${_break}"
+                    __error_config "curl is not installed. Please install curl to download configuration files.${_break}"
                     return 1
                 fi
                 
@@ -1132,12 +1174,12 @@ __handle_config() {
                     
                     # Open the downloaded configuration file
                     __editor "${_config_path}" || {
-                        __config_error "Opening external configuration file:${_reset}${_gray} $_config_name${_break} Please check if the file exists and is accessible.${_break}"
+                        __error_config "Opening external configuration file:${_reset}${_gray} $_config_name${_break} Please check if the file exists and is accessible.${_break}"
                         return 1
                     }
                 else
                     # Failed to download configuration file
-                    __config_error "Downloading external configuration from ${_config_url} failed!${_break} Please check your internet connection and try again.${_break}"
+                    __error_config "Downloading external configuration from ${_config_url} failed!${_break} Please check your internet connection and try again.${_break}"
                     return 1
                 fi
                 ;;
@@ -1157,7 +1199,7 @@ __handle_config() {
 
     # Notify user
     __banner
-    __msg_info_orange "Closing external configuration file:${_reset}${_gray} $_config_name${_reset}${_break}"
+    __msg_info "${_green_neon}${_uline_on}CLOSE${_uline_off}:${_reset}${_gray} $_config_name${_reset}${_green_light} external configuration file${_break}"     
     sleep 1.5s
     clear
     return 0
@@ -1241,6 +1283,7 @@ __menu() {
     )
     export _preview_docs_json
 
+    # Define preview repositories
     local _preview_repos_json
     _preview_repos_json=$(printf '%s\n' \
         "Linux=${_preview_repos[Linux]}" \
@@ -1266,27 +1309,34 @@ __menu() {
         [[ -n "$repo" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_frog_raw_url}"'/${repo}/README.md"
     '
 
+    # Define header texts
     local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Main menu${_uline_off}${_reset}${_break}${_break}\
     ${_green_light}Build, install and customize -TKG- packages${_break}${_break}${_break}\
    Select an option below:"
     
+    # Define footer texts
     local _footer_text="  ${_green_light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}\
   Press [Enter] to select, [Ctrl+P] ${_green_light}to toggle the preview window, [ESC] to exit${_break}${_break}\
   ${_green_light}Website:${_reset} ${_gray}https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family${_reset}"
   
+    # Define border label text
     local _border_label_text="${_tkg_version}"
     local _preview_window_settings='right:wrap:55%:hidden'
 
+    # Run fzf menu
     local _main_choice
     _main_choice=$(__fzf_menu "$_menu_content" "$_preview_command" "$_header_text" "$_footer_text" "$_border_label_text" "$_preview_window_settings" "$_fzf_bind")
 
+    # Cleanup exported variables
     unset _preview_docs_json _preview_repos_json
 
+    # Handle user choice
     if [[ -z "${_main_choice:-}" ]]; then
         clear
         __exit 0
     fi
 
+    # Write user choice to file
     echo "$_main_choice" | cut -d"|" -f1 | xargs > "$_choice_file"
 }
 
@@ -1309,12 +1359,12 @@ __main_direct_mode() {
         proton|p|--proton|-p) _package="proton-tkg" ;;
         clean|--clean)
             __banner
-            __msg_info_orange "Cleaning all temporary files...${_break}"
+            __msg_info "Cleaning all temporary files...${_break}"
             __msg_plain " Location:${_reset}${_gray} ${_tmp_dir}${_reset}${_break}"
             rm -f "$_choice_file" "$_lock_file" 2>&1 || true
             rm -rf "$_tmp_dir" 2>&1 || true
             sleep 1.5s
-            __msg_plain "${_green_mint}Done.${_break}"
+            __msg_plain "${_green_neon}Done.${_break}"
             exit 0 >/dev/null 2>&1
             ;;
         help|h|--help|-h)
@@ -1337,7 +1387,7 @@ __main_direct_mode() {
 
     # Handle config editing if second argument is config/edit
     if [[ "$_arg2" =~ ^(config|c|edit|e)$ && -n "$_package" ]]; then
-        # Map package to config details (DRY - same structure as __edit_config)
+        # Map package to config details (DRY - same structure as __menu_config)
         declare -A _config_urls=(
             [linux-tkg]="${_frog_raw_url}/linux-tkg/master/customization.cfg"
             [nvidia-all]="${_frog_raw_url}/nvidia-all/master/customization.cfg"
@@ -1360,7 +1410,7 @@ __main_direct_mode() {
             "${_config_dir}/${_package}.cfg" \
             "${_config_urls[$_package]}"
         __banner
-        __msg_plain "${_green_mint}Closed.${_break}"
+        __msg_plain "${_green_neon}Closed.${_break}"
         __clean || true
         exit 0
     fi
@@ -1405,7 +1455,7 @@ __main_interactive_mode() {
         Wine)    __install_wrapper __wine_install ;;
         Proton)  __install_wrapper __proton_install ;;
         Config)
-            __edit_config
+            __menu_config
             rm -f "$_lock_file" 2>&1 || true
             clear
             exec "$0"
@@ -1418,12 +1468,12 @@ __main_interactive_mode() {
             ;;
         Clean)
             __banner
-            __msg_info_orange "Cleaning all temporary files...${_break}"
+            __msg_info "Cleaning all temporary files...${_break}"
             __msg_plain " Location:${_reset}${_gray} ${_tmp_dir}${_reset}${_break}"
             rm -f "$_choice_file" "$_lock_file" 2>&1 || true
             rm -rf "$_tmp_dir" 2>&1 || true
             sleep 1.5s
-            __msg_plain "${_green_mint}Done.${_break}"
+            __msg_plain "${_green_neon}Done.${_break}"
             exit 0 >/dev/null 2>&1
             ;;
         Close)
