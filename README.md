@@ -11,7 +11,7 @@
 
 # TKG-Installer 🐸
 
-#### This installation wrapper allows you to build, install, and customize system-specifice -TKG- source packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
+#### This installation wrapper allows you to build, install, and customize system specifice -TKG- source packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
 
 ### Features
 
