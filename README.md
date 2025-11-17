@@ -9,7 +9,7 @@
   <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a>
 </p>
 
-<pre style="font-family: 'Courier New', monospace; font-size: 132px; line-height: 1.2;">
+<pre style="font-family: 'Courier New', monospace; font-size: 32px; line-height: 1.2;">
 ░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
@@ -17,9 +17,9 @@
 
 This tool allows you to easy build, install, and customize system-specific TKG/Frogminer source packages
 from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.
-  
-  * Use either an interactive `fzf` menu or a quick direct `terminal` command.
-  * For maximum flexibility this tool allows you create, compare, and edit `customization.cfg` files.
+
+ - Use either an interactive `fzf` menu or a quick direct `terminal` command.
+ - For maximum flexibility this tool allows you create, compare, and edit `customization.cfg` files.
 </pre>
 
 **`Installation`**
@@ -35,7 +35,7 @@ from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> reposi
    tkginstaller
    ```
 
-- `All Distributions *supported by the Frogging-Family`*
+- `All Distributions *supported by the Frogging-Family`
 
    ```bash
    # STEP 1: Preparation
@@ -69,9 +69,9 @@ from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> reposi
    tkginstaller
    ```
 
-`**Usage**`
+**`Usage`**
 
-- For a user-friendly, interactive, menu-driven experience, simply run:
+- `For a user-friendly, interactive, menu-driven experience, simply run:`
 
    ```bash
    tkginstaller
@@ -104,19 +104,13 @@ from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> reposi
    tkginstaller help
    ```
 
----
-
-📄 License
-
+<pre style="font-family: 'Courier New', monospace; font-size: 32px; line-height: 1.2;">
 This installer script is released under the MIT License.
 
-[![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+Individual TKG/Frogminer packages have their own licenses:
+ - See respective repositories at <a href="https://github.com/Frogging-Family">Frogging-Family</a>
 
-Individual TKG packages have their own licenses:
-- See respective repositories at [https://github.com/Frogging-Family](https://github.com/Frogging-Family)
-
-> *🙏 Your support keeps this project alive and improving — thank you!.*
-
----
-
-👨‍💻 Developed by **DAMACHINE** 📧 Contact: christkue79@gmail.com 🌐 Repository: [GitHub](https://github.com/damachine/tkginstaller)
+🙏 Your support keeps this project alive and improving — thank you!.
+  
+👨‍💻 Developed by DAMACHINE 📧 Contact: christkue79@gmail.com 🌐 Repository: <a href="https://github.com/damachine/tkginstalle">GitHub</a>
+</pre>
