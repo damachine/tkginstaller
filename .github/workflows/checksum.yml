@@ -13,7 +13,8 @@ permissions:
   contents: write
 
 jobs:
-  update-checksum:
+  checksum:
+    name: Generate and Update SHA256SUMS
     runs-on: ubuntu-latest
     
     steps:
