@@ -14,17 +14,17 @@
 ░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
 ──  KISS the 🐸  ──
-</pre>
 
 This tool allows you to easy build, install, and customize system-specific TKG/Frogminer source packages
-from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
-
+from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.
+  
   * Use either an interactive `fzf` menu or a quick direct `terminal` command.
   * For maximum flexibility this tool allows you create, compare, and edit `customization.cfg` files.
+</pre>
 
-**Installation**
+**`Installation`**
 
-- Arch Linux
+- `Arch Linux`
 
    ```bash
    # STEP 1: Install
@@ -35,7 +35,7 @@ from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
    tkginstaller
    ```
 
-- All Distributions *supported by the Frogging-Family*
+- `All Distributions *supported by the Frogging-Family`*
 
    ```bash
    # STEP 1: Preparation
@@ -69,7 +69,7 @@ from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
    tkginstaller
    ```
 
-**Usage**
+`**Usage**`
 
 - For a user-friendly, interactive, menu-driven experience, simply run:
 
@@ -77,7 +77,7 @@ from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
    tkginstaller
    ```
 
-- For quick, automated tasks, skips the interactive menu and use direct commands.
+- `For quick, automated tasks, skips the interactive menu and use direct commands.`
 
    ```bash
    # Syntax: tkginstaller [package]
