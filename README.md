@@ -18,8 +18,8 @@
 This tool allows you to easy build, install, and customize system-specific TKG/Frogminer source
 packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.
 
-- Use either an interactive `fzf` menu or a quick direct `terminal` command.
-- For maximum flexibility this tool allows you create, compare, and edit `customization.cfg` files.
+ - Use either an interactive `fzf` menu or a quick direct `terminal` command.
+ - For maximum flexibility this tool allows you to manage `customization.cfg` files.
 </pre>
 
 **`Installation`**
