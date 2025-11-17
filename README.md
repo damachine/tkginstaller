@@ -44,24 +44,24 @@ OR:
     curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller
 
     # STEP 2: Optional verify integrity (Recommended)
-    curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sha256sum
-    sha256sum -c tkginstaller
+    curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/SHA256SUMS
+    sha256sum -c SHA256SUMS
 
     # STEP 3: Make script executable
     chmod +x tkginstaller
 
     # Optional: To make the installer available system-wide after manual installation
 
-    # Method 1: Create a system link (Recommended)
+    # Method 1: Create a system link
     sudo ln -s /path/to/tkginstaller /usr/bin/tkginstaller
 
     # Method 2: Create a shell alias or function
     # Add one of these to your ~/.bashrc or ~/.zshrc:
 
-    # As alias (simplest):
+    # As alias:
     alias tkginstaller='/path/to/tkginstaller'
 
-    # OR as function (more flexible):
+    # OR as function:
     tkginstaller() {
       /path/to/tkginstaller "$@"
     }
