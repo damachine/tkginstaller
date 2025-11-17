@@ -5,7 +5,7 @@
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
 ──  KISS the 🐸  ──
 
-<img src="https://img.shields.io/badge/Platform-Linux-green.svg"> <img src="https://img.shields.io/badge/language-bash-blue?logo=gnu-bash"> <a href="https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21"></a>
+<img src="https://img.shields.io/badge/version-v0.26.0-brightgreen"> <a href="https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21"></a>
   
 This tool allows you to easy build, install, and customize system-specific TKG/Frogminer source
 packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.
@@ -25,28 +25,32 @@ packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</
 ```bash
     # STEP 1: Install
     yay -S tkginstaller-git
-    #OR any other AUR helper
+    # OR any other AUR helper
 
     # After installation, you can simply run
     tkginstaller
 ```
 <pre style="font-family: 'Courier New', monospace; font-size: 32px; line-height: 1.2;">
 OR:
-  <img src="https://img.shields.io/badge/Arch%20Linux-1793D1?logo=archlinux&logoColor=white" alt="Arch Linux" title="Arch Linux Badge"> <img src="https://img.shields.io/badge/Debian-A81D33?logo=debian&logoColor=white" alt="Debian" title="Debian Badge"> <img src="https://img.shields.io/badge/Fedora-51A2DA?logo=fedora&logoColor=white" alt="Fedora" title="Fedora Badge"> <img src="https://img.shields.io/badge/openSUSE-73BA25?logo=opensuse&logoColor=white" alt="openSUSE" title="openSUSE Badge"> <img src="https://img.shields.io/badge/Ubuntu-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu" title="Ubuntu Badge"> <img src="https://img.shields.io/badge/Gentoo-54487A?logo=gentoo&logoColor=white" alt="Gentoo" title="Gentoo Badge"> <img src="https://img.shields.io/badge/Linux-000000?logo=linux&logoColor=white" alt="Linux" title="Linux Badge">
+  <img src="https://img.shields.io/badge/Arch%20Linux-1793D1?logo=archlinux&logoColor=white" alt="Arch Linux" title="Arch Linux Badge"> <img src="https://img.shields.io/badge/Gentoo-54487A?logo=gentoo&logoColor=white" alt="Gentoo" title="Gentoo Badge"> <img src="https://img.shields.io/badge/Debian-A81D33?logo=debian&logoColor=white" alt="Debian" title="Debian Badge"> <img src="https://img.shields.io/badge/Ubuntu-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu" title="Ubuntu Badge"> <img src="https://img.shields.io/badge/Fedora-51A2DA?logo=fedora&logoColor=white" alt="Fedora" title="Fedora Badge"> <img src="https://img.shields.io/badge/openSUSE-73BA25?logo=opensuse&logoColor=white" alt="openSUSE" title="openSUSE Badge"> <img src="https://img.shields.io/badge/Linux-000000?logo=linux&logoColor=white" alt="Linux" title="Linux Badge">
   - All distributions – manual installation
 </pre>
 ```bash
-    # STEP 1: Preparation
+    # Preparation
     mkdir -p /patch/to/tkginstaller
     cd /patch/to/tkginstaller
 
-    # STEP 2: Download with curl
+    # STEP 1: Download with curl
     curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller
+
+    # STEP 2: Optional verify integrity (Recommended)
+    curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller.sha256sum
+    sha256sum -c tkginstaller
 
     # STEP 3: Make script executable
     chmod +x tkginstaller
 
-    # Optional: Make the installer available system-wide after manual installation
+    # Optional: To make the installer available system-wide after manual installation
 
     # Method 1: Create a system link (Recommended)
     sudo ln -s /path/to/tkginstaller /usr/bin/tkginstaller
