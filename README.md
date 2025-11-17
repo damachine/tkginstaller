@@ -20,7 +20,7 @@ This tool allows you to easy build, install, and customize system-specific TKG/F
 from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
 
   * Use either an interactive `fzf` menu or a quick direct `terminal` command.
-  * For maximum flexibility create, compare, and edit `customization.cfg` files.
+  * For maximum flexibility this tool allows you create, compare, and edit `customization.cfg` files.
 
 **Installation**
 
