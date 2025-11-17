@@ -72,10 +72,3 @@ jobs:
           echo "**Checksum:** \`${{ steps.checksum.outputs.checksum }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: SHA256SUMS
-          path: SHA256SUMS
-          retention-days: 90
