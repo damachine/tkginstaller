@@ -17,7 +17,7 @@ packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</
 ---
 
 <pre style="font-family: 'Courier New', monospace; font-size: 32px; line-height: 1.2;">
-<b>Installation:</b>
+<b>INSTALLATION:</b>
 
   <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <img src="https://img.shields.io/badge/Arch%20Linux-1793D1?logo=archlinux&logoColor=white" alt="Arch Linux" title="Arch Linux Badge">
   - Arch Linux
@@ -30,10 +30,10 @@ packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</
     # After installation, you can simply run
     tkginstaller
 ```
-
 <pre style="font-family: 'Courier New', monospace; font-size: 32px; line-height: 1.2;">
+OR:
   <img src="https://img.shields.io/badge/Arch%20Linux-1793D1?logo=archlinux&logoColor=white" alt="Arch Linux" title="Arch Linux Badge"> <img src="https://img.shields.io/badge/Debian-A81D33?logo=debian&logoColor=white" alt="Debian" title="Debian Badge"> <img src="https://img.shields.io/badge/Fedora-51A2DA?logo=fedora&logoColor=white" alt="Fedora" title="Fedora Badge"> <img src="https://img.shields.io/badge/openSUSE-73BA25?logo=opensuse&logoColor=white" alt="openSUSE" title="openSUSE Badge"> <img src="https://img.shields.io/badge/Ubuntu-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu" title="Ubuntu Badge"> <img src="https://img.shields.io/badge/Gentoo-54487A?logo=gentoo&logoColor=white" alt="Gentoo" title="Gentoo Badge"> <img src="https://img.shields.io/badge/Linux-000000?logo=linux&logoColor=white" alt="Linux" title="Linux Badge">
-  - Manual installation
+  - All distributions – manual installation
 </pre>
 ```bash
     # STEP 1: Preparation
@@ -69,7 +69,7 @@ packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</
 ---
 
 <pre style="font-family: 'Courier New', monospace; font-size: 32px; line-height: 1.2;">
-<b>Usage:</b>
+<b>USEAGE:</b>
 
   <img src="https://img.shields.io/badge/TUI-000000?logo=windowsterminal&logoColor=white" alt="TUI" title="Text UI Badge"> <img src="https://img.shields.io/badge/fzf-finder-13A10E?logo=search&logoColor=white" alt="fzf-finder" title="fzf-finder Badge (with icon)">
   - For a user-friendly, interactive, menu-driven experience, simply run
@@ -78,8 +78,9 @@ packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</
      tkginstaller
 ```
 <pre style="font-family: 'Courier New', monospace; font-size: 32px; line-height: 1.2;">
+OR:
   <img src="https://img.shields.io/badge/CLI-000000?logo=prompt&logoColor=white" alt="CLI" title="Command Line Interface"> <img src="https://img.shields.io/badge/Terminal-333333?logo=windows-terminal&logoColor=white" alt="Terminal" title="Terminal (nerd font)">
-  - For quick, automated tasks, skips the interactive menu and use direct commands
+  - For quick, automated tasks, skips the interactive menu and use direct terminal commands
 </pre>
 ```bash
     # Syntax: tkginstaller [package]
