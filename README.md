@@ -9,9 +9,9 @@
   <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a>
 </p>
 
-# TKG-Installer 🐸
+# tkginstaller 🐸
 
-#### This installation wrapper allows you to build, install, and customize system specifice -TKG- source packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
+#### This tool allows you to easy build, install, and customize system-specific TKG source packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
 
 ### Features
 
