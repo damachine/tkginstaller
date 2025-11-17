@@ -1,15 +1,13 @@
-# .github/workflows/update-checksum.yml
 name: Update SHA256SUMS
 
 on:
   push:
-    branches:
-      - master
-      - main
+    branches: [ master ]
     paths:
-      - 'tkginstaller'  # Läuft NUR wenn tkginstaller geändert wird
-
-  workflow_dispatch:  # Manueller Trigger über GitHub UI
+      - 'tkginstaller'
+  release:
+    types: [ published ]
+  workflow_dispatch:  # Allows manual execution
 
 permissions:
   contents: write
