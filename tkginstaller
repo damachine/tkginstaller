@@ -50,7 +50,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.25.9"
+_tkg_version="v0.26.0"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -674,7 +674,7 @@ __linux_install() {
         # Arch-based distributions build system to use
         __msg_info "${_break}${_green_neon}${_uline_on}CHOOSE${_uline_off}:${_reset}${_green_light} Which build system want to use?${_break}"
         __msg_plain " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
-        __msg_plain " ${_uline_on}1${_uline_off}) makepkg -si${_reset}${_gray} (recommended for Arch-based distros) (${_uline_on}selected${_uline_off})"
+        __msg_plain " ${_uline_on}1${_uline_off}) makepkg -Csic${_reset}${_gray} (recommended for Arch-based distros) (${_uline_on}selected${_uline_off})"
         __msg_plain " 2) install.sh install${_reset}${_gray} (use if you want the generic install script)${_break}"
         
         __prompt_timer "[${_uline_on}1${_uline_off}/2]" 60
@@ -684,7 +684,7 @@ __linux_install() {
                 _build_command="chmod +x install.sh && ./install.sh install"
                 ;;
             *)
-                _build_command="makepkg -si"
+                _build_command="makepkg -Csic"
                 ;;
         esac
     else
@@ -702,7 +702,7 @@ __nvidia_install() {
     __msg_pkg "nvidia" "${_frog_repo_url}/nvidia-all/blob/master/customization.cfg"
 
     # Execute installation process
-    __install_package "${_frog_repo_url}/nvidia-all.git" "nvidia-all" "makepkg -si"
+    __install_package "${_frog_repo_url}/nvidia-all.git" "nvidia-all" "makepkg -Csic"
 }
 
 # Mesa-TKG installation
@@ -711,7 +711,7 @@ __mesa_install() {
     __msg_pkg "mesa" "${_frog_repo_url}/mesa-git/blob/master/customization.cfg"
 
     # Execute installation process
-    __install_package "${_frog_repo_url}/mesa-git.git" "mesa-git" "makepkg -si"
+    __install_package "${_frog_repo_url}/mesa-git.git" "mesa-git" "makepkg -Csic"
 }
 
 # Wine-TKG installation
@@ -726,7 +726,7 @@ __wine_install() {
         # Arch-based distributions build system to use
         __msg_info "${_break}${_green_neon}${_uline_on}CHOOSE${_uline_off}:${_reset}${_green_light} Which build system want to use?${_break}"
         __msg_plain " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
-        __msg_plain " ${_uline_on}1${_uline_off}) makepkg -si${_reset}${_gray} (recommended for Arch-based distros) (${_uline_on}selected${_uline_off})"
+        __msg_plain " ${_uline_on}1${_uline_off}) makepkg -Csic${_reset}${_gray} (recommended for Arch-based distros) (${_uline_on}selected${_uline_off})"
         __msg_plain " 2) non-makepkg-build.sh${_reset}${_gray} (use if you want a custom build script)${_break}"
         
         __prompt_timer "[${_uline_on}1${_uline_off}/2]" 60
@@ -736,7 +736,7 @@ __wine_install() {
                 _build_command="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
                 ;;
             *)
-                _build_command="makepkg -si"
+                _build_command="makepkg -Csic"
                 ;;
         esac
     else
@@ -1053,7 +1053,7 @@ __old_config() {
         fi
     fi
 
-    # Check for advanced customization file variables for Wine-TKG and Proton-TKG (robust, dedupliziert)
+    # Check for advanced customization file variables for Wine-TKG and Proton-TKG
     if [[ "$_package_name" == "Wine-TKG" ]]; then
         local _adv_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/advanced-customization.cfg"
         local _tmp_adv="/tmp/upstream_advanced.cfg"
