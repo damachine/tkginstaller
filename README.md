@@ -5,7 +5,7 @@
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
 ──  KISS the 🐸  ──
 
-<img src="https://img.shields.io/badge/version-v0.26.0-brightgreen"> <a href="https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21"></a>
+<img src="https://img.shields.io/badge/version-v0.26.1-brightgreen"> <a href="https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21"></a>
   
 This tool allows you to easy build, install, and customize system-specific TKG/Frogminer source
 packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.
