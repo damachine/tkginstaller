@@ -9,18 +9,22 @@
   <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a>
 </p>
 
-# tkginstaller 🐸
+<pre style="font-family: 'Courier New', monospace; font-size: 132px; line-height: 1.2;">
+░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
+░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
+░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
+──  KISS the 🐸  ──
+</pre>
 
-#### This tool allows you to easy build, install, and customize system-specific TKG source packages from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
+This tool allows you to easy build, install, and customize system-specific TKG/Frogminer source packages
+from the [Frogging-Family](https://github.com/Frogging-Family) repositories.
 
-### Features
+  * Use either an interactive `fzf` menu or a quick direct `terminal` command.
+  * For maximum flexibility create, compare, and edit `customization.cfg` files.
 
-- **Build/Install**: Use either an interactive `fzf` menu or a quick direct `terminal` command.
-- **Customize**: For maximum flexibility create, compare, and edit `customization.cfg` files.
+**Installation**
 
-### Installation
-
-- **Arch Linux**
+- Arch Linux
 
    ```bash
    # STEP 1: Install
@@ -31,7 +35,7 @@
    tkginstaller
    ```
 
-- **All Distributions** *supported by the Frogging-Family*
+- All Distributions *supported by the Frogging-Family*
 
    ```bash
    # STEP 1: Preparation
@@ -65,19 +69,15 @@
    tkginstaller
    ```
 
-### Usage
+**Usage**
 
-##### Interactive (Menu-mode)
-
-- **For a user-friendly, menu-driven experience, simply run:**
+- For a user-friendly, interactive, menu-driven experience, simply run:
 
    ```bash
    tkginstaller
    ```
 
-##### Command-line (Direct-mode)
-
-- **For quick, automated tasks, use direct commands. This mode skips the interactive menu.**
+- For quick, automated tasks, skips the interactive menu and use direct commands.
 
    ```bash
    # Syntax: tkginstaller [package]
@@ -106,29 +106,16 @@
 
 ---
 
-#### 📄 License
+📄 License
 
-This installer script is released under the **MIT License**.
+This installer script is released under the MIT License.
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 Individual TKG packages have their own licenses:
 - See respective repositories at [https://github.com/Frogging-Family](https://github.com/Frogging-Family)
 
-#### 💝 Support the Project
-
-If you find TKG Installer useful and want to support its development:
-
-- ⭐ **Star this repository** on GitHub.
-- 🐛 **Report bugs** and suggest improvements.
-- 🔄 **Share** the project with others.
-- 📝 **Contribute** code or documentation.
-- [![Sponsor](https://img.shields.io/badge/Sponsor-GitHub-blue?logo=github-sponsors)](https://github.com/sponsors/damachine)
-
 > *🙏 Your support keeps this project alive and improving — thank you!.*
-
-##### ⭐ Stargazers over time
-[![Stargazers over time](https://starchart.cc/damachine/tkginstaller.svg?variant=adaptive)](https://starchart.cc/damachine/tkginstaller)
 
 ---
 
