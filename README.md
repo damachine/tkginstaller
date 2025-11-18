@@ -26,17 +26,17 @@ TKG/Frogminer source packages from the <a href="https://github.com/Frogging-Fami
   - Other distributions (Linux kernel, Wine and Proton packages support by Frogging-Family)
 </pre>
 ```bash
-    # Arch based distro
-    # Install via AUR helper
-    yay -S tkginstaller-git
-    # OR any other AUR helper
+# Arch based distro
+# Install via AUR helper
+yay -S tkginstaller-git
+# OR any other AUR helper
 
-    # OR:
-    # Automated installation helper
-    curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/install.sh | bash
+# OR:
+# Automated installation helper
+curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/install.sh | bash
 
-    # After installation, you can simply run
-    tkginstaller
+# After installation, you can simply run
+tkginstaller
 ```
 
 ---
@@ -48,34 +48,34 @@ TKG/Frogminer source packages from the <a href="https://github.com/Frogging-Fami
   - Use either an interactive `fzf` menu or a quick direct `terminal` command
 </pre>
 ```bash
-    # For a modern and menu-driven experience, simply run
-    tkginstaller
+# For a modern and menu-driven experience, simply run
+tkginstaller
 ```
 ```bash
-    # For a quick tasks use one of the direct terminal commands
+# For a quick tasks use one of the direct terminal commands
 
-    # Syntax: tkginstaller [package]
-    # Use full names or shortcuts (l, n, m, w, p)
+# Syntax: tkginstaller [package]
+# Use full names or shortcuts (l, n, m, w, p)
 
-    tkginstaller linux      # or 'tkginstaller l'
-    tkginstaller nvidia     # or 'tkginstaller n'
-    tkginstaller mesa       # or 'tkginstaller m'
-    tkginstaller wine       # or 'tkginstaller w'
-    tkginstaller proton     # or 'tkginstaller p'
+tkginstaller linux      # or 'tkginstaller l'
+tkginstaller nvidia     # or 'tkginstaller n'
+tkginstaller mesa       # or 'tkginstaller m'
+tkginstaller wine       # or 'tkginstaller w'
+tkginstaller proton     # or 'tkginstaller p'
 
-    # Syntax: tkginstaller [package] [action]
-    # Use full names or shortcuts (c, e for config/edit)
+# Syntax: tkginstaller [package] [action]
+# Use full names or shortcuts (c, e for config/edit)
 
-    # Edit a package's configuration file:
-    tkginstaller linux config   # or 'tkginstaller l c'
-    tkginstaller config linux   # or 'tkginstaller c l'
-    tkginstaller mesa edit      # or 'tkginstaller m e'
+# Edit a package's configuration file:
+tkginstaller linux config   # or 'tkginstaller l c'
+tkginstaller config linux   # or 'tkginstaller c l'
+tkginstaller mesa edit      # or 'tkginstaller m e'
 
-    # Clean up all temporary files and restart installer
-    tkginstaller clean
+# Clean up all temporary files and restart installer
+tkginstaller clean
 
-    # Use 'help' or its shortcuts (h, --help, -h)
-    tkginstaller help
+# Use 'help' or its shortcuts (h, --help, -h)
+tkginstaller help
 ```
 
 ---
