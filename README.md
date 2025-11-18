@@ -68,7 +68,7 @@ OR:
       /path/to/tkginstaller "$@"
     }
 
-    # Now you can run from anywhere:
+    # Now you can run from anywhere
     tkginstaller
 ```
 
@@ -104,7 +104,7 @@ OR:
     tkginstaller config linux   # or 'tkginstaller c l'
     tkginstaller mesa edit      # or 'tkginstaller m e'
 
-    # Clean up all temporary files and restart installer:
+    # Clean up all temporary files and restart installer
     tkginstaller clean
 
     # Use 'help' or its shortcuts (h, --help, -h)
