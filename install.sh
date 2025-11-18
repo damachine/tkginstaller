@@ -103,7 +103,7 @@ main() {
     # Move to installation directory
     msg_step "Installing to $INSTALL_DIR..."
     mv "${SCRIPT_NAME}" "${INSTALL_DIR}/"
-    mv "${SCRIPT_NAME}.sha256sum" "${INSTALL_DIR}/"
+    mv "SHA256SUMS" "${INSTALL_DIR}/"
     chmod +x "${INSTALL_DIR}/${SCRIPT_NAME}"
     msg_info "✓ Installation complete"
     echo ""
