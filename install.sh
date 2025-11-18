@@ -111,17 +111,26 @@ main() {
     # Setup shell alias
     msg_step "Setting up shell alias..."
     
-    # Detect shell
+    # Detect shell - prioritize $SHELL variable (most reliable)
     SHELL_RC=""
-    if [[ -n "${BASH_VERSION:-}" ]]; then
-        SHELL_RC="${HOME}/.bashrc"
-    elif [[ -n "${ZSH_VERSION:-}" ]]; then
-        SHELL_RC="${HOME}/.zshrc"
-    elif [[ "$SHELL" == *"zsh"* ]]; then
-        SHELL_RC="${HOME}/.zshrc"
-    elif [[ "$SHELL" == *"bash"* ]]; then
-        SHELL_RC="${HOME}/.bashrc"
-    fi
+    CURRENT_SHELL="$(basename "${SHELL}")"
+    
+    case "$CURRENT_SHELL" in
+        zsh)
+            SHELL_RC="${HOME}/.zshrc"
+            ;;
+        bash)
+            SHELL_RC="${HOME}/.bashrc"
+            ;;
+        *)
+            # Fallback: check shell version variables
+            if [[ -n "${ZSH_VERSION:-}" ]]; then
+                SHELL_RC="${HOME}/.zshrc"
+            elif [[ -n "${BASH_VERSION:-}" ]]; then
+                SHELL_RC="${HOME}/.bashrc"
+            fi
+            ;;
+    esac
 
     if [[ -n "$SHELL_RC" ]]; then
         # Check if alias already exists
