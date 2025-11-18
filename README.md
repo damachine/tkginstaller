@@ -13,7 +13,7 @@ TKG/Frogminer source packages from the <a href="https://github.com/Frogging-Fami
  + Fast and short commands
  + Interactive TUI mode
  + Integrated online manual
- + Extended `customization.cfg` manager (Beta)
+ + Extended `customization.cfg` manager (Beta) 🔥
 </pre>
 
 ---
