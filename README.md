@@ -78,7 +78,7 @@ OR:
 <b>USEAGE:</b>
 
   <img src="https://img.shields.io/badge/TUI-000000?logo=windowsterminal&logoColor=white" alt="TUI" title="Text UI Badge"> <img src="https://img.shields.io/badge/fzf-finder-13A10E?logo=search&logoColor=white" alt="fzf-finder" title="fzf-finder Badge (with icon)"> <img src="https://img.shields.io/badge/CLI-000000?logo=prompt&logoColor=white" alt="CLI" title="Command Line Interface"> <img src="https://img.shields.io/badge/Terminal-333333?logo=windows-terminal&logoColor=white" alt="Terminal" title="Terminal (nerd font)">
-  - Use either an interactive `fzf` menu or a quick direct `terminal` command.
+  - Use either an interactive `fzf` menu or a quick direct `terminal` command
 </pre>
 ```bash
     # For a modern and menu-driven experience, simply run
