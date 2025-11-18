@@ -13,7 +13,7 @@ RESET='\033[0m'
 
 # Configuration
 REPO_URL="https://raw.githubusercontent.com/damachine/tkginstaller/master"
-INSTALL_DIR="${HOME}/bin"
+INSTALL_DIR="${HOME}/tkginstaller"
 SCRIPT_NAME="tkginstaller"
 
 # Functions
