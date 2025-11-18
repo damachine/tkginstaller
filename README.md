@@ -85,7 +85,7 @@ OR:
     tkginstaller
 ```
 ```bash
-    # For quick tasks use one of tthe direct terminal commands
+    # For quick tasks use one of the direct terminal commands
 
     # Syntax: tkginstaller [package]
     # Use full names or shortcuts (l, n, m, w, p)
