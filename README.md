@@ -7,11 +7,13 @@
 
 <img src="https://img.shields.io/badge/version-v0.26.1-brightgreen"> <a href="https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21"></a>
   
-This tool allows you to easy build, install, and customize system-specific TKG/Frogminer source
-packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.
+This user-friendly tool will support you to build, install, and customize system-specific TKG/Frogminer
+source packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.
 
- - Use either an interactive `fzf` menu or a quick direct `terminal` command.
- - For maximum flexibility this tool allows you to manage `customization.cfg` files.
+ + Fast and short commands
+ + Interactive TUI mode
+ + Integrated online manual
+ + Extended `customization.cfg` manager (Beta)
 </pre>
 
 ---
@@ -75,18 +77,16 @@ OR:
 <pre style="font-family: 'Courier New', monospace; font-size: 32px; line-height: 1.2;">
 <b>USEAGE:</b>
 
-  <img src="https://img.shields.io/badge/TUI-000000?logo=windowsterminal&logoColor=white" alt="TUI" title="Text UI Badge"> <img src="https://img.shields.io/badge/fzf-finder-13A10E?logo=search&logoColor=white" alt="fzf-finder" title="fzf-finder Badge (with icon)">
-  - For a user-friendly, interactive, menu-driven experience, simply run
+  <img src="https://img.shields.io/badge/TUI-000000?logo=windowsterminal&logoColor=white" alt="TUI" title="Text UI Badge"> <img src="https://img.shields.io/badge/fzf-finder-13A10E?logo=search&logoColor=white" alt="fzf-finder" title="fzf-finder Badge (with icon)"> <img src="https://img.shields.io/badge/CLI-000000?logo=prompt&logoColor=white" alt="CLI" title="Command Line Interface"> <img src="https://img.shields.io/badge/Terminal-333333?logo=windows-terminal&logoColor=white" alt="Terminal" title="Terminal (nerd font)">
+  - Use either an interactive `fzf` menu or a quick direct `terminal` command.
 </pre>
 ```bash
-     tkginstaller
+    # For a modern and menu-driven experience, simply run
+    tkginstaller
 ```
-<pre style="font-family: 'Courier New', monospace; font-size: 32px; line-height: 1.2;">
-OR:
-  <img src="https://img.shields.io/badge/CLI-000000?logo=prompt&logoColor=white" alt="CLI" title="Command Line Interface"> <img src="https://img.shields.io/badge/Terminal-333333?logo=windows-terminal&logoColor=white" alt="Terminal" title="Terminal (nerd font)">
-  - For quick, automated tasks, skips the interactive menu and use direct terminal commands
-</pre>
 ```bash
+    # For quick tasks use one of tthe direct terminal commands
+
     # Syntax: tkginstaller [package]
     # Use full names or shortcuts (l, n, m, w, p)
 
@@ -121,7 +121,7 @@ This installer script is released under the MIT License.
 Individual TKG/Frogminer packages have their own licenses:
  - See respective repositories at <a href="https://github.com/Frogging-Family">Frogging-Family</a>
 
-🙏 Your support keeps this project alive and improving — thank you!.
+🙏 Your support keeps this project alive and improving — thank you!
   
 👨‍💻 Developed by DAMACHINE 📧 Contact: christkue79@gmail.com 🌐 Repository: <a href="https://github.com/damachine/tkginstalle">GitHub</a>
 </pre>
