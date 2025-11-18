@@ -19,7 +19,8 @@ TKG/Frogminer source packages from the <a href="https://github.com/Frogging-Fami
 ---
 
 <pre style="font-family: 'Courier New', monospace;">
-<b>INSTALLATION:</b>
+<b>INSTALLATION</b>
+  via AUR Helper
 
   <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <img src="https://img.shields.io/badge/Arch%20Linux-1793D1?logo=archlinux&logoColor=white" alt="Arch Linux" title="Arch Linux Badge">
   - Arch Linux
@@ -33,49 +34,25 @@ TKG/Frogminer source packages from the <a href="https://github.com/Frogging-Fami
     tkginstaller
 ```
 <pre style="font-family: 'Courier New', monospace;">
-OR:
+<b>OR</b>
+<b>INSTALLATION</b>
+  via installer
+  
   <img src="https://img.shields.io/badge/Arch%20Linux-1793D1?logo=archlinux&logoColor=white" alt="Arch Linux" title="Arch Linux Badge"> <img src="https://img.shields.io/badge/Gentoo-54487A?logo=gentoo&logoColor=white" alt="Gentoo" title="Gentoo Badge"> <img src="https://img.shields.io/badge/Debian-A81D33?logo=debian&logoColor=white" alt="Debian" title="Debian Badge"> <img src="https://img.shields.io/badge/Ubuntu-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu" title="Ubuntu Badge"> <img src="https://img.shields.io/badge/Fedora-51A2DA?logo=fedora&logoColor=white" alt="Fedora" title="Fedora Badge"> <img src="https://img.shields.io/badge/openSUSE-73BA25?logo=opensuse&logoColor=white" alt="openSUSE" title="openSUSE Badge"> <img src="https://img.shields.io/badge/Linux-000000?logo=linux&logoColor=white" alt="Linux" title="Linux Badge">
-  - All distributions – manual installation
+  - All distributions
 </pre>
 ```bash
-    # Preparation
-    mkdir -p /patch/to/tkginstaller
-    cd /patch/to/tkginstaller
+    # Automated installation run
+    curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/install.sh | bash
 
-    # STEP 1: Download with curl
-    curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller
-
-    # STEP 2: Optional verify integrity (Recommended)
-    curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/SHA256SUMS
-    sha256sum -c SHA256SUMS
-
-    # STEP 3: Make script executable
-    chmod +x tkginstaller
-
-    # Optional: To make the installer available system-wide after manual installation
-
-    # Method 1: Create a system link
-    sudo ln -s /path/to/tkginstaller /usr/bin/tkginstaller
-
-    # Method 2: Create a shell alias or function
-    # Add one of these to your ~/.bashrc or ~/.zshrc:
-
-    # As alias:
-    alias tkginstaller='/path/to/tkginstaller'
-
-    # OR as function:
-    tkginstaller() {
-      /path/to/tkginstaller "$@"
-    }
-
-    # Now you can run from anywhere
+    # After installation, you can simply run
     tkginstaller
 ```
 
 ---
 
 <pre style="font-family: 'Courier New', monospace;">
-<b>USEAGE:</b>
+<b>USAGE:</b>
 
   <img src="https://img.shields.io/badge/TUI-000000?logo=windowsterminal&logoColor=white" alt="TUI" title="Text UI Badge"> <img src="https://img.shields.io/badge/fzf-finder-13A10E?logo=search&logoColor=white" alt="fzf-finder" title="fzf-finder Badge (with icon)"> <img src="https://img.shields.io/badge/CLI-000000?logo=prompt&logoColor=white" alt="CLI" title="Command Line Interface"> <img src="https://img.shields.io/badge/Terminal-333333?logo=windows-terminal&logoColor=white" alt="Terminal" title="Terminal (nerd font)">
   - Use either an interactive `fzf` menu or a quick direct `terminal` command
@@ -121,7 +98,7 @@ This installer script is released under the MIT License.
 Individual TKG/Frogminer packages have their own licenses:
  - See respective repositories at <a href="https://github.com/Frogging-Family">Frogging-Family</a>
 
-🙏 Your support keeps this project alive and improving — thank you!
+<b>Your support keeps this project alive and improving — thank you! 🙏</b>
   
 👨‍💻 Developed by DAMACHINE 📧 Contact: christkue79@gmail.com 🌐 Repository: <a href="https://github.com/damachine/tkginstalle">GitHub</a>
 </pre>
