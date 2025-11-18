@@ -50,7 +50,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.26.1"
+_tkg_version="v0.26.2"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -959,11 +959,11 @@ __menu_config() {
         '
 
         # Define header texts
-        local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Config menu (Beta)${_uline_off}${_reset}${_break}${_break}\
+        local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Customizing (Beta)${_uline_off}${_reset}${_break}${_break}\
 ${_green_light}    - Customize to your preferred settings${_break}\
 ${_green_light}    - Download missing file(s)${_break}\
 ${_green_light}    - Show difference between remote and local${_break}${_break}\
-${_green_light}    According to -TKG- package standards file(s)${_break}    stored in: ${_reset}${_gray}file://$HOME/.config/frogminer/${_reset}${_break}${_break}\
+${_green_light}    According to -TKG/Frogminer- package standards file(s)${_break}    stored in: ${_reset}${_gray}file://$HOME/.config/frogminer/${_reset}${_break}${_break}\
 ${_green_light}    Please make sure to adjust the settings correctly!${_break}    More visit: ${_reset}${_gray}https://github.com/Frogging-Family${_reset}${_break}${_break}${_break}\
 ${_green_light}   Select an option below:"
 
@@ -1225,22 +1225,22 @@ __menu() {
 
     # Define menu options
     local _menu_options=(
-        "Linux  |🐧 ${_green_neon}Linux   ${_gray} Linux custom kernels for better desktop and gaming experience"
+        "Linux  |🐧 ${_green_neon}Linux      ${_gray} Linux custom kernels for better desktop and gaming experience"
     )
 
     if [[ "${_is_arch_based}" == "true" ]]; then
         _menu_options+=(
-            "Nvidia |💻 ${_green_neon}Nvidia  ${_gray} Nvidia open-source or proprietary graphics drivers"
-            "Mesa   |🧩 ${_green_neon}Mesa    ${_gray} AMD and Intel open-source graphics driver"
+            "Nvidia |💻 ${_green_neon}Nvidia     ${_gray} Nvidia open-source or proprietary graphics drivers"
+            "Mesa   |🧩 ${_green_neon}Mesa       ${_gray} AMD and Intel open-source graphics driver"
         )
     fi
 
     _menu_options+=(
-        "Wine   |🍷 ${_green_neon}Wine    ${_gray} Windows compatibility layer to run Windows apps on Linux"
-        "Proton |🎮 ${_green_neon}Proton  ${_gray} Run Windows games on the Linux system via Steam"
-        "Config |🔧 ${_green_neon}Config  ${_gray} Enter external configuration files menu (Expert)"
-        "Clean  |🧹 ${_green_neon}Clean   ${_gray} Removes all temporary files for a clean installation"
-        "Help   |❓ ${_green_neon}Help    ${_gray} Displays help and usage information about TKG-Installer"
+        "Wine   |🍷 ${_green_neon}Wine       ${_gray} Windows compatibility layer to run Windows apps on Linux"
+        "Proton |🎮 ${_green_neon}Proton     ${_gray} Run Windows games on the Linux system via Steam"
+        "Config |🔧 ${_green_neon}Customize  ${_gray} Enter external configuration files menu (Expert)"
+        "Clean  |🧹 ${_green_neon}Clean      ${_gray} Removes all temporary files for a clean installation"
+        "Help   |❓ ${_green_neon}Help       ${_gray} Displays help and usage information about TKG-Installer"
         "Close  |❎ ${_green_neon}Close"
     )
 
@@ -1310,9 +1310,10 @@ __menu() {
     '
 
     # Define header texts
-    local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Main menu${_uline_off}${_reset}${_break}${_break}\
-    ${_green_light}Build, install and customize -TKG- packages${_break}${_break}${_break}\
-   Select an option below:"
+    local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Main${_uline_off}${_reset}${_break}${_break}\
+    ${_green_light}- Build, install and customize -TKG/Frogminer- packages${_break}\
+${_green_light}    - Manual in the preview window on the right${_break}${_break}${_break}\
+${_green_light}   Select an option below:"
     
     # Define footer texts
     local _footer_text="  ${_green_light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}\
@@ -1321,7 +1322,7 @@ __menu() {
   
     # Define border label text
     local _border_label_text="${_tkg_version}"
-    local _preview_window_settings='right:wrap:55%:hidden'
+    local _preview_window_settings='right:wrap:55%'
 
     # Run fzf menu
     local _main_choice
