@@ -73,13 +73,13 @@ main() {
     fi
 
     msg_step "Downloading checksum..."
-    if curl -fsSL "${REPO_URL}/SHA256SUMS" -o "${SCRIPT_NAME}.SHA256SUMS" 2>/dev/null; then
+    if curl -fsSL "${REPO_URL}/SHA256SUMS" -o "SHA256SUMS" 2>/dev/null; then
         msg_info "✓ Download complete"
         echo ""
 
         msg_step "Verifying integrity..."
         echo ""
-        if sha256sum -c "${SCRIPT_NAME}.SHA256SUMS" 2>&1 | grep -q "OK"; then
+        if sha256sum -c "SHA256SUMS" 2>&1 | grep -q "OK"; then
             msg_info "✓ Checksum verification successful!"
         else
             msg_error "Checksum verification FAILED!"
