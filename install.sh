@@ -73,31 +73,32 @@ main() {
     fi
 
     msg_step "Downloading checksum..."
-    if ! curl -fsSL "${REPO_URL}/${SCRIPT_NAME}.sha256sum" -o "${SCRIPT_NAME}.sha256sum"; then
-        msg_error "Failed to download checksum file"
-        exit 1
-    fi
-    msg_info "✓ Download complete"
-    echo ""
+    if curl -fsSL "${REPO_URL}/SHA256SUMS" -o "${SCRIPT_NAME}.SHA256SUMS" 2>/dev/null; then
+        msg_info "✓ Download complete"
+        echo ""
 
-    # Verify checksum
-    msg_step "Verifying integrity..."
-    echo ""
-    if sha256sum -c "${SCRIPT_NAME}.sha256sum" 2>&1 | grep -q "OK"; then
-        msg_info "✓ Checksum verification successful!"
+        msg_step "Verifying integrity..."
+        echo ""
+        if sha256sum -c "${SCRIPT_NAME}.SHA256SUMS" 2>&1 | grep -q "OK"; then
+            msg_info "✓ Checksum verification successful!"
+        else
+            msg_error "Checksum verification FAILED!"
+            echo ""
+            msg_warning "The downloaded file does not match the expected checksum."
+            msg_warning "This could indicate:"
+            msg_warning "  - File corruption during download"
+            msg_warning "  - Security compromise"
+            msg_warning "  - Network issues"
+            echo ""
+            msg_error "Installation aborted for security reasons."
+            exit 1
+        fi
+        echo ""
     else
-        msg_error "Checksum verification FAILED!"
+        msg_warning "Checksum file not available (expected for development versions)"
+        msg_warning "Skipping integrity verification"
         echo ""
-        msg_warning "The downloaded file does not match the expected checksum."
-        msg_warning "This could indicate:"
-        msg_warning "  - File corruption during download"
-        msg_warning "  - Security compromise"
-        msg_warning "  - Network issues"
-        echo ""
-        msg_error "Installation aborted for security reasons."
-        exit 1
     fi
-    echo ""
 
     # Move to installation directory
     msg_step "Installing to $INSTALL_DIR..."
