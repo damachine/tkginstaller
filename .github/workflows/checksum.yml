@@ -44,22 +44,18 @@ jobs:
         run: |
           git diff --exit-code SHA256SUMS > /dev/null 2>&1 && echo "changed=false" >> $GITHUB_OUTPUT || echo "changed=true" >> $GITHUB_OUTPUT
 
-      - name: Commit and push changes
+      - name: Commit and create Pull Request
         if: steps.git-check.outputs.changed == 'true'
-        env:
-          CHECKSUM: ${{ steps.checksum.outputs.checksum }}
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
-
+          git checkout -b update-sha256sums
           git add SHA256SUMS
-          git commit -m "Auto-update SHA256SUMS [skip ci]
-
-          SHA256: $CHECKSUM
-          Triggered by: $COMMIT_MESSAGE"
-
-          git push
+          git commit -m "Auto-update SHA256SUMS [skip ci]"
+          git push origin update-sha256sums
+          gh pr create --title "Auto-update SHA256SUMS" --body "Automated update of SHA256SUMS by workflow." --base master --head update-sha256sums
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create summary
         run: |
