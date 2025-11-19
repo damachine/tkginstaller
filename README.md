@@ -5,8 +5,8 @@
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
 ──  KISS the 🐸  ──
 
-<strong>This script helps you in building, installing, and customizing
--TKG- packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.</strong>
+<strong>This script helps you in building, installing, and customizing 
+TKG/Frogminer packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.</strong>
 
    <img src="https://img.shields.io/badge/version-v0.26.2-brightgreen"> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21"></a>
   
