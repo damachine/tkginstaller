@@ -1,5 +1,5 @@
 
-<pre style="font-family: monospace, fixed; font-weight: bold;">
+<pre>
 ░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
@@ -9,16 +9,17 @@
 packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.</strong>
 
    <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/version-v0.26.3-brightgreen"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21"></a>
-  
- + User-friendly interactive control
- + Use fast direct terminal commandline mode
- + Modern stylish menu-driven TUI client
-    <sup>Integrated preview and editor</sup>
-    <sup>Read online manual</sup>
- + One place to manage the <mark>customization.cfg</mark> files (Beta) 🔥
-    <sup>Download missing files</sup>
-    <sup>Adjust the settings to your liking</sup>
-    <sup>Compare your local files with the online ones</sup>
+
+Features
+ <strong>- User-friendly interactive control</strong>
+ <strong>- Use fast direct terminal commandline mode</strong>
+ <strong>- Modern stylish menu-driven TUI client</strong>
+    <sub>Integrated preview and editor</sub>
+    <sub>Read online manual</sub>
+ <strong>- One place to manage the <mark>customization.cfg</mark> files (Beta) 🔥</strong>
+    <sub>Download missing files</sub>
+    <sub>Adjust the settings to your liking</sub>
+    <sub>Compare your local files with the online ones</sub>
 </pre>
 
 # 
@@ -74,7 +75,7 @@ tkginstaller help
 
 ###### DISCLAIMER
 
-<pre style="font-family: monospace, fixed; font-weight: bold;">
+<pre>
 This installer script is released under the MIT License.
 
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg"></a>
