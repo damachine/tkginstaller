@@ -11,13 +11,10 @@ This user-friendly tool allows you to easily build, install, and customize syste
 TKG/Frogminer source packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.
 
  + Fast and short direct terminal command mode
-  
  + Modern stylish menu-driven TUI mode
    - Integrated customize menu
    - Preview online manual
-  
  + Interactive or automated control
-  
  + Extended `customization.cfg` manager (Beta) 🔥
 </pre>
 
