@@ -12,10 +12,13 @@ TKG/Frogminer source packages from the <a href="https://github.com/Frogging-Fami
 
  + Fast and short direct terminal command mode
  + Modern stylish menu-driven TUI mode
-   - Integrated preview/editor for <mark>customization.cfg</mark>
-   - Read online manual
+    <sub>Integrated preview and editor</sub>
+    <sub>Read online manual</sub>
  + User-friendly interactive or automated control
- + Extended <mark>customization.cfg</mark> manager (Beta) 🔥
+ + One place to manage the <mark>customization.cfg</mark> files (Beta) 🔥
+    <sub>Download missing files</sub>
+    <sub>Adjust the settings to your liking</sub>
+    <sub>Compare your local files with the online ones</sub>
 </pre>
 
 # 
