@@ -10,9 +10,14 @@
 This user-friendly tool allows you to easily build, install, and customize system-specific
 TKG/Frogminer source packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.
 
- + Fast and short commands
- + Interactive TUI mode
- + Integrated online manual
+ + Fast and short direct terminal command mode
+  
+ + Modern stylish menu-driven TUI mode
+   - Integrated customize menu
+   - Preview online manual
+  
+ + Interactive or automated control
+  
  + Extended `customization.cfg` manager (Beta) 🔥
 </pre>
 
@@ -20,7 +25,7 @@ TKG/Frogminer source packages from the <a href="https://github.com/Frogging-Fami
 
 ##### INSTALLATION
 
-```bash
+```yaml
 # Arch Linux-based distributions
 # Install via AUR helper
 yay -S tkginstaller-git
@@ -34,12 +39,12 @@ curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/insta
 
 ##### USAGE
 
-```bash
-# For a modern and menu-driven experience, simply run
+```yaml
+# TUI mode, simply run
 tkginstaller
 ```
-```bash
-# For a quick tasks use one of the direct terminal commands
+```yaml
+# DIRECT mode, terminal commands to run
 
 # Syntax: tkginstaller [package]
 # Use full names or shortcuts (l, n, m, w, p)
@@ -77,7 +82,7 @@ This installer script is released under the MIT License.
 Individual TKG/Frogminer packages have their own licenses:
  - See respective repositories at <a href="https://github.com/Frogging-Family">Frogging-Family</a>
 
-<b>Your support keeps this project alive and improving — thank you! 🙏</b>
+<b>💚 Your support keeps this project alive and improving — thank you! 🙏</b>
   
 👨‍💻 Developed by DAMACHINE 📧 Contact: christkue79@gmail.com 🌐 Repository: <a href="https://github.com/damachine/tkginstalle">GitHub</a>
 </pre>
