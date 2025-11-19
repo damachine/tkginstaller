@@ -1,11 +1,11 @@
 
-<pre style="font-family: 'Courier New', monospace;">
+<pre style="font-family: monospace, fixed; font-weight: bold;">
 ░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
 ──  KISS the 🐸  ──
 
-  <img src="https://img.shields.io/badge/version-v0.26.1-brightgreen"> <a href="https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21"></a>
+  <img src="https://img.shields.io/badge/version-v0.26.2-brightgreen"> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21"></a>
   
 This user-friendly tool allows you to easily build, install, and customize system-specific
 TKG/Frogminer source packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.
@@ -16,23 +16,24 @@ TKG/Frogminer source packages from the <a href="https://github.com/Frogging-Fami
  + Extended `customization.cfg` manager (Beta) 🔥
 </pre>
 
-<pre style="font-family: 'Courier New', monospace;">
-<b>INSTALLATION and USAGE</b>
+# 
 
-  <img src="https://img.shields.io/badge/TUI-000000?logo=windowsterminal&logoColor=white" alt="TUI" title="Text UI Badge"> <img src="https://img.shields.io/badge/fzf-finder-13A10E?logo=search&logoColor=white" alt="fzf-finder" title="fzf-finder Badge (with icon)"> <img src="https://img.shields.io/badge/CLI-000000?logo=prompt&logoColor=white" alt="CLI" title="Command Line Interface"> <img src="https://img.shields.io/badge/Terminal-333333?logo=windows-terminal&logoColor=white" alt="Terminal" title="Terminal (nerd font)">
-  - Use either an interactive `fzf` menu or a quick direct `terminal` command
+##### INSTALLATION
 
-  <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <img src="https://img.shields.io/badge/Arch%20Linux-1793D1?logo=archlinux&logoColor=white" alt="Arch Linux" title="Arch Linux Badge"> <img src="https://img.shields.io/badge/Gentoo-54487A?logo=gentoo&logoColor=white" alt="Gentoo" title="Gentoo Badge"> <img src="https://img.shields.io/badge/Debian-A81D33?logo=debian&logoColor=white" alt="Debian" title="Debian Badge"> <img src="https://img.shields.io/badge/Ubuntu-E95420?logo=ubuntu&logoColor=white" alt="Ubuntu" title="Ubuntu Badge"> <img src="https://img.shields.io/badge/Fedora-51A2DA?logo=fedora&logoColor=white" alt="Fedora" title="Fedora Badge"> <img src="https://img.shields.io/badge/openSUSE-73BA25?logo=opensuse&logoColor=white" alt="openSUSE" title="openSUSE Badge"> <img src="https://img.shields.io/badge/Linux-000000?logo=linux&logoColor=white" alt="Linux" title="Linux Badge">
-</pre>
 ```bash
 # Arch Linux-based distributions
 # Install via AUR helper
 yay -S tkginstaller-git
 
-# OR:
+# OR: Universal all distributions
 # Install via automated installation helper
 curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/install.sh | bash
 ```
+
+# 
+
+##### USAGE
+
 ```bash
 # For a modern and menu-driven experience, simply run
 tkginstaller
@@ -64,9 +65,11 @@ tkginstaller clean
 tkginstaller help
 ```
 
----
+# 
 
-<pre style="font-family: 'Courier New', monospace;">
+###### DISCLAIMER
+
+<pre style="font-family: monospace, fixed; font-weight: bold;">
 This installer script is released under the MIT License.
 
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg"></a>
