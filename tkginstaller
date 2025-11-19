@@ -50,7 +50,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.26.2"
+_tkg_version="v0.26.3"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -946,9 +946,9 @@ __menu_config() {
             
             if [[ -f "$_config_file_path" && -n "$_remote_url" ]]; then
                 _remote_tmp="'"${_tmp_dir}"'/${key}-remote.cfg"
-                if curl -fsSL "$_remote_url" -o "$_remote_tmp" 2>/dev/null; then
+                if curl --max-time 10 -fsSL "$_remote_url" -o "$_remote_tmp" 2>/dev/null; then
                     printf "%b\n" "'"${_info_config}"'"
-                    '"${_diff_cmd}"' "$_remote_tmp" "$_config_file_path" 2>/dev/null | '"${_bat_cmd}"' || printf "%b\n" "${_orange}Diff failed${_reset}"
+                    '"${_diff_cmd}"' "$_remote_tmp" "$_config_file_path" 2>/dev/null | '"${_bat_cmd}"' || printf "%b\n" "${_orange}Diff failed: Could not compare files.${_break}Possible reasons: file format/encoding issues, missing dependencies (wdiff/bat), or file access problems.${_break}Try checking file existence and ensure required tools are installed.${_reset}"
                     rm -f "$_remote_tmp"
                 else
                     printf "%b\n" "'"${_error_config_not_exist}"'"
@@ -1027,8 +1027,8 @@ __old_config() {
     fi
     
     # Download upstream config
-    local _tmp_upstream="/tmp/upstream_customization.cfg"
-    if ! curl -fsSL "$_upstream_url" -o "$_tmp_upstream" 2>/dev/null; then
+    local _tmp_upstream="${_tmp_dir}/upstream_customization.cfg"
+    if ! curl --max-time 10 -fsSL "$_upstream_url" -o "$_tmp_upstream" 2>/dev/null; then
         __msg_warning "Could not download upstream config for comparison"
         return 1
     fi
@@ -1045,8 +1045,8 @@ __old_config() {
     local _officially_deprecated=""
     if [[ "$_package_name" == "Linux-TKG" ]]; then
         local _prepare_url="${_frog_raw_url}/linux-tkg/master/linux-tkg-config/prepare"
-        local _tmp_prepare="/tmp/linux-tkg-prepare"
-        if curl -fsSL "$_prepare_url" -o "$_tmp_prepare" 2>/dev/null; then
+        local _tmp_prepare="${_tmp_dir}/linux-tkg-prepare"
+        if curl --max-time 10 -fsSL "$_prepare_url" -o "$_tmp_prepare" 2>/dev/null; then
             # Extract deprecated variables from _deprecated_config_vars array
             _officially_deprecated=$(sed -n '/_deprecated_config_vars=($/,/^)$/p' "$_tmp_prepare" | grep -oP '^\s*"_\K[^"]+' | sed 's/^/_/' || true)
             rm -f "$_tmp_prepare"
@@ -1056,8 +1056,8 @@ __old_config() {
     # Check for advanced customization file variables for Wine-TKG and Proton-TKG
     if [[ "$_package_name" == "Wine-TKG" ]]; then
         local _adv_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/advanced-customization.cfg"
-        local _tmp_adv="/tmp/upstream_advanced.cfg"
-        if curl -fsSL "$_adv_url" -o "$_tmp_adv" 2>/dev/null; then
+        local _tmp_adv="${_tmp_dir}/upstream_advanced.cfg"
+        if curl --max-time 10 -fsSL "$_adv_url" -o "$_tmp_adv" 2>/dev/null; then
             local _adv_vars
             _adv_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_adv" 2>/dev/null)
             if [[ -n "$_adv_vars" ]]; then
@@ -1067,8 +1067,8 @@ __old_config() {
         fi
     elif [[ "$_package_name" == "Proton-TKG" ]]; then
         local _adv_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/advanced-customization.cfg"
-        local _tmp_adv="/tmp/upstream_advanced.cfg"
-        if curl -fsSL "$_adv_url" -o "$_tmp_adv" 2>/dev/null; then
+        local _tmp_adv="${_tmp_dir}/upstream_advanced.cfg"
+        if curl --max-time 10 -fsSL "$_adv_url" -o "$_tmp_adv" 2>/dev/null; then
             local _adv_vars
             _adv_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_adv" 2>/dev/null)
             if [[ -n "$_adv_vars" ]]; then
@@ -1099,7 +1099,8 @@ __old_config() {
         while IFS= read -r _var; do
             __msg_plain " ${_gray}${_var}${_reset}"
         done <<< "$_deprecated_vars"
-        __msg_plain "${_break} These variables are no longer used in upstream and can be removed.${_break}"
+        __msg_plain "${_break} These variables are no longer used in upstream and can be removed.${_break} \
+Please check this to ensure correctness!${_break}"
         __msg_prompt "Press any key to continue...${_break}"
         read -n 1 -s -r
     fi
@@ -1165,7 +1166,7 @@ __handle_config() {
                 fi
                 
                 # Download config with timeout (project guideline)
-                if curl --max-time 30 -fsSL "${_config_url}" -o "${_config_path}" 2>/dev/null; then
+                if curl --max-time 10 -fsSL "${_config_url}" -o "${_config_path}" 2>/dev/null; then
                     clear
                     __banner
                     __msg_info "External configuration ready at:${_reset}${_gray} ${_config_path}"
