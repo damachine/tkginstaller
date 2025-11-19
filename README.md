@@ -7,8 +7,8 @@
 
   <img src="https://img.shields.io/badge/version-v0.26.2-brightgreen"> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://app.codacy.com/gh/damachine/tkginstaller/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade"><img src="https://app.codacy.com/project/badge/Grade/5736b4b014ca45e1877fc0c75a200c21"></a>
   
-This user-friendly tool allows you to easily build, install, and customize system-specific
-TKG/Frogminer source packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.
+<strong>This user-friendly tool allows you to easily build, install, and customize system-specific
+TKG/Frogminer source packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.</strong>
 
  + Fast and short direct terminal command mode
  + Modern stylish menu-driven TUI mode
@@ -79,7 +79,7 @@ This installer script is released under the MIT License.
 Individual TKG/Frogminer packages have their own licenses:
  - See respective repositories at <a href="https://github.com/Frogging-Family">Frogging-Family</a>
 
-<b>💚 Your support keeps this project alive and improving — thank you! 🙏</b>
+<strong>💚 Your support keeps this project alive and improving — thank you! 🙏</strong>
   
 👨‍💻 Developed by DAMACHINE 📧 Contact: christkue79@gmail.com 🌐 Repository: <a href="https://github.com/damachine/tkginstalle">GitHub</a>
 </pre>
