@@ -46,11 +46,11 @@
 # -----------------------------------------------------------------------------
 
 # Fuzzy finder run in a separate shell (subshell) - export variables for fzf subshells
-# shellcheck disable=SC2016 # Allow variable expansion in strings
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
+set -e
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.26.3"
+_tkg_version="v0.26.4"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -80,7 +80,7 @@ __init_style() {
     _reset=$'\033[0m'
 
     # Helper to return TrueColor escape if supported
-    _color() {
+    __color() {
         # $1 = r, $2 = g, $3 = b, $4 = fallback tput color index (0-7)
         local r=${1:-255} g=${2:-255} b=${3:-255} idx=${4:-7}
 
@@ -111,14 +111,13 @@ __init_style() {
     }
 
     # Define TrueColor values, fallback to tput
-    _red="$(_color 220 60 60 1)"           # warm red
-    _green_light="$(_color 80 255 140 2)"  # light green
-    _green_neon="$(_color 120 255 100 2)"  # neon green
-    _green_mint="$(_color 152 255 200 6)"  # mint green
-    _green_dark="$(_color 34 68 34 2)"     # dark green (#224422)
-    _orange="$(_color 255 190 60 3)"       # orange/yellow
-    _blue="$(_color 85 170 255 4)"         # blue
-    _gray="$(_color 200 250 200 7)"        # gray
+    _red="$(__color 220 60 60 1)"           # warm red
+    _green_light="$(__color 80 255 140 2)"  # light green
+    _green_neon="$(__color 120 255 100 2)"  # neon green
+    _green_mint="$(__color 152 255 200 6)"  # mint green
+    _green_dark="$(__color 34 68 34 2)"     # dark green (#224422)
+    _orange="$(__color 255 190 60 3)"       # orange/yellow
+    _gray="$(__color 200 250 200 7)"        # gray
 
     # Draw underline
     _uline_on=$(tput smul 2>/dev/null || printf '\033[4m')
@@ -139,8 +138,8 @@ __init_style() {
 
 # Display banner
 __banner() {
-    local _color="${1:-$_green_neon}"
-    printf "%b\n" "${_color}"
+    local __color="${1:-$_green_neon}"
+    printf "%b\n" "${__color}"
     cat <<EOF
 ░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
@@ -171,26 +170,24 @@ __msg() {
     fi
 
     # Ensure colors exist
-    : "${_reset:=''}" "${_red:=''}" "${_green_light:=''}" "${_green_neon:=''}" "${_green_mint:=''}" "${_green_dark:=''}" "${_orange:=''}" "${_blue:=''}" "${_gray:=''}" "${_uline_on:=''}" "${_uline_off:=''}"
+    : "${_reset:=''}" "${_red:=''}" "${_green_light:=''}" "${_green_neon:=''}" "${_green_mint:=''}" "${_green_dark:=''}" "${_orange:=''}" "${_gray:=''}" "${_uline_on:=''}" "${_uline_off:=''}"
 
     # Map level
-    local _color="" _prefix=""
-    local _mapping="${_msg_level}:${_green_light}:|${_msg_level#info_}:${_green_neon}:|${_msg_level#info_}:${_green_mint}:|${_msg_level#info_}:${_orange}:|${_msg_level#info_}:${_blue}:|warning:${_orange}:${_uline_on}WARNING:${_uline_off} |error:${_red}:${_uline_on}ERROR:${_uline_off} |prompt:::|plain:${_reset}:"
+    local __color="" _prefix=""
     
     case "${_msg_level}" in
         prompt) printf '%b' "$_msg"; return 0 ;;
-        info_green) _color="${_green_light}"; _prefix="" ;;
-        info_neon) _color="${_green_neon}"; _prefix="" ;;
-        info_mint) _color="${_green_mint}"; _prefix="" ;;
-        info_orange) _color="${_orange}"; _prefix="" ;;
-        info_blue) _color="${_blue}"; _prefix="" ;;
-        warning) _color="${_orange}"; _prefix="${_uline_on}WARNING${_uline_off}:${_color} " ;;
-        error) _color="${_red}"; _prefix="${_uline_on}ERROR${_uline_off}:${_color} " ;;
-        *) _color="${_reset}"; _prefix="" ;;
+        info_green) __color="${_green_light}"; _prefix="" ;;
+        info_neon) __color="${_green_neon}"; _prefix="" ;;
+        info_mint) __color="${_green_mint}"; _prefix="" ;;
+        info_orange) __color="${_orange}"; _prefix="" ;;
+        warning) __color="${_orange}"; _prefix="${_uline_on}WARNING${_uline_off}:${__color} " ;;
+        error) __color="${_red}"; _prefix="${_uline_on}ERROR${_uline_off}:${__color} " ;;
+        *) __color="${_reset}"; _prefix="" ;;
     esac
 
     # Print formatted line with color and reset
-    printf '%b\n' "${_color}${_prefix}${_msg}${_reset}"
+    printf '%b\n' "${__color}${_prefix}${_msg}${_reset}"
 }
 
 # Message functions
@@ -198,7 +195,6 @@ __msg_info()        { __msg 'info_green' "$@"; }
 __msg_info_neon()   { __msg 'info_neon' "$@"; }
 __msg_info_mint()   { __msg 'info_mint' "$@"; }
 __msg_info_orange() { __msg 'info_orange' "$@"; }
-__msg_info_blue()   { __msg 'info_blue' "$@"; }
 __msg_warning()     { __msg 'warning' "$@"; }
 __msg_error()       { __msg 'error' "$@"; }
 __msg_prompt()      { __msg 'prompt' "$@"; }
@@ -334,7 +330,7 @@ __prepare() {
     # Welcome message
     __banner
     printf "%s" "${_green_neon}Starting"
-    for i in {1..3}; do
+    for _ in {1..3}; do
         printf " ."
         sleep 0.3s
     done
@@ -936,6 +932,7 @@ __menu_config() {
         local _diff_cmd="wdiff --terminal --statistics --start-delete='${_red}' --end-delete='${_reset}' --start-insert='${_green_light}' --end-insert='${_reset}'"
 
         # Simplified preview command using exported URLs
+        # shellcheck disable=SC2016 # Need to use single quotes for fzf preview
         local _preview_command='
             key=$(echo {} | cut -d"|" -f1 | xargs)
             
@@ -957,7 +954,6 @@ __menu_config() {
                 printf "%b\n" "'"${_error_config_not_exist}"'"
             fi
         '
-
         # Define header texts
         local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Customizing (Beta)${_uline_off}${_reset}${_break}${_break}\
 ${_green_light}    - Customize to your preferred settings${_break}\
@@ -1296,6 +1292,7 @@ __menu() {
     export _preview_repos_json
 
     # Simplified preview command using exported mappings
+    # shellcheck disable=SC2016 # Need to use single quotes for fzf preview
     local _preview_command='
         key=$(echo {} | cut -d"|" -f1 | xargs)
         
@@ -1309,7 +1306,6 @@ __menu() {
         repo=$(echo "$_preview_repos_json" | grep "^${key}=" | cut -d= -f2-)
         [[ -n "$repo" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_frog_raw_url}"'/${repo}/README.md"
     '
-
     # Define header texts
     local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Main${_uline_off}${_reset}${_break}${_break}\
     ${_green_light}- Build, install and customize -TKG/Frogminer- packages${_break}\

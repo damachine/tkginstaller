@@ -1,115 +1,205 @@
 #!/usr/bin/env bash
-# install.sh - TKG-Installer automated installation with verification
-# Usage: curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/install.sh | bash
 
+# -----------------------------------------------------------------------------
+# author : damachine (christkue79@gmail.com)
+# website: https://github.com/damachine
+#          https://github.com/damachine/tkginstaller
+# -----------------------------------------------------------------------------
+# MIT License
+#
+# Copyright (c) 2025 damachine
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+# -----------------------------------------------------------------------------
+# INFO:
+#   Installation script for TKG-Installer
+# DESCRIPTION:
+#   This script automates the installation of TKG-Installer with integrity verification.
+#   It downloads the latest version from the official repository, verifies the checksum,
+#   and sets up a shell alias for easy access.
+# USAGE:
+#   Simply run this script using cURL:
+#   curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/install.sh | bash
+# -----------------------------------------------------------------------------
+
+# shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 set -e
 
-# Colors
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-ORANGE='\033[0;33m'
-CYAN='\033[0;36m'
-RESET='\033[0m'
+# Initialize color and style (copied from tkginstaller)
+__init_style() {
+    _break=$'\n'
+    _reset=$'\033[0m'
+    __color() {
+        local r=${1:-255} g=${2:-255} b=${3:-255} idx=${4:-7}
+        if [[ "${COLORTERM,,}" == *truecolor* || "${COLORTERM,,}" == *24bit* ]]; then
+            printf '\033[38;2;%d;%d;%dm' "$r" "$g" "$b"
+            return 0
+        fi
+        if command -v tput >/dev/null 2>&1; then
+            local _tput_seq
+            _tput_seq=$(tput sgr0; tput setaf "$idx")
+            printf '%s' "${_tput_seq}"
+            return 0
+        fi
+        local _idx256
+        case "$idx" in
+            1) _idx256=196 ;;  # bright red
+            2) _idx256=118 ;;  # light green
+            3) _idx256=214 ;;  # orange/yellow
+            4) _idx256=39  ;;  # bright blue
+            *) _idx256=15  ;;  # white
+        esac
+        printf '\033[38;5;%dm' "$_idx256"
+    }
+
+    # Define TrueColor values, fallback to tput
+    _red="$(__color 220 60 60 1)"           # warm red
+    _green_light="$(__color 80 255 140 2)"  # light green
+    _green_neon="$(__color 120 255 100 2)"  # neon green
+    _green_mint="$(__color 152 255 200 6)"  # mint green
+    _green_dark="$(__color 34 68 34 2)"     # dark green (#224422)
+    _orange="$(__color 255 190 60 3)"       # orange/yellow
+    _gray="$(__color 200 250 200 7)"        # gray
+
+    # Draw underline
+    _uline_on=$(tput smul 2>/dev/null || printf '\033[4m')
+    _uline_off=$(tput rmul 2>/dev/null || printf '\033[24m')
+}
+
+# Initialize colors
+__init_style
 
 # Configuration
-REPO_URL="https://raw.githubusercontent.com/damachine/tkginstaller/master"
-INSTALL_DIR="${HOME}/tkginstaller"
-SCRIPT_NAME="tkginstaller"
+_tkg_repo_url="https://raw.githubusercontent.com/damachine/tkginstaller/master"
+_tkg_install_dir="${HOME}/tkginstaller"
+_tkg_script_name="tkginstaller"
 
 # Functions
-msg_info() { printf "${GREEN}%s${RESET}\n" "$*"; }
-msg_error() { printf "${RED}ERROR: %s${RESET}\n" "$*"; }
-msg_warning() { printf "${ORANGE}WARNING: %s${RESET}\n" "$*"; }
-msg_step() { printf "${CYAN}➜ %s${RESET}\n" "$*"; }
+__msg_info() { printf '%b\n' "${_green_light}$*${_reset}"; }
+__msg_error() { printf '%b\n' "${_red}ERROR: $*${_reset}"; }
+__msg_warning() { printf '%b\n' "${_orange}WARNING: $*${_reset}"; }
+__msg_step() { printf '%b\n' "${_gray} ➜➜ $*${_reset}"; }
+__msg_prompt() { printf '%b\n' "$*"; }
 
-banner() {
+__banner() {
+    local __color="${1:-$_green_neon}"
+    printf '%b\n' "${__color}"
     cat << "EOF"
 ░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
+──  KISS the 🐸 ──
 EOF
+    printf '%b\n' "${_reset}"
 }
 
-cleanup() {
+# Check for root
+if [[ "$(id -u)" -eq 0 ]]; then
+    __banner "$_orange"
+    __msg_warning "You are running as root!${_break}"
+    __msg_prompt " Running this script as root is not recommended for security reasons.${_break}"
+    __msg_prompt "Do you really want to continue as root? [y/N]: "
+    trap 'echo;echo; __msg_prompt "${_red}Aborted by user.\n";sleep 1.5s; exit 1' INT
+    read -r _user_answer
+    trap - INT
+    if [[ ! "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
+        __msg_prompt "${_red}Aborted by user.${_break}"
+        exit 1
+    fi
+fi
+
+__cleanup() {
     cd "$OLDPWD" 2>/dev/null || true
     if [[ -n "${TEMP_DIR:-}" && -d "$TEMP_DIR" ]]; then
         rm -rf "$TEMP_DIR"
     fi
 }
 
-trap cleanup EXIT INT TERM
+trap __cleanup EXIT INT TERM
 
 # Main installation
-main() {
-    banner
-    echo ""
-    msg_info "🐸 TKG-Installer - Automated Installation"
-    echo ""
+__main() {
+    # Welcome message
+    __banner
+    printf "%s" "${_green_neon}Starting installation"
+    for _ in {1..3}; do
+        printf " ."
+        sleep 0.3s
+    done
+    printf "%b\n" "${_break}${_reset}"
 
     # Check dependencies
-    msg_step "Checking dependencies..."
+    __msg_step "Checking dependencies..."
     for cmd in curl sha256sum; do
         if ! command -v "$cmd" &>/dev/null; then
-            msg_error "$cmd is not installed!"
+            __msg_error "$cmd is not installed!"
             exit 1
         fi
     done
-    msg_info "✓ Dependencies OK"
-    echo ""
+    __msg_info "[✓] Dependencies OK${_break}"
 
     # Create installation directory
-    msg_step "Creating installation directory: $INSTALL_DIR"
-    mkdir -p "$INSTALL_DIR"
+    __msg_step "Creating installation directory: $_tkg_install_dir"
+    mkdir -p "$_tkg_install_dir"
 
     # Create temporary directory
     TEMP_DIR=$(mktemp -d)
     cd "$TEMP_DIR"
 
     # Download files
-    msg_step "Downloading tkginstaller..."
-    if ! curl -fsSL "${REPO_URL}/${SCRIPT_NAME}" -o "${SCRIPT_NAME}"; then
-        msg_error "Failed to download tkginstaller"
+    __msg_step "Downloading tkginstaller..."
+    if ! curl -fsSL "${_tkg_repo_url}/${_tkg_script_name}" -o "${_tkg_script_name}"; then
+        __msg_error "Failed to download tkginstaller"
         exit 1
     fi
 
-    msg_step "Downloading checksum..."
-    if curl -fsSL "${REPO_URL}/SHA256SUMS" -o "SHA256SUMS" 2>/dev/null; then
-        msg_info "✓ Download complete"
-        echo ""
-
-        msg_step "Verifying integrity..."
-        echo ""
+    __msg_step "Downloading checksum..."
+    if curl -fsSL "${_tkg_repo_url}/SHA256SUMS" -o "SHA256SUMS" 2>/dev/null; then
+        __msg_info "[✓] Download complete${_break}"
+    
+        __msg_step "Verifying integrity..."
         if sha256sum -c "SHA256SUMS" 2>&1 | grep -q "OK"; then
-            msg_info "✓ Checksum verification successful!"
+            __msg_info "[✓] Checksum verification successful!${_break}"
         else
-            msg_error "Checksum verification FAILED!"
-            echo ""
-            msg_warning "The downloaded file does not match the expected checksum."
-            msg_warning "This could indicate:"
-            msg_warning "  - File corruption during download"
-            msg_warning "  - Security compromise"
-            msg_warning "  - Network issues"
-            echo ""
-            msg_error "Installation aborted for security reasons."
+            __msg_error "Checksum verification FAILED!${_break}"
+            __msg_warning "The downloaded file does not match the expected checksum."
+            __msg_warning "This could indicate:"
+            __msg_warning " - File corruption during download"
+            __msg_warning " - Security compromise"
+            __msg_warning " - Network issues${_break}"
+            __msg_error "Installation aborted for security reasons."
             exit 1
         fi
-        echo ""
     else
-        msg_warning "Checksum file not available (expected for development versions)"
-        msg_warning "Skipping integrity verification"
-        echo ""
+        __msg_warning "Checksum file not available (expected for development versions)"
+        __msg_warning "Skipping integrity verification${_break}"
     fi
 
     # Move to installation directory
-    msg_step "Installing to $INSTALL_DIR..."
-    mv "${SCRIPT_NAME}" "${INSTALL_DIR}/"
-    mv "SHA256SUMS" "${INSTALL_DIR}/"
-    chmod +x "${INSTALL_DIR}/${SCRIPT_NAME}"
-    msg_info "✓ Installation complete"
-    echo ""
+    __msg_step "Installing to: $_tkg_install_dir"
+    mv "${_tkg_script_name}" "${_tkg_install_dir}/"
+    mv "SHA256SUMS" "${_tkg_install_dir}/"
+    chmod +x "${_tkg_install_dir}/${_tkg_script_name}"
+    __msg_info "[✓] Installation complete${_break}"
 
     # Setup shell alias
-    msg_step "Setting up shell alias..."
+    __msg_step "Setting up shell alias..."
     
     # Detect shell - prioritize $SHELL variable (most reliable)
     SHELL_RC=""
@@ -134,39 +224,38 @@ main() {
 
     if [[ -n "$SHELL_RC" ]]; then
         # Check if alias already exists
-        if grep -q "alias ${SCRIPT_NAME}=" "$SHELL_RC" 2>/dev/null; then
-            msg_info "✓ Alias already exists in $SHELL_RC"
+        if grep -q "alias ${_tkg_script_name}=" "$SHELL_RC" 2>/dev/null; then
+            __msg_info "[✓] Alias already exists in $SHELL_RC"
         else
-            echo "" >> "$SHELL_RC"
-            echo "# TKG-Installer alias" >> "$SHELL_RC"
-            echo "alias ${SCRIPT_NAME}='${INSTALL_DIR}/${SCRIPT_NAME}'" >> "$SHELL_RC"
-            msg_info "✓ Alias added to $SHELL_RC"
+            # Append alias to shell RC file in a single here-doc block
+            cat >> "$SHELL_RC" <<EOF
+
+# TKG-Installer alias
+alias ${_tkg_script_name}='${_tkg_install_dir}/${_tkg_script_name}'
+EOF
+            __msg_info "[✓] Alias added to $SHELL_RC"
         fi
-        echo ""
-        msg_warning "Run the following command to activate the alias:"
-        echo "  source $SHELL_RC"
     else
-        msg_warning "Could not detect shell configuration file."
-        msg_warning "Add this manually to your shell config:"
-        echo "  alias ${SCRIPT_NAME}='${INSTALL_DIR}/${SCRIPT_NAME}'"
+        __msg_warning "Could not detect shell configuration file."
+        __msg_warning "Add this manually to your shell config:"
+        __msg_prompt " ${_gray}alias ${_tkg_script_name}='${_tkg_install_dir}/${_tkg_script_name}'${_reset}${_break}"
     fi
 
-    echo ""
-    msg_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    msg_info "✓ Installation successful!"
-    msg_info "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo ""
-    echo "Next steps:"
-    echo "  1. Reload your shell config:"
+    # Clean temp dir
+    __cleanup
+
+    __msg_info "${_break}${_break}${_green_neon}${_uline_on}INSTALLATION SUCCESSFUL!${_uline_off}${_reset}${_break}${_break}"
+    __msg_prompt "${_green_neon}${_uline_on}Next steps${_uline_off}:${_reset}"
+    __msg_prompt "1) Reload your shell config:"
+
     if [[ -n "$SHELL_RC" ]]; then
-        echo "     source $SHELL_RC"
+        __msg_prompt "   ${_gray}source $SHELL_RC${_reset}${_break}"
     fi
-    echo "  2. Run the installer:"
-    echo "     ${SCRIPT_NAME}"
-    echo ""
-    echo "Documentation: https://github.com/damachine/tkginstaller"
-    echo ""
+    
+    __msg_prompt "2) Run the installer:"
+    __msg_prompt "   ${_gray}${_tkg_script_name}${_reset}${_break}"
+    __msg_prompt "Documentation: ${_gray}https://github.com/damachine/tkginstaller${_reset}${_break}"
 }
 
 # Run main
-main
+__main
