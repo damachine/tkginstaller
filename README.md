@@ -5,7 +5,7 @@
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
 ──  KISS the 🐸  ──
 
-<strong>This script have the goal to help you with the process 
+<strong>This script have the goal to help you with the full process 
 of building, installing, and customizing the TKG/Frogminer
 source-based packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories,
 neither more nor less.</strong>
