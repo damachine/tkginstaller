@@ -50,7 +50,7 @@
 set -e
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.26.4"
+_tkg_version="v0.26.5"
 
 # Lock file to prevent concurrent execution of the script
 _lock_file="/tmp/tkginstaller.lock"
@@ -943,9 +943,9 @@ __menu_config() {
             
             if [[ -f "$_config_file_path" && -n "$_remote_url" ]]; then
                 _remote_tmp="'"${_tmp_dir}"'/${key}-remote.cfg"
-                if curl --max-time 10 -fsSL "$_remote_url" -o "$_remote_tmp" 2>/dev/null; then
+                if curl -fsSL "$_remote_url" -o "$_remote_tmp" 2>/dev/null; then
                     printf "%b\n" "'"${_info_config}"'"
-                    '"${_diff_cmd}"' "$_remote_tmp" "$_config_file_path" 2>/dev/null | '"${_bat_cmd}"' || printf "%b\n" "${_orange}Diff failed: Could not compare files.${_break}Possible reasons: file format/encoding issues, missing dependencies (wdiff/bat), or file access problems.${_break}Try checking file existence and ensure required tools are installed.${_reset}"
+                    '"${_diff_cmd}"' "$_remote_tmp" "$_config_file_path" 2>/dev/null | '"${_bat_cmd}"' || printf "%b\n" "${_orange}Diff failed${_reset}"
                     rm -f "$_remote_tmp"
                 else
                     printf "%b\n" "'"${_error_config_not_exist}"'"
@@ -954,6 +954,7 @@ __menu_config() {
                 printf "%b\n" "'"${_error_config_not_exist}"'"
             fi
         '
+
         # Define header texts
         local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Customizing (Beta)${_uline_off}${_reset}${_break}${_break}\
 ${_green_light}    - Customize to your preferred settings${_break}\
@@ -1023,7 +1024,7 @@ __old_config() {
     fi
     
     # Download upstream config
-    local _tmp_upstream="${_tmp_dir}/upstream_customization.cfg"
+    local _tmp_upstream="/tmp/upstream_customization.cfg"
     if ! curl --max-time 10 -fsSL "$_upstream_url" -o "$_tmp_upstream" 2>/dev/null; then
         __msg_warning "Could not download upstream config for comparison"
         return 1
@@ -1041,7 +1042,7 @@ __old_config() {
     local _officially_deprecated=""
     if [[ "$_package_name" == "Linux-TKG" ]]; then
         local _prepare_url="${_frog_raw_url}/linux-tkg/master/linux-tkg-config/prepare"
-        local _tmp_prepare="${_tmp_dir}/linux-tkg-prepare"
+        local _tmp_prepare="/tmp/linux-tkg-prepare"
         if curl --max-time 10 -fsSL "$_prepare_url" -o "$_tmp_prepare" 2>/dev/null; then
             # Extract deprecated variables from _deprecated_config_vars array
             _officially_deprecated=$(sed -n '/_deprecated_config_vars=($/,/^)$/p' "$_tmp_prepare" | grep -oP '^\s*"_\K[^"]+' | sed 's/^/_/' || true)
@@ -1052,7 +1053,7 @@ __old_config() {
     # Check for advanced customization file variables for Wine-TKG and Proton-TKG
     if [[ "$_package_name" == "Wine-TKG" ]]; then
         local _adv_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/advanced-customization.cfg"
-        local _tmp_adv="${_tmp_dir}/upstream_advanced.cfg"
+        local _tmp_adv="/tmp/upstream_advanced.cfg"
         if curl --max-time 10 -fsSL "$_adv_url" -o "$_tmp_adv" 2>/dev/null; then
             local _adv_vars
             _adv_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_adv" 2>/dev/null)
@@ -1063,7 +1064,7 @@ __old_config() {
         fi
     elif [[ "$_package_name" == "Proton-TKG" ]]; then
         local _adv_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/advanced-customization.cfg"
-        local _tmp_adv="${_tmp_dir}/upstream_advanced.cfg"
+        local _tmp_adv="/tmp/upstream_advanced.cfg"
         if curl --max-time 10 -fsSL "$_adv_url" -o "$_tmp_adv" 2>/dev/null; then
             local _adv_vars
             _adv_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_adv" 2>/dev/null)
@@ -1095,8 +1096,8 @@ __old_config() {
         while IFS= read -r _var; do
             __msg_plain " ${_gray}${_var}${_reset}"
         done <<< "$_deprecated_vars"
-        __msg_plain "${_break} These variables are no longer used in upstream and can be removed.${_break} \
-Please check this to ensure correctness!${_break}"
+        __msg_plain "${_break} These variables are no longer used in upstream.${_break} \
+Please check this to ensure correctness! Then they can be removed from your local config.${_break}${_break}"
         __msg_prompt "Press any key to continue...${_break}"
         read -n 1 -s -r
     fi
@@ -1222,22 +1223,22 @@ __menu() {
 
     # Define menu options
     local _menu_options=(
-        "Linux  |🐧 ${_green_neon}Linux      ${_gray} Linux custom kernels for better desktop and gaming experience"
+        "Linux  |🐧 ${_green_neon}Linux   ${_gray} Linux custom kernels for better desktop and gaming experience"
     )
 
     if [[ "${_is_arch_based}" == "true" ]]; then
         _menu_options+=(
-            "Nvidia |💻 ${_green_neon}Nvidia     ${_gray} Nvidia open-source or proprietary graphics drivers"
-            "Mesa   |🧩 ${_green_neon}Mesa       ${_gray} AMD and Intel open-source graphics driver"
+            "Nvidia |💻 ${_green_neon}Nvidia  ${_gray} Nvidia open-source or proprietary graphics drivers"
+            "Mesa   |🧩 ${_green_neon}Mesa    ${_gray} AMD and Intel open-source graphics driver"
         )
     fi
 
     _menu_options+=(
-        "Wine   |🍷 ${_green_neon}Wine       ${_gray} Windows compatibility layer to run Windows apps on Linux"
-        "Proton |🎮 ${_green_neon}Proton     ${_gray} Run Windows games on the Linux system via Steam"
-        "Config |🔧 ${_green_neon}Customize  ${_gray} Enter external configuration files menu (Expert)"
-        "Clean  |🧹 ${_green_neon}Clean      ${_gray} Removes all temporary files for a clean installation"
-        "Help   |❓ ${_green_neon}Help       ${_gray} Displays help and usage information about TKG-Installer"
+        "Wine   |🍷 ${_green_neon}Wine    ${_gray} Windows compatibility layer to run Windows apps on Linux"
+        "Proton |🎮 ${_green_neon}Proton  ${_gray} Run Windows games on the Linux system via Steam"
+        "Config |🔧 ${_green_neon}Config  ${_gray} Enter external configuration files menu (Expert)"
+        "Clean  |🧹 ${_green_neon}Clean   ${_gray} Removes all temporary files for a clean installation"
+        "Help   |❓ ${_green_neon}Help    ${_gray} Displays help and usage information about TKG-Installer"
         "Close  |❎ ${_green_neon}Close"
     )
 
@@ -1347,15 +1348,125 @@ __main_direct_mode() {
     local _arg1="${1,,}"
     local _arg2="${2,,}"
 
-    # Map package shortcuts to internal names
+    # Accept both [package] [config] and [config] [package] order for arguments
     local _package=""
+    local _config_arg=""
+
+    # Check for config argument
+    if [[ "$_arg1" =~ ^(config|c|edit|e|customize|cu)$ ]]; then
+        _config_arg="$_arg1"
+        case "$_arg2" in
+            linux|l|--linux|-l) _package="linux-tkg" ;;
+            nvidia|n|--nvidia|-n) _package="nvidia-all" ;;
+            mesa|m|--mesa|-m) _package="mesa-git" ;;
+            wine|w|--wine|-w) _package="wine-tkg" ;;
+            proton|p|--proton|-p) _package="proton-tkg" ;;
+            
+        esac
+    elif [[ "$_arg2" =~ ^(config|c|edit|e|customize|cu)$ ]]; then
+        _config_arg="$_arg2"
+        case "$_arg1" in
+            linux|l|--linux|-l) _package="linux-tkg" ;;
+            nvidia|n|--nvidia|-n) _package="nvidia-all" ;;
+            mesa|m|--mesa|-m) _package="mesa-git" ;;
+            wine|w|--wine|-w) _package="wine-tkg" ;;
+            proton|p|--proton|-p) _package="proton-tkg" ;;
+        esac
+    fi
+
+    # Allow only supported second-args (config/edit/customize)
+    if [[ "$_arg1" =~ ^(linux|l|nvidia|n|mesa|m|wine|w|proton|p)$ ]] && [[ -n "$_arg2" ]] \
+    && ! [[ "$_arg2" =~ ^(config|c|edit|e|customize|cu)$ ]]; then
+        __banner "$_orange"
+        __msg_warning "Invalid argument:${_reset}${_gray} ${_arg1:-} ${_arg2:-}${_reset}${_break}"
+        __msg_plain " The argument is either invalid or incomplete."
+        __msg_plain " All available arguments run:${_break}"
+        __msg_plain "$0 help${_break}"
+        trap - INT TERM EXIT HUP
+        __clean || true
+        exit 1
+    fi
+
+    # If user asked only "config" (no package) -> open interactive config menu
+    if [[ -n "$_config_arg" && -z "$_package" ]]; then
+        # Prepare environment and open config menu in interactive mode (with preview)
+        trap - INT TERM EXIT HUP
+        __prepare true
+        clear
+        __menu_config
+        __clean || true
+        exit 0
+    fi
+
+    # Handle config editing
+    if [[ -n "$_package" && -n "$_config_arg" ]]; then
+        # Determine config file path and URL
+        local _config_path="${_config_dir}/${_package}.cfg"
+        local _config_url=""
+        local _config_name=""
+
+        case "$_package" in
+            linux-tkg)
+                _config_name="Linux-TKG"
+                _config_url="${_frog_raw_url}/linux-tkg/master/customization.cfg"
+                ;;
+            nvidia-all)
+                _config_name="Nvidia-TKG"
+                _config_url="${_frog_raw_url}/nvidia-all/master/customization.cfg"
+                ;;
+            mesa-git)
+                _config_name="Mesa-TKG"
+                _config_url="${_frog_raw_url}/mesa-git/master/customization.cfg"
+                ;;
+            wine-tkg)
+                _config_name="Wine-TKG"
+                _config_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
+                ;;
+            proton-tkg)
+                _config_name="Proton-TKG"
+                _config_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
+                ;;
+        esac
+
+        # Disable exit trap before editing config
+        trap - INT TERM EXIT HUP
+
+        # Handle config file editing directly
+        __handle_config "$_config_name" "$_config_path" "$_config_url"
+
+        # Display exit messages
+        __banner
+        __msg_plain "${_green_mint}Closed.${_break}"
+
+        # Clean exit
+        __clean || true
+        exit 0
+    fi
+
+    # Handle regular install commands
     case "$_arg1" in
-        linux|l|--linux|-l) _package="linux-tkg" ;;
-        nvidia|n|--nvidia|-n) _package="nvidia-all" ;;
-        mesa|m|--mesa|-m) _package="mesa-git" ;;
-        wine|w|--wine|-w) _package="wine-tkg" ;;
-        proton|p|--proton|-p) _package="proton-tkg" ;;
+        linux|l|--linux|-l)
+            __prepare
+            __install_wrapper __linux_install
+            ;;
+        nvidia|n|--nvidia|-n)
+            __prepare
+            __install_wrapper __nvidia_install
+            ;;
+        mesa|m|--mesa|-m)
+            __prepare
+            __install_wrapper __mesa_install
+            ;;
+        wine|w|--wine|-w)
+            __prepare
+            __install_wrapper __wine_install
+            ;;
+        proton|p|--proton|-p)
+            __prepare
+            __install_wrapper __proton_install
+            ;;
         clean|--clean)
+            # Clean temporary files and restart
             __banner
             __msg_info "Cleaning all temporary files...${_break}"
             __msg_plain " Location:${_reset}${_gray} ${_tmp_dir}${_reset}${_break}"
@@ -1366,64 +1477,22 @@ __main_direct_mode() {
             exit 0 >/dev/null 2>&1
             ;;
         help|h|--help|-h)
-            __help
-            trap - INT TERM EXIT HUP
-            __clean || true
-            exit 0
+            # Handle help command
             ;;
         *)
+            # Invalid argument handling and usage instructions display
             __banner "$_orange"
-            __msg_warning "Invalid argument:${_reset}${_gray} ${1:-}${_reset}${_break}"
+            __msg_warning "Invalid argument:${_reset}${_gray} ${1:-} ${2:-}${_reset}${_break}"
             __msg_plain " The argument is either invalid or incomplete."
             __msg_plain " All available arguments run:${_break}"
             __msg_plain "$0 help${_break}"
+
+            # Disable exit trap before cleanup and exit to avoid duplicate cleanup messages on exit
             trap - INT TERM EXIT HUP
             __clean || true
             exit 1
             ;;
     esac
-
-    # Handle config editing if second argument is config/edit
-    if [[ "$_arg2" =~ ^(config|c|edit|e)$ && -n "$_package" ]]; then
-        # Map package to config details (DRY - same structure as __menu_config)
-        declare -A _config_urls=(
-            [linux-tkg]="${_frog_raw_url}/linux-tkg/master/customization.cfg"
-            [nvidia-all]="${_frog_raw_url}/nvidia-all/master/customization.cfg"
-            [mesa-git]="${_frog_raw_url}/mesa-git/master/customization.cfg"
-            [wine-tkg]="${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
-            [proton-tkg]="${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
-        )
-        
-        declare -A _config_names=(
-            [linux-tkg]="Linux-TKG"
-            [nvidia-all]="Nvidia-TKG"
-            [mesa-git]="Mesa-TKG"
-            [wine-tkg]="Wine-TKG"
-            [proton-tkg]="Proton-TKG"
-        )
-
-        trap - INT TERM EXIT HUP
-        __handle_config \
-            "${_config_names[$_package]}" \
-            "${_config_dir}/${_package}.cfg" \
-            "${_config_urls[$_package]}"
-        __banner
-        __msg_plain "${_green_neon}Closed.${_break}"
-        __clean || true
-        exit 0
-    fi
-
-    # Handle package installation
-    if [[ -n "$_package" ]]; then
-        __prepare
-        case "$_package" in
-            linux-tkg) __install_wrapper __linux_install ;;
-            nvidia-all) __install_wrapper __nvidia_install ;;
-            mesa-git) __install_wrapper __mesa_install ;;
-            wine-tkg) __install_wrapper __wine_install ;;
-            proton-tkg) __install_wrapper __proton_install ;;
-        esac
-    fi
 }
 
 # Main function for interactive mode
@@ -1431,27 +1500,32 @@ __main_interactive_mode() {
     # Initialize dynamic preview content for fzf menus
     __prepare true
     clear
-    __menu || {
-        __banner "$_red"
-        __msg_error "Failed to initialize fzf menu!"
-        __msg_plain " Exiting..."
-        trap - INT TERM EXIT HUP
-        __clean || true
-        exit 1
-    }
+    __menu
 
     # Process user selection from menu
     local _user_choice
     _user_choice=$(< "$_choice_file")
+
+    # Remove temporary choice file
     rm -f "$_choice_file" 2>&1 || true
 
     # Handle user choice from menu
     case $_user_choice in
-        Linux)   __install_wrapper __linux_install ;;
-        Nvidia)  __install_wrapper __nvidia_install ;;
-        Mesa)    __install_wrapper __mesa_install ;;
-        Wine)    __install_wrapper __wine_install ;;
-        Proton)  __install_wrapper __proton_install ;;
+        Linux)
+            __install_wrapper __linux_install
+            ;;
+        Nvidia)
+            __install_wrapper __nvidia_install
+            ;;
+        Mesa)
+            __install_wrapper __mesa_install
+            ;;
+        Wine)
+            __install_wrapper __wine_install
+            ;;
+        Proton)
+            __install_wrapper __proton_install
+            ;;
         Config)
             __menu_config
             rm -f "$_lock_file" 2>&1 || true
@@ -1459,12 +1533,14 @@ __main_interactive_mode() {
             exec "$0"
             ;;
         Help)
+            # Remove exit trap
             trap - INT TERM EXIT HUP
             __help
             __clean || true
             exit 0
             ;;
         Clean)
+            # Clean temporary files and restart
             __banner
             __msg_info "Cleaning all temporary files...${_break}"
             __msg_plain " Location:${_reset}${_gray} ${_tmp_dir}${_reset}${_break}"
@@ -1490,4 +1566,4 @@ __main() {
 }
 
 # SCRIPT EXECUTION ENTRY POINT
-__main "$@"
+__main "$@" 
