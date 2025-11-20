@@ -29,13 +29,14 @@ Features
 
 ```yaml
 # Arch Linux-based distributions
-# Install via AUR helper
+# Install via AUR helper (recommended)
 yay -S tkginstaller-git
-
-# OR: Universal all distributions
+`````
+````yaml
+# All distributions
 # Install via automated installation helper
 curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/install.sh | bash
-```
+`````
 
 # 
 
