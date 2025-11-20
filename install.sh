@@ -87,7 +87,7 @@ __init_style
 
 # Configuration
 _tkg_repo_url="https://raw.githubusercontent.com/damachine/tkginstaller/master"
-_tkg_install_dir="${HOME}/tkginstaller"
+_tkg_install_dir="${HOME}/.tkginstaller"
 _tkg_script_name="tkginstaller"
 
 # Functions
