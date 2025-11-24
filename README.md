@@ -13,7 +13,7 @@ source-based packages from the <a href="https://github.com/Frogging-Family">Frog
    
 Features
  <strong>- User-friendly interactive control</strong>
- <strong>- Use fast direct terminal commandline mode</strong>
+ <strong>- Use commands for automated processes</strong>
  <strong>- Modern stylish menu-driven TUI client</strong>
     <sub>Integrated preview and editor</sub>
     <sub>Read online manual</sub>
