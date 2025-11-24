@@ -38,7 +38,41 @@ yay -S tkginstaller-git
 # Install via automated installation helper
 curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/install.sh | bash
 `````
+```yaml
+# OR: Install all manual
+# Preparation
+mkdir -p /patch/to/tkginstaller
+cd /patch/to/tkginstaller
 
+# STEP 1: Download with curl
+curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller
+
+# STEP 2: Optional verify integrity (Recommended)
+curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/SHA256SUMS
+sha256sum -c SHA256SUMS
+
+# STEP 3: Make script executable
+chmod +x tkginstaller
+
+# Optional: To make the installer available system-wide after manual installation
+
+# Method 1: Create a system link
+sudo ln -s /path/to/tkginstaller /usr/bin/tkginstaller
+
+# Method 2: Create a shell alias or function
+# Add one of these to your ~/.bashrc or ~/.zshrc:
+
+# As alias:
+alias tkginstaller='/path/to/tkginstaller'
+
+# OR as function:
+tkginstaller() {
+  /path/to/tkginstaller "$@"
+}
+
+# Now you can run from anywhere:
+tkginstaller
+```
 # 
 
 ##### USAGE
