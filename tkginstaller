@@ -49,10 +49,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-_tkg_version="v0.26.6"
-
-# Lock file to prevent concurrent execution of the script
-_lock_file="/tmp/tkginstaller.lock"
+_tkg_installer_version="v0.26.7"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -60,16 +57,68 @@ _lock_file="/tmp/tkginstaller.lock"
 
 # Initialize global variables, paths, and configurations
 __init_globals() {
-    _tmp_dir=${HOME}/.cache/tkginstaller
-    _choice_file=${_tmp_dir}/choice.tmp
-    _config_dir=${HOME}/.config/frogminer
+    _tkg_tmp_dir=${HOME}/.tkginstaller
+    _tkg_choice_file=${_tkg_tmp_dir}/.choice.tmp
+    _local_config_dir=${HOME}/.config/frogminer
     _tkg_repo_url=https://github.com/damachine/tkginstaller
     _tkg_raw_url=https://raw.githubusercontent.com/damachine/tkginstaller/refs/heads/master/docs
     _frog_repo_url=https://github.com/Frogging-Family
     _frog_raw_url=https://raw.githubusercontent.com/Frogging-Family
     
     # Export only variables used in fzf preview commands
-    export _tmp_dir _config_dir _tkg_raw_url _frog_raw_url
+    export _tkg_tmp_dir _local_config_dir _tkg_raw_url _frog_raw_url
+}
+
+# Centralized package configuration (paths relative to _frog_raw_url)
+declare -gA _ext_config_patch=(
+    [linux-tkg]="linux-tkg/master/customization.cfg"
+    [nvidia-all]="nvidia-all/master/customization.cfg"
+    [mesa-git]="mesa-git/master/customization.cfg"
+    [wine-tkg]="wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
+    [proton-tkg]="wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
+)
+
+# Package display names
+declare -gA _pkg_display_name=(
+    [linux-tkg]="Linux-TKG"
+    [nvidia-all]="Nvidia-TKG"
+    [mesa-git]="Mesa-TKG"
+    [wine-tkg]="Wine-TKG"
+    [proton-tkg]="Proton-TKG"
+)
+
+# Normalize package argument to internal key
+__normalize_package() {
+    case "${1,,}" in
+        linux|l|--linux|-l) echo "linux-tkg" ;;
+        nvidia|n|--nvidia|-n) echo "nvidia-all" ;;
+        mesa|m|--mesa|-m) echo "mesa-git" ;;
+        wine|w|--wine|-w) echo "wine-tkg" ;;
+        proton|p|--proton|-p) echo "proton-tkg" ;;
+        *) echo "" ;;
+    esac
+}
+
+# Check if argument is a config command
+__is_config_arg() {
+    [[ "${1,,}" =~ ^(config|c|edit|e|customize|cu)$ ]]
+}
+
+# Get full config URL for a package
+__get_config_url() {
+    local _pkg="$1"
+    [[ -n "${_ext_config_patch[$_pkg]:-}" ]] && echo "${_frog_raw_url}/${_ext_config_patch[$_pkg]}"
+}
+
+# Clean temporary files and cache
+__clean_temp_dir() {
+    __banner
+    __msg_info "Cleaning all temporary files...${_break}"
+    __msg_plain " Location:${_reset}${_gray} ${_tkg_tmp_dir}${_reset}${_break}"
+    rm -f "$_tkg_choice_file" 2>&1 || true
+    rm -rf "$_tkg_tmp_dir" 2>&1 || true
+    sleep 1.5s
+    __msg_plain "${_green_neon}Done.${_break}"
 }
 
 # Initialize color and formatting
@@ -143,7 +192,7 @@ __banner() {
 ░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
-──  ${_tkg_version}  ──
+──  ${_tkg_installer_version}  ──
 EOF
     printf "%b\n" "$_reset"
 }
@@ -204,16 +253,20 @@ __msg_pkg() {
     local _pkg_name="${1:-TKG package}"
     local _config_url="${2:-${_frog_repo_url}}"
 
-    __msg_info "${_break}${_green_neon}${_uline_on}NOTICE${_uline_off}:${_reset}${_green_light} Create, edit, and compare${_gray} customization.cfg${_reset}${_green_light} files${_reset}${_break}"
-    __msg_plain "\
- A wide range of options are available!
- Thanks to their flexible configuration and powerful settings, -TKG- packages
- can be precisely tailored to different systems and personal preferences.${_break}
- Set up and use the${_gray} customization.cfg${_reset} file with one of the two methods listed below:
-  1)${_gray} tkginstaller -> Config -> ${_pkg_name,,}${_reset} (interactive menu)
-  2)${_gray} tkginstaller ${_pkg_name,,} config${_reset} (direct command)${_break}
- ${_uline_on}Please make sure to adjust the settings correctly!${_uline_off}
- See: ${_gray}${_config_url}${_reset}"
+    echo
+    __msg_info "${_green_neon}${_uline_on}INFO${_uline_off}:${_reset} ${_green_light}Configuration Options${_reset}"
+    __msg_plain "  ${_green_dark}┌─────────────────────────────────────────────────────────────────────────────${_reset}"
+    __msg_plain "  ${_green_dark}│${_reset} A wide range of options are available!${_reset}"
+    __msg_plain "  ${_green_dark}│${_reset} TKG packages can be precisely tailored to your system.${_reset}"
+    __msg_plain "  ${_green_dark}│${_reset}"
+    __msg_plain "  ${_green_dark}│${_reset} ${_orange}You will find detailed instructions at:${_reset}"
+    __msg_plain "  ${_green_dark}│${_reset} ${_gray}${_config_url}${_reset}"
+    __msg_plain "  ${_green_dark}│${_reset}"
+    __msg_plain "  ${_green_dark}│${_reset} Set up ${_gray}customization.cfg${_reset} using one of the following options:${_reset}"
+    __msg_plain "  ${_green_dark}├─────────────────────────────────────────────────────────────────────────────${_reset}"
+    __msg_plain "  ${_green_dark}│${_reset} ${_green_neon}A${_reset} │ tkginstaller → Config → ${_pkg_name,,}  ${_gray}(interactive)${_reset}"
+    __msg_plain "  ${_green_dark}│${_reset} ${_green_neon}B${_reset} │ tkginstaller ${_pkg_name,,} config      ${_gray}(direct)${_reset}"
+    __msg_plain "  ${_green_dark}└─────────────────────────────────────────────────────────────────────────────${_reset}"
 }
 
 # Check for root
@@ -277,47 +330,6 @@ EOF
 # Help can show always!
 [[ $# -gt 0 && "${1:-}" =~ ^(help|h|--help|-h)$ ]] && { __help; exit 0; }
 
-# Prevent concurrent execution with atomic lock file creation
-if ! (set -o noclobber; echo $$ > "$_lock_file") 2>/dev/null; then
-    # Lock file exists, check if process is still running
-    if [[ -r "$_lock_file" ]]; then
-        _old_pid=$(cat "$_lock_file" 2>/dev/null || echo "")
-        if [[ -n "$_old_pid" ]] && kill -0 "$_old_pid" 2>/dev/null; then
-            # Process is still running
-            __banner "$_orange"
-            __msg_warning "Script is already running (PID: $_old_pid). Exiting...${_break}"
-            __msg_plain " If the script was unexpectedly terminated before."
-            __msg_plain " Remove ${_reset}${_gray}$_lock_file${_reset} manually by running:${_break}"
-            __msg_plain "tkginstaller clean${_break}"
-            exit 1
-        else
-            # Stale lock file found, remove it and retry atomically
-            rm -f "$_lock_file" 2>/dev/null || {
-                # Failed to remove stale lock file
-                __banner "$_orange"
-                __msg_warning "Cannot remove stale lock file. Exiting...${_break}"
-                __msg_plain " Remove ${_reset}${_gray}$_lock_file${_reset} manually by running:${_break}"
-                __msg_plain "tkginstaller clean${_break}"
-                exit 1
-            }
-            # Retry atomic lock creation after removing stale lock
-            if ! (set -o noclobber; echo $$ > "$_lock_file") 2>/dev/null; then
-                # Another process acquired lock between removal and creation
-                __banner "$_orange"
-                __msg_warning "Another instance started during cleanup. Exiting...${_break}"
-                exit 1
-            fi
-        fi
-    else
-        # Lock file exists but not readable
-        __banner "$_red"
-        __msg_error "Lock file exists but is not readable. Exiting...${_break}"
-        __msg_plain " Remove ${_reset}${_gray}$_lock_file${_reset} manually by running:${_break}"
-        __msg_plain "tkginstaller clean${_break}"
-        exit 1
-    fi
-fi
-
 # =============================================================================
 # CORE UTILITY FUNCTIONS
 # =============================================================================
@@ -354,6 +366,7 @@ __prepare() {
     )
 
     # Set install command based on distro
+    # Note: Case patterns use literal strings for POSIX compatibility
     case "${_distro_id,,}" in
         arch|manjaro|endeavouros|cachyos)
             _install_cmd_dep="pacman -S"
@@ -380,7 +393,7 @@ __prepare() {
             done
             _install_cmd_dep="emerge"
             ;;
-        ubuntu|debian|linuxmint|pop|elementary)
+        debian|ubuntu|linuxmint|pop|elementary|mx|raspbian)
             _install_cmd_dep="apt install"
             ;;
         *)
@@ -398,7 +411,7 @@ __prepare() {
 
     if [[ ${#_missing_dep[@]} -gt 0 ]]; then
         for i in {1..7}; do
-            __clear_line 80 ""
+            __clear_line 120 ""
         done
         __banner "$_red"
         __msg_error "Missing dependencies detected.${_break}"
@@ -416,15 +429,15 @@ __prepare() {
         exit 1 >/dev/null 2>&1
     fi
 
-    # Setup temporary directory
-    rm -f "$_choice_file" 2>/dev/null || true
-    rm -rf "$_tmp_dir" 2>/dev/null || true
-    mkdir -p "$_tmp_dir" 2>/dev/null || {
+    # Setup temporary directory (preserved for git pull updates per linux-tkg recommendation)
+    rm -f "$_tkg_choice_file" 2>/dev/null || true
+    # Cache is preserved to allow git pull updates instead of fresh clones
+    mkdir -p "$_tkg_tmp_dir" 2>/dev/null || {
         for i in {1..7}; do
-            __clear_line 80 ""
+            __clear_line 120 ""
         done
         __banner "$_red"
-        __msg_error "Creating temporary directory failed: ${_tmp_dir}${_break}"
+        __msg_error "Creating temporary directory failed: ${_tkg_tmp_dir}${_break}"
         __msg_plain " Please check your permissions and try again.${_break}"
         exit 1 >/dev/null 2>&1
     }
@@ -486,15 +499,15 @@ __exit() {
 trap '__exit 130' INT TERM HUP
 trap '__exit $?' EXIT
 
-# Cleanup handler
+# Cleanup handler (preserves cache directory for git pull updates)
 __clean() {
-    # Remove temporary files and directories
-    rm -f "$_lock_file" 2>/dev/null || true
-    rm -f "$_choice_file" 2>/dev/null || true
-    rm -rf "$_tmp_dir" 2>/dev/null || true
+    # Remove temporary files but preserve cache directory for git pull updates
+    rm -f "$_tkg_choice_file" 2>/dev/null || true
+    # Cache directory is intentionally preserved to allow git pull updates
+    # Use 'tkginstaller clean' to explicitly remove the cache
 
     # Unset all variables
-    unset _tkg_version _lock_file
+    unset _tkg_installer_version
     unset _break _reset _green_light _green_neon _green_mint _green_dark _orange _gray _uline_on _uline_off _cols _line
  }
 
@@ -505,7 +518,7 @@ __fzf_menu() {
     local _preview_command="$2"
     local _header_text="$3"
     local _footer_text="$4"
-    local _border_label_text="${5:-$_tkg_version}"
+    local _border_label_text="${5:-$_tkg_installer_version}"
     local _preview_window_settings="${6:-right:wrap:55%}"
     local _fzf_bind="${7:-ctrl-p:toggle-preview}"
 
@@ -556,19 +569,41 @@ __install_package() {
     local _work_directory="${4:-}"
 
     # Enter temporary directory
-    cd "${_tmp_dir}" > /dev/null 2>&1 || return 1
+    cd "${_tkg_tmp_dir}" > /dev/null 2>&1 || return 1
 
-    # Clone repository
-    __msg_info "${_break}${_green_neon}${_uline_on}NOTICE${_uline_off}:${_reset}${_green_light} Fetching $_package_name from Frogging-Family repository...${_break}"
-    git clone "$_repo_url" > /dev/null 2>&1 || {
-        __msg_error "Cloning failed for: $_package_name${_break}"
-        __msg_plain " Please check your internet connection and try again."
-        return 1
-    }
-
-    # Enter repository directory
+    # Clone or update repository (git pull if exists, clone if not)
     local _repo_dir
     _repo_dir=$(basename "${_repo_url}" .git)
+    
+    if [[ -d "${_repo_dir}/.git" ]]; then
+        # Repository exists - update with git pull (recommended by linux-tkg)
+        __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Updating ${_gray}$_package_name${_reset} ${_green_light}(git pull)...${_reset}${_break}"
+        cd "${_repo_dir}" > /dev/null 2>&1 || {
+            __msg_error "Cannot enter repository directory: ${_repo_dir}${_break}"
+            return 1
+        }
+        git pull > /dev/null 2>&1 || {
+            __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Git pull failed, trying fresh clone...${_reset}${_break}"
+            cd "${_tkg_tmp_dir}" > /dev/null 2>&1 || return 1
+            rm -rf "${_repo_dir}" 2>/dev/null || true
+            git clone "$_repo_url" > /dev/null 2>&1 || {
+                __msg_error "Cloning failed for: $_package_name${_break}"
+                __msg_plain " Please check your internet connection and try again."
+                return 1
+            }
+        }
+        cd "${_tkg_tmp_dir}" > /dev/null 2>&1 || return 1
+    else
+        # Fresh clone
+        __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Cloning ${_gray}$_package_name${_reset} ${_green_light}from Frogging-Family repository...${_reset}${_break}"
+        git clone "$_repo_url" > /dev/null 2>&1 || {
+            __msg_error "Cloning failed for: $_package_name${_break}"
+            __msg_plain " Please check your internet connection and try again."
+            return 1
+        }
+    fi
+
+    # Enter repository directory
     cd "${_repo_dir}" > /dev/null 2>&1 || {
         __msg_error "Cloned repository directory not found: ${_repo_dir}${_break}"
         __msg_plain " Please check your path or permissions and try again."
@@ -589,12 +624,13 @@ __install_package() {
     sleep 1.5s # Short delay
 
     # Build and install the package
-    __msg_info "${_break}${_green_neon}${_uline_on}NOTICE${_uline_off}:${_reset}${_green_light} Cloning, building and installing $_package_name for $_distro_name, this may take a while...${_break}"
-    eval "$_build_command" || {
-        __msg_plain ""
-        __msg_error "Building failed: $_package_name for $_distro_name"
-        return 1
-    }
+    __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Building and installing ${_gray}$_package_name${_reset} ${_green_light}for ${_gray}$_distro_name$, {_reset}${_orange}this may take a while...${_reset}${_break}"
+    eval "$_build_command"
+    local _status=$?
+    
+    # Display completion status
+    __status "$_status"
+    return "$_status"
 }
 
 # Countdown prompt with timeout
@@ -606,19 +642,34 @@ __prompt_timer() {
     _old_trap_int=$(trap -p INT 2>/dev/null || true)
     trap '__exit 130' INT
     
-    SECONDS_LEFT="$_timeout"
+    _seconds_left="$_timeout"
     _user_answer=""
     
-    while [[ $SECONDS_LEFT -gt 0 ]]; do
-        printf "\r${_green_neon}${_uline_on}SELECT${_uline_off}:${_reset} %s${_orange} Waiting for input... %2ds:${_reset} " "$_prompt_options" "$SECONDS_LEFT"
+    # Progress bar characters
+    local _bar_filled="█"
+    local _bar_empty="░"
+    local _bar_width=66
+    
+    while [[ $_seconds_left -gt 0 ]]; do
+        # Calculate progress bar
+        local _progress=$(( (_timeout - _seconds_left) * _bar_width / _timeout ))
+        local _remaining=$(( _bar_width - _progress ))
+        local _bar=""
+        for ((i=0; i<_progress; i++)); do _bar+="${_bar_filled}"; done
+        for ((i=0; i<_remaining; i++)); do _bar+="${_bar_empty}"; done
+        
+        # Display styled prompt
+        printf "\r${_green_neon}▶${_reset} ${_gray}%s${_reset} ${_green_dark}%s${_reset} ${_orange}%02d${_gray}s${_reset} " \
+            "$_prompt_options" "$_bar" "$_seconds_left"
+        
         trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
         if read -r -t 1 _user_answer; then
-            __clear_line 80 ""
+            __clear_line 120 ""
             break
         fi
-        ((SECONDS_LEFT--))
+        ((_seconds_left--))
     done
-    __clear_line 80 ""
+    __clear_line 120 ""
     
     # Default to "1" if no answer
     : "${_user_answer:=1}"
@@ -638,25 +689,6 @@ __prompt_answer() {
     : "${_user_answer:=$_default}"
 }
 
-# Common wrapper for installation functions
-__install_wrapper() {
-    local _install_func="$1"
-    
-    # Display banner if in preview mode
-    if [[ "${_load_preview:-false}" == "true" ]]; then
-        __banner
-        __clear_line 80 ""
-    fi
-    
-    # Execute installation function
-    "$_install_func"
-    local _status=$?
-    
-    # Display status
-    __status "$_status"
-    return "$_status"
-}
-
 # Linux-TKG installation
 __linux_install() {
     # Inform user about external configuration
@@ -664,31 +696,75 @@ __linux_install() {
 
     # Determine build command
     local _build_command
+    local _pkg_type=""
 
     if [[ "${_is_arch_based}" == "true" ]]; then
         # Arch-based distributions build system to use
-        __msg_info "${_break}${_green_neon}${_uline_on}CHOOSE${_uline_off}:${_reset}${_green_light} Which build system want to use?${_break}"
-        __msg_plain " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
-        __msg_plain " ${_uline_on}1${_uline_off}) makepkg -Csic${_reset}${_gray} (recommended for Arch-based distros) (${_uline_on}selected${_uline_off})"
-        __msg_plain " 2) install.sh install${_reset}${_gray} (use if you want the generic install script)${_break}"
+        echo
+        __msg_info "${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which installations method do you want to perform?${_reset}"
+        __msg_plain "  ${_green_dark}┌─────────────────────────────────────────────────────────────────────────────${_reset}"
+        __msg_plain "  ${_green_dark}│${_reset} Detected: ${_gray}${_distro_name}${_reset}"
+        __msg_plain "  ${_green_dark}├─────────────────────────────────────────────────────────────────────────────${_reset}"
+        __msg_plain "  ${_green_dark}│${_reset} ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ makepkg -Csic         ${_green_light}recommended for Arch${_reset}"
+        __msg_plain "  ${_green_dark}│${_reset} ${_orange}2${_reset} │ install.sh install    ${_gray}(generic script)${_reset}"
+        __msg_plain "  ${_green_dark}│${_reset} ${_red}9${_reset} │ install.sh uninstall  ${_gray}(show uninstall help)${_reset}"
+        __msg_plain "  ${_green_dark}└─────────────────────────────────────────────────────────────────────────────${_reset}${_break}"
         
-        __prompt_timer "[${_uline_on}1${_uline_off}/2]" 60
+        __prompt_timer "[${_green_neon}${_uline_on}1${_uline_off}${_reset}/${_orange}2${_reset}/${_red}9${_reset}]" 60
 
         case "$_user_answer" in
             2)
                 _build_command="chmod +x install.sh && ./install.sh install"
+                ;;
+            9)
+                _build_command="chmod +x install.sh && ./install.sh uninstall-help"
                 ;;
             *)
                 _build_command="makepkg -Csic"
                 ;;
         esac
     else
-        # Non-Arch distributions
+        # Detect DEB or RPM based distributions
+        case "${_distro_id,,}" in
+            debian|ubuntu|linuxmint|pop|elementary|mx|raspbian)
+                _pkg_type="DEB"
+                ;;
+            fedora|rhel|centos|rocky|alma|opensuse*|suse*)
+                _pkg_type="RPM"
+                ;;
+        esac
+
+        # Show info for DEB/RPM based distros
+        if [[ -n "$_pkg_type" ]]; then
+            __msg_info "${_break}${_green_neon}${_uline_on}INFO${_uline_off}:${_reset}${_green_light} ${_pkg_type}-based distribution detected: ${_gray}${_distro_name}${_reset}${_break}"
+            __msg_plain " The install.sh script will create ${_gray}.${_pkg_type,,}${_reset} packages,"
+            __msg_plain " move them to the ${_gray}${_pkg_type}S${_reset} subfolder, then prompt to install.${_break}"
+        else
+            __msg_info "${_break}${_green_neon}${_uline_on}INFO${_uline_off}:${_reset}${_green_light} Linux distribution detected: ${_gray}${_distro_name}${_reset}${_break}"
+        fi
+
+        # Non-Arch distributions use install.sh
         _build_command="chmod +x install.sh && ./install.sh install"
     fi
 
     # Execute installation process
     __install_package "${_frog_repo_url}/linux-tkg.git" "linux-tkg" "$_build_command"
+    local _status=$?
+
+    # Offer uninstall info for non-Arch distros after successful installation
+    if [[ "${_is_arch_based}" != "true" && $_status -eq 0 ]]; then
+        __msg_info "${_break}${_green_neon}${_uline_on}TIP${_uline_off}:${_reset}${_green_light} Uninstalling custom kernels has to be done manually.${_break}"
+        __msg_plain " The install.sh script can help with useful information:${_break}"
+        __msg_plain " ${_gray}cd ${_tkg_tmp_dir}/linux-tkg && ./install.sh uninstall-help${_reset}${_break}"
+        __msg_prompt "${_break}Show uninstall info now? [y/N]: "
+        read -r _show_info
+        if [[ "${_show_info,,}" =~ ^(y|yes)$ ]]; then
+            __msg_info "${_break}${_green_neon}${_uline_on}UNINSTALL-HELP${_uline_off}:${_reset}${_break}"
+            cd "${_tkg_tmp_dir}/linux-tkg" > /dev/null 2>&1 && ./install.sh uninstall-help 2>/dev/null || true
+        fi
+    fi
+
+    return "${_status:-0}"
 }
 
 # Nvidia-TKG installation
@@ -769,7 +845,7 @@ __proton_install() {
             __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_clean_command" "proton-tkg"
             local _clean_status=$?
             if [[ $_clean_status -eq 0 ]]; then
-                __msg_info "${_break}${_green_neon}${_uline_on}NOTICE:${_uline_off}${_reset}${_green_light} Cleaning completed successfully.${_reset}${_break}"
+                __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}Cleaning completed successfully.${_reset}${_break}"
             else
                 __msg_error "Cleaning failed (code: ${_clean_status}).${_break}"
             fi
@@ -825,31 +901,14 @@ __editor() {
 
 # Configuration file editor menu
 __menu_config() {
-    # Define config mappings and URLs
-    declare -A _config_urls=(
-        [linux-tkg]="${_frog_raw_url}/linux-tkg/master/customization.cfg"
-        [nvidia-all]="${_frog_raw_url}/nvidia-all/master/customization.cfg"
-        [mesa-git]="${_frog_raw_url}/mesa-git/master/customization.cfg"
-        [wine-tkg]="${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
-        [proton-tkg]="${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
-    )
-    
-    declare -A _config_names=(
-        [linux-tkg]="Linux-TKG"
-        [nvidia-all]="Nvidia-TKG"
-        [mesa-git]="Mesa-TKG"
-        [wine-tkg]="Wine-TKG"
-        [proton-tkg]="Proton-TKG"
-    )
-
     while true; do
         local _config_choice
 
         # Ensure configuration directory exists
-        if [[ ! -d "${_config_dir}" ]]; then
+        if [[ ! -d "${_local_config_dir}" ]]; then
             __banner "$_orange"
             __msg_warning "Configuration directory not found.${_break}"
-            __msg_plain " Creating directory:${_reset}${_gray} ${_config_dir}${_reset}${_break}"
+            __msg_plain " Creating directory:${_reset}${_gray} ${_local_config_dir}${_reset}${_break}"
             __msg_prompt "Do you want to create the configuration directory? [y/N]: "
             
             local _old_trap_int
@@ -860,13 +919,13 @@ __menu_config() {
             
             case "${_user_answer,,}" in
                 y|yes)
-                    if ! mkdir -p "${_config_dir}" 2>/dev/null; then
-                        __error_config "Creating configuration directory failed: ${_config_dir}${_break} Please check the path and your permissions then try again.${_break}"
+                    if ! mkdir -p "${_local_config_dir}" 2>/dev/null; then
+                        __error_config "Creating configuration directory failed: ${_local_config_dir}${_break} Please check the path and your permissions then try again.${_break}"
                         return 1
                     fi
                     clear
                     __banner
-                    __msg_info "Configuration directory created:${_reset}${_gray} ${_config_dir}${_reset}${_break}"
+                    __msg_info "Configuration directory created:${_reset}${_gray} ${_local_config_dir}${_reset}${_break}"
                     __msg_plain " You can now manage your${_reset}${_gray} customization.cfg${_reset} files.${_break}"
                     __msg_prompt "Press any key to continue...${_break}"
                     read -n 1 -s -r
@@ -909,16 +968,16 @@ __menu_config() {
         local _menu_content
         _menu_content=$(printf '%s\n' "${_menu_options[@]}")
 
-        # Export config URLs for preview command
-        local _config_urls_json
-        _config_urls_json=$(printf '%s\n' \
-            "linux-tkg=${_config_urls[linux-tkg]}" \
-            "nvidia-all=${_config_urls[nvidia-all]}" \
-            "mesa-git=${_config_urls[mesa-git]}" \
-            "wine-tkg=${_config_urls[wine-tkg]}" \
-            "proton-tkg=${_config_urls[proton-tkg]}"
+        # Export config URLs for preview command (build full URLs from global paths)
+        local _pkg_urls_json
+        _pkg_urls_json=$(printf '%s\n' \
+            "linux-tkg=${_frog_raw_url}/${_ext_config_patch[linux-tkg]}" \
+            "nvidia-all=${_frog_raw_url}/${_ext_config_patch[nvidia-all]}" \
+            "mesa-git=${_frog_raw_url}/${_ext_config_patch[mesa-git]}" \
+            "wine-tkg=${_frog_raw_url}/${_ext_config_patch[wine-tkg]}" \
+            "proton-tkg=${_frog_raw_url}/${_ext_config_patch[proton-tkg]}"
             )
-        export _config_urls_json
+        export _pkg_urls_json
 
         # Define preview command components
         local _info_config="${_green_neon}Comparing remote and local ${_reset}${_gray}customization.cfg${_reset}${_green_neon}, press [Enter] to open and edit ${_reset}${_break}${_break}${_green_light} Remote:${_reset}${_gray} \$_remote_url ${_reset}${_break}${_orange}≠${_reset}${_green_light} Local:${_reset}${_gray} file://\$_config_file_path ${_reset}${_break}${_green_dark}${_line}${_break}"
@@ -937,11 +996,11 @@ __menu_config() {
             
             [[ "$key" == "return" ]] && { glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_tkg_raw_url}"'/return.md"; exit 0; }
             
-            _config_file_path="'"${_config_dir}"'/${key}.cfg"
-            _remote_url=$(echo "$_config_urls_json" | grep "^${key}=" | cut -d= -f2-)
+            _config_file_path="'"${_local_config_dir}"'/${key}.cfg"
+            _remote_url=$(echo "$_pkg_urls_json" | grep "^${key}=" | cut -d= -f2-)
             
             if [[ -f "$_config_file_path" && -n "$_remote_url" ]]; then
-                _remote_tmp="'"${_tmp_dir}"'/${key}-remote.cfg"
+                _remote_tmp="'"${_tkg_tmp_dir}"'/${key}-remote.cfg"
                 if curl -fsSL "$_remote_url" -o "$_remote_tmp" 2>/dev/null; then
                     printf "%b\n" "'"${_info_config}"'"
                     '"${_diff_cmd}"' "$_remote_tmp" "$_config_file_path" 2>/dev/null | '"${_bat_cmd}"' || printf "%b\n" "${_orange}Diff failed${_reset}"
@@ -969,7 +1028,7 @@ ${_green_light}   Select an option below:"
   ${_green_light}Website:${_reset} ${_gray}https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family"
 
         # Define border label text
-        local _border_label_text="${_tkg_version}"
+        local _border_label_text="${_tkg_installer_version}"
         local _preview_window_settings='right:wrap:75%'
 
         # Run fzf menu
@@ -977,7 +1036,7 @@ ${_green_light}   Select an option below:"
         _config_choice=$(__fzf_menu "$_menu_content" "$_preview_command" "$_header_text" "$_footer_text" "$_border_label_text" "$_preview_window_settings" "$_fzf_bind")
 
         # Unset exported variables
-        unset _config_urls_json
+        unset _pkg_urls_json
 
         # Handle empty choice (ESC pressed)
         if [[ -z "$_config_choice" ]]; then
@@ -1001,12 +1060,12 @@ ${_green_light}   Select an option below:"
             return 0
         fi
 
-        # Handle config editing using mappings
-        if [[ -n "${_config_urls[$_config_file]}" ]]; then
+        # Handle config editing using global package mappings
+        if [[ -n "${_ext_config_patch[$_config_file]:-}" ]]; then
             __handle_config \
-                "${_config_names[$_config_file]}" \
-                "${_config_dir}/${_config_file}.cfg" \
-                "${_config_urls[$_config_file]}"
+                "${_pkg_display_name[$_config_file]}" \
+                "${_local_config_dir}/${_config_file}.cfg" \
+                "$(__get_config_url "$_config_file")"
         fi
     done
 }
@@ -1318,7 +1377,7 @@ ${_green_light}   Select an option below:"
   ${_green_light}Website:${_reset} ${_gray}https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family${_reset}"
   
     # Define border label text
-    local _border_label_text="${_tkg_version}"
+    local _border_label_text="${_tkg_installer_version}"
     local _preview_window_settings='right:wrap:55%'
 
     # Run fzf menu
@@ -1335,7 +1394,7 @@ ${_green_light}   Select an option below:"
     fi
 
     # Write user choice to file
-    echo "$_main_choice" | cut -d"|" -f1 | xargs > "$_choice_file"
+    echo "$_main_choice" | cut -d"|" -f1 | xargs > "$_tkg_choice_file"
 }
 
 # =============================================================================
@@ -1351,26 +1410,13 @@ __main_direct_mode() {
     local _package=""
     local _config_arg=""
 
-    # Check for config argument
-    if [[ "$_arg1" =~ ^(config|c|edit|e|customize|cu)$ ]]; then
+    # Check for config argument using helper functions
+    if __is_config_arg "$_arg1"; then
         _config_arg="$_arg1"
-        case "$_arg2" in
-            linux|l|--linux|-l) _package="linux-tkg" ;;
-            nvidia|n|--nvidia|-n) _package="nvidia-all" ;;
-            mesa|m|--mesa|-m) _package="mesa-git" ;;
-            wine|w|--wine|-w) _package="wine-tkg" ;;
-            proton|p|--proton|-p) _package="proton-tkg" ;;
-            
-        esac
-    elif [[ "$_arg2" =~ ^(config|c|edit|e|customize|cu)$ ]]; then
+        _package=$(__normalize_package "$_arg2")
+    elif __is_config_arg "$_arg2"; then
         _config_arg="$_arg2"
-        case "$_arg1" in
-            linux|l|--linux|-l) _package="linux-tkg" ;;
-            nvidia|n|--nvidia|-n) _package="nvidia-all" ;;
-            mesa|m|--mesa|-m) _package="mesa-git" ;;
-            wine|w|--wine|-w) _package="wine-tkg" ;;
-            proton|p|--proton|-p) _package="proton-tkg" ;;
-        esac
+        _package=$(__normalize_package "$_arg1")
     fi
 
     # Allow only supported second-args (config/edit/customize)
@@ -1397,35 +1443,12 @@ __main_direct_mode() {
         exit 0
     fi
 
-    # Handle config editing
+    # Handle config editing using centralized mappings
     if [[ -n "$_package" && -n "$_config_arg" ]]; then
-        # Determine config file path and URL
-        local _config_path="${_config_dir}/${_package}.cfg"
-        local _config_url=""
-        local _config_name=""
-
-        case "$_package" in
-            linux-tkg)
-                _config_name="Linux-TKG"
-                _config_url="${_frog_raw_url}/linux-tkg/master/customization.cfg"
-                ;;
-            nvidia-all)
-                _config_name="Nvidia-TKG"
-                _config_url="${_frog_raw_url}/nvidia-all/master/customization.cfg"
-                ;;
-            mesa-git)
-                _config_name="Mesa-TKG"
-                _config_url="${_frog_raw_url}/mesa-git/master/customization.cfg"
-                ;;
-            wine-tkg)
-                _config_name="Wine-TKG"
-                _config_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
-                ;;
-            proton-tkg)
-                _config_name="Proton-TKG"
-                _config_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
-                ;;
-        esac
+        local _config_path="${_local_config_dir}/${_package}.cfg"
+        local _config_url
+        _config_url=$(__get_config_url "$_package")
+        local _config_name="${_pkg_display_name[$_package]}"
 
         # Disable exit trap before editing config
         trap - INT TERM EXIT HUP
@@ -1446,33 +1469,26 @@ __main_direct_mode() {
     case "$_arg1" in
         linux|l|--linux|-l)
             __prepare
-            __install_wrapper __linux_install
+            __linux_install
             ;;
         nvidia|n|--nvidia|-n)
             __prepare
-            __install_wrapper __nvidia_install
+            __nvidia_install
             ;;
         mesa|m|--mesa|-m)
             __prepare
-            __install_wrapper __mesa_install
+            __mesa_install
             ;;
         wine|w|--wine|-w)
             __prepare
-            __install_wrapper __wine_install
+            __wine_install
             ;;
         proton|p|--proton|-p)
             __prepare
-            __install_wrapper __proton_install
+            __proton_install
             ;;
         clean|--clean)
-            # Clean temporary files and restart
-            __banner
-            __msg_info "Cleaning all temporary files...${_break}"
-            __msg_plain " Location:${_reset}${_gray} ${_tmp_dir}${_reset}${_break}"
-            rm -f "$_choice_file" "$_lock_file" 2>&1 || true
-            rm -rf "$_tmp_dir" 2>&1 || true
-            sleep 1.5s
-            __msg_plain "${_green_neon}Done.${_break}"
+            __clean_temp_dir
             exit 0 >/dev/null 2>&1
             ;;
         help|h|--help|-h)
@@ -1510,31 +1526,35 @@ __main_interactive_mode() {
 
     # Process user selection from menu
     local _user_choice
-    _user_choice=$(< "$_choice_file")
+    _user_choice=$(< "$_tkg_choice_file")
 
     # Remove temporary choice file
-    rm -f "$_choice_file" 2>&1 || true
+    rm -f "$_tkg_choice_file" 2>&1 || true
 
     # Handle user choice from menu
     case $_user_choice in
+        Linux|Nvidia|Mesa|Wine|Proton)
+            # Display banner before installation from menu
+            __banner
+            __clear_line 120
+            ;;&
         Linux)
-            __install_wrapper __linux_install
+            __linux_install
             ;;
         Nvidia)
-            __install_wrapper __nvidia_install
+            __nvidia_install
             ;;
         Mesa)
-            __install_wrapper __mesa_install
+            __mesa_install
             ;;
         Wine)
-            __install_wrapper __wine_install
+            __wine_install
             ;;
         Proton)
-            __install_wrapper __proton_install
+            __proton_install
             ;;
         Config)
             __menu_config
-            rm -f "$_lock_file" 2>&1 || true
             clear
             exec "$0"
             ;;
@@ -1546,14 +1566,7 @@ __main_interactive_mode() {
             exit 0
             ;;
         Clean)
-            # Clean temporary files and restart
-            __banner
-            __msg_info "Cleaning all temporary files...${_break}"
-            __msg_plain " Location:${_reset}${_gray} ${_tmp_dir}${_reset}${_break}"
-            rm -f "$_choice_file" "$_lock_file" 2>&1 || true
-            rm -rf "$_tmp_dir" 2>&1 || true
-            sleep 1.5s
-            __msg_plain "${_green_neon}Done.${_break}"
+            __clean_temp_dir
             exit 0 >/dev/null 2>&1
             ;;
         Close)

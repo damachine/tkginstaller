@@ -2,14 +2,16 @@
 
 ---
 
-**This option provides a safe way to remove all temporary files and reset the installer to a clean state.**
+**This option explicitly removes all temporary files and resets the installer to a clean state.**
+
+> **Note:** The cache directory is now preserved by default to allow `git pull` updates instead of fresh clones (as recommended by linux-tkg). Use `tkginstaller clean` only when you want to force a fresh clone.
 
 ---
 
 ### What it does:
 
-- **Removes Temporary Directory:** Deletes the entire `~/.cache/tkginstaller` directory. This includes:
-  - Cloned Git repositories from previous builds.
+- **Removes Temporary Directory:** Deletes the entire `~/.tkginstaller` directory. This includes:
+  - Cloned Git repositories from previous builds (including `linux-src-git` kernel sources).
   - Compiled packages and build artifacts.
   - Any other temporary files created by the installer.
 - **Removes Lock File:** Deletes `/tmp/tkginstaller.lock` to prevent issues with restarting the installer.
@@ -20,10 +22,11 @@
 
 ### When to use it:
 
-- To free up disk space by removing old build files.
+- To free up disk space by removing old build files and kernel sources.
 - To resolve potential issues caused by a stale or corrupted cache.
-- To ensure a fresh clone of a repository for a new build.
+- To force a fresh clone of a repository (e.g., after major upstream changes).
 - If you encounter problems starting the installer due to leftover lock files.
+- **Not needed for regular updates** — the installer now uses `git pull` automatically.
 
 ---
 

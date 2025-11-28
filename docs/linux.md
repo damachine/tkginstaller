@@ -9,10 +9,11 @@
 ### Key Information:
 
 - **Dependencies:** Ensure you have the necessary build dependencies for compiling a kernel on your distribution (e.g., `base-devel` on Arch).
-- **Process:** The installer clones the repository, builds the kernel using your external configuration, and installs it.
-- **Build Time:** Compiling a kernel can take a significant amount of time, depending on your hardware.
+- **Process:** The installer uses `git pull` to update an existing repository, or clones fresh if not present. This preserves the `linux-src-git` kernel sources between builds (as recommended by linux-tkg upstream).
+- **Build Time:** Compiling a kernel can take a significant amount of time, depending on your hardware. Subsequent builds are faster due to cached sources.
 - **Customization:** Allows for deep customization via the `linux-tkg.cfg` file. Use the configuration editor to tweak build options.
 - **Post-Install:** After a successful installation, you must **reboot** your system to use the new kernel.
+- **Cache Location:** `~/.tkginstaller/linux-tkg/` — kept between runs for faster updates.
 
 ---
 
