@@ -49,7 +49,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.26.9"
+_tkg_installer_version="v0.27.0"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -57,7 +57,7 @@ _tkg_installer_version="v0.26.9"
 
 # Initialize global variables, paths, and configurations
 __init_globals() {
-    _tkg_tmp_dir=${HOME}/.tkginstaller
+    _tkg_tmp_dir=${HOME}/.tkginstaller/.cache
     _tkg_choice_file=${_tkg_tmp_dir}/.choice.tmp
     _local_config_dir=${HOME}/.config/frogminer
     _tkg_repo_url=https://github.com/damachine/tkginstaller
