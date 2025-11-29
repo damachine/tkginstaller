@@ -49,7 +49,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.26.7"
+_tkg_installer_version="v0.26.8"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -255,18 +255,18 @@ __msg_pkg() {
 
     echo
     __msg_info "${_green_neon}${_uline_on}INFO${_uline_off}:${_reset} ${_green_light}Configuration Options${_reset}"
-    __msg_plain "  ${_green_dark}┌─────────────────────────────────────────────────────────────────────────────${_reset}"
-    __msg_plain "  ${_green_dark}│${_reset} A wide range of options are available!${_reset}"
-    __msg_plain "  ${_green_dark}│${_reset} TKG packages can be precisely tailored to your system.${_reset}"
-    __msg_plain "  ${_green_dark}│${_reset}"
-    __msg_plain "  ${_green_dark}│${_reset} ${_orange}You will find detailed instructions at:${_reset}"
-    __msg_plain "  ${_green_dark}│${_reset} ${_gray}${_config_url}${_reset}"
-    __msg_plain "  ${_green_dark}│${_reset}"
-    __msg_plain "  ${_green_dark}│${_reset} Set up ${_gray}customization.cfg${_reset} using one of the following options:${_reset}"
-    __msg_plain "  ${_green_dark}├─────────────────────────────────────────────────────────────────────────────${_reset}"
-    __msg_plain "  ${_green_dark}│${_reset} ${_green_neon}A${_reset} │ tkginstaller → Config → ${_pkg_name,,}  ${_gray}(interactive)${_reset}"
-    __msg_plain "  ${_green_dark}│${_reset} ${_green_neon}B${_reset} │ tkginstaller ${_pkg_name,,} config      ${_gray}(direct)${_reset}"
-    __msg_plain "  ${_green_dark}└─────────────────────────────────────────────────────────────────────────────${_reset}"
+    __msg_plain "  ${_green_dark}┌─────────────────────────────────────────────────────────────────────────────┐${_reset}"
+    __msg_plain "  ${_green_dark}${_reset}  A wide range of options are available!${_reset}"
+    __msg_plain "  ${_green_dark}${_reset}  TKG packages can be precisely tailored to your system.${_reset}"
+    __msg_plain "  ${_green_dark}${_reset}"
+    __msg_plain "  ${_green_dark}${_reset}  ${_orange}You will find detailed instructions at:${_reset}"
+    __msg_plain "  ${_green_dark}${_reset}  ${_gray}${_config_url}${_reset}"
+    __msg_plain "  ${_green_dark}${_reset}"
+    __msg_plain "  ${_green_dark}${_reset}  Set up ${_gray}customization.cfg${_reset} using one of the following options:${_reset}"
+    __msg_plain "  ${_green_dark}├─────────────────────────────────────────────────────────────────────────────┤${_reset}"
+    __msg_plain "  ${_green_dark}${_reset}  ${_green_neon}A${_reset} │ tkginstaller → Config → ${_pkg_name,,}  ${_gray}(interactive)${_reset}"
+    __msg_plain "  ${_green_dark}${_reset}  ${_green_neon}B${_reset} │ tkginstaller ${_pkg_name,,} config      ${_gray}(direct)${_reset}"
+    __msg_plain "  ${_green_dark}└─────────────────────────────────────────────────────────────────────────────┘${_reset}"
 }
 
 # Check for root
@@ -531,7 +531,6 @@ __fzf_menu() {
         --layout=reverse \
         --highlight-line \
         --height='-1' \
-        --padding='0' \
         --ansi \
         --delimiter='|' \
         --with-nth='2' \
@@ -551,6 +550,7 @@ __fzf_menu() {
         --preview-window="${_preview_window_settings}" \
         --preview="${_preview_command}" \
         --preview-border=line \
+        --bind='esc:abort,ctrl-c:abort' \
         --bind="${_fzf_bind}" \
         --disabled \
         <<< "${_menu_content}"
@@ -624,7 +624,7 @@ __install_package() {
     sleep 1.5s # Short delay
 
     # Build and install the package
-    __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Building and installing ${_gray}$_package_name${_reset} ${_green_light}for ${_gray}$_distro_name$, {_reset}${_orange}this may take a while...${_reset}${_break}"
+    __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Building and installing ${_gray}$_package_name${_reset} ${_green_light}for ${_gray}$_distro_name, ${_reset}${_orange}this may take a while...${_reset}${_break}"
     eval "$_build_command"
     local _status=$?
     
@@ -648,7 +648,7 @@ __prompt_timer() {
     # Progress bar characters
     local _bar_filled="█"
     local _bar_empty="░"
-    local _bar_width=66
+    local _bar_width=60
     
     while [[ $_seconds_left -gt 0 ]]; do
         # Calculate progress bar
@@ -700,19 +700,23 @@ __linux_install() {
 
     if [[ "${_is_arch_based}" == "true" ]]; then
         # Arch-based distributions build system to use
-        echo
-        __msg_info "${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which installations method do you want to perform?${_reset}"
-        __msg_plain "  ${_green_dark}┌─────────────────────────────────────────────────────────────────────────────${_reset}"
-        __msg_plain "  ${_green_dark}│${_reset} Detected: ${_gray}${_distro_name}${_reset}"
-        __msg_plain "  ${_green_dark}├─────────────────────────────────────────────────────────────────────────────${_reset}"
-        __msg_plain "  ${_green_dark}│${_reset} ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ makepkg -Csic         ${_green_light}recommended for Arch${_reset}"
-        __msg_plain "  ${_green_dark}│${_reset} ${_orange}2${_reset} │ install.sh install    ${_gray}(generic script)${_reset}"
-        __msg_plain "  ${_green_dark}│${_reset} ${_red}9${_reset} │ install.sh uninstall  ${_gray}(show uninstall help)${_reset}"
-        __msg_plain "  ${_green_dark}└─────────────────────────────────────────────────────────────────────────────${_reset}${_break}"
+        __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which installations method do you want to perform?${_reset}"
+        __msg_plain "  ${_green_dark}┌─────────────────────────────────────────────────────────────────────────────┐${_reset}"
+        __msg_plain "  ${_green_dark}${_reset}  Detected: ${_gray}${_distro_name}${_reset}"
+        __msg_plain "  ${_green_dark}├─────────────────────────────────────────────────────────────────────────────┤${_reset}"
+        __msg_plain "  ${_green_dark}${_reset}  ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ makepkg -Csic         ${_green_light}recommended for Arch${_reset}"
+        __msg_plain "  ${_green_dark}${_reset}  ${_orange}2${_reset} │ install.sh install    ${_gray}(generic script)${_reset}"
+        __msg_plain "  ${_green_dark}${_reset}  ${_gray}9${_reset} │ install.sh uninstall  ${_gray}(show uninstall help)${_reset}"
+        __msg_plain "  ${_green_dark}${_reset}  ${_red}0${_reset} │ Cancel"
+        __msg_plain "  ${_green_dark}└─────────────────────────────────────────────────────────────────────────────┘${_reset}"
         
-        __prompt_timer "[${_green_neon}${_uline_on}1${_uline_off}${_reset}/${_orange}2${_reset}/${_red}9${_reset}]" 60
+        __prompt_timer "[${_green_neon}${_uline_on}1${_uline_off}${_reset}/${_orange}2${_reset}/${_gray}9${_reset}/${_red}0${_reset}]" 60
 
         case "$_user_answer" in
+            0)
+                __msg_info "${_break}${_break}${_orange}Cancelled by user${_reset}${_break}"
+                __exit 1
+                ;;
             2)
                 _build_command="chmod +x install.sh && ./install.sh install"
                 ;;
@@ -795,14 +799,23 @@ __wine_install() {
 
     if [[ "${_is_arch_based}" == "true" ]]; then
         # Arch-based distributions build system to use
-        __msg_info "${_break}${_green_neon}${_uline_on}CHOOSE${_uline_off}:${_reset}${_green_light} Which build system want to use?${_break}"
-        __msg_plain " Detected distribution:${_reset} ${_gray}${_distro_name}${_break}"
-        __msg_plain " ${_uline_on}1${_uline_off}) makepkg -Csic${_reset}${_gray} (recommended for Arch-based distros) (${_uline_on}selected${_uline_off})"
-        __msg_plain " 2) non-makepkg-build.sh${_reset}${_gray} (use if you want a custom build script)${_break}"
+        __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which build system do you want to use?${_reset}"
+        __msg_plain "  ${_green_dark}┌─────────────────────────────────────────────────────────────────────────────┐${_reset}"
+        __msg_plain "  ${_green_dark}${_reset}  Detected: ${_gray}${_distro_name}${_reset}"
+        __msg_plain "  ${_green_dark}├─────────────────────────────────────────────────────────────────────────────┤${_reset}"
+        __msg_plain "  ${_green_dark}${_reset}  ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ makepkg -Csic         ${_green_light}recommended for Arch${_reset}"
+        __msg_plain "  ${_green_dark}${_reset}  ${_orange}2${_reset} │ non-makepkg-build.sh  ${_gray}(custom build script)${_reset}"
+        __msg_plain "  ${_green_dark}${_reset} ${_red}0${_reset} │ Cancel"
+        __msg_plain "  ${_green_dark}└─────────────────────────────────────────────────────────────────────────────┘${_reset}"
         
-        __prompt_timer "[${_uline_on}1${_uline_off}/2]" 60
+        # Get user choice with timeout
+        __prompt_timer "[${_green_neon}${_uline_on}1${_uline_off}${_reset}/${_orange}2${_reset}/${_red}0${_reset}]" 60
 
         case "$_user_answer" in
+            0)
+                __msg_info "${_break}${_break}${_orange}Cancelled by user${_reset}${_break}"
+                __exit 1
+                ;;
             2)
                 _build_command="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
                 ;;
