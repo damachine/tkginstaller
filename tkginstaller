@@ -49,7 +49,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.26.8"
+_tkg_installer_version="v0.26.9"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -64,7 +64,7 @@ __init_globals() {
     _tkg_raw_url=https://raw.githubusercontent.com/damachine/tkginstaller/refs/heads/master/docs
     _frog_repo_url=https://github.com/Frogging-Family
     _frog_raw_url=https://raw.githubusercontent.com/Frogging-Family
-    
+
     # Export only variables used in fzf preview commands
     export _tkg_tmp_dir _local_config_dir _tkg_raw_url _frog_raw_url
 }
@@ -222,7 +222,7 @@ __msg() {
 
     # Map level
     local __color="" _prefix=""
-    
+
     case "${_msg_level}" in
         prompt) printf '%b' "$_msg"; return 0 ;;
         info_green) __color="${_green_light}"; _prefix="" ;;
@@ -253,20 +253,14 @@ __msg_pkg() {
     local _pkg_name="${1:-TKG package}"
     local _config_url="${2:-${_frog_repo_url}}"
 
-    echo
-    __msg_info "${_green_neon}${_uline_on}INFO${_uline_off}:${_reset} ${_green_light}Configuration Options${_reset}"
-    __msg_plain "  ${_green_dark}┌─────────────────────────────────────────────────────────────────────────────┐${_reset}"
-    __msg_plain "  ${_green_dark}${_reset}  A wide range of options are available!${_reset}"
-    __msg_plain "  ${_green_dark}${_reset}  TKG packages can be precisely tailored to your system.${_reset}"
-    __msg_plain "  ${_green_dark}${_reset}"
-    __msg_plain "  ${_green_dark}${_reset}  ${_orange}You will find detailed instructions at:${_reset}"
-    __msg_plain "  ${_green_dark}${_reset}  ${_gray}${_config_url}${_reset}"
-    __msg_plain "  ${_green_dark}${_reset}"
-    __msg_plain "  ${_green_dark}${_reset}  Set up ${_gray}customization.cfg${_reset} using one of the following options:${_reset}"
-    __msg_plain "  ${_green_dark}├─────────────────────────────────────────────────────────────────────────────┤${_reset}"
-    __msg_plain "  ${_green_dark}${_reset}  ${_green_neon}A${_reset} │ tkginstaller → Config → ${_pkg_name,,}  ${_gray}(interactive)${_reset}"
-    __msg_plain "  ${_green_dark}${_reset}  ${_green_neon}B${_reset} │ tkginstaller ${_pkg_name,,} config      ${_gray}(direct)${_reset}"
-    __msg_plain "  ${_green_dark}└─────────────────────────────────────────────────────────────────────────────┘${_reset}"
+    __msg_info "${_break}${_green_neon}${_uline_on}INFO${_uline_off}:${_reset} ${_green_light}Configuration Options for ${_pkg_name}${_reset}${_break}"
+    __msg_plain " A wide range of options are available!"
+    __msg_plain " TKG packages can be precisely tailored to your system.${_reset}${_break}"
+    __msg_plain " Set up ${_gray}customization.cfg${_reset} using one of the following options:${_reset}${_break}"
+    __msg_plain " ${_orange}A${_reset} │ tkginstaller -> Config -> ${_pkg_name,,}${_reset}  ${_gray}(interactive)${_reset}"
+    __msg_plain " ${_orange}B${_reset} │ tkginstaller ${_pkg_name,,} config        ${_gray}(direct)${_reset}${_break}"
+    __msg_plain " You will find detailed instructions at:${_reset}"
+    __msg_plain " ${_gray}${_config_url}${_reset}"
 }
 
 # Check for root
@@ -337,7 +331,7 @@ EOF
 # Pre-installation checks
 __prepare() {
     _load_preview="${1:-false}"
-   
+
     # Welcome message
     __banner
     printf "%s" "${_green_neon}Starting"
@@ -511,7 +505,7 @@ __clean() {
     unset _break _reset _green_light _green_neon _green_mint _green_dark _orange _gray _uline_on _uline_off _cols _line
  }
 
-# Fuzzy finder menu wrapper function 
+# Fuzzy finder menu wrapper function
 __fzf_menu() {
     # $1: Menü-Inhalt, $2: Preview-Command, $3: Header, $4: Footer, $5: Label (optional), $6: Preview-Window-Settings (optional)
     local _menu_content="$1"
@@ -574,7 +568,7 @@ __install_package() {
     # Clone or update repository (git pull if exists, clone if not)
     local _repo_dir
     _repo_dir=$(basename "${_repo_url}" .git)
-    
+
     if [[ -d "${_repo_dir}/.git" ]]; then
         # Repository exists - update with git pull (recommended by linux-tkg)
         __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Updating ${_gray}$_package_name${_reset} ${_green_light}(git pull)...${_reset}${_break}"
@@ -627,7 +621,7 @@ __install_package() {
     __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Building and installing ${_gray}$_package_name${_reset} ${_green_light}for ${_gray}$_distro_name, ${_reset}${_orange}this may take a while...${_reset}${_break}"
     eval "$_build_command"
     local _status=$?
-    
+
     # Display completion status
     __status "$_status"
     return "$_status"
@@ -638,18 +632,18 @@ __prompt_timer() {
     local _prompt_options="${1:-[1/2]}"
     local _timeout="${2:-60}"
     local _old_trap_int
-    
+
     _old_trap_int=$(trap -p INT 2>/dev/null || true)
     trap '__exit 130' INT
-    
+
     _seconds_left="$_timeout"
     _user_answer=""
-    
+
     # Progress bar characters
     local _bar_filled="█"
     local _bar_empty="░"
-    local _bar_width=60
-    
+    local _bar_width=50
+
     while [[ $_seconds_left -gt 0 ]]; do
         # Calculate progress bar
         local _progress=$(( (_timeout - _seconds_left) * _bar_width / _timeout ))
@@ -657,11 +651,11 @@ __prompt_timer() {
         local _bar=""
         for ((i=0; i<_progress; i++)); do _bar+="${_bar_filled}"; done
         for ((i=0; i<_remaining; i++)); do _bar+="${_bar_empty}"; done
-        
+
         # Display styled prompt
-        printf "\r${_green_neon}▶${_reset} ${_gray}%s${_reset} ${_green_dark}%s${_reset} ${_orange}%02d${_gray}s${_reset} " \
+        printf "\r${_gray}%s${_reset} ${_green_dark}%s${_reset} ${_orange}%02d${_gray}s${_reset} " \
             "$_prompt_options" "$_bar" "$_seconds_left"
-        
+
         trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
         if read -r -t 1 _user_answer; then
             __clear_line 120 ""
@@ -670,10 +664,10 @@ __prompt_timer() {
         ((_seconds_left--))
     done
     __clear_line 120 ""
-    
+
     # Default to "1" if no answer
     : "${_user_answer:=1}"
-    
+
     # Restore previous INT trap
     if [[ -n "$_old_trap_int" ]]; then
         eval "$_old_trap_int"
@@ -700,16 +694,13 @@ __linux_install() {
 
     if [[ "${_is_arch_based}" == "true" ]]; then
         # Arch-based distributions build system to use
-        __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which installations method do you want to perform?${_reset}"
-        __msg_plain "  ${_green_dark}┌─────────────────────────────────────────────────────────────────────────────┐${_reset}"
-        __msg_plain "  ${_green_dark}${_reset}  Detected: ${_gray}${_distro_name}${_reset}"
-        __msg_plain "  ${_green_dark}├─────────────────────────────────────────────────────────────────────────────┤${_reset}"
-        __msg_plain "  ${_green_dark}${_reset}  ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ makepkg -Csic         ${_green_light}recommended for Arch${_reset}"
-        __msg_plain "  ${_green_dark}${_reset}  ${_orange}2${_reset} │ install.sh install    ${_gray}(generic script)${_reset}"
-        __msg_plain "  ${_green_dark}${_reset}  ${_gray}9${_reset} │ install.sh uninstall  ${_gray}(show uninstall help)${_reset}"
-        __msg_plain "  ${_green_dark}${_reset}  ${_red}0${_reset} │ Cancel"
-        __msg_plain "  ${_green_dark}└─────────────────────────────────────────────────────────────────────────────┘${_reset}"
-        
+        __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which installations method do you want to perform${_reset}${_break}"
+        __msg_plain " Detected distro: ${_gray}${_distro_name}${_reset}${_break}"
+        __msg_plain " ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ makepkg -Csic         ${_green_light}recommended for Arch${_reset}"
+        __msg_plain " ${_orange}2${_reset} │ install.sh install    ${_gray}(generic script)${_reset}"
+        __msg_plain " ${_gray}9${_reset} │ install.sh uninstall  ${_gray}(show uninstall help)${_reset}"
+        __msg_plain " ${_red}0${_reset} │ Cancel${_break}"
+
         __prompt_timer "[${_green_neon}${_uline_on}1${_uline_off}${_reset}/${_orange}2${_reset}/${_gray}9${_reset}/${_red}0${_reset}]" 60
 
         case "$_user_answer" in
@@ -799,15 +790,12 @@ __wine_install() {
 
     if [[ "${_is_arch_based}" == "true" ]]; then
         # Arch-based distributions build system to use
-        __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which build system do you want to use?${_reset}"
-        __msg_plain "  ${_green_dark}┌─────────────────────────────────────────────────────────────────────────────┐${_reset}"
-        __msg_plain "  ${_green_dark}${_reset}  Detected: ${_gray}${_distro_name}${_reset}"
-        __msg_plain "  ${_green_dark}├─────────────────────────────────────────────────────────────────────────────┤${_reset}"
-        __msg_plain "  ${_green_dark}${_reset}  ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ makepkg -Csic         ${_green_light}recommended for Arch${_reset}"
-        __msg_plain "  ${_green_dark}${_reset}  ${_orange}2${_reset} │ non-makepkg-build.sh  ${_gray}(custom build script)${_reset}"
-        __msg_plain "  ${_green_dark}${_reset} ${_red}0${_reset} │ Cancel"
-        __msg_plain "  ${_green_dark}└─────────────────────────────────────────────────────────────────────────────┘${_reset}"
-        
+        __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which build system do you want to use${_reset}${_break}"
+        __msg_plain " Detected distro: ${_gray}${_distro_name}${_reset}${_break}"
+        __msg_plain " ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ makepkg -Csic         ${_green_light}recommended for Arch${_reset}"
+        __msg_plain " ${_orange}2${_reset} │ non-makepkg-build.sh  ${_gray}(custom build script)${_reset}"
+        __msg_plain " ${_red}0${_reset} │ Cancel${_break}"
+
         # Get user choice with timeout
         __prompt_timer "[${_green_neon}${_uline_on}1${_uline_off}${_reset}/${_orange}2${_reset}/${_red}0${_reset}]" 60
 
@@ -900,7 +888,7 @@ __editor() {
                 break
             fi
         done
-        
+
         # No editor found - show error
         if [[ -z "${_editor_parts[0]:-}" ]]; then
             __error_config "No editor found!${_break} Please set \$EDITOR environment variable or install one of:${_break} ${_gray}nano${_reset}, ${_gray}micro${_reset}, ${_gray}vim${_reset}, or ${_gray}vi${_reset}${_break}"
@@ -923,13 +911,13 @@ __menu_config() {
             __msg_warning "Configuration directory not found.${_break}"
             __msg_plain " Creating directory:${_reset}${_gray} ${_local_config_dir}${_reset}${_break}"
             __msg_prompt "Do you want to create the configuration directory? [y/N]: "
-            
+
             local _old_trap_int
             _old_trap_int=$(trap -p INT 2>/dev/null || true)
             trap 'echo;echo; __msg_plain "${_red}Aborted by user.${_reset}";sleep 1.5; clear; return 0' INT
             __prompt_answer "n"
             if [[ -n "$_old_trap_int" ]]; then eval "$_old_trap_int"; else trap - INT; fi
-            
+
             case "${_user_answer,,}" in
                 y|yes)
                     if ! mkdir -p "${_local_config_dir}" 2>/dev/null; then
@@ -1006,12 +994,12 @@ __menu_config() {
         # shellcheck disable=SC2016 # Need to use single quotes for fzf preview
         local _preview_command='
             key=$(echo {} | cut -d"|" -f1 | xargs)
-            
+
             [[ "$key" == "return" ]] && { glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_tkg_raw_url}"'/return.md"; exit 0; }
-            
+
             _config_file_path="'"${_local_config_dir}"'/${key}.cfg"
             _remote_url=$(echo "$_pkg_urls_json" | grep "^${key}=" | cut -d= -f2-)
-            
+
             if [[ -f "$_config_file_path" && -n "$_remote_url" ]]; then
                 _remote_tmp="'"${_tkg_tmp_dir}"'/${key}-remote.cfg"
                 if curl -fsSL "$_remote_url" -o "$_remote_tmp" 2>/dev/null; then
@@ -1088,12 +1076,12 @@ __old_config() {
     local _config_file="$1"
     local _upstream_url="$2"
     local _package_name="$3"
-    
+
     # Check if config file exists
     if [[ ! -f "$_config_file" ]]; then
         return 0
     fi
-    
+
     # Download upstream config
     local _tmp_upstream="/tmp/upstream_customization.cfg"
     if ! curl -fsSL "$_upstream_url" -o "$_tmp_upstream" 2>/dev/null; then
@@ -1149,17 +1137,17 @@ __old_config() {
     # Find deprecated variables (in local but not in upstream)
     local _deprecated_vars
     _deprecated_vars=$(comm -23 <(echo "$_local_vars") <(echo "$_upstream_vars"))
-    
+
     # Combine with officially deprecated variables for linux-tkg
     if [[ -n "$_officially_deprecated" ]]; then
         local _combined_deprecated
         _combined_deprecated=$(echo "$_local_vars" | grep -F -x -f <(echo "$_officially_deprecated") | sort -u || true)
-        
+
         if [[ -n "$_combined_deprecated" ]]; then
             _deprecated_vars=$(printf "%s\n%s" "$_deprecated_vars" "$_combined_deprecated" | sort -u)
         fi
     fi
-    
+
     # Notify user if deprecated variables found
     if [[ -n "$_deprecated_vars" ]]; then
         __banner "$_orange"
@@ -1172,7 +1160,7 @@ Please check this to ensure correctness! Then they can be removed from your loca
         __msg_prompt "Press any key to continue...${_break}"
         read -n 1 -s -r
     fi
-    
+
     # Cleanup tmp upstream files
     rm -f "$_tmp_upstream"
 }
@@ -1182,7 +1170,7 @@ __handle_config() {
     local _config_name="${1}"
     local _config_path="${2}"
     local _config_url="${3}"
-    
+
     # Check for deprecated variables before editing
     if [[ -f "${_config_path}" ]]; then
         __old_config "${_config_path}" "${_config_url}" "${_config_name}"
@@ -1211,13 +1199,13 @@ __handle_config() {
 
         # Prompt user for download
         __msg_prompt "Do you want to download the default configuration? [y/N]: "
-        
+
         local _old_trap_int
         _old_trap_int=$(trap -p INT 2>/dev/null || true)
         trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; clear; return 0' INT
         __prompt_answer "n"
         if [[ -n "$_old_trap_int" ]]; then eval "$_old_trap_int"; else trap - INT; fi
-        
+
         # Handle user response for downloading the config file
         case "${_user_answer,,}" in
             y|yes)
@@ -1226,13 +1214,13 @@ __handle_config() {
                     __error_config "Creating configuration directory failed: ${_config_path}${_break} Please check the path and your permissions then try again.${_break}"
                     return 1
                 }
-                
+
                 # Check for curl availability
                 if ! command -v curl >/dev/null 2>&1; then
                     __error_config "curl is not installed. Please install curl to download configuration files.${_break}"
                     return 1
                 fi
-                
+
                 # Download config with timeout (project guideline)
                 if curl -fsSL "${_config_url}" -o "${_config_path}" 2>/dev/null; then
                     clear
@@ -1240,7 +1228,7 @@ __handle_config() {
                     __msg_info "External configuration ready at:${_reset}${_gray} ${_config_path}"
                     sleep 1.5s
                     clear
-                    
+
                     # Open the downloaded configuration file
                     __editor "${_config_path}" || {
                         __error_config "Opening external configuration file:${_reset}${_gray} $_config_name${_break} Please check if the file exists and is accessible.${_break}"
@@ -1268,7 +1256,7 @@ __handle_config() {
 
     # Notify user
     __banner
-    __msg_info "${_green_neon}${_uline_on}CLOSE${_uline_off}:${_reset}${_gray} $_config_name${_reset}${_green_light} external configuration file${_break}"     
+    __msg_info "${_green_neon}${_uline_on}CLOSE${_uline_off}:${_reset}${_gray} $_config_name${_reset}${_green_light} external configuration file${_break}"
     sleep 1.5s
     clear
     return 0
@@ -1367,13 +1355,13 @@ __menu() {
     # shellcheck disable=SC2016 # Need to use single quotes for fzf preview
     local _preview_command='
         key=$(echo {} | cut -d"|" -f1 | xargs)
-        
+
         # Get doc path
         doc=$(echo "$_preview_docs_json" | grep "^${key}=" | cut -d= -f2-)
-        
+
         # Show local doc
         [[ -n "$doc" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_tkg_raw_url}"'/${doc}.md"
-        
+
         # Show remote README if package has repo
         repo=$(echo "$_preview_repos_json" | grep "^${key}=" | cut -d= -f2-)
         [[ -n "$repo" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_frog_raw_url}"'/${repo}/README.md"
@@ -1383,12 +1371,12 @@ __menu() {
     ${_green_light}- Build, install and customize -TKG/Frogminer- packages${_break}\
 ${_green_light}    - Manual in the preview window on the right${_break}${_break}${_break}\
 ${_green_light}   Select an option below:"
-    
+
     # Define footer texts
     local _footer_text="  ${_green_light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}\
   Press [Enter] to select, [Ctrl+P] ${_green_light}to toggle the preview window, [ESC] to exit${_break}${_break}\
   ${_green_light}Website:${_reset} ${_gray}https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family${_reset}"
-  
+
     # Define border label text
     local _border_label_text="${_tkg_installer_version}"
     local _preview_window_settings='right:wrap:55%'
@@ -1598,4 +1586,4 @@ __main() {
 }
 
 # SCRIPT EXECUTION ENTRY POINT
-__main "$@" 
+__main "$@"
