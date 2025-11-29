@@ -49,7 +49,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.27.1"
+_tkg_installer_version="v0.27.2"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -1200,7 +1200,7 @@ __old_config() {
 
     # Download upstream config
     local _tmp_upstream="/tmp/upstream_customization.cfg"
-    if ! curl "${_curl_opts}" "$_upstream_url" -o "$_tmp_upstream" 2>/dev/null; then
+    if ! curl -fsSL "$_upstream_url" -o "$_tmp_upstream" 2>/dev/null; then
         __msg_warning "Could not download upstream config for comparison"
         return 1
     fi
@@ -1218,7 +1218,7 @@ __old_config() {
     if [[ "$_package_name" == "Linux-TKG" ]]; then
         local _prepare_url="${_frog_raw_url}/linux-tkg/master/linux-tkg-config/prepare"
         local _tmp_prepare="/tmp/linux-tkg-prepare"
-        if curl "${_curl_opts}" "$_prepare_url" -o "$_tmp_prepare" 2>/dev/null; then
+        if curl -fsSL "$_prepare_url" -o "$_tmp_prepare" 2>/dev/null; then
             # Extract deprecated variables from _deprecated_config_vars array
             _officially_deprecated=$(sed -n '/_deprecated_config_vars=($/,/^)$/p' "$_tmp_prepare" | grep -oP '^\s*"_\K[^"]+' | sed 's/^/_/' || true)
             rm -f "$_tmp_prepare"
@@ -1229,7 +1229,7 @@ __old_config() {
     if [[ "$_package_name" == "Wine-TKG" ]]; then
         local _adv_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/advanced-customization.cfg"
         local _tmp_adv="/tmp/upstream_advanced.cfg"
-        if curl "${_curl_opts}" "$_adv_url" -o "$_tmp_adv" 2>/dev/null; then
+        if curl -fsSL "$_adv_url" -o "$_tmp_adv" 2>/dev/null; then
             local _adv_vars
             _adv_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_adv" 2>/dev/null)
             if [[ -n "$_adv_vars" ]]; then
@@ -1240,7 +1240,7 @@ __old_config() {
     elif [[ "$_package_name" == "Proton-TKG" ]]; then
         local _adv_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/advanced-customization.cfg"
         local _tmp_adv="/tmp/upstream_advanced.cfg"
-        if curl "${_curl_opts}" "$_adv_url" -o "$_tmp_adv" 2>/dev/null; then
+        if curl -fsSL "$_adv_url" -o "$_tmp_adv" 2>/dev/null; then
             local _adv_vars
             _adv_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_adv" 2>/dev/null)
             if [[ -n "$_adv_vars" ]]; then
