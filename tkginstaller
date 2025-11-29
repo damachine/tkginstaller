@@ -49,7 +49,7 @@
 # shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.27.0"
+_tkg_installer_version="v0.27.1"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -65,8 +65,19 @@ __init_globals() {
     _frog_repo_url=https://github.com/Frogging-Family
     _frog_raw_url=https://raw.githubusercontent.com/Frogging-Family
 
+    # Curl timeout configuration (network resilience)
+    _curl_max_time=10
+    _curl_connect_timeout=5
+    _curl_opts="--max-time ${_curl_max_time} --connect-timeout ${_curl_connect_timeout} -fsSL"
+
+    # Logging configuration
+    _log_dir="${HOME}/.tkginstaller/logs"
+    _log_file="${_log_dir}/tkginstaller.log"
+    _log_max_size=5242880  # 5MB in bytes
+    _log_enabled="${TKG_LOG_ENABLED:-false}"
+
     # Export only variables used in fzf preview commands
-    export _tkg_tmp_dir _local_config_dir _tkg_raw_url _frog_raw_url
+    export _tkg_tmp_dir _local_config_dir _tkg_raw_url _frog_raw_url _curl_opts
 }
 
 # Centralized package configuration (paths relative to _frog_raw_url)
@@ -108,17 +119,6 @@ __is_config_arg() {
 __get_config_url() {
     local _pkg="$1"
     [[ -n "${_ext_config_patch[$_pkg]:-}" ]] && echo "${_frog_raw_url}/${_ext_config_patch[$_pkg]}"
-}
-
-# Clean temporary files and cache
-__clean_temp_dir() {
-    __banner
-    __msg_info "Cleaning all temporary files...${_break}"
-    __msg_plain " Location:${_reset}${_gray} ${_tkg_tmp_dir}${_reset}${_break}"
-    rm -f "$_tkg_choice_file" 2>&1 || true
-    rm -rf "$_tkg_tmp_dir" 2>&1 || true
-    sleep 1.5s
-    __msg_plain "${_green_neon}Done.${_break}"
 }
 
 # Initialize color and formatting
@@ -238,13 +238,78 @@ __msg() {
     printf '%b\n' "${__color}${_prefix}${_msg}${_reset}"
 }
 
+# =============================================================================
+# LOGGING FUNCTIONS
+# =============================================================================
+
+# Initialize logging system
+__log_init() {
+    [[ "${_log_enabled}" != "true" ]] && return 0
+
+    # Create log directory
+    if [[ ! -d "${_log_dir}" ]]; then
+        mkdir -p "${_log_dir}" 2>/dev/null || {
+            _log_enabled="false"
+            return 1
+        }
+    fi
+
+    # Rotate log if too large
+    if [[ -f "${_log_file}" ]]; then
+        local _size
+        _size=$(stat -f%z "${_log_file}" 2>/dev/null || stat -c%s "${_log_file}" 2>/dev/null || echo 0)
+        if [[ ${_size} -gt ${_log_max_size} ]]; then
+            mv "${_log_file}" "${_log_file}.old" 2>/dev/null || true
+        fi
+    fi
+
+    # Log session start
+    {
+        echo "========================================================================"
+        echo "TKG-Installer ${_tkg_installer_version} - Session started"
+        echo "Date: $(date '+%Y-%m-%d %H:%M:%S')"
+        echo "User: ${USER:-unknown}"
+        echo "Distribution: ${_distro_name:-unknown} (${_distro_id:-unknown})"
+        echo "Arguments: $*"
+        echo "========================================================================"
+    } >> "${_log_file}" 2>/dev/null || _log_enabled="false"
+}
+
+# Core logging function
+__log() {
+    [[ "${_log_enabled}" != "true" ]] && return 0
+
+    local _level="${1:-INFO}"
+    shift
+    local _msg="$*"
+
+    # Remove ANSI color codes for log file
+    _msg=$(echo -e "${_msg}" | sed 's/\x1b\[[0-9;]*m//g')
+
+    # Write to log file
+    printf '[%s] [%-7s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "${_level}" "${_msg}" >> "${_log_file}" 2>/dev/null
+}
+
+# Convenience logging functions
+__log_info()    { __log "INFO" "$@"; }
+__log_success() { __log "SUCCESS" "$@"; }
+__log_warning() { __log "WARNING" "$@"; }
+__log_error()   { __log "ERROR" "$@"; }
+__log_debug()   { [[ "${TKG_LOG_DEBUG:-false}" == "true" ]] && __log "DEBUG" "$@"; }
+
+# Log command execution
+__log_cmd() {
+    local _cmd="$*"
+    __log_debug "Executing: ${_cmd}"
+}
+
 # Message functions
-__msg_info()        { __msg 'info_green' "$@"; }
-__msg_info_neon()   { __msg 'info_neon' "$@"; }
-__msg_info_mint()   { __msg 'info_mint' "$@"; }
-__msg_info_orange() { __msg 'info_orange' "$@"; }
-__msg_warning()     { __msg 'warning' "$@"; }
-__msg_error()       { __msg 'error' "$@"; }
+__msg_info()        { __msg 'info_green' "$@"; __log_info "$@"; }
+__msg_info_neon()   { __msg 'info_neon' "$@"; __log_info "$@"; }
+__msg_info_mint()   { __msg 'info_mint' "$@"; __log_info "$@"; }
+__msg_info_orange() { __msg 'info_orange' "$@"; __log_info "$@"; }
+__msg_warning()     { __msg 'warning' "$@"; __log_warning "$@"; }
+__msg_error()       { __msg 'error' "$@"; __log_error "$@"; }
 __msg_prompt()      { __msg 'prompt' "$@"; }
 __msg_plain()       { __msg 'plain' "$@"; }
 
@@ -297,6 +362,9 @@ if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_li
 else
     _is_arch_based="false"
 fi
+
+# Initialize logging after distro detection
+__log_init "$@"
 
 # Help information display
 __help() {
@@ -472,6 +540,13 @@ __exit() {
     local _exit_code=${1:-$?}
     trap - INT TERM EXIT HUP
 
+    # Log exit
+    if [[ $_exit_code -ne 0 ]]; then
+        __log_error "Session ended with error code: $_exit_code"
+    else
+        __log_info "Session ended successfully"
+    fi
+
     # Message handling on exit
     if [[ $_exit_code -ne 0 ]]; then
         __banner "$_red"
@@ -504,6 +579,23 @@ __clean() {
     unset _tkg_installer_version
     unset _break _reset _green_light _green_neon _green_mint _green_dark _orange _gray _uline_on _uline_off _cols _line
  }
+
+# Clean temporary files and cache
+__clean_temp_dir() {
+    __banner
+    __msg_info "Cleaning all temporary files...${_break}"
+    __msg_plain " Location:${_reset}${_gray} ${_tkg_tmp_dir}${_reset}${_break}"
+    __log_info "Cleaning temporary directory: ${_tkg_tmp_dir}"
+    local _cache_count=0
+    if [[ -d "${_tkg_tmp_dir}" ]]; then
+        _cache_count=$(find "${_tkg_tmp_dir}" -type f 2>/dev/null | wc -l)
+    fi
+    rm -f "$_tkg_choice_file" 2>&1 || true
+    rm -rf "$_tkg_tmp_dir" 2>&1 || true
+    __log_success "Temporary files cleaned"
+    sleep 1.5s
+    __msg_plain "${_green_neon}Done. ${_gray}(${_cache_count} cached files removed)${_reset}${_break}"
+}
 
 # Fuzzy finder menu wrapper function
 __fzf_menu() {
@@ -562,8 +654,16 @@ __install_package() {
     local _build_command="$3"
     local _work_directory="${4:-}"
 
+    __log_info "Starting installation: $_package_name"
+    __log_debug "Repository: $_repo_url"
+    __log_debug "Build command: $_build_command"
+    __log_debug "Work directory: ${_work_directory:-none}"
+
     # Enter temporary directory
-    cd "${_tkg_tmp_dir}" > /dev/null 2>&1 || return 1
+    cd "${_tkg_tmp_dir}" > /dev/null 2>&1 || {
+        __log_error "Failed to enter temporary directory: ${_tkg_tmp_dir}"
+        return 1
+    }
 
     # Clone or update repository (git pull if exists, clone if not)
     local _repo_dir
@@ -572,29 +672,37 @@ __install_package() {
     if [[ -d "${_repo_dir}/.git" ]]; then
         # Repository exists - update with git pull (recommended by linux-tkg)
         __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Updating ${_gray}$_package_name${_reset} ${_green_light}(git pull)...${_reset}${_break}"
+        __log_info "Updating existing repository: $_repo_dir"
         cd "${_repo_dir}" > /dev/null 2>&1 || {
             __msg_error "Cannot enter repository directory: ${_repo_dir}${_break}"
+            __log_error "Failed to enter directory: ${_repo_dir}"
             return 1
         }
         git pull > /dev/null 2>&1 || {
             __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Git pull failed, trying fresh clone...${_reset}${_break}"
+            __log_warning "Git pull failed, attempting fresh clone"
             cd "${_tkg_tmp_dir}" > /dev/null 2>&1 || return 1
             rm -rf "${_repo_dir}" 2>/dev/null || true
             git clone "$_repo_url" > /dev/null 2>&1 || {
                 __msg_error "Cloning failed for: $_package_name${_break}"
                 __msg_plain " Please check your internet connection and try again."
+                __log_error "Git clone failed: $_repo_url"
                 return 1
             }
+            __log_info "Successfully cloned repository after pull failure"
         }
         cd "${_tkg_tmp_dir}" > /dev/null 2>&1 || return 1
     else
         # Fresh clone
         __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Cloning ${_gray}$_package_name${_reset} ${_green_light}from Frogging-Family repository...${_reset}${_break}"
+        __log_info "Cloning repository: $_repo_url"
         git clone "$_repo_url" > /dev/null 2>&1 || {
             __msg_error "Cloning failed for: $_package_name${_break}"
             __msg_plain " Please check your internet connection and try again."
+            __log_error "Git clone failed: $_repo_url"
             return 1
         }
+        __log_success "Repository cloned successfully"
     fi
 
     # Enter repository directory
@@ -619,8 +727,16 @@ __install_package() {
 
     # Build and install the package
     __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Building and installing ${_gray}$_package_name${_reset} ${_green_light}for ${_gray}$_distro_name, ${_reset}${_orange}this may take a while...${_reset}${_break}"
+    __log_info "Executing build command for $_package_name"
+    __log_cmd "$_build_command"
     eval "$_build_command"
     local _status=$?
+
+    if [[ $_status -eq 0 ]]; then
+        __log_success "Package built successfully: $_package_name"
+    else
+        __log_error "Package build failed with status $_status: $_package_name"
+    fi
 
     # Display completion status
     __status "$_status"
@@ -1002,7 +1118,7 @@ __menu_config() {
 
             if [[ -f "$_config_file_path" && -n "$_remote_url" ]]; then
                 _remote_tmp="'"${_tkg_tmp_dir}"'/${key}-remote.cfg"
-                if curl -fsSL "$_remote_url" -o "$_remote_tmp" 2>/dev/null; then
+                if curl '"${_curl_opts}"' "$_remote_url" -o "$_remote_tmp" 2>/dev/null; then
                     printf "%b\n" "'"${_info_config}"'"
                     '"${_diff_cmd}"' "$_remote_tmp" "$_config_file_path" 2>/dev/null | '"${_bat_cmd}"' || printf "%b\n" "${_orange}Diff failed${_reset}"
                     rm -f "$_remote_tmp"
@@ -1084,7 +1200,7 @@ __old_config() {
 
     # Download upstream config
     local _tmp_upstream="/tmp/upstream_customization.cfg"
-    if ! curl -fsSL "$_upstream_url" -o "$_tmp_upstream" 2>/dev/null; then
+    if ! curl "${_curl_opts}" "$_upstream_url" -o "$_tmp_upstream" 2>/dev/null; then
         __msg_warning "Could not download upstream config for comparison"
         return 1
     fi
@@ -1102,7 +1218,7 @@ __old_config() {
     if [[ "$_package_name" == "Linux-TKG" ]]; then
         local _prepare_url="${_frog_raw_url}/linux-tkg/master/linux-tkg-config/prepare"
         local _tmp_prepare="/tmp/linux-tkg-prepare"
-        if curl -fsSL "$_prepare_url" -o "$_tmp_prepare" 2>/dev/null; then
+        if curl "${_curl_opts}" "$_prepare_url" -o "$_tmp_prepare" 2>/dev/null; then
             # Extract deprecated variables from _deprecated_config_vars array
             _officially_deprecated=$(sed -n '/_deprecated_config_vars=($/,/^)$/p' "$_tmp_prepare" | grep -oP '^\s*"_\K[^"]+' | sed 's/^/_/' || true)
             rm -f "$_tmp_prepare"
@@ -1113,7 +1229,7 @@ __old_config() {
     if [[ "$_package_name" == "Wine-TKG" ]]; then
         local _adv_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/advanced-customization.cfg"
         local _tmp_adv="/tmp/upstream_advanced.cfg"
-        if curl -fsSL "$_adv_url" -o "$_tmp_adv" 2>/dev/null; then
+        if curl "${_curl_opts}" "$_adv_url" -o "$_tmp_adv" 2>/dev/null; then
             local _adv_vars
             _adv_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_adv" 2>/dev/null)
             if [[ -n "$_adv_vars" ]]; then
@@ -1124,7 +1240,7 @@ __old_config() {
     elif [[ "$_package_name" == "Proton-TKG" ]]; then
         local _adv_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/advanced-customization.cfg"
         local _tmp_adv="/tmp/upstream_advanced.cfg"
-        if curl -fsSL "$_adv_url" -o "$_tmp_adv" 2>/dev/null; then
+        if curl "${_curl_opts}" "$_adv_url" -o "$_tmp_adv" 2>/dev/null; then
             local _adv_vars
             _adv_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_adv" 2>/dev/null)
             if [[ -n "$_adv_vars" ]]; then
@@ -1222,7 +1338,7 @@ __handle_config() {
                 fi
 
                 # Download config with timeout (project guideline)
-                if curl -fsSL "${_config_url}" -o "${_config_path}" 2>/dev/null; then
+                if curl "${_curl_opts}" "${_config_url}" -o "${_config_path}" 2>/dev/null; then
                     clear
                     __banner
                     __msg_info "External configuration ready at:${_reset}${_gray} ${_config_path}"
