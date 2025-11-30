@@ -23,6 +23,10 @@ Features
     <sub>Compare your local files with the online ones</sub>
 </pre>
 
+#  
+
+https://github.com/user-attachments/assets/2ac5add4-81e8-4feb-a255-b8c80f7ef63a
+
 # 
 
 ##### INSTALLATION
