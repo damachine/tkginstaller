@@ -23,9 +23,7 @@ Features
     <sub>Compare your local files with the online ones</sub>
 </pre>
 
-#  
-
-https://github.com/user-attachments/assets/2ac5add4-81e8-4feb-a255-b8c80f7ef63a
+https://github.com/user-attachments/assets/f2ef500c-0d4b-4021-a5b0-e9b5f7306b25
 
 # 
 
