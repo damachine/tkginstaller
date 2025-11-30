@@ -47,7 +47,7 @@ set -euo pipefail
 # -----------------------------------------------------------------------------
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.27.4"
+_tkg_installer_version="v0.27.5"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -1259,7 +1259,8 @@ __handle_config() {
                 fi
 
                 # Download config with timeout (project guideline)
-                if curl "${_curl_opts}" "${_config_url}" -o "${_config_path}" 2>/dev/null; then
+                # shellcheck disable=SC2086 # _curl_opts must be unquoted for word splitting
+                if curl ${_curl_opts} "${_config_url}" -o "${_config_path}" 2>/dev/null; then
                     clear
                     __banner
                     __msg_info "External configuration ready at:${_reset}${_gray} ${_config_path}"
