@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 # -----------------------------------------------------------------------------
 # author : damachine (christkue79@gmail.com)
@@ -45,11 +46,8 @@
 #       run: tkginstaller help
 # -----------------------------------------------------------------------------
 
-# Fuzzy finder run in a separate shell (subshell) - export variables for fzf subshells
-# shellcheck disable=SC2218 # Allow usage of printf with variable format strings
-
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.27.2"
+_tkg_installer_version="v0.27.3"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -69,12 +67,6 @@ __init_globals() {
     _curl_max_time=10
     _curl_connect_timeout=5
     _curl_opts="--max-time ${_curl_max_time} --connect-timeout ${_curl_connect_timeout} -fsSL"
-
-    # Logging configuration
-    _log_dir="${HOME}/.tkginstaller/logs"
-    _log_file="${_log_dir}/tkginstaller.log"
-    _log_max_size=5242880  # 5MB in bytes
-    _log_enabled="${TKG_LOG_ENABLED:-false}"
 
     # Export only variables used in fzf preview commands
     export _tkg_tmp_dir _local_config_dir _tkg_raw_url _frog_raw_url _curl_opts
@@ -238,78 +230,13 @@ __msg() {
     printf '%b\n' "${__color}${_prefix}${_msg}${_reset}"
 }
 
-# =============================================================================
-# LOGGING FUNCTIONS
-# =============================================================================
-
-# Initialize logging system
-__log_init() {
-    [[ "${_log_enabled}" != "true" ]] && return 0
-
-    # Create log directory
-    if [[ ! -d "${_log_dir}" ]]; then
-        mkdir -p "${_log_dir}" 2>/dev/null || {
-            _log_enabled="false"
-            return 1
-        }
-    fi
-
-    # Rotate log if too large
-    if [[ -f "${_log_file}" ]]; then
-        local _size
-        _size=$(stat -f%z "${_log_file}" 2>/dev/null || stat -c%s "${_log_file}" 2>/dev/null || echo 0)
-        if [[ ${_size} -gt ${_log_max_size} ]]; then
-            mv "${_log_file}" "${_log_file}.old" 2>/dev/null || true
-        fi
-    fi
-
-    # Log session start
-    {
-        echo "========================================================================"
-        echo "TKG-Installer ${_tkg_installer_version} - Session started"
-        echo "Date: $(date '+%Y-%m-%d %H:%M:%S')"
-        echo "User: ${USER:-unknown}"
-        echo "Distribution: ${_distro_name:-unknown} (${_distro_id:-unknown})"
-        echo "Arguments: $*"
-        echo "========================================================================"
-    } >> "${_log_file}" 2>/dev/null || _log_enabled="false"
-}
-
-# Core logging function
-__log() {
-    [[ "${_log_enabled}" != "true" ]] && return 0
-
-    local _level="${1:-INFO}"
-    shift
-    local _msg="$*"
-
-    # Remove ANSI color codes for log file
-    _msg=$(echo -e "${_msg}" | sed 's/\x1b\[[0-9;]*m//g')
-
-    # Write to log file
-    printf '[%s] [%-7s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "${_level}" "${_msg}" >> "${_log_file}" 2>/dev/null
-}
-
-# Convenience logging functions
-__log_info()    { __log "INFO" "$@"; }
-__log_success() { __log "SUCCESS" "$@"; }
-__log_warning() { __log "WARNING" "$@"; }
-__log_error()   { __log "ERROR" "$@"; }
-__log_debug()   { [[ "${TKG_LOG_DEBUG:-false}" == "true" ]] && __log "DEBUG" "$@"; }
-
-# Log command execution
-__log_cmd() {
-    local _cmd="$*"
-    __log_debug "Executing: ${_cmd}"
-}
-
 # Message functions
-__msg_info()        { __msg 'info_green' "$@"; __log_info "$@"; }
-__msg_info_neon()   { __msg 'info_neon' "$@"; __log_info "$@"; }
-__msg_info_mint()   { __msg 'info_mint' "$@"; __log_info "$@"; }
-__msg_info_orange() { __msg 'info_orange' "$@"; __log_info "$@"; }
-__msg_warning()     { __msg 'warning' "$@"; __log_warning "$@"; }
-__msg_error()       { __msg 'error' "$@"; __log_error "$@"; }
+__msg_info()        { __msg 'info_green' "$@"; }
+__msg_info_neon()   { __msg 'info_neon' "$@"; }
+__msg_info_mint()   { __msg 'info_mint' "$@"; }
+__msg_info_orange() { __msg 'info_orange' "$@"; }
+__msg_warning()     { __msg 'warning' "$@"; }
+__msg_error()       { __msg 'error' "$@"; }
 __msg_prompt()      { __msg 'prompt' "$@"; }
 __msg_plain()       { __msg 'plain' "$@"; }
 
@@ -362,9 +289,6 @@ if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_li
 else
     _is_arch_based="false"
 fi
-
-# Initialize logging after distro detection
-__log_init "$@"
 
 # Help information display
 __help() {
@@ -466,7 +390,7 @@ __prepare() {
     # Check for missing dependencies
     local _missing_dep=()
     for _required_dep in "${_dep[@]}"; do
-        if ! command -v "$_required_dep" >/dev/null; then
+        if ! command -v "$_required_dep" >/dev/null 2>&1; then
             _missing_dep+=("$_required_dep")
         fi
     done
@@ -540,13 +464,6 @@ __exit() {
     local _exit_code=${1:-$?}
     trap - INT TERM EXIT HUP
 
-    # Log exit
-    if [[ $_exit_code -ne 0 ]]; then
-        __log_error "Session ended with error code: $_exit_code"
-    else
-        __log_info "Session ended successfully"
-    fi
-
     # Message handling on exit
     if [[ $_exit_code -ne 0 ]]; then
         __banner "$_red"
@@ -585,14 +502,12 @@ __clean_temp_dir() {
     __banner
     __msg_info "Cleaning all temporary files...${_break}"
     __msg_plain " Location:${_reset}${_gray} ${_tkg_tmp_dir}${_reset}${_break}"
-    __log_info "Cleaning temporary directory: ${_tkg_tmp_dir}"
     local _cache_count=0
     if [[ -d "${_tkg_tmp_dir}" ]]; then
-        _cache_count=$(find "${_tkg_tmp_dir}" -type f 2>/dev/null | wc -l)
+        _cache_count=$(find "${_tkg_tmp_dir}" -type f 2>/dev/null | wc -l || echo 0)
     fi
     rm -f "$_tkg_choice_file" 2>&1 || true
     rm -rf "$_tkg_tmp_dir" 2>&1 || true
-    __log_success "Temporary files cleaned"
     sleep 1.5s
     __msg_plain "${_green_neon}Done. ${_gray}(${_cache_count} cached files removed)${_reset}${_break}"
 }
@@ -609,6 +524,7 @@ __fzf_menu() {
     local _fzf_bind="${7:-ctrl-p:toggle-preview}"
 
     # Run fzf with consistent styling and options
+    # Note: fzf returns exit code 130 on ESC/Ctrl-C, we need to handle this with set -e
     fzf \
         --with-shell='bash -c' \
         --style default \
@@ -639,7 +555,7 @@ __fzf_menu() {
         --bind='esc:abort,ctrl-c:abort' \
         --bind="${_fzf_bind}" \
         --disabled \
-        <<< "${_menu_content}"
+        <<< "${_menu_content}" || true
 }
 
 # =============================================================================
@@ -654,14 +570,9 @@ __install_package() {
     local _build_command="$3"
     local _work_directory="${4:-}"
 
-    __log_info "Starting installation: $_package_name"
-    __log_debug "Repository: $_repo_url"
-    __log_debug "Build command: $_build_command"
-    __log_debug "Work directory: ${_work_directory:-none}"
-
     # Enter temporary directory
     cd "${_tkg_tmp_dir}" > /dev/null 2>&1 || {
-        __log_error "Failed to enter temporary directory: ${_tkg_tmp_dir}"
+        __msg_error "Failed to enter temporary directory: ${_tkg_tmp_dir}${_break}"
         return 1
     }
 
@@ -672,37 +583,29 @@ __install_package() {
     if [[ -d "${_repo_dir}/.git" ]]; then
         # Repository exists - update with git pull (recommended by linux-tkg)
         __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Updating ${_gray}$_package_name${_reset} ${_green_light}(git pull)...${_reset}${_break}"
-        __log_info "Updating existing repository: $_repo_dir"
         cd "${_repo_dir}" > /dev/null 2>&1 || {
             __msg_error "Cannot enter repository directory: ${_repo_dir}${_break}"
-            __log_error "Failed to enter directory: ${_repo_dir}"
             return 1
         }
         git pull > /dev/null 2>&1 || {
             __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Git pull failed, trying fresh clone...${_reset}${_break}"
-            __log_warning "Git pull failed, attempting fresh clone"
             cd "${_tkg_tmp_dir}" > /dev/null 2>&1 || return 1
             rm -rf "${_repo_dir}" 2>/dev/null || true
             git clone "$_repo_url" > /dev/null 2>&1 || {
                 __msg_error "Cloning failed for: $_package_name${_break}"
                 __msg_plain " Please check your internet connection and try again."
-                __log_error "Git clone failed: $_repo_url"
                 return 1
             }
-            __log_info "Successfully cloned repository after pull failure"
         }
         cd "${_tkg_tmp_dir}" > /dev/null 2>&1 || return 1
     else
         # Fresh clone
         __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Cloning ${_gray}$_package_name${_reset} ${_green_light}from Frogging-Family repository...${_reset}${_break}"
-        __log_info "Cloning repository: $_repo_url"
         git clone "$_repo_url" > /dev/null 2>&1 || {
             __msg_error "Cloning failed for: $_package_name${_break}"
             __msg_plain " Please check your internet connection and try again."
-            __log_error "Git clone failed: $_repo_url"
             return 1
         }
-        __log_success "Repository cloned successfully"
     fi
 
     # Enter repository directory
@@ -727,16 +630,8 @@ __install_package() {
 
     # Build and install the package
     __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Building and installing ${_gray}$_package_name${_reset} ${_green_light}for ${_gray}$_distro_name, ${_reset}${_orange}this may take a while...${_reset}${_break}"
-    __log_info "Executing build command for $_package_name"
-    __log_cmd "$_build_command"
     eval "$_build_command"
     local _status=$?
-
-    if [[ $_status -eq 0 ]]; then
-        __log_success "Package built successfully: $_package_name"
-    else
-        __log_error "Package build failed with status $_status: $_package_name"
-    fi
 
     # Display completion status
     __status "$_status"
@@ -747,9 +642,9 @@ __install_package() {
 __prompt_timer() {
     local _prompt_options="${1:-[1/2]}"
     local _timeout="${2:-60}"
-    local _old_trap_int
+    local _old_trap_int=""
 
-    _old_trap_int=$(trap -p INT 2>/dev/null || true)
+    _old_trap_int=$(trap -p INT 2>/dev/null) || true
     trap '__exit 130' INT
 
     _seconds_left="$_timeout"
@@ -952,9 +847,10 @@ __proton_install() {
     if [[ $_status -eq 0 ]]; then
         # Ask user if clean command should be executed
         __msg_prompt "Do you want to run ${_reset}${_gray}'./proton-tkg.sh clean'${_reset} after building Proton-TKG? [y/N]: "
-        _old_trap_int=$(trap -p INT 2>/dev/null || true)
+        local _old_trap_int=""
+        _old_trap_int=$(trap -p INT 2>/dev/null) || true
         trap '__exit 130' INT
-        read -r _user_answer || { eval "$_old_trap_int"; trap - INT; __exit 130; }
+        read -r _user_answer || { eval "${_old_trap_int:-trap - INT}"; __exit 130; }
         # Restore previous trap
         if [[ -n "$_old_trap_int" ]]; then eval "$_old_trap_int"; else trap - INT; fi
 
@@ -1028,8 +924,8 @@ __menu_config() {
             __msg_plain " Creating directory:${_reset}${_gray} ${_local_config_dir}${_reset}${_break}"
             __msg_prompt "Do you want to create the configuration directory? [y/N]: "
 
-            local _old_trap_int
-            _old_trap_int=$(trap -p INT 2>/dev/null || true)
+            local _old_trap_int=""
+            _old_trap_int=$(trap -p INT 2>/dev/null) || true
             trap 'echo;echo; __msg_plain "${_red}Aborted by user.${_reset}";sleep 1.5; clear; return 0' INT
             __prompt_answer "n"
             if [[ -n "$_old_trap_int" ]]; then eval "$_old_trap_int"; else trap - INT; fi
@@ -1147,6 +1043,7 @@ ${_green_light}   Select an option below:"
         # Define border label text
         local _border_label_text="${_tkg_installer_version}"
         local _preview_window_settings='right:wrap:75%'
+        local _fzf_bind='ctrl-p:toggle-preview'
 
         # Run fzf menu
         local _config_choice
@@ -1207,11 +1104,11 @@ __old_config() {
 
     # Extract variable names from local file
     local _local_vars
-    _local_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_config_file" | sort -u)
+    _local_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_config_file" 2>/dev/null | sort -u || true)
 
     # Extract variable names from upstream file(s)
     local _upstream_vars
-    _upstream_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_upstream" | sort -u)
+    _upstream_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_upstream" 2>/dev/null | sort -u || true)
 
     # For linux-tkg, also check _deprecated_config_vars from prepare file
     local _officially_deprecated=""
@@ -1227,32 +1124,56 @@ __old_config() {
 
     # Check for advanced customization file variables for Wine-TKG and Proton-TKG
     if [[ "$_package_name" == "Wine-TKG" ]]; then
+        # Check advanced-customization.cfg
         local _adv_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/advanced-customization.cfg"
         local _tmp_adv="/tmp/upstream_advanced.cfg"
         if curl -fsSL "$_adv_url" -o "$_tmp_adv" 2>/dev/null; then
             local _adv_vars
-            _adv_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_adv" 2>/dev/null)
+            _adv_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_adv" 2>/dev/null || true)
             if [[ -n "$_adv_vars" ]]; then
-                _upstream_vars=$(printf "%s\n%s" "$_upstream_vars" "$_adv_vars" | sort -u | uniq)
+                _upstream_vars=$(printf "%s\n%s" "$_upstream_vars" "$_adv_vars" | sort -u)
             fi
             rm -f "$_tmp_adv"
         fi
+        # Check sample-external-config.cfg
+        local _ext_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/sample-external-config.cfg"
+        local _tmp_ext="/tmp/upstream_external.cfg"
+        if curl -fsSL "$_ext_url" -o "$_tmp_ext" 2>/dev/null; then
+            local _ext_vars
+            _ext_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_ext" 2>/dev/null || true)
+            if [[ -n "$_ext_vars" ]]; then
+                _upstream_vars=$(printf "%s\n%s" "$_upstream_vars" "$_ext_vars" | sort -u)
+            fi
+            rm -f "$_tmp_ext"
+        fi
     elif [[ "$_package_name" == "Proton-TKG" ]]; then
+        # Check advanced-customization.cfg
         local _adv_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/advanced-customization.cfg"
         local _tmp_adv="/tmp/upstream_advanced.cfg"
         if curl -fsSL "$_adv_url" -o "$_tmp_adv" 2>/dev/null; then
             local _adv_vars
-            _adv_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_adv" 2>/dev/null)
+            _adv_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_adv" 2>/dev/null || true)
             if [[ -n "$_adv_vars" ]]; then
-                _upstream_vars=$(printf "%s\n%s" "$_upstream_vars" "$_adv_vars" | sort -u | uniq)
+                _upstream_vars=$(printf "%s\n%s" "$_upstream_vars" "$_adv_vars" | sort -u)
             fi
             rm -f "$_tmp_adv"
+        fi
+        # Check sample-external-config.cfg
+        local _ext_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/sample-external-config.cfg"
+        local _tmp_ext="/tmp/upstream_external.cfg"
+        if curl -fsSL "$_ext_url" -o "$_tmp_ext" 2>/dev/null; then
+            local _ext_vars
+            _ext_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$_tmp_ext" 2>/dev/null || true)
+            if [[ -n "$_ext_vars" ]]; then
+                _upstream_vars=$(printf "%s\n%s" "$_upstream_vars" "$_ext_vars" | sort -u)
+            fi
+            rm -f "$_tmp_ext"
         fi
     fi
 
     # Find deprecated variables (in local but not in upstream)
     local _deprecated_vars
-    _deprecated_vars=$(comm -23 <(echo "$_local_vars") <(echo "$_upstream_vars"))
+    _deprecated_vars=$(comm -23 <(echo "$_local_vars") <(echo "$_upstream_vars") 2>/dev/null || true)
 
     # Combine with officially deprecated variables for linux-tkg
     if [[ -n "$_officially_deprecated" ]]; then
@@ -1272,7 +1193,7 @@ __old_config() {
             __msg_plain " ${_gray}${_var}${_reset}"
         done <<< "$_deprecated_vars"
         __msg_plain "${_break} These variables are no longer used in upstream.${_break} \
-Please check this to ensure correctness! Then they can be removed from your local config.${_break}${_break}"
+Please check this to ensure correctness! Then they can be removed from your local config.${_break}"
         __msg_prompt "Press any key to continue...${_break}"
         read -n 1 -s -r
     fi
@@ -1316,8 +1237,8 @@ __handle_config() {
         # Prompt user for download
         __msg_prompt "Do you want to download the default configuration? [y/N]: "
 
-        local _old_trap_int
-        _old_trap_int=$(trap -p INT 2>/dev/null || true)
+        local _old_trap_int=""
+        _old_trap_int=$(trap -p INT 2>/dev/null) || true
         trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; clear; return 0' INT
         __prompt_answer "n"
         if [[ -n "$_old_trap_int" ]]; then eval "$_old_trap_int"; else trap - INT; fi
@@ -1496,6 +1417,7 @@ ${_green_light}   Select an option below:"
     # Define border label text
     local _border_label_text="${_tkg_installer_version}"
     local _preview_window_settings='right:wrap:55%'
+    local _fzf_bind='ctrl-p:toggle-preview'
 
     # Run fzf menu
     local _main_choice
@@ -1520,8 +1442,10 @@ ${_green_light}   Select an option below:"
 
 # Handle direct command-line arguments
 __main_direct_mode() {
-    local _arg1="${1,,}"
-    local _arg2="${2,,}"
+    local _arg1="${1:-}"
+    _arg1="${_arg1,,}"
+    local _arg2="${2:-}"
+    _arg2="${_arg2,,}"
 
     # Accept both [package] [config] and [config] [package] order for arguments
     local _package=""
@@ -1642,8 +1566,16 @@ __main_interactive_mode() {
     }
 
     # Process user selection from menu
-    local _user_choice
-    _user_choice=$(< "$_tkg_choice_file")
+    local _user_choice=""
+    if [[ -f "$_tkg_choice_file" ]]; then
+        _user_choice=$(< "$_tkg_choice_file") || true
+    fi
+
+    # Handle empty choice (ESC/Ctrl-C pressed)
+    if [[ -z "${_user_choice:-}" ]]; then
+        clear
+        __exit 0
+    fi
 
     # Remove temporary choice file
     rm -f "$_tkg_choice_file" 2>&1 || true
