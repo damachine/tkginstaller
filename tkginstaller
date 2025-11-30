@@ -47,7 +47,7 @@ set -euo pipefail
 # -----------------------------------------------------------------------------
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.27.3"
+_tkg_installer_version="v0.27.4"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -877,7 +877,7 @@ __error_config() {
     __banner "$_red"
     __msg_error "$_msg"
     __msg_prompt "Press any key to continue...${_break}"
-    read -n 1 -s -r
+    read -n 1 -s -r || true
     clear
 }
 
@@ -941,7 +941,7 @@ __menu_config() {
                     __msg_info "Configuration directory created:${_reset}${_gray} ${_local_config_dir}${_reset}${_break}"
                     __msg_plain " You can now manage your${_reset}${_gray} customization.cfg${_reset} files.${_break}"
                     __msg_prompt "Press any key to continue...${_break}"
-                    read -n 1 -s -r
+                    read -n 1 -s -r || true
                     clear
                     continue
                     ;;
@@ -951,7 +951,7 @@ __menu_config() {
                     __msg_info_orange "Directory creation cancelled.${_break}"
                     __msg_plain " No changes were made.${_break}"
                     __msg_prompt "Press any key to continue...${_break}"
-                    read -n 1 -s -r
+                    read -n 1 -s -r || true
                     clear
                     return 0
                     ;;
@@ -1079,7 +1079,7 @@ ${_green_light}   Select an option below:"
             __handle_config \
                 "${_pkg_display_name[$_config_file]}" \
                 "${_local_config_dir}/${_config_file}.cfg" \
-                "$(__get_config_url "$_config_file")"
+                "$(__get_config_url "$_config_file")" || true
         fi
     done
 }
@@ -1195,7 +1195,7 @@ __old_config() {
         __msg_plain "${_break} These variables are no longer used in upstream.${_break} \
 Please check this to ensure correctness! Then they can be removed from your local config.${_break}"
         __msg_prompt "Press any key to continue...${_break}"
-        read -n 1 -s -r
+        read -n 1 -s -r || true
     fi
 
     # Cleanup tmp upstream files
@@ -1284,7 +1284,7 @@ __handle_config() {
                 __msg_info_orange "Download cancelled. No configuration file created.${_break}"
                 __msg_plain " No changes were made.${_break}"
                 __msg_prompt "Press any key to continue...${_break}"
-                read -n 1 -s -r
+                read -n 1 -s -r || true
                 clear
                 return 1
                 ;;
@@ -1495,7 +1495,7 @@ __main_direct_mode() {
         trap - INT TERM EXIT HUP
 
         # Handle config file editing directly
-        __handle_config "$_config_name" "$_config_path" "$_config_url"
+        __handle_config "$_config_name" "$_config_path" "$_config_url" || true
 
         # Display exit messages
         __banner
