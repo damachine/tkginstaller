@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# TKG-Installer VERSION definition
+_tkg_installer_version="v0.27.6"
+
 # -----------------------------------------------------------------------------
-# author : damachine (christkue79@gmail.com)
+# author : damachine (christkue79 at gmail dot com)
 # website: https://github.com/damachine
 #          https://github.com/damachine/tkginstaller
 # -----------------------------------------------------------------------------
@@ -46,9 +49,6 @@ set -euo pipefail
 #       run: tkginstaller help
 # -----------------------------------------------------------------------------
 
-# TKG-Installer VERSION definition
-_tkg_installer_version="v0.27.5"
-
 # =============================================================================
 # ENVIRONMENT SETUP
 # =============================================================================
@@ -63,7 +63,7 @@ __init_globals() {
     _frog_repo_url=https://github.com/Frogging-Family
     _frog_raw_url=https://raw.githubusercontent.com/Frogging-Family
 
-    # Curl timeout configuration (network resilience)
+    # Curl timeout configuration
     _curl_max_time=10
     _curl_connect_timeout=5
     _curl_opts="--max-time ${_curl_max_time} --connect-timeout ${_curl_connect_timeout} -fsSL"
@@ -352,7 +352,6 @@ __prepare() {
     )
 
     # Set install command based on distro
-    # Note: Case patterns use literal strings for POSIX compatibility
     case "${_distro_id,,}" in
         arch|manjaro|endeavouros|cachyos)
             _install_cmd_dep="pacman -S"
@@ -415,7 +414,7 @@ __prepare() {
         exit 1 >/dev/null 2>&1
     fi
 
-    # Setup temporary directory (preserved for git pull updates per linux-tkg recommendation)
+    # Setup temporary directory
     rm -f "$_tkg_choice_file" 2>/dev/null || true
     # Cache is preserved to allow git pull updates instead of fresh clones
     mkdir -p "$_tkg_tmp_dir" 2>/dev/null || {
@@ -435,7 +434,7 @@ __prepare() {
         __msg_plain "${_green_neon}Running direct installation${_reset}"
     fi
 
-    # Short delay for better UX (( :P ))
+    # Short delay for better UX
     sleep 0.5s
 }
 
@@ -481,19 +480,16 @@ __exit() {
 }
 
 # Ensure signals lead to __exit with non-zero code so __exit shows error output.
-# EXIT gets the real status, INT/TERM/HUP use 130 (SIGINT) as conventional code.
 trap '__exit 130' INT TERM HUP
 trap '__exit $?' EXIT
 
-# Cleanup handler (preserves cache directory for git pull updates)
+# Cleanup handler
 __clean() {
     # Remove temporary files but preserve cache directory for git pull updates
     rm -f "$_tkg_choice_file" 2>/dev/null || true
-    # Cache directory is intentionally preserved to allow git pull updates
-    # Use 'tkginstaller clean' to explicitly remove the cache
 
     # Unset all variables
-    unset _tkg_installer_version
+    unset _tkg_tmp_dir _local_config_dir _tkg_raw_url _frog_raw_url _curl_opts
     unset _break _reset _green_light _green_neon _green_mint _green_dark _orange _gray _uline_on _uline_off _cols _line
  }
 
@@ -524,7 +520,6 @@ __fzf_menu() {
     local _fzf_bind="${7:-ctrl-p:toggle-preview}"
 
     # Run fzf with consistent styling and options
-    # Note: fzf returns exit code 130 on ESC/Ctrl-C, we need to handle this with set -e
     fzf \
         --with-shell='bash -c' \
         --style default \
@@ -707,7 +702,7 @@ __linux_install() {
         # Arch-based distributions build system to use
         __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which installations method do you want to perform${_reset}${_break}"
         __msg_plain " Detected distro: ${_gray}${_distro_name}${_reset}${_break}"
-        __msg_plain " ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ makepkg -Csic         ${_green_light}recommended for Arch${_reset}"
+        __msg_plain " ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ makepkg -si         ${_green_light}recommended for Arch${_reset}"
         __msg_plain " ${_orange}2${_reset} │ install.sh install    ${_gray}(generic script)${_reset}"
         __msg_plain " ${_gray}9${_reset} │ install.sh uninstall  ${_gray}(show uninstall help)${_reset}"
         __msg_plain " ${_red}0${_reset} │ Cancel${_break}"
@@ -726,7 +721,7 @@ __linux_install() {
                 _build_command="chmod +x install.sh && ./install.sh uninstall-help"
                 ;;
             *)
-                _build_command="makepkg -Csic"
+                _build_command="makepkg -si"
                 ;;
         esac
     else
@@ -779,7 +774,7 @@ __nvidia_install() {
     __msg_pkg "nvidia" "${_frog_repo_url}/nvidia-all/blob/master/customization.cfg"
 
     # Execute installation process
-    __install_package "${_frog_repo_url}/nvidia-all.git" "nvidia-all" "makepkg -Csic"
+    __install_package "${_frog_repo_url}/nvidia-all.git" "nvidia-all" "makepkg -si"
 }
 
 # Mesa-TKG installation
@@ -788,7 +783,7 @@ __mesa_install() {
     __msg_pkg "mesa" "${_frog_repo_url}/mesa-git/blob/master/customization.cfg"
 
     # Execute installation process
-    __install_package "${_frog_repo_url}/mesa-git.git" "mesa-git" "makepkg -Csic"
+    __install_package "${_frog_repo_url}/mesa-git.git" "mesa-git" "makepkg -si"
 }
 
 # Wine-TKG installation
@@ -803,7 +798,7 @@ __wine_install() {
         # Arch-based distributions build system to use
         __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which build system do you want to use${_reset}${_break}"
         __msg_plain " Detected distro: ${_gray}${_distro_name}${_reset}${_break}"
-        __msg_plain " ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ makepkg -Csic         ${_green_light}recommended for Arch${_reset}"
+        __msg_plain " ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ makepkg -si         ${_green_light}recommended for Arch${_reset}"
         __msg_plain " ${_orange}2${_reset} │ non-makepkg-build.sh  ${_gray}(custom build script)${_reset}"
         __msg_plain " ${_red}0${_reset} │ Cancel${_break}"
 
@@ -819,7 +814,7 @@ __wine_install() {
                 _build_command="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
                 ;;
             *)
-                _build_command="makepkg -Csic"
+                _build_command="makepkg -si"
                 ;;
         esac
     else
