@@ -39,6 +39,34 @@
 
 ---
 
+### DXVK-Tools Integration (Optional)
+
+Before building Proton-TKG, you can optionally prepare custom DXVK and vkd3d-proton builds using dxvk-tools:
+
+- **What is dxvk-tools?**  
+  A build system for custom DXVK (DirectX to Vulkan) and vkd3d-proton (Direct3D 12 to Vulkan) versions.
+- **When to use:**  
+  Use this for cutting-edge DXVK/vkd3d versions, custom patches, or debugging purposes.
+- **Workflow:**
+  1. TKG-Installer asks: "Prepare custom DXVK/vkd3d with dxvk-tools first?"
+  2. If yes → Clone dxvk-tools repository to `~/.tkginstaller/.cache/dxvk-tools`
+  3. Ask: "Build DXVK?" → Runs `./updxvk build` if yes
+  4. Ask: "Build vkd3d-proton?" → Runs `./upvkd3d-proton build` if yes
+  5. Ask: "Export for Proton-TKG?" → Runs `./updxvk proton-tkg` if yes (only if something was built)
+  6. Continue with Proton-TKG build using exported DLLs
+- **Config Files:**  
+  Edit `updxvk.cfg` and `upvkd3d-proton.cfg` via Config menu or:
+  - `tkginstaller config dxvk`
+  - `tkginstaller config vkd3d`
+- **Standalone Installation:**  
+  `tkginstaller dxvk-tools` or `tkginstaller dxvk`
+- **Error Handling:**  
+  If dxvk-tools build fails, Proton-TKG build continues anyway.
+- **Requirements:**  
+  wine, meson, mingw64, glslang (handled by dxvk-tools scripts).
+
+---
+
 ### Troubleshooting
 
 - **Invalid or incomplete arguments:**  
@@ -47,6 +75,8 @@
   Do not run TKG-Installer as root. Use a regular user account for security.
 - **Build Errors:**  
   Check that all dependencies are installed and your config is valid.
+- **dxvk-tools Errors:**  
+  Check logs in `~/.tkginstaller/.cache/` (dxvk-build.log, vkd3d-build.log, dxvk-export.log).
 
 ---
 
@@ -55,6 +85,8 @@
 - Ensure you have a large amount of free disk space, as the build process is resource-intensive.
 - Customizing can improve performance, but incorrect settings can also lead to issues.
 - Join the Frogging-Family community for troubleshooting and support.
+- Use dxvk-tools only if you need bleeding-edge versions or custom patches.
+- Default Proton-TKG already includes stable DXVK/vkd3d versions.
 
 ---
 
