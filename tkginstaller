@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.27.6"
+_tkg_installer_version="v0.27.7"
 
 # -----------------------------------------------------------------------------
 # author : damachine (christkue79 at gmail dot com)
@@ -77,8 +77,12 @@ declare -gA _ext_config_patch=(
     [linux-tkg]="linux-tkg/master/customization.cfg"
     [nvidia-all]="nvidia-all/master/customization.cfg"
     [mesa-git]="mesa-git/master/customization.cfg"
+    [amdgpu-pro]="amdgpu-pro-vulkan-only/master/customization.cfg"
+    [amdvlk-opt]="amdvlk-opt/master/amdvlk-buildfromsource/customization.cfg"
     [wine-tkg]="wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
     [proton-tkg]="wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
+    [dxvk]="dxvk-tools/master/updxvk.cfg"
+    [vkd3d]="dxvk-tools/master/upvkd3d-proton.cfg"
 )
 
 # Package display names
@@ -86,8 +90,12 @@ declare -gA _pkg_display_name=(
     [linux-tkg]="Linux-TKG"
     [nvidia-all]="Nvidia-TKG"
     [mesa-git]="Mesa-TKG"
+    [amdgpu-pro]="AMDGPU-PRO"
+    [amdvlk-opt]="AMDVLK-OPT"
     [wine-tkg]="Wine-TKG"
     [proton-tkg]="Proton-TKG"
+    [dxvk]="DXVK"
+    [vkd3d]="vkd3d-proton"
 )
 
 # Normalize package argument to internal key
@@ -96,6 +104,8 @@ __normalize_package() {
         linux|l|--linux|-l) echo "linux-tkg" ;;
         nvidia|n|--nvidia|-n) echo "nvidia-all" ;;
         mesa|m|--mesa|-m) echo "mesa-git" ;;
+        amdgpu|ag|--amdgpu|-ag) echo "amdgpu-pro" ;;
+        amdvlk|av|--amdvlk|-av) echo "amdvlk-opt" ;;
         wine|w|--wine|-w) echo "wine-tkg" ;;
         proton|p|--proton|-p) echo "proton-tkg" ;;
         *) echo "" ;;
@@ -671,8 +681,8 @@ __prompt_timer() {
     done
     __clear_line 120 ""
 
-    # Default to "1" if no answer
-    : "${_user_answer:=1}"
+    # Default to "0" if no answer
+    : "${_user_answer:=0}"
 
     # Restore previous INT trap
     if [[ -n "$_old_trap_int" ]]; then
@@ -786,6 +796,18 @@ __mesa_install() {
     __install_package "${_frog_repo_url}/mesa-git.git" "mesa-git" "makepkg -si"
 }
 
+# AMDGPU-PRO installation
+__amdgpu_pro_install() {
+    # Execute installation process
+    __install_package "${_frog_repo_url}/amdgpu-pro-vulkan-only.git" "amdgpu-pro-vulkan-only" "makepkg -si"
+}
+
+# AMDVLK-OPT installation
+__amdvlk_opt_install() {
+    # Execute installation process (buildfromsource variant with subdirectory)
+    __install_package "${_frog_repo_url}/amdvlk-opt.git" "amdvlk-opt" "makepkg -si" "amdvlk-buildfromsource"
+}
+
 # Wine-TKG installation
 __wine_install() {
     # Inform user about external configuration usage
@@ -826,10 +848,120 @@ __wine_install() {
     __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "wine-tkg-git"
 }
 
+# DXVK-Tools preparation (optional pre-build for Proton-TKG)
+__dxvk_tools_prepare() {
+    # Present build options menu FIRST (before cloning)
+    __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which DXVK/vkd3d build option do you want?${_reset}${_break}"
+    __msg_plain " ${_orange}${_uline_on}0${_uline_off}${_reset} │ No (skip)              ${_gray}Skip all builds, continue with Proton-TKG${_reset}"
+    __msg_plain " ${_green_neon}1${_reset} │ Yes (build both)       ${_green_light}Build DXVK + vkd3d-proton${_reset}"
+    __msg_plain " ${_orange}2${_reset} │ Custom                 ${_gray}Choose individually which to build${_reset}"
+    __msg_plain " ${_red}9${_reset} │ Cancel${_break}"
+
+    __prompt_timer "[${_orange}${_uline_on}0${_uline_off}${_reset}/${_green_neon}1${_reset}/${_orange}2${_reset}/${_red}9${_reset}]" 60
+
+    local _build_dxvk=false
+    local _build_vkd3d=false
+    local _built_something=false
+
+    case "$_user_answer" in
+        9)
+            __msg_info "${_break}${_break}${_orange}Cancelled by user${_reset}${_break}"
+            __exit 1
+            ;;
+        0)
+            __msg_info "${_break}${_orange}Skipping DXVK/vkd3d builds${_reset}${_break}"
+            return 0
+            ;;
+        2)
+            # Custom selection - ask individually
+            __msg_prompt "${_break}Build ${_reset}${_gray}'DXVK'${_reset} (DirectX to Vulkan)? [y/N]: "
+            __prompt_answer "n"
+            [[ "${_user_answer,,}" =~ ^(y|yes)$ ]] && _build_dxvk=true
+
+            __msg_prompt "Build ${_reset}${_gray}'vkd3d-proton'${_reset} (Direct3D 12 to Vulkan)? [y/N]: "
+            __prompt_answer "n"
+            [[ "${_user_answer,,}" =~ ^(y|yes)$ ]] && _build_vkd3d=true
+            ;;
+        *)
+            # Build both (Option 1)
+            _build_dxvk=true
+            _build_vkd3d=true
+            ;;
+    esac
+
+    # Clone dxvk-tools ONLY if user wants to build something (Option 1 or 3)
+    if [[ "$_build_dxvk" == "true" ]] || [[ "$_build_vkd3d" == "true" ]]; then
+        __msg_info "${_break}${_green_neon}${_uline_on}INFO${_uline_off}:${_reset} ${_green_light}Preparing dxvk-tools${_reset}${_break}"
+        __msg_plain " DXVK-tools allows building custom DXVK and vkd3d-proton versions${_break}"
+
+        local _dxvk_dir="${_tkg_tmp_dir}/dxvk-tools"
+        if [[ -d "$_dxvk_dir" ]]; then
+            __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}dxvk-tools directory already exists, using existing clone${_reset}${_break}"
+        else
+            __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}Cloning dxvk-tools repository to '${_dxvk_dir}'...${_reset}${_break}"
+            if ! git clone "${_frog_repo_url}/dxvk-tools.git" "$_dxvk_dir" 2>&1 | tee -a "${_tkg_tmp_dir}/dxvk-tools.log"; then
+                __msg_error "Failed to clone dxvk-tools repository${_break}"
+                return 1
+            fi
+        fi
+
+        cd "$_dxvk_dir" || { __msg_error "Failed to enter dxvk-tools directory${_break}"; return 1; }
+    else
+        # User selected 'No' or nothing to build
+        return 0
+    fi
+
+    # Build DXVK if selected
+    if [[ "$_build_dxvk" == "true" ]]; then
+        __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}Building DXVK...${_reset}${_break}"
+        if ./updxvk build 2>&1 | tee -a "${_tkg_tmp_dir}/dxvk-build.log"; then
+            __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}DXVK build completed successfully${_reset}${_break}"
+            _built_something=true
+        else
+            __msg_error "DXVK build failed (see ${_tkg_tmp_dir}/dxvk-build.log)${_break}"
+            __msg_plain " Continuing anyway...${_break}"
+        fi
+    fi
+
+    # Build vkd3d-proton if selected
+    if [[ "$_build_vkd3d" == "true" ]]; then
+        __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}Building vkd3d-proton...${_reset}${_break}"
+        if ./upvkd3d-proton build 2>&1 | tee -a "${_tkg_tmp_dir}/vkd3d-build.log"; then
+            __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}vkd3d-proton build completed successfully${_reset}${_break}"
+            _built_something=true
+        else
+            __msg_error "vkd3d-proton build failed (see ${_tkg_tmp_dir}/vkd3d-build.log)${_break}"
+            __msg_plain " Continuing anyway...${_break}"
+        fi
+    fi
+
+    # Only ask about export if something was built
+    if [[ "$_built_something" == "true" ]]; then
+        __msg_prompt "${_break}Do you want to ${_reset}${_gray}'export for Proton-TKG'${_reset}? [y/N]: "
+        __prompt_answer "n"
+
+        if [[ "${_user_answer,,}" =~ ^(y|yes)$ ]]; then
+            __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}Exporting DXVK DLLs for Proton-TKG...${_reset}${_break}"
+            if ./updxvk proton-tkg 2>&1 | tee -a "${_tkg_tmp_dir}/dxvk-export.log"; then
+                __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}Export completed successfully${_reset}${_break}"
+                __msg_info "${_break}${_green_neon}${_uline_on}TIP${_uline_off}:${_reset} ${_green_light}DXVK DLLs are ready for Proton-TKG build${_reset}${_break}"
+            else
+                __msg_error "Export failed (see ${_tkg_tmp_dir}/dxvk-export.log)${_break}"
+                __msg_plain " Continuing with Proton-TKG build anyway...${_break}"
+            fi
+        fi
+    else
+        __msg_info "${_break}${_orange}No builds performed, skipping export step${_reset}${_break}"
+    fi
+}
+
 # Proton-TKG installation
 __proton_install() {
     # Inform user about external configuration usage
     __msg_pkg "proton" "${_frog_repo_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
+
+    # Optional DXVK/vkd3d preparation (user can skip with default option)
+    __dxvk_tools_prepare || __msg_warning "dxvk-tools preparation cancelled or failed, continuing with Proton-TKG build${_break}"
 
     # Determine build command
     local _build_command="./proton-tkg.sh"
@@ -844,8 +976,8 @@ __proton_install() {
         __msg_prompt "Do you want to run ${_reset}${_gray}'./proton-tkg.sh clean'${_reset} after building Proton-TKG? [y/N]: "
         local _old_trap_int=""
         _old_trap_int=$(trap -p INT 2>/dev/null) || true
-        trap '__exit 130' INT
-        read -r _user_answer || { eval "${_old_trap_int:-trap - INT}"; __exit 130; }
+        trap 'return 130' INT
+        read -r _user_answer || { eval "${_old_trap_int:-trap - INT}"; return 130; }
         # Restore previous trap
         if [[ -n "$_old_trap_int" ]]; then eval "$_old_trap_int"; else trap - INT; fi
 
@@ -905,6 +1037,90 @@ __editor() {
 
     # Execute editor with target file
     "${_editor_parts[@]}" "$_target_file"
+}
+
+# AMD Graphics Driver submenu
+__menu_amd() {
+    clear
+    # Define AMD menu options
+    local _amd_menu_options=(
+        "AMDGPU-PRO |💎 ${_green_neon}AMDGPU-PRO   ${_gray} AMD Vulkan-only graphics driver (Pro)"
+        "AMDVLK-OPT |🔷 ${_green_neon}AMDVLK-OPT   ${_gray} AMD standalone Vulkan driver (buildfromsource)"
+        "return     |⏪ ${_green_neon}Return"
+    )
+
+    local _amd_menu_content
+    _amd_menu_content=$(printf '%s\n' "${_amd_menu_options[@]}")
+
+    # Define preview repositories for AMD submenu
+    declare -A _amd_preview_repos=(
+        [AMDGPU-PRO]="amdgpu-pro-vulkan-only/master"
+        [AMDVLK-OPT]="amdvlk-opt/master"
+    )
+
+    # Export preview repos for subshell
+    local _amd_repos_json
+    _amd_repos_json=$(printf '%s\n' \
+        "AMDGPU-PRO=${_amd_preview_repos[AMDGPU-PRO]}" \
+        "AMDVLK-OPT=${_amd_preview_repos[AMDVLK-OPT]}"
+    )
+    export _amd_repos_json
+
+    # Define preview command for AMD submenu
+    # shellcheck disable=SC2016 # Need to use single quotes for fzf preview
+    local _amd_preview_command='
+        key=$(echo {} | cut -d"|" -f1 | xargs)
+        [[ "$key" == "return" ]] && { echo "Back to main menu..."; exit 0; }
+        
+        repo=$(echo "$_amd_repos_json" | grep "^${key}=" | cut -d= -f2-)
+        [[ -n "$repo" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_frog_raw_url}"'/${repo}/README.md"
+    '
+
+    # Define header and footer for AMD submenu
+    local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ AMD Graphics Drivers${_uline_off}${_reset}${_break}${_break}\
+${_green_light}    Select an AMD graphics driver to build and install:${_break}${_break}\
+${_green_light}    Press [Ctrl+P] to toggle preview${_break}${_break}\
+${_green_light}   Select an option below:"
+
+    local _footer_text="  ${_green_light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}\
+  Press [Enter] to select, [Ctrl+P] to toggle preview, [ESC] to exit${_break}${_break}\
+  ${_green_light}Website:${_reset} ${_gray}https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family"
+
+    local _border_label_text="${_tkg_installer_version}"
+    local _preview_window_settings='right:wrap:60%'
+    local _fzf_bind='ctrl-p:toggle-preview'
+
+    # Run fzf menu
+    local _amd_choice
+    _amd_choice=$(__fzf_menu "$_amd_menu_content" "$_amd_preview_command" "$_header_text" "$_footer_text" "$_border_label_text" "$_preview_window_settings" "$_fzf_bind")
+
+    # Unset exported variables
+    unset _amd_repos_json
+
+    # Handle empty choice (ESC pressed)
+    if [[ -z "$_amd_choice" ]]; then
+        return 0
+    fi
+
+    # Extract driver key from choice
+    _amd_choice=$(echo "$_amd_choice" | cut -d"|" -f1 | xargs)
+
+    # Handle user choice from AMD submenu
+    case $_amd_choice in
+        AMDGPU-PRO)
+            __banner
+            __clear_line 120 ""
+            __amdgpu_pro_install
+            ;;
+        AMDVLK-OPT)
+            __banner
+            __clear_line 120 ""
+            __amdvlk_opt_install
+            ;;
+        return)
+            return 0
+            ;;
+    esac
 }
 
 # Configuration file editor menu
@@ -969,6 +1185,8 @@ __menu_config() {
         _menu_options+=(
             "wine-tkg   |🍷 ${_green_neon}Wine    ${_gray} customization.cfg ${_reset}->${_orange} 'wine-tkg.cfg'"
             "proton-tkg |🎮 ${_green_neon}Proton  ${_gray} customization.cfg ${_reset}->${_orange} 'proton-tkg.cfg'"
+            "dxvk       |🎮 ${_green_neon}DXVK    ${_gray} customization.cfg ${_reset}->${_orange} 'updxvk.cfg'"
+            "vkd3d      |🎮 ${_green_neon}vkd3d   ${_gray} customization.cfg ${_reset}->${_orange} 'upvkd3d-proton.cfg'"
             "return     |⏪ ${_green_neon}Return"
         )
 
@@ -983,7 +1201,9 @@ __menu_config() {
             "nvidia-all=${_frog_raw_url}/${_ext_config_patch[nvidia-all]}" \
             "mesa-git=${_frog_raw_url}/${_ext_config_patch[mesa-git]}" \
             "wine-tkg=${_frog_raw_url}/${_ext_config_patch[wine-tkg]}" \
-            "proton-tkg=${_frog_raw_url}/${_ext_config_patch[proton-tkg]}"
+            "proton-tkg=${_frog_raw_url}/${_ext_config_patch[proton-tkg]}" \
+            "dxvk=${_frog_raw_url}/${_ext_config_patch[dxvk]}" \
+            "vkd3d=${_frog_raw_url}/${_ext_config_patch[vkd3d]}"
             )
         export _pkg_urls_json
 
@@ -1320,8 +1540,9 @@ __menu() {
 
     if [[ "${_is_arch_based}" == "true" ]]; then
         _menu_options+=(
-            "Nvidia |💻 ${_green_neon}Nvidia  ${_gray} Nvidia open-source or proprietary graphics drivers"
-            "Mesa   |🧩 ${_green_neon}Mesa    ${_gray} AMD and Intel open-source graphics driver"
+            "Nvidia      |💻 ${_green_neon}Nvidia  ${_gray} Nvidia open-source or proprietary graphics drivers"
+            "Mesa        |🧩 ${_green_neon}Mesa    ${_gray} AMD and Intel open-source graphics driver"
+            "AMD         |💎 ${_green_neon}AMD     ${_gray} AMDGPU-PRO and Vulkan drivers (Pro & OPT)"
         )
     fi
 
@@ -1342,6 +1563,7 @@ __menu() {
         [Linux]="linux"
         [Nvidia]="nvidia"
         [Mesa]="mesa"
+        [AMD]="amd"
         [Wine]="wine"
         [Proton]="proton"
         [Config]="config"
@@ -1364,6 +1586,7 @@ __menu() {
         "Linux=${_preview_docs[Linux]}" \
         "Nvidia=${_preview_docs[Nvidia]}" \
         "Mesa=${_preview_docs[Mesa]}" \
+        "AMD=${_preview_docs[AMD]}" \
         "Wine=${_preview_docs[Wine]}" \
         "Proton=${_preview_docs[Proton]}" \
         "Config=${_preview_docs[Config]}" \
@@ -1516,6 +1739,14 @@ __main_direct_mode() {
             __prepare
             __mesa_install
             ;;
+        amdgpu|ag|--amdgpu|-ag)
+            __prepare
+            __amdgpu_pro_install
+            ;;
+        amdvlk|av|--amdvlk|-av)
+            __prepare
+            __amdvlk_opt_install
+            ;;
         wine|w|--wine|-w)
             __prepare
             __wine_install
@@ -1523,6 +1754,10 @@ __main_direct_mode() {
         proton|p|--proton|-p)
             __prepare
             __proton_install
+            ;;
+        dxvk-tools|dxvk|--dxvk-tools|-d)
+            __prepare
+            __dxvk_tools_prepare
             ;;
         clean|--clean)
             __clean_temp_dir
@@ -1578,7 +1813,7 @@ __main_interactive_mode() {
 
     # Handle user choice from menu
     case $_user_choice in
-        Linux|Nvidia|Mesa|Wine|Proton)
+        Linux|Nvidia|Mesa|AMD|Wine|Proton)
             # Display banner before installation from menu
             __banner
             __clear_line 120
@@ -1591,6 +1826,11 @@ __main_interactive_mode() {
             ;;
         Mesa)
             __mesa_install
+            ;;
+        AMD)
+            __menu_amd
+            clear
+            exec "$0"
             ;;
         Wine)
             __wine_install
