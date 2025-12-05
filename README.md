@@ -5,11 +5,11 @@
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
 ──  KISS the 🐸  ──
 
-<strong>This helper script is intended to simplify the building, installing, and 
-customizing the TKG/Frogminer source-based packages from the
-<a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.</strong>
+<strong>This AIO helper script is intended to serve as an entry point
+to perform the building, installing, and customizing of the
+TKG/Frogminer packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.</strong>
 
-   <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/Version-0.27.7-yellow?style=flat&logo=linux"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://github.com/search?q=org%3AFrogging-Family+author%3Adamachine&type=commits"><img src="https://img.shields.io/badge/Frogging--Family-Contributor-green?style=flat&logo=github"></a>
+   <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/Version-0.27.8-yellow?style=flat&logo=linux"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://github.com/search?q=org%3AFrogging-Family+author%3Adamachine&type=commits"><img src="https://img.shields.io/badge/Frogging--Family-Contributor-green?style=flat&logo=github"></a>
    
 Features
  <strong>- User-friendly interactive control</strong>
@@ -87,20 +87,11 @@ yay -R tkginstaller-git
 # All distributions (manual installation)
 # Simply remove the script and optional cache folder
 # If installed manually, also remove the symlink and/or alias/function
-
-# Remove the script
-rm /usr/bin/tkginstaller          # if installed system-wide
+rm /path/to/tkginstaller                      # if installed locally
 # OR:
-# Remove symlink (if created)
-sudo rm /usr/bin/tkginstaller
-
-# OR remove it locally
-# Replace '/path/to/' with the actual path where you installed it
-rm /path/to/tkginstaller          # if installed locally
-
-# Remove cache folder
-rm -rf ~/.tkginstaller            # cache directory
-
+rm /usr/bin/tkginstaller                      # if installed system-wide
+# Remove cache directory
+rm -rf ~/.tkginstaller
 # Remove alias/function from ~/.bashrc or ~/.zshrc (if added)
 sed -i '/tkginstaller/d' ~/.bashrc ~/.zshrc
 ```
