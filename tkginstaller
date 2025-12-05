@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.27.7"
+_tkg_installer_version="v0.27.8"
 
 # -----------------------------------------------------------------------------
 # author : damachine (christkue79 at gmail dot com)
@@ -647,6 +647,7 @@ __install_package() {
 __prompt_timer() {
     local _prompt_options="${1:-[1/2]}"
     local _timeout="${2:-60}"
+    local _default="${3:-1}"
     local _old_trap_int=""
 
     _old_trap_int=$(trap -p INT 2>/dev/null) || true
@@ -681,8 +682,8 @@ __prompt_timer() {
     done
     __clear_line 120 ""
 
-    # Default to "0" if no answer
-    : "${_user_answer:=0}"
+    # Default if no answer
+    : "${_user_answer:=$_default}"
 
     # Restore previous INT trap
     if [[ -n "$_old_trap_int" ]]; then
@@ -717,7 +718,7 @@ __linux_install() {
         __msg_plain " ${_gray}9${_reset} │ install.sh uninstall  ${_gray}(show uninstall help)${_reset}"
         __msg_plain " ${_red}0${_reset} │ Cancel${_break}"
 
-        __prompt_timer "[${_green_neon}${_uline_on}1${_uline_off}${_reset}/${_orange}2${_reset}/${_gray}9${_reset}/${_red}0${_reset}]" 60
+        __prompt_timer "[${_green_neon}${_uline_on}1${_uline_off}${_reset}/${_orange}2${_reset}/${_gray}9${_reset}/${_red}0${_reset}]" 60 1
 
         case "$_user_answer" in
             0)
@@ -825,7 +826,7 @@ __wine_install() {
         __msg_plain " ${_red}0${_reset} │ Cancel${_break}"
 
         # Get user choice with timeout
-        __prompt_timer "[${_green_neon}${_uline_on}1${_uline_off}${_reset}/${_orange}2${_reset}/${_red}0${_reset}]" 60
+        __prompt_timer "[${_green_neon}${_uline_on}1${_uline_off}${_reset}/${_orange}2${_reset}/${_red}0${_reset}]" 60 1
 
         case "$_user_answer" in
             0)
@@ -857,7 +858,7 @@ __dxvk_tools_prepare() {
     __msg_plain " ${_orange}2${_reset} │ Custom                 ${_gray}Choose individually which to build${_reset}"
     __msg_plain " ${_red}9${_reset} │ Cancel${_break}"
 
-    __prompt_timer "[${_orange}${_uline_on}0${_uline_off}${_reset}/${_green_neon}1${_reset}/${_orange}2${_reset}/${_red}9${_reset}]" 60
+    __prompt_timer "[${_orange}${_uline_on}0${_uline_off}${_reset}/${_green_neon}1${_reset}/${_orange}2${_reset}/${_red}9${_reset}]" 60 0
 
     local _build_dxvk=false
     local _build_vkd3d=false
