@@ -5,7 +5,7 @@
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
 ──  KISS the 🐸  ──
 
-<strong>This helper script is intended to simplify the building, installing, and 
+<strong>This AIO helper script is intended to simplify the building, installing, and 
 customizing the TKG/Frogminer source-based packages from the
 <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.</strong>
 
