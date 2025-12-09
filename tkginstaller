@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.27.8"
+_tkg_installer_version="v0.27.9"
 
 # -----------------------------------------------------------------------------
 # author : damachine (christkue79 at gmail dot com)
@@ -713,7 +713,7 @@ __linux_install() {
         # Arch-based distributions build system to use
         __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which installations method do you want to perform${_reset}${_break}"
         __msg_plain " Detected distro: ${_gray}${_distro_name}${_reset}${_break}"
-        __msg_plain " ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ makepkg -si         ${_green_light}recommended for Arch${_reset}"
+        __msg_plain " ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ makepkg -si           ${_green_light}recommended for Arch${_reset}"
         __msg_plain " ${_orange}2${_reset} │ install.sh install    ${_gray}(generic script)${_reset}"
         __msg_plain " ${_gray}9${_reset} │ install.sh uninstall  ${_gray}(show uninstall help)${_reset}"
         __msg_plain " ${_red}0${_reset} │ Cancel${_break}"
@@ -821,7 +821,7 @@ __wine_install() {
         # Arch-based distributions build system to use
         __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which build system do you want to use${_reset}${_break}"
         __msg_plain " Detected distro: ${_gray}${_distro_name}${_reset}${_break}"
-        __msg_plain " ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ makepkg -si         ${_green_light}recommended for Arch${_reset}"
+        __msg_plain " ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ makepkg -si           ${_green_light}recommended for Arch${_reset}"
         __msg_plain " ${_orange}2${_reset} │ non-makepkg-build.sh  ${_gray}(custom build script)${_reset}"
         __msg_plain " ${_red}0${_reset} │ Cancel${_break}"
 
@@ -1186,8 +1186,8 @@ __menu_config() {
         _menu_options+=(
             "wine-tkg   |🍷 ${_green_neon}Wine    ${_gray} customization.cfg ${_reset}->${_orange} 'wine-tkg.cfg'"
             "proton-tkg |🎮 ${_green_neon}Proton  ${_gray} customization.cfg ${_reset}->${_orange} 'proton-tkg.cfg'"
-            "dxvk       |🎮 ${_green_neon}DXVK    ${_gray} customization.cfg ${_reset}->${_orange} 'updxvk.cfg'"
-            "vkd3d      |🎮 ${_green_neon}vkd3d   ${_gray} customization.cfg ${_reset}->${_orange} 'upvkd3d-proton.cfg'"
+            "dxvk       |🎮 ${_green_neon}Dxvk    ${_gray} customization.cfg ${_reset}->${_orange} 'updxvk.cfg'"
+            "vkd3d      |🎮 ${_green_neon}Vkd3d   ${_gray} customization.cfg ${_reset}->${_orange} 'upvkd3d-proton.cfg'"
             "return     |⏪ ${_green_neon}Return"
         )
 
