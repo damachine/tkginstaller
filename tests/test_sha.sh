@@ -22,10 +22,10 @@ main() {
 
     echo "Calculating SHA256 checksum..."
     cd "$project_root" || exit 1
-    sha256sum tkginstaller > SHA256SUMS
+    sha256sum tkginstaller > "$sha_file"
 
     echo "✓ SHA256SUMS updated"
-    cat SHA256SUMS
+    cat "$sha_file"
 }
 
 main "$@"
