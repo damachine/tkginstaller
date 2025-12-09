@@ -3,9 +3,9 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # ----------------------------------------------------------------------
-# Script: validate.sh
+# Script: test_checks.sh
 # Purpose: Run syntax and lint checks on tkginstaller
-# Usage:   ./validate.sh
+# Usage:   ./test_checks.sh
 # ----------------------------------------------------------------------
 
 main() {
