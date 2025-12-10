@@ -13,7 +13,7 @@ TKG/Frogminer packages from the <a href="https://github.com/Frogging-Family">Fro
    
 Features
  <strong>- User-friendly interactive control</strong>
- <strong>- Use commands for automated processes</strong>
+ <strong>- Use short commands for automated processes</strong>
  <strong>- Modern stylish menu-driven TUI client</strong>
     <sub>Integrated preview and editor</sub>
     <sub>Read online manual</sub>
@@ -107,14 +107,12 @@ sed -i '/tkginstaller/d' ~/.bashrc ~/.zshrc
 ###### DISCLAIMER
 
 <pre>
-This installer script is released under the MIT license.
+This AIO installer is released under the MIT license.
 
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg"></a>
   
 Individual TKG/Frogminer packages have their own licenses:
  - See respective repositories at <a href="https://github.com/Frogging-Family">Frogging-Family</a>
 
-<strong>💚 Your support keeps this project alive and improving — thank you! 🙏</strong>
-  
-👨‍💻 Developed by DAMACHINE 📧 Contact: christkue79@gmail.com 🌐 Repository: <a href="https://github.com/damachine/tkginstalle">GitHub</a>
+<strong><em>💚 Your support ⭐️ keeps this project alive and improving — thank you! 🙏</em></strong>
 </pre>
