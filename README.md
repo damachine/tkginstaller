@@ -5,8 +5,8 @@
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
 ──  KISS the 🐸  ──
 
-<strong>This AIO helper script is intended to serve as an entry point
-to perform the building, installing, and customizing of the
+<strong>This AIO installer is intended to serve as an entry point to
+perform the building, installing, and customizing of the
 TKG/Frogminer packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.</strong>
 
    <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/Version-0.27.9-yellow?style=flat&logo=linux"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://github.com/search?q=org%3AFrogging-Family+author%3Adamachine&type=commits"><img src="https://img.shields.io/badge/Frogging--Family-Contributor-green?style=flat&logo=github"></a>
@@ -23,7 +23,11 @@ Features
     <sub>Compare your local files with the online ones</sub>
 </pre>
 
+<details>
+  <summary>Demo Video</summary>
+   
 https://github.com/user-attachments/assets/f2ef500c-0d4b-4021-a5b0-e9b5f7306b25
+</details>
 
 # 
 
@@ -39,62 +43,6 @@ yay -S tkginstaller-git
 # Install via automated installation helper
 curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/install.sh | bash
 `````
-```yaml
-# OR: Install all manual
-# Preparation
-mkdir -p /patch/to/tkginstaller
-cd /patch/to/tkginstaller
-
-# STEP 1: Download with curl
-curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller
-
-# STEP 2: Optional verify integrity (Recommended)
-curl -O https://raw.githubusercontent.com/damachine/tkginstaller/master/SHA256SUMS
-sha256sum -c SHA256SUMS
-
-# STEP 3: Make script executable
-chmod +x tkginstaller
-
-# Optional: To make the installer available system-wide after manual installation
-
-# Method 1: Create a system link
-sudo ln -s /path/to/tkginstaller /usr/bin/tkginstaller
-
-# Method 2: Create a shell alias or function
-# Add one of these to your ~/.bashrc or ~/.zshrc:
-
-# As alias:
-alias tkginstaller='/path/to/tkginstaller'
-
-# OR as function:
-tkginstaller() {
-  /path/to/tkginstaller "$@"
-}
-
-# Now you can run from anywhere:
-tkginstaller
-```
-
-# 
-
-##### UNINSTALL
-
-```yaml
-# Arch Linux-based distributions (AUR)
-yay -R tkginstaller-git
-```
-```yaml
-# All distributions (manual installation)
-# Simply remove the script and optional cache folder
-# If installed manually, also remove the symlink and/or alias/function
-rm /path/to/tkginstaller                      # if installed locally
-# OR:
-rm /usr/bin/tkginstaller                      # if installed system-wide
-# Remove cache directory
-rm -rf ~/.tkginstaller
-# Remove alias/function from ~/.bashrc or ~/.zshrc (if added)
-sed -i '/tkginstaller/d' ~/.bashrc ~/.zshrc
-```
 
 # 
 
@@ -110,19 +58,19 @@ tkginstaller
 # Syntax: tkginstaller [package]
 # Use full names or shortcuts (l, n, m, w, p)
 
-tkginstaller linux      # or 'tkginstaller l'
-tkginstaller nvidia     # or 'tkginstaller n'
-tkginstaller mesa       # or 'tkginstaller m'
-tkginstaller wine       # or 'tkginstaller w'
-tkginstaller proton     # or 'tkginstaller p'
+tkginstaller linux      # or shortcut
+tkginstaller nvidia
+tkginstaller mesa
+tkginstaller wine
+tkginstaller proton
 
 # Syntax: tkginstaller [package] [action]
 # Use full names or shortcuts (c, e for config/edit)
 
 # Edit a package's configuration file:
-tkginstaller linux config   # or 'tkginstaller l c'
-tkginstaller config linux   # or 'tkginstaller c l'
-tkginstaller mesa edit      # or 'tkginstaller m e'
+tkginstaller linux config   # or shortcut
+tkginstaller config linux
+tkginstaller mesa edit
 
 # Clean up all temporary files and restart installer
 tkginstaller clean
@@ -130,6 +78,29 @@ tkginstaller clean
 # Use 'help' or its shortcuts (h, --help, -h)
 tkginstaller help
 ```
+
+# 
+
+##### UNINSTALL
+
+<details>
+  <summary>Expand</summary>
+   
+```yaml
+# Arch Linux-based distributions (AUR)
+yay -R tkginstaller-git
+```
+```yaml
+# All distributions (manual installation)
+# Simply remove the script and optional cache folder
+# If installed manually, also remove the symlink and/or alias/function
+rm /path/to/tkginstaller
+# Remove cache directory
+rm -rf ~/.tkginstaller
+# Remove alias/function from ~/.bashrc or ~/.zshrc (if added)
+sed -i '/tkginstaller/d' ~/.bashrc ~/.zshrc
+```
+</details> 
 
 # 
 
