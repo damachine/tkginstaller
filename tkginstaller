@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.27.9"
+_tkg_installer_version="v0.28.0"
 
 # -----------------------------------------------------------------------------
 # author : damachine (christkue79 at gmail dot com)
