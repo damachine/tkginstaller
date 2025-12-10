@@ -23,7 +23,11 @@ Features
     <sub>Compare your local files with the online ones</sub>
 </pre>
 
+<details>
+  <summary>Demo Video</summary>
+   
 https://github.com/user-attachments/assets/f2ef500c-0d4b-4021-a5b0-e9b5f7306b25
+</details>
 
 # 
 
@@ -42,8 +46,46 @@ curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/insta
 
 # 
 
+##### USAGE
+
+```yaml
+# TUI mode, simply run
+tkginstaller
+```
+```yaml
+# DIRECT mode, terminal commands to run
+
+# Syntax: tkginstaller [package]
+# Use full names or shortcuts (l, n, m, w, p)
+
+tkginstaller linux      # or shortcut
+tkginstaller nvidia
+tkginstaller mesa
+tkginstaller wine
+tkginstaller proton
+
+# Syntax: tkginstaller [package] [action]
+# Use full names or shortcuts (c, e for config/edit)
+
+# Edit a package's configuration file:
+tkginstaller linux config   # or shortcut
+tkginstaller config linux
+tkginstaller mesa edit
+
+# Clean up all temporary files and restart installer
+tkginstaller clean
+
+# Use 'help' or its shortcuts (h, --help, -h)
+tkginstaller help
+```
+
+# 
+
 ##### UNINSTALL
 
+<details>
+  <summary>Expand</summary>
+   
 ```yaml
 # Arch Linux-based distributions (AUR)
 yay -R tkginstaller-git
@@ -58,41 +100,7 @@ rm -rf ~/.tkginstaller
 # Remove alias/function from ~/.bashrc or ~/.zshrc (if added)
 sed -i '/tkginstaller/d' ~/.bashrc ~/.zshrc
 ```
-
-# 
-
-##### USAGE
-
-```yaml
-# TUI mode, simply run
-tkginstaller
-```
-```yaml
-# DIRECT mode, terminal commands to run
-
-# Syntax: tkginstaller [package]
-# Use full names or shortcuts (l, n, m, w, p)
-
-tkginstaller linux      # or 'tkginstaller l'
-tkginstaller nvidia     # or 'tkginstaller n'
-tkginstaller mesa       # or 'tkginstaller m'
-tkginstaller wine       # or 'tkginstaller w'
-tkginstaller proton     # or 'tkginstaller p'
-
-# Syntax: tkginstaller [package] [action]
-# Use full names or shortcuts (c, e for config/edit)
-
-# Edit a package's configuration file:
-tkginstaller linux config   # or 'tkginstaller l c'
-tkginstaller config linux   # or 'tkginstaller c l'
-tkginstaller mesa edit      # or 'tkginstaller m e'
-
-# Clean up all temporary files and restart installer
-tkginstaller clean
-
-# Use 'help' or its shortcuts (h, --help, -h)
-tkginstaller help
-```
+</details> 
 
 # 
 
