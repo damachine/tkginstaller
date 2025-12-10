@@ -52,9 +52,7 @@ yay -R tkginstaller-git
 # All distributions (manual installation)
 # Simply remove the script and optional cache folder
 # If installed manually, also remove the symlink and/or alias/function
-rm /path/to/tkginstaller                      # if installed locally
-# OR:
-rm /usr/bin/tkginstaller                      # if installed system-wide
+rm /path/to/tkginstaller
 # Remove cache directory
 rm -rf ~/.tkginstaller
 # Remove alias/function from ~/.bashrc or ~/.zshrc (if added)
