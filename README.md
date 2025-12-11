@@ -116,5 +116,5 @@ Individual TKG/Frogminer packages have their own licenses:
 
 <strong>💚 Your support keeps this project alive and improving — thank you! 🙏</strong>
   
-👨‍💻 Developed by DAMACHINE 📧 Contact: christkue79@gmail.com 🌐 Repository: <a href="https://github.com/damachine/tkginstalle">GitHub</a>
+👨‍💻 Developed by DAMACHINE 📧 Contact: damachin3@proton.me 🌐 Repository: <a href="https://github.com/damachine/tkginstalle">GitHub</a>
 </pre>
