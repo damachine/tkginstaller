@@ -2,10 +2,10 @@
 set -euo pipefail
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.28.1"
+_tkg_installer_version="v0.28.2"
 
 # -----------------------------------------------------------------------------
-# author : damachine (christkue79 at gmail dot com)
+# author : damachine (damachin3 at proton dot me)
 # website: https://github.com/damachine
 #          https://github.com/damachine/tkginstaller
 # -----------------------------------------------------------------------------
@@ -274,8 +274,17 @@ if [[ "$(id -u)" -eq 0 ]]; then
     trap 'echo;echo; __msg_plain "${_red}Aborted by user.\n";sleep 1.5s; exit 1' INT
     read -r _user_answer
     trap - INT
-    if [[ ! "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
+    if [[ "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
+        # User confirmed - continue
+        :
+    elif [[ "$_user_answer" =~ ^([nN]|[nN][oO])$ ]]; then
+        # Explicit no
         __msg_plain "${_break}${_red}Aborted by user.${_break}"
+        exit 1
+    else
+        # Invalid input - treat as no (default)
+        __msg_plain "${_break}${_orange}Invalid input. Defaulting to 'No'.${_break}"
+        __msg_plain "${_red}Aborted.${_break}"
         exit 1
     fi
 fi
@@ -904,7 +913,7 @@ __dxvk_tools_prepare() {
             __exit 1
             ;;
         0)
-            __msg_info "${_break}${_orange}Skipping DXVK/vkd3d builds${_reset}${_break}"
+            __msg_info "${_break}${_orange}Skipping DXVK/vkd3d builds, continue with Proton-TKG${_reset}${_break}"
             return 0
             ;;
         2)
