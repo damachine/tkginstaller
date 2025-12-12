@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.28.0"
+_tkg_installer_version="v0.28.1"
 
 # -----------------------------------------------------------------------------
 # author : damachine (christkue79 at gmail dot com)
@@ -451,6 +451,7 @@ __prepare() {
 # Display completion status
 __status() {
     local _status=${1:-$?}
+    local _package_name="${2:-}"
     local _duration="${SECONDS:-0}"
     local _minutes=$((_duration / 60))
     local _seconds=$((_duration % 60))
@@ -458,14 +459,19 @@ __status() {
     # Finisher message display
     __msg_info_orange "${_break}Action completed: $(date '+%Y-%m-%d %H:%M:%S')"
     if [[ $_status -eq 0 ]]; then
-        __msg_info "Status: Successfully completed!"
+        if [[ -n "$_package_name" ]]; then
+            __msg_info "Status: ${_package_name} successfully completed!"
+        else
+            __msg_info "Status: Successfully completed!"
+        fi
     else
-        __msg_error "Failed process (Code: $_status)"
+        if [[ -n "$_package_name" ]]; then
+            __msg_error "Failed process: ${_package_name} (Code: $_status)"
+        else
+            __msg_error "Failed process (Code: $_status)"
+        fi
     fi
     __msg_info_orange "Duration: ${_minutes} min ${_seconds} sec"
-
-    # Return status code
-    return "$_status"
 }
 
 # Setup exit trap for cleanup on script termination and errors
@@ -473,10 +479,18 @@ __exit() {
     local _exit_code=${1:-$?}
     trap - INT TERM EXIT HUP
 
-    # Message handling on exit
+    # Message handling on exit with banner and status first
     if [[ $_exit_code -ne 0 ]]; then
         __banner "$_red"
-        __msg_error "Aborting status: $_exit_code${_break}"
+        
+        # Show completion info for interrupted processes
+        local _duration="${SECONDS:-0}"
+        local _minutes=$((_duration / 60))
+        local _seconds=$((_duration % 60))
+        __msg_info_orange "${_break}Action completed: $(date '+%Y-%m-%d %H:%M:%S')"
+        __msg_error "Failed process (Code: $_exit_code)"
+        __msg_info_orange "Duration: ${_minutes} min ${_seconds} sec${_break}"
+        
         __msg_plain "${_red} Exiting due to errors. Please check the messages above for details.${_break}"
     else
         __banner
@@ -490,7 +504,7 @@ __exit() {
 }
 
 # Ensure signals lead to __exit with non-zero code so __exit shows error output.
-trap '__exit 130' INT TERM HUP
+trap 'trap - INT TERM EXIT HUP; __exit 130' INT TERM HUP
 trap '__exit $?' EXIT
 
 # Cleanup handler
@@ -509,13 +523,24 @@ __clean_temp_dir() {
     __msg_info "Cleaning all temporary files...${_break}"
     __msg_plain " Location:${_reset}${_gray} ${_tkg_tmp_dir}${_reset}${_break}"
     local _cache_count=0
+    local _cache_size_bytes=0
+    local _cache_size_human=""
+    
     if [[ -d "${_tkg_tmp_dir}" ]]; then
         _cache_count=$(find "${_tkg_tmp_dir}" -type f 2>/dev/null | wc -l || echo 0)
+        _cache_size_bytes=$(du -sb "${_tkg_tmp_dir}" 2>/dev/null | cut -f1 || echo 0)
+        _cache_size_human=$(du -sh "${_tkg_tmp_dir}" 2>/dev/null | cut -f1 || echo "0B")
     fi
+    
     rm -f "$_tkg_choice_file" 2>&1 || true
     rm -rf "$_tkg_tmp_dir" 2>&1 || true
     sleep 1.5s
-    __msg_plain "${_green_neon}Done. ${_gray}(${_cache_count} cached files removed)${_reset}${_break}"
+    
+    if [[ "$_cache_count" -eq 0 ]]; then
+        __msg_plain "${_green_neon}Cleanup complete ${_gray}(nothing to remove, cache already clean)${_reset}${_break}"
+    else
+        __msg_plain "${_green_neon}Cleanup complete ${_gray}(${_cache_count} cached files removed, ${_cache_size_human} freed)${_reset}${_break}"
+    fi
 }
 
 # Fuzzy finder menu wrapper function
@@ -639,7 +664,7 @@ __install_package() {
     local _status=$?
 
     # Display completion status
-    __status "$_status"
+    __status "$_status" "$_package_name"
     return "$_status"
 }
 
@@ -651,35 +676,44 @@ __prompt_timer() {
     local _old_trap_int=""
 
     _old_trap_int=$(trap -p INT 2>/dev/null) || true
-    trap '__exit 130' INT
-
+    
     _seconds_left="$_timeout"
     _user_answer=""
+    local _abort_flag=false
 
-    # Progress bar characters
-    local _bar_filled="█"
-    local _bar_empty="░"
-    local _bar_width=50
+    # Set trap to abort cleanly 
+    trap '__clear_line 120 ""; echo; echo; __msg_plain "${_red}Aborted by user!${_break}"; _abort_flag=true; break' INT
 
-    while [[ $_seconds_left -gt 0 ]]; do
-        # Calculate progress bar
-        local _progress=$(( (_timeout - _seconds_left) * _bar_width / _timeout ))
-        local _remaining=$(( _bar_width - _progress ))
-        local _bar=""
-        for ((i=0; i<_progress; i++)); do _bar+="${_bar_filled}"; done
-        for ((i=0; i<_remaining; i++)); do _bar+="${_bar_empty}"; done
+    # Simple progress display without complex bar
+    while [[ $_seconds_left -gt 0 && $_abort_flag == false ]]; do
+        # Calculate simple progress percentage
+        local _progress_pct=$(( ((_timeout - _seconds_left) * 100) / _timeout ))
+        
+        # Display simple prompt with dots
+        local _dots=""
+        case $(( _seconds_left % 4 )) in
+            3) _dots="   " ;;
+            2) _dots=".  " ;;
+            1) _dots=".. " ;;
+            0) _dots="..." ;;
+        esac
 
         # Display styled prompt
-        printf "\r${_gray}%s${_reset} ${_green_dark}%s${_reset} ${_orange}%02d${_gray}s${_reset} " \
-            "$_prompt_options" "$_bar" "$_seconds_left"
-
-        trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; __exit 130' INT
+        printf "\r${_gray}%s${_reset} ${_green_dark}%d%%${_reset} ${_orange}%02d${_gray}s${_reset} %s" \
+            "$_prompt_options" "$_progress_pct" "$_seconds_left" "$_dots"
+        
         if read -r -t 1 _user_answer; then
             __clear_line 120 ""
             break
         fi
         ((_seconds_left--))
     done
+    
+    # Handle abort
+    if [[ $_abort_flag == true ]]; then
+        sleep 1.5s
+        exit 130
+    fi
     __clear_line 120 ""
 
     # Default if no answer
