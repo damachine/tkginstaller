@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.28.2"
+_tkg_installer_version="v0.28.3"
 
 # -----------------------------------------------------------------------------
 # author : damachine (damachin3 at proton dot me)
@@ -503,7 +503,7 @@ __exit() {
         __msg_plain "${_red} Exiting due to errors. Please check the messages above for details.${_break}"
     else
         __banner
-        __msg_plain "${_green_neon}Closed.${_break}"
+        __msg_plain "${_green_neon}Closed... Finish${_break}"
     fi
 
     # Perform cleanup
@@ -1762,7 +1762,7 @@ __main_direct_mode() {
 
         # Display exit messages
         __banner
-        __msg_plain "${_green_mint}Closed.${_break}"
+        __msg_plain "${_green_mint}Closed... Finish${_break}"
 
         # Clean exit
         __clean || true
