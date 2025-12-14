@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.28.3"
+_tkg_installer_version="v0.28.4"
 
 # -----------------------------------------------------------------------------
 # author : damachine (damachin3 at proton dot me)
@@ -567,7 +567,7 @@ __fzf_menu() {
     fzf \
         --with-shell='bash -c' \
         --style default \
-        --color='current-fg:#00ff00,current-bg:#336633,gutter:#336633,pointer:#336633,border:#224422,scrollbar:#336633:bold' \
+        --color='current-fg:#78FF64,current-bg:#224422,gutter:#224422,pointer:#224422,border:#224422,scrollbar:#224422:bold' \
         --border=sharp \
         --layout=reverse \
         --highlight-line \
