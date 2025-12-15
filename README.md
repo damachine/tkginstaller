@@ -5,22 +5,18 @@
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
 ──  KISS the 🐸  ──
 
-<strong>This AIO installer is intended to serve as an entry point to
+<strong>This AIO installer is intended to serve as an helper to
 perform the building, installing, and customizing of the
 TKG/Frogminer packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.</strong>
 
    <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/Version-0.28.4-yellow?style=flat&logo=linux"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://github.com/search?q=org%3AFrogging-Family+author%3Adamachine&type=commits"><img src="https://img.shields.io/badge/Frogging--Family-Contributor-green?style=flat&logo=github"></a>
    
 Features
- <strong>- User-friendly interactive control</strong>
- <strong>- Use short commands for automated processes</strong>
- <strong>- Modern stylish menu-driven TUI client</strong>
-    <sub>Integrated preview and editor</sub>
-    <sub>Read online manual</sub>
- <strong>- One place to manage the <mark>customization.cfg</mark> files (Beta) 🔥</strong>
-    <sub>Download missing files</sub>
-    <sub>Adjust the settings to your liking</sub>
-    <sub>Compare your local files with the online ones</sub>
+ <strong>- Easy-to-use, AIO package manager for the TKG repositories</strong>
+ <strong>- Uses fzf TUI or DIRECT command-line mode</strong>
+ <strong>- Supports multiple distributions</strong>
+ <strong>- Manage each <mark>customization.cfg</mark> package file (Beta) 🔥</strong>
+    <sub>Download, adjust and compare</sub>
 </pre>
 
 <details>
@@ -37,37 +33,35 @@ https://github.com/user-attachments/assets/f2ef500c-0d4b-4021-a5b0-e9b5f7306b25
 # Arch Linux-based distributions
 # Install via AUR helper (recommended)
 yay -S tkginstaller-git
-`````
-````yaml
+```
+```yaml
 # All distributions
 # Install via automated installation helper
 curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/install.sh | bash
-`````
+```
 
 # 
 
 ##### USAGE
 
 ```yaml
-# TUI mode, simply run
+# Use fzf TUI mode, simply run
 tkginstaller
-```
-```yaml
-# DIRECT mode, terminal commands to run
 
-# Syntax: tkginstaller [package]
+# Use DIRECT mode (skip TUI), run with arguments
+tkginstaller [package]
+
 # Use full names or shortcuts (l, n, m, w, p)
-
 tkginstaller linux      # or shortcut
 tkginstaller nvidia
 tkginstaller mesa
 tkginstaller wine
 tkginstaller proton
 
-# Syntax: tkginstaller [package] [action]
-# Use full names or shortcuts (c, e for config/edit)
-
 # Edit a package's configuration file:
+tkginstaller [package] [action]
+
+# Use full names or shortcuts (c, e for config/edit)
 tkginstaller linux config   # or shortcut
 tkginstaller config linux
 tkginstaller mesa edit
@@ -100,7 +94,7 @@ rm -rf ~/.tkginstaller
 # Remove alias/function from ~/.bashrc or ~/.zshrc (if added)
 sed -i '/tkginstaller/d' ~/.bashrc ~/.zshrc
 ```
-</details> 
+</details>
 
 # 
 
