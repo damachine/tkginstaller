@@ -65,6 +65,7 @@ tkginstaller [package] [action]
 tkginstaller linux config   # or shortcut
 tkginstaller config linux
 tkginstaller mesa edit
+tkginstaller config         # Enter TUI to select package
 
 # Clean up all temporary files and restart installer
 tkginstaller clean
