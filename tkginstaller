@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.28.9"
+_tkg_installer_version="v0.29.0"
 
 # -----------------------------------------------------------------------------
 # author : damachine (damachin3 at proton dot me)
@@ -92,7 +92,7 @@ declare -gA _pkg_repo=(
     [amdvlk]="${_frog_repo_url}/amdvlk-opt.git"
     [wine]="${_frog_repo_url}/wine-tkg-git.git"
     [proton]="${_frog_repo_url}/wine-tkg-git.git"
-    [dxvk-tools]="${_frog_repo_url}/dxvk-tools.git"
+    [dxvk]="${_frog_repo_url}/dxvk-tools.git"
 )
 
 # Configuration file paths (relative to _frog_raw_url)
@@ -1019,20 +1019,21 @@ __dxvk_tools_prepare() {
 
     # Clone dxvk-tools ONLY if user wants to build something (Option 1 or 3)
     if [[ "$_build_dxvk" == "true" ]] || [[ "$_build_vkd3d" == "true" ]]; then
-        __msg_info "${_break}${_green_neon}${_uline_on}INFO${_uline_off}:${_reset} ${_green_light}Preparing dxvk-tools${_reset}${_break}"
-        __msg_plain " DXVK-tools allows building custom DXVK and vkd3d-proton versions${_break}"
+        __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Preparing dxvk-tools${_reset}${_break}"
+        __msg_plain " DXVK-tools allows building custom DXVK and vkd3d-proton versions"
 
         local _dxvk_dir="${_tkg_tmp_dir}/dxvk-tools"
         if [[ -d "$_dxvk_dir" ]]; then
-            __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}dxvk-tools directory already exists, using existing clone${_reset}${_break}"
+            __msg_info " ${_green_light}dxvk-tools directory already exists, using existing clone${_reset}${_break}"
         else
-            __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}Cloning dxvk-tools repository to '${_dxvk_dir}'...${_reset}${_break}"
-            if ! git clone "${_pkg_repo[dxvk-tools]}" "$_dxvk_dir" 2>&1 | tee -a "${_tkg_tmp_dir}/dxvk-tools.log"; then
+            __msg_info " ${_green_light}Cloning dxvk-tools repository to '${_dxvk_dir}'...${_reset}${_break}"
+            if ! git clone "${_pkg_repo[dxvk]}" "$_dxvk_dir" >/dev/null 2>&1; then
                 __msg_error "Failed to clone dxvk-tools repository${_break}"
                 return 1
             fi
         fi
 
+        # Change to dxvk-tools directory and build
         cd "$_dxvk_dir" || {
             __msg_error "Failed to enter dxvk-tools directory${_break}"
             return 1
@@ -1042,26 +1043,29 @@ __dxvk_tools_prepare() {
         return 0
     fi
 
+    # Short delay for better UX
+    sleep 1.5s
+
     # Build DXVK if selected
     if [[ "$_build_dxvk" == "true" ]]; then
-        __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}Building DXVK...${_reset}${_break}"
-        if ./updxvk build 2>&1 | tee -a "${_tkg_tmp_dir}/dxvk-build.log"; then
-            __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}DXVK build completed successfully${_reset}${_break}"
+        __msg_info "${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Building DXVK...${_reset}${_break}"
+        if ./updxvk build; then
+            __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}DXVK build completed successfully${_reset}${_break}"
             _built_something=true
         else
-            __msg_error "DXVK build failed (see ${_tkg_tmp_dir}/dxvk-build.log)${_break}"
+            __msg_error "DXVK build failed${_break}"
             __msg_plain " Continuing anyway...${_break}"
         fi
     fi
 
     # Build vkd3d-proton if selected
     if [[ "$_build_vkd3d" == "true" ]]; then
-        __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}Building vkd3d-proton...${_reset}${_break}"
-        if ./upvkd3d-proton build 2>&1 | tee -a "${_tkg_tmp_dir}/vkd3d-build.log"; then
-            __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}vkd3d-proton build completed successfully${_reset}${_break}"
+        __msg_info "${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Building vkd3d-proton...${_reset}${_break}"
+        if ./upvkd3d-proton build; then
+            __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}vkd3d-proton build completed successfully${_reset}${_break}"
             _built_something=true
         else
-            __msg_error "vkd3d-proton build failed (see ${_tkg_tmp_dir}/vkd3d-build.log)${_break}"
+            __msg_error "vkd3d-proton build failed${_reset}${_break}"
             __msg_plain " Continuing anyway...${_break}"
         fi
     fi
@@ -1073,11 +1077,11 @@ __dxvk_tools_prepare() {
 
         if [[ "${_user_answer,,}" =~ ^(y|yes)$ ]]; then
             __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}Exporting DXVK DLLs for Proton-TKG...${_reset}${_break}"
-            if ./updxvk proton-tkg 2>&1 | tee -a "${_tkg_tmp_dir}/dxvk-export.log"; then
+            if ./updxvk proton-tkg; then
                 __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}Export completed successfully${_reset}${_break}"
                 __msg_info "${_break}${_green_neon}${_uline_on}TIP${_uline_off}:${_reset} ${_green_light}DXVK DLLs are ready for Proton-TKG build${_reset}${_break}"
             else
-                __msg_error "Export failed (see ${_tkg_tmp_dir}/dxvk-export.log)${_break}"
+                __msg_error "Export failed${_break}"
                 __msg_plain " Continuing with Proton-TKG build anyway...${_break}"
             fi
         fi
@@ -1908,7 +1912,7 @@ __main_direct_mode() {
             __prepare
             __proton_install
             ;;
-        dxvk-tools | dxvk | --dxvk-tools | -d)
+        dxvk | d | --dxvk | -d)
             __prepare
             __dxvk_tools_prepare
             ;;

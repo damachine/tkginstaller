@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2218 # Allow usage of printf with variable format strings
+set -euo pipefail
+IFS=$'\n\t'
 
 # -----------------------------------------------------------------------------
 # author : damachine (damachin3 at proton dot me)
@@ -38,9 +41,6 @@
 #   curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/install.sh | bash
 # -----------------------------------------------------------------------------
 
-# shellcheck disable=SC2218 # Allow usage of printf with variable format strings
-set -e
-
 # Initialize color and style (copied from tkginstaller)
 __init_style() {
     _break=$'\n'
@@ -53,29 +53,32 @@ __init_style() {
         fi
         if command -v tput >/dev/null 2>&1; then
             local _tput_seq
-            _tput_seq=$(tput sgr0; tput setaf "$idx")
+            _tput_seq=$(
+                tput sgr0
+                tput setaf "$idx"
+            )
             printf '%s' "${_tput_seq}"
             return 0
         fi
         local _idx256
         case "$idx" in
-            1) _idx256=196 ;;  # bright red
-            2) _idx256=118 ;;  # light green
-            3) _idx256=214 ;;  # orange/yellow
-            4) _idx256=39  ;;  # bright blue
-            *) _idx256=15  ;;  # white
+            1) _idx256=196 ;; # bright red
+            2) _idx256=118 ;; # light green
+            3) _idx256=214 ;; # orange/yellow
+            4) _idx256=39 ;;  # bright blue
+            *) _idx256=15 ;;  # white
         esac
         printf '\033[38;5;%dm' "$_idx256"
     }
 
     # Define TrueColor values, fallback to tput
-    _red="$(__color 220 60 60 1)"           # warm red
-    _green_light="$(__color 80 255 140 2)"  # light green
-    _green_neon="$(__color 120 255 100 2)"  # neon green
-    _green_mint="$(__color 152 255 200 6)"  # mint green
-    _green_dark="$(__color 34 68 34 2)"     # dark green (#224422)
-    _orange="$(__color 255 190 60 3)"       # orange/yellow
-    _gray="$(__color 200 250 200 7)"        # gray
+    _red="$(__color 220 60 60 1)"          # warm red
+    _green_light="$(__color 80 255 140 2)" # light green
+    _green_neon="$(__color 120 255 100 2)" # neon green
+    _green_mint="$(__color 152 255 200 6)" # mint green
+    _green_dark="$(__color 34 68 34 2)"    # dark green (#224422)
+    _orange="$(__color 255 190 60 3)"      # orange/yellow
+    _gray="$(__color 200 250 200 7)"       # gray
 
     # Draw underline
     _uline_on=$(tput smul 2>/dev/null || printf '\033[4m')
@@ -100,7 +103,7 @@ __msg_prompt() { printf '%b\n' "$*"; }
 __banner() {
     local __color="${1:-$_green_neon}"
     printf '%b\n' "${__color}"
-    cat << "EOF"
+    cat <<"EOF"
 ░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
@@ -132,6 +135,83 @@ __cleanup() {
 }
 
 trap __cleanup EXIT INT TERM
+
+# Uninstall function
+__uninstall() {
+    __banner "$_orange"
+    __msg_warning "${_green_neon}${_uline_on}UNINSTALLATION${_uline_off}${_reset}${_break}"
+    __msg_prompt "This will remove:${_break}"
+    __msg_prompt " - Installation directory: ${_gray}${_tkg_install_dir}${_reset}"
+    __msg_prompt " - All files and cached data"
+    __msg_prompt " - Shell aliases from .zshrc/.bashrc${_break}"
+    __msg_prompt "Do you want to continue? [y/N]: "
+
+    trap 'echo;echo; __msg_prompt "${_red}Aborted by user.${_break}";exit 1' INT
+    read -r _user_answer
+    trap - INT
+
+    if [[ ! "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
+        __msg_prompt "${_orange}Uninstallation cancelled.${_break}"
+        exit 0
+    fi
+
+    echo
+    __msg_step "Removing shell aliases..."
+
+    # List of shell config files to check
+    local shell_configs=(
+        "${HOME}/.zshrc"
+        "${HOME}/.bashrc"
+        "${HOME}/.bash_profile"
+        "${HOME}/.profile"
+    )
+
+    local removed_alias=false
+    for config in "${shell_configs[@]}"; do
+        if [[ -f "$config" ]]; then
+            # Remove the TKG-Installer alias block (including comment and empty lines)
+            if grep -q "# TKG-Installer alias" "$config" 2>/dev/null; then
+                # Create temp file and remove the alias block
+                local tmp_file
+                tmp_file="$(mktemp)"
+                awk '
+                    /^# TKG-Installer alias$/ { skip=1; next }
+                    skip && /^alias.*tkginstaller/ { next }
+                    skip && /^$/ { skip=0; next }
+                    { print }
+                ' "$config" >"$tmp_file"
+                mv -f "$tmp_file" "$config"
+                __msg_info "[✓] Removed alias from $(basename "$config")"
+                removed_alias=true
+            fi
+        fi
+    done
+
+    if [[ "$removed_alias" == false ]]; then
+        __msg_info "[✓] No aliases found in shell configs"
+    fi
+
+    echo
+    __msg_step "Removing installation directory..."
+
+    if [[ -d "$_tkg_install_dir" ]]; then
+        # Count files for info
+        local file_count
+        file_count=$(find "$_tkg_install_dir" -type f 2>/dev/null | wc -l || echo 0)
+
+        rm -rf "$_tkg_install_dir"
+        __msg_info "[✓] Removed ${_gray}${_tkg_install_dir}${_reset} (${file_count} files)"
+    else
+        __msg_info "[✓] Installation directory does not exist"
+    fi
+
+    echo
+    __msg_info "${_break}${_green_neon}${_uline_on}UNINSTALLATION COMPLETE!${_uline_off}${_reset}${_break}${_break}"
+    __msg_prompt "${_green_neon}Next steps:${_reset}"
+    __msg_prompt "1) Reload your shell config:"
+    __msg_prompt "   ${_gray}source ~/.zshrc${_reset} or ${_gray}source ~/.bashrc${_reset}${_break}"
+    __msg_prompt "2) The tkginstaller command is no longer available${_break}"
+}
 
 # Main installation
 __main() {
@@ -172,7 +252,7 @@ __main() {
     __msg_step "Downloading checksum..."
     if curl -fsSL "${_tkg_repo_url}/SHA256SUMS" -o "SHA256SUMS" 2>/dev/null; then
         __msg_info "[✓] Download complete${_break}"
-    
+
         __msg_step "Verifying integrity..."
         if sha256sum -c "SHA256SUMS" 2>&1 | grep -q "OK"; then
             __msg_info "[✓] Checksum verification successful!${_break}"
@@ -193,18 +273,18 @@ __main() {
 
     # Move to installation directory
     __msg_step "Installing to: $_tkg_install_dir"
-    mv "${_tkg_script_name}" "${_tkg_install_dir}/"
-    mv "SHA256SUMS" "${_tkg_install_dir}/"
+    mv -f "${_tkg_script_name}" "${_tkg_install_dir}/"
+    mv -f "SHA256SUMS" "${_tkg_install_dir}/"
     chmod +x "${_tkg_install_dir}/${_tkg_script_name}"
     __msg_info "[✓] Installation complete${_break}"
 
     # Setup shell alias
     __msg_step "Setting up shell alias..."
-    
+
     # Detect shell - prioritize $SHELL variable (most reliable)
     SHELL_RC=""
     CURRENT_SHELL="$(basename "${SHELL}")"
-    
+
     case "$CURRENT_SHELL" in
         zsh)
             SHELL_RC="${HOME}/.zshrc"
@@ -228,7 +308,7 @@ __main() {
             __msg_info "[✓] Alias already exists in $SHELL_RC"
         else
             # Append alias to shell RC file in a single here-doc block
-            cat >> "$SHELL_RC" <<EOF
+            cat >>"$SHELL_RC" <<EOF
 
 # TKG-Installer alias
 alias ${_tkg_script_name}='${_tkg_install_dir}/${_tkg_script_name}'
@@ -251,11 +331,15 @@ EOF
     if [[ -n "$SHELL_RC" ]]; then
         __msg_prompt "   ${_gray}source $SHELL_RC${_reset}${_break}"
     fi
-    
+
     __msg_prompt "2) Run the installer:"
     __msg_prompt "   ${_gray}${_tkg_script_name}${_reset}${_break}"
     __msg_prompt "Documentation: ${_gray}https://github.com/damachine/tkginstaller${_reset}${_break}"
 }
 
-# Run main
-__main
+# Main entry point
+if [[ "${1:-}" == "--uninstall" || "${1:-}" == "-u" ]]; then
+    __uninstall
+else
+    __main
+fi
