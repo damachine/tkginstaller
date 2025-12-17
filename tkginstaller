@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.28.5"
+_tkg_installer_version="v0.28.6"
 
 # -----------------------------------------------------------------------------
 # author : damachine (damachin3 at proton dot me)
@@ -88,7 +88,7 @@ declare -gA _ext_config_patch=(
 # Package display names
 declare -gA _pkg_display_name=(
     [linux-tkg]="Linux-TKG"
-    [nvidia-all]="Nvidia-TKG"
+    [nvidia-all]="Nvidia-all"
     [mesa-git]="Mesa-TKG"
     [amdgpu-pro]="AMDGPU-PRO"
     [amdvlk-opt]="AMDVLK-OPT"
@@ -746,7 +746,7 @@ __prompt_answer() {
 # Linux-TKG installation
 __linux_install() {
     # Inform user about external configuration
-    __msg_pkg "linux" "${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
+    __msg_pkg "Linux-TKG" "${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
 
     # Determine build command
     local _build_command
@@ -822,10 +822,10 @@ __linux_install() {
     return "${_status:-0}"
 }
 
-# Nvidia-TKG installation
+# Nvidia-all installation
 __nvidia_install() {
     # Inform user about external configuration
-    __msg_pkg "nvidia" "${_frog_repo_url}/nvidia-all/blob/master/customization.cfg"
+    __msg_pkg "nvidia-all" "${_frog_repo_url}/nvidia-all/blob/master/customization.cfg"
 
     # Execute installation process
     __install_package "${_frog_repo_url}/nvidia-all.git" "nvidia-all" "makepkg -si"
@@ -834,7 +834,7 @@ __nvidia_install() {
 # Mesa-TKG installation
 __mesa_install() {
     # Inform user about external configuration
-    __msg_pkg "mesa" "${_frog_repo_url}/mesa-git/blob/master/customization.cfg"
+    __msg_pkg "mesa-git" "${_frog_repo_url}/mesa-git/blob/master/customization.cfg"
 
     # Execute installation process
     __install_package "${_frog_repo_url}/mesa-git.git" "mesa-git" "makepkg -si"
@@ -855,7 +855,7 @@ __amdvlk_opt_install() {
 # Wine-TKG installation
 __wine_install() {
     # Inform user about external configuration usage
-    __msg_pkg "wine" "${_frog_repo_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
+    __msg_pkg "Wine-TKG" "${_frog_repo_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
 
     # Determine build command
     local _build_command
@@ -901,6 +901,15 @@ __dxvk_tools_prepare() {
     __msg_plain " ${_orange}2${_reset} │ Custom                 ${_gray}Choose individually which to build${_reset}"
     __msg_plain " ${_red}9${_reset} │ Cancel${_break}"
 
+    __msg_info "${_green_neon}${_uline_on}NOTE${_uline_off}:${_reset} ${_green_light}By default, Proton-TKG downloads latest official DXVK release from GitHub.${_reset}${_break}"
+    __msg_plain " You have nothing to do, it's all good. However, if you want to build/use a"
+    __msg_plain " development or modified version of DXVK, it's recommended to use dxvk-tools.${_break}"
+
+    __msg_info "${_orange}${_uline_on}IMPORTANT${_uline_off}:${_reset} ${_orange}To use the prebuilt DXVK/vkd3d tools in Proton-TKG:${_reset}${_break}"
+    __msg_plain " Set ${_gray}_use_dxvk=\"prebuilt\"${_reset} in your ${_gray}proton-tkg.cfg${_reset} configuration file."
+    __msg_plain " Location: ${_gray}~/.config/frogminer/proton-tkg.cfg${_reset}${_break}"
+    __msg_plain " More info: ${_gray}https://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg#the-prebuilt-dxvk-problem${_reset}${_break}"
+
     __prompt_timer "[${_orange}${_uline_on}0${_uline_off}${_reset}/${_green_neon}1${_reset}/${_orange}2${_reset}/${_red}9${_reset}]" 60 0
 
     local _build_dxvk=false
@@ -913,7 +922,7 @@ __dxvk_tools_prepare() {
             __exit 1
             ;;
         0)
-            __msg_info "${_break}${_orange}Skipping DXVK/vkd3d builds, continue with Proton-TKG${_reset}${_break}"
+            __msg_info "${_break}${_orange}Skipping DXVK/vkd3d builds, continue with Proton-TKG${_reset}"
             return 0
             ;;
         2)
@@ -1002,7 +1011,7 @@ __dxvk_tools_prepare() {
 # Proton-TKG installation
 __proton_install() {
     # Inform user about external configuration usage
-    __msg_pkg "proton" "${_frog_repo_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
+    __msg_pkg "Proton-TKG" "${_frog_repo_url}/wine-tkg-git"
 
     # Optional DXVK/vkd3d preparation (user can skip with default option)
     __dxvk_tools_prepare || __msg_warning "dxvk-tools preparation cancelled or failed, continuing with Proton-TKG build${_break}"
@@ -1012,7 +1021,7 @@ __proton_install() {
     local _clean_command="./proton-tkg.sh clean"
 
     # Build and install
-    __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "proton-tkg"
+    __install_package "${_frog_repo_url}/wine-tkg-git.git" "Proton-TKG" "$_build_command" "proton-tkg"
     local _status=$?
 
     if [[ $_status -eq 0 ]]; then
@@ -1026,7 +1035,7 @@ __proton_install() {
         if [[ -n "$_old_trap_int" ]]; then eval "$_old_trap_int"; else trap - INT; fi
 
         if [[ "${_user_answer,,}" =~ ^(y|yes)$ ]]; then
-            __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_clean_command" "proton-tkg"
+            __install_package "${_frog_repo_url}/wine-tkg-git.git" "Proton-TKG" "$_clean_command" "proton-tkg"
             local _clean_status=$?
             if [[ $_clean_status -eq 0 ]]; then
                 __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}Cleaning completed successfully.${_reset}${_break}"
