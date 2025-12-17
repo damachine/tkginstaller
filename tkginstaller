@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.28.8"
+_tkg_installer_version="v0.28.9"
 
 # -----------------------------------------------------------------------------
 # author : damachine (damachin3 at proton dot me)
@@ -53,61 +53,99 @@ _tkg_installer_version="v0.28.8"
 # ENVIRONMENT SETUP
 # =============================================================================
 
-# Initialize global variables, paths, and configurations
-__init_globals() {
-    _tkg_tmp_dir=${HOME}/.tkginstaller/.cache
-    _tkg_choice_file=${_tkg_tmp_dir}/.choice.tmp
-    _local_config_dir=${HOME}/.config/frogminer
-    _tkg_repo_url=https://github.com/damachine/tkginstaller
-    _tkg_raw_url=https://raw.githubusercontent.com/damachine/tkginstaller/refs/heads/master/docs
-    _frog_repo_url=https://github.com/Frogging-Family
-    _frog_raw_url=https://raw.githubusercontent.com/Frogging-Family
+# Global variables, paths, and configurations
+_tkg_tmp_dir=${HOME}/.tkginstaller/.cache
+_tkg_choice_file=${_tkg_tmp_dir}/.choice.tmp
+_local_config_dir=${HOME}/.config/frogminer
+_tkg_repo_url=https://github.com/damachine/tkginstaller
+_tkg_raw_url=https://raw.githubusercontent.com/damachine/tkginstaller/refs/heads/master/docs
+_frog_repo_url=https://github.com/Frogging-Family
+_frog_raw_url=https://raw.githubusercontent.com/Frogging-Family
 
-    # Curl timeout configuration
-    _curl_max_time=10
-    _curl_connect_timeout=5
-    _curl_opts="--max-time ${_curl_max_time} --connect-timeout ${_curl_connect_timeout} -fsSL"
+# Curl timeout configuration
+_curl_max_time=10
+_curl_connect_timeout=5
+_curl_opts="--max-time ${_curl_max_time} --connect-timeout ${_curl_connect_timeout} -fsSL"
 
-    # Export only variables used in fzf preview commands
-    export _tkg_tmp_dir _local_config_dir _tkg_raw_url _frog_raw_url _curl_opts
-}
+# Export only variables used in fzf preview commands
+export _tkg_tmp_dir _local_config_dir _tkg_raw_url _frog_raw_url _curl_opts
 
-# Centralized package configuration (paths relative to _frog_raw_url)
-declare -gA _ext_config_patch=(
-    [linux-tkg]="linux-tkg/master/customization.cfg"
-    [nvidia-all]="nvidia-all/master/customization.cfg"
-    [mesa-git]="mesa-git/master/customization.cfg"
-    [amdgpu-pro]="amdgpu-pro-vulkan-only/master/customization.cfg"
-    [amdvlk-opt]="amdvlk-opt/master/amdvlk-buildfromsource/customization.cfg"
-    [wine-tkg]="wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
-    [proton-tkg]="wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
+# Human-readable display names
+declare -gA _pkg_display_name=(
+    [linux]="Linux-TKG"
+    [nvidia]="Nvidia-all"
+    [mesa]="Mesa-TKG"
+    [amdgpu]="AMDGPU-PRO"
+    [amdvlk]="AMDVLK-OPT"
+    [wine]="Wine-TKG"
+    [proton]="Proton-TKG"
+    [dxvk]="DXVK"
+    [vkd3d]="vkd3d-proton"
+)
+
+# Git repository URLs (requires _frog_repo_url from __init_globals)
+declare -gA _pkg_repo=(
+    [linux]="${_frog_repo_url}/linux-tkg.git"
+    [nvidia]="${_frog_repo_url}/nvidia-all.git"
+    [mesa]="${_frog_repo_url}/mesa-git.git"
+    [amdgpu]="${_frog_repo_url}/amdgpu-pro-vulkan-only.git"
+    [amdvlk]="${_frog_repo_url}/amdvlk-opt.git"
+    [wine]="${_frog_repo_url}/wine-tkg-git.git"
+    [proton]="${_frog_repo_url}/wine-tkg-git.git"
+    [dxvk-tools]="${_frog_repo_url}/dxvk-tools.git"
+)
+
+# Configuration file paths (relative to _frog_raw_url)
+declare -gA _pkg_config_path=(
+    [linux]="linux-tkg/master/customization.cfg"
+    [nvidia]="nvidia-all/master/customization.cfg"
+    [mesa]="mesa-git/master/customization.cfg"
+    [amdgpu]="amdgpu-pro-vulkan-only/master/customization.cfg"
+    [amdvlk]="amdvlk-opt/master/amdvlk-buildfromsource/customization.cfg"
+    [wine]="wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
+    [proton]="wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
     [dxvk]="dxvk-tools/master/updxvk.cfg"
     [vkd3d]="dxvk-tools/master/upvkd3d-proton.cfg"
 )
 
-# Package display names
-declare -gA _pkg_display_name=(
-    [linux-tkg]="Linux-TKG"
-    [nvidia-all]="Nvidia-all"
-    [mesa-git]="Mesa-TKG"
-    [amdgpu-pro]="AMDGPU-PRO"
-    [amdvlk-opt]="AMDVLK-OPT"
-    [wine-tkg]="Wine-TKG"
-    [proton-tkg]="Proton-TKG"
-    [dxvk]="DXVK"
-    [vkd3d]="vkd3d-proton"
+# Optional: Subdirectory to enter after git clone
+declare -gA _pkg_workdir=(
+    [amdvlk]="amdvlk-buildfromsource"
+    [wine]="wine-tkg-git"
+    [proton]="proton-tkg"
+)
+
+# Default build commands (for packages using __install_pkg_key)
+declare -gA _pkg_default_cmd=(
+    [nvidia]="makepkg -si"
+    [mesa]="makepkg -si"
+    [amdgpu]="makepkg -si"
+    [amdvlk]="makepkg -si"
+)
+
+# Local config filenames (preserves established naming for user configs)
+declare -gA _pkg_local_config=(
+    [linux]="linux-tkg.cfg"
+    [nvidia]="nvidia-all.cfg"
+    [mesa]="mesa-git.cfg"
+    [amdgpu]="amdgpu-pro.cfg"
+    [amdvlk]="amdvlk-opt.cfg"
+    [wine]="wine-tkg.cfg"
+    [proton]="proton-tkg.cfg"
+    [dxvk]="updxvk.cfg"
+    [vkd3d]="upvkd3d-proton.cfg"
 )
 
 # Normalize package argument to internal key
 __normalize_package() {
     case "${1,,}" in
-        linux | l | --linux | -l) echo "linux-tkg" ;;
-        nvidia | n | --nvidia | -n) echo "nvidia-all" ;;
-        mesa | m | --mesa | -m) echo "mesa-git" ;;
-        amdgpu | ag | --amdgpu | -ag) echo "amdgpu-pro" ;;
-        amdvlk | av | --amdvlk | -av) echo "amdvlk-opt" ;;
-        wine | w | --wine | -w) echo "wine-tkg" ;;
-        proton | p | --proton | -p) echo "proton-tkg" ;;
+        linux | l | --linux | -l) echo "linux" ;;
+        nvidia | n | --nvidia | -n) echo "nvidia" ;;
+        mesa | m | --mesa | -m) echo "mesa" ;;
+        amdgpu | ag | --amdgpu | -ag) echo "amdgpu" ;;
+        amdvlk | av | --amdvlk | -av) echo "amdvlk" ;;
+        wine | w | --wine | -w) echo "wine" ;;
+        proton | p | --proton | -p) echo "proton" ;;
         *) echo "" ;;
     esac
 }
@@ -120,7 +158,7 @@ __is_config_arg() {
 # Get full config URL for a package
 __get_config_url() {
     local _pkg="$1"
-    [[ -n "${_ext_config_patch[$_pkg]:-}" ]] && echo "${_frog_raw_url}/${_ext_config_patch[$_pkg]}"
+    [[ -n "${_pkg_config_path[$_pkg]:-}" ]] && echo "${_frog_raw_url}/${_pkg_config_path[$_pkg]}"
 }
 
 # Initialize color and formatting
@@ -206,8 +244,7 @@ EOF
 # INITIALIZATION AND PRE-CHECKS
 # =============================================================================
 
-# Initialize globals and colors
-__init_globals
+# Initialize style and colors
 __init_style
 
 # Unified message function
@@ -707,6 +744,24 @@ __install_package() {
     return "$_status"
 }
 
+# Generic package installation via registry
+__install_pkg_key() {
+    local _key="$1"
+    local _repo="${_pkg_repo[$_key]}"
+    local _name="${_pkg_display_name[$_key]}"
+    local _cmd="${_pkg_default_cmd[$_key]}"
+    local _workdir="${_pkg_workdir[$_key]:-}"
+    local _config_url="${_pkg_config_path[$_key]:-}"
+
+    # Inform user about external configuration if available
+    if [[ -n "$_config_url" ]]; then
+        __msg_pkg "$_name" "$_config_url"
+    fi
+
+    # Execute installation process
+    __install_package "$_repo" "$_key" "$_cmd" "$_workdir"
+}
+
 # Countdown prompt with timeout
 __prompt_timer() {
     local _prompt_options="${1:-[1/2]}"
@@ -833,7 +888,7 @@ __linux_install() {
     fi
 
     # Execute installation process
-    __install_package "${_frog_repo_url}/linux-tkg.git" "linux-tkg" "$_build_command"
+    __install_package "${_pkg_repo[linux]}" "linux-tkg" "$_build_command"
     local _status=$?
 
     # Offer uninstall info for non-Arch distros after successful installation
@@ -854,32 +909,22 @@ __linux_install() {
 
 # Nvidia-all installation
 __nvidia_install() {
-    # Inform user about external configuration
-    __msg_pkg "nvidia-all" "${_frog_repo_url}/nvidia-all/blob/master/customization.cfg"
-
-    # Execute installation process
-    __install_package "${_frog_repo_url}/nvidia-all.git" "nvidia-all" "makepkg -si"
+    __install_pkg_key "nvidia"
 }
 
 # Mesa-TKG installation
 __mesa_install() {
-    # Inform user about external configuration
-    __msg_pkg "mesa-git" "${_frog_repo_url}/mesa-git/blob/master/customization.cfg"
-
-    # Execute installation process
-    __install_package "${_frog_repo_url}/mesa-git.git" "mesa-git" "makepkg -si"
+    __install_pkg_key "mesa"
 }
 
 # AMDGPU-PRO installation
 __amdgpu_pro_install() {
-    # Execute installation process
-    __install_package "${_frog_repo_url}/amdgpu-pro-vulkan-only.git" "amdgpu-pro-vulkan-only" "makepkg -si"
+    __install_pkg_key "amdgpu"
 }
 
 # AMDVLK-OPT installation
 __amdvlk_opt_install() {
-    # Execute installation process (buildfromsource variant with subdirectory)
-    __install_package "${_frog_repo_url}/amdvlk-opt.git" "amdvlk-opt" "makepkg -si" "amdvlk-buildfromsource"
+    __install_pkg_key "amdvlk"
 }
 
 # Wine-TKG installation
@@ -919,7 +964,7 @@ __wine_install() {
     fi
 
     # Execute installation
-    __install_package "${_frog_repo_url}/wine-tkg-git.git" "wine-tkg-git" "$_build_command" "wine-tkg-git"
+    __install_package "${_pkg_repo[wine]}" "wine-tkg-git" "$_build_command" "${_pkg_workdir[wine]}"
 }
 
 # DXVK-Tools preparation (optional pre-build for Proton-TKG)
@@ -982,7 +1027,7 @@ __dxvk_tools_prepare() {
             __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}dxvk-tools directory already exists, using existing clone${_reset}${_break}"
         else
             __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}Cloning dxvk-tools repository to '${_dxvk_dir}'...${_reset}${_break}"
-            if ! git clone "${_frog_repo_url}/dxvk-tools.git" "$_dxvk_dir" 2>&1 | tee -a "${_tkg_tmp_dir}/dxvk-tools.log"; then
+            if ! git clone "${_pkg_repo[dxvk-tools]}" "$_dxvk_dir" 2>&1 | tee -a "${_tkg_tmp_dir}/dxvk-tools.log"; then
                 __msg_error "Failed to clone dxvk-tools repository${_break}"
                 return 1
             fi
@@ -1054,7 +1099,7 @@ __proton_install() {
     local _clean_command="./proton-tkg.sh clean"
 
     # Build and install
-    __install_package "${_frog_repo_url}/wine-tkg-git.git" "Proton-TKG" "$_build_command" "proton-tkg"
+    __install_package "${_pkg_repo[proton]}" "Proton-TKG" "$_build_command" "${_pkg_workdir[proton]}"
     local _status=$?
 
     if [[ $_status -eq 0 ]]; then
@@ -1071,7 +1116,7 @@ __proton_install() {
         if [[ -n "$_old_trap_int" ]]; then eval "$_old_trap_int"; else trap - INT; fi
 
         if [[ "${_user_answer,,}" =~ ^(y|yes)$ ]]; then
-            __install_package "${_frog_repo_url}/wine-tkg-git.git" "Proton-TKG" "$_clean_command" "proton-tkg"
+            __install_package "${_pkg_repo[proton]}" "Proton-TKG" "$_clean_command" "${_pkg_workdir[proton]}"
             local _clean_status=$?
             if [[ $_clean_status -eq 0 ]]; then
                 __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}Cleaning completed successfully.${_reset}${_break}"
@@ -1261,23 +1306,23 @@ __menu_config() {
 
         # Build menu options dynamically
         local _menu_options=(
-            "linux-tkg  |🐧 ${_green_neon}Linux   ${_gray} customization.cfg ${_reset}->${_orange} 'linux-tkg.cfg'  "
+            "linux  |🐧 ${_green_neon}Linux   ${_gray} customization.cfg ${_reset}->${_orange} 'linux-tkg.cfg'  "
         )
 
         # Add Nvidia and Mesa options only for Arch-based distros
         if [[ "${_is_arch_based}" == "true" ]]; then
             _menu_options+=(
-                "nvidia-all |💻 ${_green_neon}Nvidia  ${_gray} customization.cfg ${_reset}->${_orange} 'nvidia-all.cfg'"
-                "mesa-git   |🧩 ${_green_neon}Mesa    ${_gray} customization.cfg ${_reset}->${_orange} 'mesa-git.cfg'"
+                "nvidia |💻 ${_green_neon}Nvidia  ${_gray} customization.cfg ${_reset}->${_orange} 'nvidia-all.cfg'"
+                "mesa   |🧩 ${_green_neon}Mesa    ${_gray} customization.cfg ${_reset}->${_orange} 'mesa-git.cfg'"
             )
         fi
 
         _menu_options+=(
-            "wine-tkg   |🍷 ${_green_neon}Wine    ${_gray} customization.cfg ${_reset}->${_orange} 'wine-tkg.cfg'"
-            "proton-tkg |🎮 ${_green_neon}Proton  ${_gray} customization.cfg ${_reset}->${_orange} 'proton-tkg.cfg'"
-            "dxvk       |🎮 ${_green_neon}Dxvk    ${_gray} customization.cfg ${_reset}->${_orange} 'updxvk.cfg'"
-            "vkd3d      |🎮 ${_green_neon}Vkd3d   ${_gray} customization.cfg ${_reset}->${_orange} 'upvkd3d-proton.cfg'"
-            "return     |⏪ ${_green_neon}Return"
+            "wine   |🍷 ${_green_neon}Wine    ${_gray} customization.cfg ${_reset}->${_orange} 'wine-tkg.cfg'"
+            "proton |🎮 ${_green_neon}Proton  ${_gray} customization.cfg ${_reset}->${_orange} 'proton-tkg.cfg'"
+            "dxvk   |🎮 ${_green_neon}Dxvk    ${_gray} customization.cfg ${_reset}->${_orange} 'updxvk.cfg'"
+            "vkd3d  |🎮 ${_green_neon}Vkd3d   ${_gray} customization.cfg ${_reset}->${_orange} 'upvkd3d-proton.cfg'"
+            "return |⏪ ${_green_neon}Return"
         )
 
         # Prepare menu content
@@ -1288,15 +1333,29 @@ __menu_config() {
         local _pkg_urls_json
         _pkg_urls_json=$(
             printf '%s\n' \
-                "linux-tkg=${_frog_raw_url}/${_ext_config_patch[linux-tkg]}" \
-                "nvidia-all=${_frog_raw_url}/${_ext_config_patch[nvidia-all]}" \
-                "mesa-git=${_frog_raw_url}/${_ext_config_patch[mesa-git]}" \
-                "wine-tkg=${_frog_raw_url}/${_ext_config_patch[wine-tkg]}" \
-                "proton-tkg=${_frog_raw_url}/${_ext_config_patch[proton-tkg]}" \
-                "dxvk=${_frog_raw_url}/${_ext_config_patch[dxvk]}" \
-                "vkd3d=${_frog_raw_url}/${_ext_config_patch[vkd3d]}"
+                "linux=${_frog_raw_url}/${_pkg_config_path[linux]}" \
+                "nvidia=${_frog_raw_url}/${_pkg_config_path[nvidia]}" \
+                "mesa=${_frog_raw_url}/${_pkg_config_path[mesa]}" \
+                "wine=${_frog_raw_url}/${_pkg_config_path[wine]}" \
+                "proton=${_frog_raw_url}/${_pkg_config_path[proton]}" \
+                "dxvk=${_frog_raw_url}/${_pkg_config_path[dxvk]}" \
+                "vkd3d=${_frog_raw_url}/${_pkg_config_path[vkd3d]}"
         )
         export _pkg_urls_json
+
+        # Export local config filenames for preview command
+        local _pkg_local_cfg_json
+        _pkg_local_cfg_json=$(
+            printf '%s\n' \
+                "linux=${_pkg_local_config[linux]}" \
+                "nvidia=${_pkg_local_config[nvidia]}" \
+                "mesa=${_pkg_local_config[mesa]}" \
+                "wine=${_pkg_local_config[wine]}" \
+                "proton=${_pkg_local_config[proton]}" \
+                "dxvk=${_pkg_local_config[dxvk]}" \
+                "vkd3d=${_pkg_local_config[vkd3d]}"
+        )
+        export _pkg_local_cfg_json
 
         # Define preview command components
         local _info_config="${_green_neon}Comparing remote and local ${_reset}${_gray}customization.cfg${_reset}${_green_neon}, press [Enter] to open and edit ${_reset}${_break}${_break}${_green_light} Remote:${_reset}${_gray} \$_remote_url ${_reset}${_break}${_orange}≠${_reset}${_green_light} Local:${_reset}${_gray} file://\$_config_file_path ${_reset}${_break}${_green_dark}${_line}${_break}"
@@ -1315,7 +1374,8 @@ __menu_config() {
 
             [[ "$key" == "return" ]] && { glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_tkg_raw_url}"'/return.md"; exit 0; }
 
-            _config_file_path="'"${_local_config_dir}"'/${key}.cfg"
+            _local_cfg_name=$(echo "$_pkg_local_cfg_json" | grep "^${key}=" | cut -d= -f2-)
+            _config_file_path="'"${_local_config_dir}"'/${_local_cfg_name}"
             _remote_url=$(echo "$_pkg_urls_json" | grep "^${key}=" | cut -d= -f2-)
 
             if [[ -f "$_config_file_path" && -n "$_remote_url" ]]; then
@@ -1355,7 +1415,7 @@ ${_green_light}   Select an option below:"
         local _config_choice
         _config_choice=$(__fzf_menu "$_menu_content" "$_preview_command" "$_header_text" "$_footer_text" "$_border_label_text" "$_preview_window_settings" "$_fzf_bind")
 
-        # Unset exported variables
+        # Unset exported var _pkg_local_cfg_jsoniables
         unset _pkg_urls_json
 
         # Handle empty choice (ESC pressed)
@@ -1381,10 +1441,10 @@ ${_green_light}   Select an option below:"
         fi
 
         # Handle config editing using global package mappings
-        if [[ -n "${_ext_config_patch[$_config_file]:-}" ]]; then
+        if [[ -n "${_pkg_config_path[$_config_file]:-}" ]]; then
             __handle_config \
                 "${_pkg_display_name[$_config_file]}" \
-                "${_local_config_dir}/${_config_file}.cfg" \
+                "${_local_config_dir}/${_pkg_local_config[$_config_file]}" \
                 "$(__get_config_url "$_config_file")" || true
         fi
     done
