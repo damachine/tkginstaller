@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.28.6"
+_tkg_installer_version="v0.28.7"
 
 # -----------------------------------------------------------------------------
 # author : damachine (damachin3 at proton dot me)
@@ -74,26 +74,26 @@ __init_globals() {
 
 # Centralized package configuration (paths relative to _frog_raw_url)
 declare -gA _ext_config_patch=(
-    [linux-tkg]="linux-tkg/master/customization.cfg"
-    [nvidia-all]="nvidia-all/master/customization.cfg"
-    [mesa-git]="mesa-git/master/customization.cfg"
-    [amdgpu-pro]="amdgpu-pro-vulkan-only/master/customization.cfg"
-    [amdvlk-opt]="amdvlk-opt/master/amdvlk-buildfromsource/customization.cfg"
-    [wine-tkg]="wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
-    [proton-tkg]="wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
+    [linux - tkg]="linux-tkg/master/customization.cfg"
+    [nvidia - all]="nvidia-all/master/customization.cfg"
+    [mesa - git]="mesa-git/master/customization.cfg"
+    [amdgpu - pro]="amdgpu-pro-vulkan-only/master/customization.cfg"
+    [amdvlk - opt]="amdvlk-opt/master/amdvlk-buildfromsource/customization.cfg"
+    [wine - tkg]="wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
+    [proton - tkg]="wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
     [dxvk]="dxvk-tools/master/updxvk.cfg"
     [vkd3d]="dxvk-tools/master/upvkd3d-proton.cfg"
 )
 
 # Package display names
 declare -gA _pkg_display_name=(
-    [linux-tkg]="Linux-TKG"
-    [nvidia-all]="Nvidia-all"
-    [mesa-git]="Mesa-TKG"
-    [amdgpu-pro]="AMDGPU-PRO"
-    [amdvlk-opt]="AMDVLK-OPT"
-    [wine-tkg]="Wine-TKG"
-    [proton-tkg]="Proton-TKG"
+    [linux - tkg]="Linux-TKG"
+    [nvidia - all]="Nvidia-all"
+    [mesa - git]="Mesa-TKG"
+    [amdgpu - pro]="AMDGPU-PRO"
+    [amdvlk - opt]="AMDVLK-OPT"
+    [wine - tkg]="Wine-TKG"
+    [proton - tkg]="Proton-TKG"
     [dxvk]="DXVK"
     [vkd3d]="vkd3d-proton"
 )
@@ -101,13 +101,13 @@ declare -gA _pkg_display_name=(
 # Normalize package argument to internal key
 __normalize_package() {
     case "${1,,}" in
-        linux|l|--linux|-l) echo "linux-tkg" ;;
-        nvidia|n|--nvidia|-n) echo "nvidia-all" ;;
-        mesa|m|--mesa|-m) echo "mesa-git" ;;
-        amdgpu|ag|--amdgpu|-ag) echo "amdgpu-pro" ;;
-        amdvlk|av|--amdvlk|-av) echo "amdvlk-opt" ;;
-        wine|w|--wine|-w) echo "wine-tkg" ;;
-        proton|p|--proton|-p) echo "proton-tkg" ;;
+        linux | l | --linux | -l) echo "linux-tkg" ;;
+        nvidia | n | --nvidia | -n) echo "nvidia-all" ;;
+        mesa | m | --mesa | -m) echo "mesa-git" ;;
+        amdgpu | ag | --amdgpu | -ag) echo "amdgpu-pro" ;;
+        amdvlk | av | --amdvlk | -av) echo "amdvlk-opt" ;;
+        wine | w | --wine | -w) echo "wine-tkg" ;;
+        proton | p | --proton | -p) echo "proton-tkg" ;;
         *) echo "" ;;
     esac
 }
@@ -143,7 +143,10 @@ __init_style() {
         # Fallback to tput
         if command -v tput >/dev/null 2>&1; then
             local _tput_seq
-            _tput_seq=$(tput sgr0; tput setaf "$idx") # Reset attributes, then set foreground color
+            _tput_seq=$(
+                tput sgr0
+                tput setaf "$idx"
+            ) # Reset attributes, then set foreground color
             printf '%s' "${_tput_seq}"
             return 0
         fi
@@ -151,23 +154,23 @@ __init_style() {
         # Fallback to 256-color approx idx: 1=red, 2=green, 3=yellow, 4=blue
         local _idx256
         case "$idx" in
-            1) _idx256=196 ;;  # bright red
-            2) _idx256=118 ;;  # light/bright green
-            3) _idx256=214 ;;  # orange/yellow
-            4) _idx256=39  ;;  # bright blue/cyan-ish
-            *) _idx256=15  ;;  # white
+            1) _idx256=196 ;; # bright red
+            2) _idx256=118 ;; # light/bright green
+            3) _idx256=214 ;; # orange/yellow
+            4) _idx256=39 ;;  # bright blue/cyan-ish
+            *) _idx256=15 ;;  # white
         esac
         printf '\033[38;5;%dm' "$_idx256"
     }
 
     # Define TrueColor values, fallback to tput
-    _red="$(__color 220 60 60 1)"           # warm red
-    _green_light="$(__color 80 255 140 2)"  # light green
-    _green_neon="$(__color 120 255 100 2)"  # neon green
-    _green_mint="$(__color 152 255 200 6)"  # mint green
-    _green_dark="$(__color 34 68 34 2)"     # dark green (#224422)
-    _orange="$(__color 255 190 60 3)"       # orange/yellow
-    _gray="$(__color 200 250 200 7)"        # gray
+    _red="$(__color 220 60 60 1)"          # warm red
+    _green_light="$(__color 80 255 140 2)" # light green
+    _green_neon="$(__color 120 255 100 2)" # neon green
+    _green_mint="$(__color 152 255 200 6)" # mint green
+    _green_dark="$(__color 34 68 34 2)"    # dark green (#224422)
+    _orange="$(__color 255 190 60 3)"      # orange/yellow
+    _gray="$(__color 200 250 200 7)"       # gray
 
     # Draw underline
     _uline_on=$(tput smul 2>/dev/null || printf '\033[4m')
@@ -175,12 +178,12 @@ __init_style() {
 
     # Calculate terminal width
     _cols="$(tput cols 2>/dev/null || echo 80)"
-    local _line_len=$(( _cols / 2 ))
+    local _line_len=$((_cols / 2))
     if [[ "$_line_len" -lt 80 ]]; then
         _line_len=80
     fi
     _line=""
-    for ((i=0; i<"$_line_len"; i++)); do _line+="─"; done
+    for ((i = 0; i < "$_line_len"; i++)); do _line+="─"; done
 
     # Export only variables must be used in fzf preview commands to work properly
     export _break _reset _green_light _green_neon _green_mint _green_dark _orange _gray _uline_on _uline_off _cols _line
@@ -226,14 +229,38 @@ __msg() {
     local __color="" _prefix=""
 
     case "${_msg_level}" in
-        prompt) printf '%b' "$_msg"; return 0 ;;
-        info_green) __color="${_green_light}"; _prefix="" ;;
-        info_neon) __color="${_green_neon}"; _prefix="" ;;
-        info_mint) __color="${_green_mint}"; _prefix="" ;;
-        info_orange) __color="${_orange}"; _prefix="" ;;
-        warning) __color="${_orange}"; _prefix="${_uline_on}WARNING${_uline_off}:${__color} " ;;
-        error) __color="${_red}"; _prefix="${_uline_on}ERROR${_uline_off}:${__color} " ;;
-        *) __color="${_reset}"; _prefix="" ;;
+        prompt)
+            printf '%b' "$_msg"
+            return 0
+            ;;
+        info_green)
+            __color="${_green_light}"
+            _prefix=""
+            ;;
+        info_neon)
+            __color="${_green_neon}"
+            _prefix=""
+            ;;
+        info_mint)
+            __color="${_green_mint}"
+            _prefix=""
+            ;;
+        info_orange)
+            __color="${_orange}"
+            _prefix=""
+            ;;
+        warning)
+            __color="${_orange}"
+            _prefix="${_uline_on}WARNING${_uline_off}:${__color} "
+            ;;
+        error)
+            __color="${_red}"
+            _prefix="${_uline_on}ERROR${_uline_off}:${__color} "
+            ;;
+        *)
+            __color="${_reset}"
+            _prefix=""
+            ;;
     esac
 
     # Print formatted line with color and reset
@@ -241,14 +268,14 @@ __msg() {
 }
 
 # Message functions
-__msg_info()        { __msg 'info_green' "$@"; }
-__msg_info_neon()   { __msg 'info_neon' "$@"; }
-__msg_info_mint()   { __msg 'info_mint' "$@"; }
+__msg_info() { __msg 'info_green' "$@"; }
+__msg_info_neon() { __msg 'info_neon' "$@"; }
+__msg_info_mint() { __msg 'info_mint' "$@"; }
 __msg_info_orange() { __msg 'info_orange' "$@"; }
-__msg_warning()     { __msg 'warning' "$@"; }
-__msg_error()       { __msg 'error' "$@"; }
-__msg_prompt()      { __msg 'prompt' "$@"; }
-__msg_plain()       { __msg 'plain' "$@"; }
+__msg_warning() { __msg 'warning' "$@"; }
+__msg_error() { __msg 'error' "$@"; }
+__msg_prompt() { __msg 'prompt' "$@"; }
+__msg_plain() { __msg 'plain' "$@"; }
 
 # Display package information
 __msg_pkg() {
@@ -333,7 +360,10 @@ EOF
 }
 
 # Help can show always!
-[[ $# -gt 0 && "${1:-}" =~ ^(help|h|--help|-h)$ ]] && { __help; exit 0; }
+[[ $# -gt 0 && "${1:-}" =~ ^(help|h|--help|-h)$ ]] && {
+    __help
+    exit 0
+}
 
 # =============================================================================
 # CORE UTILITY FUNCTIONS
@@ -372,13 +402,13 @@ __prepare() {
 
     # Set install command based on distro
     case "${_distro_id,,}" in
-        arch|manjaro|endeavouros|cachyos)
+        arch | manjaro | endeavouros | cachyos)
             _install_cmd_dep="pacman -S"
             ;;
         fedora)
             _install_cmd_dep="dnf install"
             ;;
-        opensuse*|suse*)
+        opensuse* | suse*)
             _install_cmd_dep="zypper install"
             ;;
         gentoo)
@@ -397,7 +427,7 @@ __prepare() {
             done
             _install_cmd_dep="emerge"
             ;;
-        debian|ubuntu|linuxmint|pop|elementary|mx|raspbian)
+        debian | ubuntu | linuxmint | pop | elementary | mx | raspbian)
             _install_cmd_dep="apt install"
             ;;
         *)
@@ -491,7 +521,7 @@ __exit() {
     # Message handling on exit with banner and status first
     if [[ $_exit_code -ne 0 ]]; then
         __banner "$_red"
-        
+
         # Show completion info for interrupted processes
         local _duration="${SECONDS:-0}"
         local _minutes=$((_duration / 60))
@@ -499,7 +529,7 @@ __exit() {
         __msg_info_orange "${_break}Action completed: $(date '+%Y-%m-%d %H:%M:%S')"
         __msg_error "Failed process (Code: $_exit_code)"
         __msg_info_orange "Duration: ${_minutes} min ${_seconds} sec${_break}"
-        
+
         __msg_plain "${_red} Exiting due to errors. Please check the messages above for details.${_break}"
     else
         __banner
@@ -524,7 +554,7 @@ __clean() {
     # Unset all variables
     unset _tkg_tmp_dir _local_config_dir _tkg_raw_url _frog_raw_url _curl_opts
     unset _break _reset _green_light _green_neon _green_mint _green_dark _orange _gray _uline_on _uline_off _cols _line
- }
+}
 
 # Clean temporary files and cache
 __clean_temp_dir() {
@@ -534,17 +564,17 @@ __clean_temp_dir() {
     local _cache_count=0
     local _cache_size_bytes=0
     local _cache_size_human=""
-    
+
     if [[ -d "${_tkg_tmp_dir}" ]]; then
         _cache_count=$(find "${_tkg_tmp_dir}" -type f 2>/dev/null | wc -l || echo 0)
         _cache_size_bytes=$(du -sb "${_tkg_tmp_dir}" 2>/dev/null | cut -f1 || echo 0)
         _cache_size_human=$(du -sh "${_tkg_tmp_dir}" 2>/dev/null | cut -f1 || echo "0B")
     fi
-    
+
     rm -f "$_tkg_choice_file" 2>&1 || true
     rm -rf "$_tkg_tmp_dir" 2>&1 || true
     sleep 1.5s
-    
+
     if [[ "$_cache_count" -eq 0 ]]; then
         __msg_plain "${_green_neon}Cleanup complete ${_gray}(nothing to remove, cache already clean)${_reset}${_break}"
     else
@@ -594,7 +624,7 @@ __fzf_menu() {
         --bind='esc:abort,ctrl-c:abort' \
         --bind="${_fzf_bind}" \
         --disabled \
-        <<< "${_menu_content}" || true
+        <<<"${_menu_content}" || true
 }
 
 # =============================================================================
@@ -610,7 +640,7 @@ __install_package() {
     local _work_directory="${4:-}"
 
     # Enter temporary directory
-    cd "${_tkg_tmp_dir}" > /dev/null 2>&1 || {
+    cd "${_tkg_tmp_dir}" >/dev/null 2>&1 || {
         __msg_error "Failed to enter temporary directory: ${_tkg_tmp_dir}${_break}"
         return 1
     }
@@ -622,25 +652,25 @@ __install_package() {
     if [[ -d "${_repo_dir}/.git" ]]; then
         # Repository exists - update with git pull (recommended by linux-tkg)
         __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Updating ${_gray}$_package_name${_reset} ${_green_light}(git pull)...${_reset}${_break}"
-        cd "${_repo_dir}" > /dev/null 2>&1 || {
+        cd "${_repo_dir}" >/dev/null 2>&1 || {
             __msg_error "Cannot enter repository directory: ${_repo_dir}${_break}"
             return 1
         }
-        git pull > /dev/null 2>&1 || {
+        git pull >/dev/null 2>&1 || {
             __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Git pull failed, trying fresh clone...${_reset}${_break}"
-            cd "${_tkg_tmp_dir}" > /dev/null 2>&1 || return 1
+            cd "${_tkg_tmp_dir}" >/dev/null 2>&1 || return 1
             rm -rf "${_repo_dir}" 2>/dev/null || true
-            git clone "$_repo_url" > /dev/null 2>&1 || {
+            git clone "$_repo_url" >/dev/null 2>&1 || {
                 __msg_error "Cloning failed for: $_package_name${_break}"
                 __msg_plain " Please check your internet connection and try again."
                 return 1
             }
         }
-        cd "${_tkg_tmp_dir}" > /dev/null 2>&1 || return 1
+        cd "${_tkg_tmp_dir}" >/dev/null 2>&1 || return 1
     else
         # Fresh clone
         __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Cloning ${_gray}$_package_name${_reset} ${_green_light}from Frogging-Family repository...${_reset}${_break}"
-        git clone "$_repo_url" > /dev/null 2>&1 || {
+        git clone "$_repo_url" >/dev/null 2>&1 || {
             __msg_error "Cloning failed for: $_package_name${_break}"
             __msg_plain " Please check your internet connection and try again."
             return 1
@@ -648,7 +678,7 @@ __install_package() {
     fi
 
     # Enter repository directory
-    cd "${_repo_dir}" > /dev/null 2>&1 || {
+    cd "${_repo_dir}" >/dev/null 2>&1 || {
         __msg_error "Cloned repository directory not found: ${_repo_dir}${_break}"
         __msg_plain " Please check your path or permissions and try again."
         return 1
@@ -656,7 +686,7 @@ __install_package() {
 
     # Navigate to working directory (wine/proton)
     if [[ -n "${_work_directory}" ]]; then
-        cd "${_work_directory}" > /dev/null 2>&1 || {
+        cd "${_work_directory}" >/dev/null 2>&1 || {
             __msg_error "Working directory not found: ${_work_directory}${_break}"
             __msg_plain " Please check your path or permissions and try again."
             return 1
@@ -685,22 +715,22 @@ __prompt_timer() {
     local _old_trap_int=""
 
     _old_trap_int=$(trap -p INT 2>/dev/null) || true
-    
+
     _seconds_left="$_timeout"
     _user_answer=""
     local _abort_flag=false
 
-    # Set trap to abort cleanly 
+    # Set trap to abort cleanly
     trap '__clear_line 120 ""; echo; echo; __msg_plain "${_red}Aborted by user!${_break}"; _abort_flag=true; break' INT
 
     # Simple progress display without complex bar
     while [[ $_seconds_left -gt 0 && $_abort_flag == false ]]; do
         # Calculate simple progress percentage
-        local _progress_pct=$(( ((_timeout - _seconds_left) * 100) / _timeout ))
-        
+        local _progress_pct=$((((_timeout - _seconds_left) * 100) / _timeout))
+
         # Display simple prompt with dots
         local _dots=""
-        case $(( _seconds_left % 4 )) in
+        case $((_seconds_left % 4)) in
             3) _dots="   " ;;
             2) _dots=".  " ;;
             1) _dots=".. " ;;
@@ -710,14 +740,14 @@ __prompt_timer() {
         # Display styled prompt
         printf "\r${_gray}%s${_reset} ${_green_dark}%d%%${_reset} ${_orange}%02d${_gray}s${_reset} %s" \
             "$_prompt_options" "$_progress_pct" "$_seconds_left" "$_dots"
-        
+
         if read -r -t 1 _user_answer; then
             __clear_line 120 ""
             break
         fi
         ((_seconds_left--))
     done
-    
+
     # Handle abort
     if [[ $_abort_flag == true ]]; then
         sleep 1.5s
@@ -781,10 +811,10 @@ __linux_install() {
     else
         # Detect DEB or RPM based distributions
         case "${_distro_id,,}" in
-            debian|ubuntu|linuxmint|pop|elementary|mx|raspbian)
+            debian | ubuntu | linuxmint | pop | elementary | mx | raspbian)
                 _pkg_type="DEB"
                 ;;
-            fedora|rhel|centos|rocky|alma|opensuse*|suse*)
+            fedora | rhel | centos | rocky | alma | opensuse* | suse*)
                 _pkg_type="RPM"
                 ;;
         esac
@@ -815,7 +845,7 @@ __linux_install() {
         read -r _show_info
         if [[ "${_show_info,,}" =~ ^(y|yes)$ ]]; then
             __msg_info "${_break}${_green_neon}${_uline_on}UNINSTALL-HELP${_uline_off}:${_reset}${_break}"
-            cd "${_tkg_tmp_dir}/linux-tkg" > /dev/null 2>&1 && ./install.sh uninstall-help 2>/dev/null || true
+            cd "${_tkg_tmp_dir}/linux-tkg" >/dev/null 2>&1 && ./install.sh uninstall-help 2>/dev/null || true
         fi
     fi
 
@@ -958,7 +988,10 @@ __dxvk_tools_prepare() {
             fi
         fi
 
-        cd "$_dxvk_dir" || { __msg_error "Failed to enter dxvk-tools directory${_break}"; return 1; }
+        cd "$_dxvk_dir" || {
+            __msg_error "Failed to enter dxvk-tools directory${_break}"
+            return 1
+        }
     else
         # User selected 'No' or nothing to build
         return 0
@@ -1030,7 +1063,10 @@ __proton_install() {
         local _old_trap_int=""
         _old_trap_int=$(trap -p INT 2>/dev/null) || true
         trap 'return 130' INT
-        read -r _user_answer || { eval "${_old_trap_int:-trap - INT}"; return 130; }
+        read -r _user_answer || {
+            eval "${_old_trap_int:-trap - INT}"
+            return 130
+        }
         # Restore previous trap
         if [[ -n "$_old_trap_int" ]]; then eval "$_old_trap_int"; else trap - INT; fi
 
@@ -1068,7 +1104,7 @@ __editor() {
 
     # Parse $EDITOR variable and split into command + arguments
     if [[ -n "${EDITOR-}" ]]; then
-        IFS=' ' read -r -a _editor_parts <<< "${EDITOR}" || true
+        IFS=' ' read -r -a _editor_parts <<<"${EDITOR}" || true
     fi
 
     # Validate editor command exists, otherwise find fallback
@@ -1107,15 +1143,16 @@ __menu_amd() {
 
     # Define preview repositories for AMD submenu
     declare -A _amd_preview_repos=(
-        [AMDGPU-PRO]="amdgpu-pro-vulkan-only/master"
-        [AMDVLK-OPT]="amdvlk-opt/master"
+        [AMDGPU - PRO]="amdgpu-pro-vulkan-only/master"
+        [AMDVLK - OPT]="amdvlk-opt/master"
     )
 
     # Export preview repos for subshell
     local _amd_repos_json
-    _amd_repos_json=$(printf '%s\n' \
-        "AMDGPU-PRO=${_amd_preview_repos[AMDGPU-PRO]}" \
-        "AMDVLK-OPT=${_amd_preview_repos[AMDVLK-OPT]}"
+    _amd_repos_json=$(
+        printf '%s\n' \
+            "AMDGPU-PRO=${_amd_preview_repos[AMDGPU - PRO]}" \
+            "AMDVLK-OPT=${_amd_preview_repos[AMDVLK - OPT]}"
     )
     export _amd_repos_json
 
@@ -1195,7 +1232,7 @@ __menu_config() {
             if [[ -n "$_old_trap_int" ]]; then eval "$_old_trap_int"; else trap - INT; fi
 
             case "${_user_answer,,}" in
-                y|yes)
+                y | yes)
                     if ! mkdir -p "${_local_config_dir}" 2>/dev/null; then
                         __error_config "Creating configuration directory failed: ${_local_config_dir}${_break} Please check the path and your permissions then try again.${_break}"
                         return 1
@@ -1249,15 +1286,16 @@ __menu_config() {
 
         # Export config URLs for preview command (build full URLs from global paths)
         local _pkg_urls_json
-        _pkg_urls_json=$(printf '%s\n' \
-            "linux-tkg=${_frog_raw_url}/${_ext_config_patch[linux-tkg]}" \
-            "nvidia-all=${_frog_raw_url}/${_ext_config_patch[nvidia-all]}" \
-            "mesa-git=${_frog_raw_url}/${_ext_config_patch[mesa-git]}" \
-            "wine-tkg=${_frog_raw_url}/${_ext_config_patch[wine-tkg]}" \
-            "proton-tkg=${_frog_raw_url}/${_ext_config_patch[proton-tkg]}" \
-            "dxvk=${_frog_raw_url}/${_ext_config_patch[dxvk]}" \
-            "vkd3d=${_frog_raw_url}/${_ext_config_patch[vkd3d]}"
-            )
+        _pkg_urls_json=$(
+            printf '%s\n' \
+                "linux-tkg=${_frog_raw_url}/${_ext_config_patch[linux - tkg]}" \
+                "nvidia-all=${_frog_raw_url}/${_ext_config_patch[nvidia - all]}" \
+                "mesa-git=${_frog_raw_url}/${_ext_config_patch[mesa - git]}" \
+                "wine-tkg=${_frog_raw_url}/${_ext_config_patch[wine - tkg]}" \
+                "proton-tkg=${_frog_raw_url}/${_ext_config_patch[proton - tkg]}" \
+                "dxvk=${_frog_raw_url}/${_ext_config_patch[dxvk]}" \
+                "vkd3d=${_frog_raw_url}/${_ext_config_patch[vkd3d]}"
+        )
         export _pkg_urls_json
 
         # Define preview command components
@@ -1459,7 +1497,7 @@ __old_config() {
         __msg_warning "Found deprecated config variables in your local config:${_reset}${_gray} $_config_file ${_reset}${_break}"
         while IFS= read -r _var; do
             __msg_plain " ${_gray}${_var}${_reset}"
-        done <<< "$_deprecated_vars"
+        done <<<"$_deprecated_vars"
         __msg_plain "${_break} These variables are no longer used in upstream.${_break} \
 Please check this to ensure correctness! Then they can be removed from your local config.${_break}"
         __msg_prompt "Press any key to continue...${_break}"
@@ -1513,7 +1551,7 @@ __handle_config() {
 
         # Handle user response for downloading the config file
         case "${_user_answer,,}" in
-            y|yes)
+            y | yes)
                 # Create the configuration directory
                 mkdir -p "$(dirname "${_config_path}")" || {
                     __error_config "Creating configuration directory failed: ${_config_path}${_break} Please check the path and your permissions then try again.${_break}"
@@ -1577,7 +1615,7 @@ __menu() {
     # Glow style detection
     if [[ -z "${_glow_style:-}" ]]; then
         case "${COLORTERM:-}${TERM:-}" in
-            *light*|*xterm*|*rxvt*|*konsole*)
+            *light* | *xterm* | *rxvt* | *konsole*)
                 _glow_style="light"
                 ;;
             *)
@@ -1635,28 +1673,30 @@ __menu() {
 
     # Export preview mappings for subshell
     local _preview_docs_json
-    _preview_docs_json=$(printf '%s\n' \
-        "Linux=${_preview_docs[Linux]}" \
-        "Nvidia=${_preview_docs[Nvidia]}" \
-        "Mesa=${_preview_docs[Mesa]}" \
-        "AMD=${_preview_docs[AMD]}" \
-        "Wine=${_preview_docs[Wine]}" \
-        "Proton=${_preview_docs[Proton]}" \
-        "Config=${_preview_docs[Config]}" \
-        "Clean=${_preview_docs[Clean]}" \
-        "Help=${_preview_docs[Help]}" \
-        "Close=${_preview_docs[Close]}"
+    _preview_docs_json=$(
+        printf '%s\n' \
+            "Linux=${_preview_docs[Linux]}" \
+            "Nvidia=${_preview_docs[Nvidia]}" \
+            "Mesa=${_preview_docs[Mesa]}" \
+            "AMD=${_preview_docs[AMD]}" \
+            "Wine=${_preview_docs[Wine]}" \
+            "Proton=${_preview_docs[Proton]}" \
+            "Config=${_preview_docs[Config]}" \
+            "Clean=${_preview_docs[Clean]}" \
+            "Help=${_preview_docs[Help]}" \
+            "Close=${_preview_docs[Close]}"
     )
     export _preview_docs_json
 
     # Define preview repositories
     local _preview_repos_json
-    _preview_repos_json=$(printf '%s\n' \
-        "Linux=${_preview_repos[Linux]}" \
-        "Nvidia=${_preview_repos[Nvidia]}" \
-        "Mesa=${_preview_repos[Mesa]}" \
-        "Wine=${_preview_repos[Wine]}" \
-        "Proton=${_preview_repos[Proton]}"
+    _preview_repos_json=$(
+        printf '%s\n' \
+            "Linux=${_preview_repos[Linux]}" \
+            "Nvidia=${_preview_repos[Nvidia]}" \
+            "Mesa=${_preview_repos[Mesa]}" \
+            "Wine=${_preview_repos[Wine]}" \
+            "Proton=${_preview_repos[Proton]}"
     )
     export _preview_repos_json
 
@@ -1705,7 +1745,7 @@ ${_green_light}   Select an option below:"
     fi
 
     # Write user choice to file
-    echo "$_main_choice" | cut -d"|" -f1 | xargs > "$_tkg_choice_file"
+    echo "$_main_choice" | cut -d"|" -f1 | xargs >"$_tkg_choice_file"
 }
 
 # =============================================================================
@@ -1733,8 +1773,8 @@ __main_direct_mode() {
     fi
 
     # Allow only supported second-args (config/edit/customize)
-    if [[ "$_arg1" =~ ^(linux|l|nvidia|n|mesa|m|wine|w|proton|p)$ ]] && [[ -n "$_arg2" ]] \
-    && ! [[ "$_arg2" =~ ^(config|c|edit|e|customize|cu)$ ]]; then
+    if [[ "$_arg1" =~ ^(linux|l|nvidia|n|mesa|m|wine|w|proton|p)$ ]] && [[ -n "$_arg2" ]] &&
+        ! [[ "$_arg2" =~ ^(config|c|edit|e|customize|cu)$ ]]; then
         __banner "$_orange"
         __msg_warning "Invalid argument:${_reset}${_gray} ${_arg1:-} ${_arg2:-}${_reset}${_break}"
         __msg_plain " The argument is either invalid or incomplete."
@@ -1780,43 +1820,43 @@ __main_direct_mode() {
 
     # Handle regular install commands
     case "$_arg1" in
-        linux|l|--linux|-l)
+        linux | l | --linux | -l)
             __prepare
             __linux_install
             ;;
-        nvidia|n|--nvidia|-n)
+        nvidia | n | --nvidia | -n)
             __prepare
             __nvidia_install
             ;;
-        mesa|m|--mesa|-m)
+        mesa | m | --mesa | -m)
             __prepare
             __mesa_install
             ;;
-        amdgpu|ag|--amdgpu|-ag)
+        amdgpu | ag | --amdgpu | -ag)
             __prepare
             __amdgpu_pro_install
             ;;
-        amdvlk|av|--amdvlk|-av)
+        amdvlk | av | --amdvlk | -av)
             __prepare
             __amdvlk_opt_install
             ;;
-        wine|w|--wine|-w)
+        wine | w | --wine | -w)
             __prepare
             __wine_install
             ;;
-        proton|p|--proton|-p)
+        proton | p | --proton | -p)
             __prepare
             __proton_install
             ;;
-        dxvk-tools|dxvk|--dxvk-tools|-d)
+        dxvk-tools | dxvk | --dxvk-tools | -d)
             __prepare
             __dxvk_tools_prepare
             ;;
-        clean|--clean)
+        clean | --clean)
             __clean_temp_dir
             exit 0 >/dev/null 2>&1
             ;;
-        help|h|--help|-h)
+        help | h | --help | -h)
             # Handle help command
             ;;
         *)
@@ -1852,7 +1892,7 @@ __main_interactive_mode() {
     # Process user selection from menu
     local _user_choice=""
     if [[ -f "$_tkg_choice_file" ]]; then
-        _user_choice=$(< "$_tkg_choice_file") || true
+        _user_choice=$(<"$_tkg_choice_file") || true
     fi
 
     # Handle empty choice (ESC/Ctrl-C pressed)
@@ -1866,7 +1906,7 @@ __main_interactive_mode() {
 
     # Handle user choice from menu
     case $_user_choice in
-        Linux|Nvidia|Mesa|AMD|Wine|Proton)
+        Linux | Nvidia | Mesa | AMD | Wine | Proton)
             # Display banner before installation from menu
             __banner
             __clear_line 120
