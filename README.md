@@ -9,7 +9,7 @@
 perform the building, installing, and customizing of the
 TKG/Frogminer packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.</strong>
 
-   <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/Version-0.28.9-yellow?style=flat&logo=linux"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://github.com/search?q=org%3AFrogging-Family+author%3Adamachine&type=commits"><img src="https://img.shields.io/badge/Frogging--Family-Contributor-green?style=flat&logo=github"></a>
+   <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/Version-0.29.0-yellow?style=flat&logo=linux"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://github.com/search?q=org%3AFrogging-Family+author%3Adamachine&type=commits"><img src="https://img.shields.io/badge/Frogging--Family-Contributor-green?style=flat&logo=github"></a>
    
 Features
  <strong>- Easy-to-use, AIO package manager for the TKG repositories</strong>
@@ -85,14 +85,21 @@ tkginstaller help
 yay -R tkginstaller-git
 ```
 ```yaml
-# All distributions (manual installation)
-# Simply remove the script and optional cache folder
-# If installed manually, also remove the symlink and/or alias/function
-rm /path/to/tkginstaller
-# Remove cache directory
+# All distributions (installed via install.sh)
+# Use the built-in uninstall function
+curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/install.sh | bash -s -- --uninstall
+
+# Or if you have the install.sh downloaded
+./install.sh --uninstall
+```
+```yaml
+# All distributions (manual cleanup)
+# If the above doesn't work, manually remove files
+rm ~/.local/bin/tkginstaller  # or your installation path
 rm -rf ~/.tkginstaller
-# Remove alias/function from ~/.bashrc or ~/.zshrc (if added)
-sed -i '/tkginstaller/d' ~/.bashrc ~/.zshrc
+# Remove alias from shell config
+sed -i '/# TKG-Installer alias/,+1d' ~/.bashrc ~/.zshrc 2>/dev/null || true
+source ~/.bashrc ~/.zshrc 2>/dev/null || true
 ```
 </details>
 
