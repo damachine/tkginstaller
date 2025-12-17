@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # TKG-Installer VERSION definition
-_tkg_installer_version="v0.28.7"
+_tkg_installer_version="v0.28.8"
 
 # -----------------------------------------------------------------------------
 # author : damachine (damachin3 at proton dot me)
@@ -74,26 +74,26 @@ __init_globals() {
 
 # Centralized package configuration (paths relative to _frog_raw_url)
 declare -gA _ext_config_patch=(
-    [linux - tkg]="linux-tkg/master/customization.cfg"
-    [nvidia - all]="nvidia-all/master/customization.cfg"
-    [mesa - git]="mesa-git/master/customization.cfg"
-    [amdgpu - pro]="amdgpu-pro-vulkan-only/master/customization.cfg"
-    [amdvlk - opt]="amdvlk-opt/master/amdvlk-buildfromsource/customization.cfg"
-    [wine - tkg]="wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
-    [proton - tkg]="wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
+    [linux-tkg]="linux-tkg/master/customization.cfg"
+    [nvidia-all]="nvidia-all/master/customization.cfg"
+    [mesa-git]="mesa-git/master/customization.cfg"
+    [amdgpu-pro]="amdgpu-pro-vulkan-only/master/customization.cfg"
+    [amdvlk-opt]="amdvlk-opt/master/amdvlk-buildfromsource/customization.cfg"
+    [wine-tkg]="wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
+    [proton-tkg]="wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
     [dxvk]="dxvk-tools/master/updxvk.cfg"
     [vkd3d]="dxvk-tools/master/upvkd3d-proton.cfg"
 )
 
 # Package display names
 declare -gA _pkg_display_name=(
-    [linux - tkg]="Linux-TKG"
-    [nvidia - all]="Nvidia-all"
-    [mesa - git]="Mesa-TKG"
-    [amdgpu - pro]="AMDGPU-PRO"
-    [amdvlk - opt]="AMDVLK-OPT"
-    [wine - tkg]="Wine-TKG"
-    [proton - tkg]="Proton-TKG"
+    [linux-tkg]="Linux-TKG"
+    [nvidia-all]="Nvidia-all"
+    [mesa-git]="Mesa-TKG"
+    [amdgpu-pro]="AMDGPU-PRO"
+    [amdvlk-opt]="AMDVLK-OPT"
+    [wine-tkg]="Wine-TKG"
+    [proton-tkg]="Proton-TKG"
     [dxvk]="DXVK"
     [vkd3d]="vkd3d-proton"
 )
@@ -1288,11 +1288,11 @@ __menu_config() {
         local _pkg_urls_json
         _pkg_urls_json=$(
             printf '%s\n' \
-                "linux-tkg=${_frog_raw_url}/${_ext_config_patch[linux - tkg]}" \
-                "nvidia-all=${_frog_raw_url}/${_ext_config_patch[nvidia - all]}" \
-                "mesa-git=${_frog_raw_url}/${_ext_config_patch[mesa - git]}" \
-                "wine-tkg=${_frog_raw_url}/${_ext_config_patch[wine - tkg]}" \
-                "proton-tkg=${_frog_raw_url}/${_ext_config_patch[proton - tkg]}" \
+                "linux-tkg=${_frog_raw_url}/${_ext_config_patch[linux-tkg]}" \
+                "nvidia-all=${_frog_raw_url}/${_ext_config_patch[nvidia-all]}" \
+                "mesa-git=${_frog_raw_url}/${_ext_config_patch[mesa-git]}" \
+                "wine-tkg=${_frog_raw_url}/${_ext_config_patch[wine-tkg]}" \
+                "proton-tkg=${_frog_raw_url}/${_ext_config_patch[proton-tkg]}" \
                 "dxvk=${_frog_raw_url}/${_ext_config_patch[dxvk]}" \
                 "vkd3d=${_frog_raw_url}/${_ext_config_patch[vkd3d]}"
         )
