@@ -171,6 +171,7 @@ __uninstall() {
         "${HOME}/.profile"
     )
 
+    # Flag to track if any alias was removed
     local removed_alias=false
     for config in "${shell_configs[@]}"; do
         if [[ -f "$config" ]]; then
