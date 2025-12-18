@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # TKG-Installer VERSION definition
-readonly _tkg_installer_version="v0.29.3"
+readonly _tkg_installer_version="v0.29.4"
 
 # -----------------------------------------------------------------------------
 # author : damachine (damachin3 at proton dot me)
