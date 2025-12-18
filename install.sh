@@ -147,7 +147,12 @@ __uninstall() {
     __msg_prompt "Do you want to continue? [y/N]: "
 
     trap 'echo;echo; __msg_prompt "${_red}Aborted by user.${_break}";exit 1' INT
-    read -r _user_answer
+    if [[ -t 0 ]]; then
+        read -r _user_answer
+    else
+        __msg_info "[i] Non-interactive mode detected – proceeding with uninstallation automatically."
+        _user_answer="y"
+    fi
     trap - INT
 
     if [[ ! "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
