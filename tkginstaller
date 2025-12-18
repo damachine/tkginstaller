@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # TKG-Installer VERSION definition
-readonly _tkg_installer_version="v0.29.4"
+readonly _tkg_installer_version="v0.29.5"
 
 # -----------------------------------------------------------------------------
 # author : damachine (damachin3 at proton dot me)
@@ -82,6 +82,7 @@ declare -gA _pkg_display_name=(
     [dxvk]="DXVK"
     [vkd3d]="Vkd3d-proton"
     [gamescope]="Gamescope"
+    [glibc]="Glibc-eeac"
 )
 
 # Git repository URLs (requires _frog_repo_url from __init_globals)
@@ -95,6 +96,7 @@ declare -gA _frog_pkg_repo=(
     [proton]="${_frog_repo_url}/wine-tkg-git.git"
     [dxvk]="${_frog_repo_url}/dxvk-tools.git"
     [gamescope]="${_frog_repo_url}/gamescope-git.git"
+    [glibc]="${_frog_repo_url}/glibc-eac.git"
 )
 
 # Configuration file paths (relative to _frog_raw_url)
@@ -152,6 +154,7 @@ __normalize_package() {
         wine | w | --wine | -w) echo "wine" ;;
         proton | p | --proton | -p) echo "proton" ;;
         gamescope | g | --gamescope | -g) echo "gamescope" ;;
+        glibc | ge | --glibc | -ge) echo "glibc" ;;
         *) echo "" ;;
     esac
 }
@@ -391,13 +394,17 @@ ${_green_neon}1) Interactive mode${_reset}
 
 ${_green_neon}2) Direct mode${_reset}
    Run specific packages directly:
-   ${_gray}tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p]${_reset}
+   ${_gray}tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p|amdvlk|av|amdgpu|ag|gamescope|g|glibc|ge]${_reset}
 
 ${_green_neon}3) Config editing${_reset}
    Edit configuration files:
-   ${_gray}tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p] [config|c|edit|e]${_reset}
+   ${_gray}tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p|amdvlk|av|amdgpu|ag|gamescope|g|glibc|ge] [config|c|edit|e]${_reset}
 
-${_orange}Shortcuts:${_reset} ${_gray}l${_reset}=linux, ${_gray}n${_reset}=nvidia, ${_gray}m${_reset}=mesa, ${_gray}w${_reset}=wine, ${_gray}p${_reset}=proton, ${_gray}c${_reset}=config, ${_gray}e${_reset}=edit
+${_green_neon}4) Clean temporary files${_reset}
+   Remove all temporary files created during installations:
+   ${_gray}tkginstaller clean${_reset}
+
+${_orange}Shortcuts:${_reset} ${_gray}l${_reset}=linux, ${_gray}n${_reset}=nvidia, ${_gray}m${_reset}=mesa, ${_gray}w${_reset}=wine, ${_gray}p${_reset}=proton, ${_gray}c${_reset}=config, ${_gray}e${_reset}=edit, ${_gray}g${_reset}=gamescope, ${_gray}ge${_reset}=glibc-eac
 
 EOF
 }
@@ -971,6 +978,38 @@ __wine_install() {
 
     # Execute installation
     __install_package "${_frog_pkg_repo[wine]}" "wine-tkg-git" "$_build_command" "${_frog_pkg_workdir[wine]}"
+}
+
+# glibc-eac installation
+__glibc_install() {
+    # Determine build command
+    local _build_command
+
+    # Inform user about external configuration usage
+    __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}How do you want to build glibc-eac?${_reset}${_break}"
+    __msg_plain " Detected distro: ${_gray}${_distro_name}${_reset}${_break}"
+    __msg_plain " ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ glibc_eac.sh         ${_green_light}recommended (Build & Install)${_reset}"
+    __msg_plain " ${_orange}2${_reset} │ glibc_eac.sh build   ${_gray}(Build only, no install)${_reset}"
+    __msg_plain " ${_red}0${_reset} │ Cancel${_break}"
+
+    # Get user choice with timeout
+    __prompt_timer "[${_green_neon}${_uline_on}1${_uline_off}${_reset}/${_orange}2${_reset}/${_red}0${_reset}]" 60 1
+
+    case "$_user_answer" in
+        0)
+            __msg_info "${_break}${_break}${_orange}Cancelled by user${_reset}${_break}"
+            __exit 1
+            ;;
+        2)
+            _build_command="chmod +x glibc_eac.sh && ./glibc_eac.sh build"
+            ;;
+        *)
+            _build_command="chmod +x glibc_eac.sh && ./glibc_eac.sh"
+            ;;
+    esac
+
+    # Execute installation
+    __install_package "${_frog_pkg_repo[glibc]}" "glibc-eac" "$_build_command"
 }
 
 # DXVK-Tools preparation (optional pre-build for Proton-TKG)
@@ -1714,6 +1753,7 @@ __menu() {
         "Wine      |🍷 ${_green_neon}Wine       ${_gray} Windows compatibility layer to run Windows apps on Linux"
         "Proton    |🎮 ${_green_neon}Proton     ${_gray} Run Windows games on the Linux system via Steam"
         "Gamescope |🕹️ ${_green_neon}Gamescope  ${_gray} Build and install Gamescope from Frogging-Family"
+        "Glibc     |🔗 ${_green_neon}Glibc-eac  ${_gray} Install EAC compatible version of glibc"
         "Config    |🔧 ${_green_neon}Config     ${_gray} Enter external configuration files menu (Expert)"
         "Clean     |🧹 ${_green_neon}Clean      ${_gray} Removes all temporary files for a clean installation"
         "Help      |❓ ${_green_neon}Help       ${_gray} Displays help and usage information about TKG-Installer"
@@ -1732,6 +1772,7 @@ __menu() {
         [Wine]="wine"
         [Proton]="proton"
         [Gamescope]="gamescope"
+        [Glibc]="glibc"
         [Config]="config"
         [Clean]="clean"
         [Help]="help"
@@ -1745,6 +1786,7 @@ __menu() {
         [Wine]="wine-tkg-git/master/wine-tkg-git"
         [Proton]="wine-tkg-git/master/proton-tkg"
         [Gamescope]="gamescope-git/master"
+        [Glibc]="glibc-eac/main"
     )
 
     # Export preview mappings for subshell
@@ -1758,6 +1800,7 @@ __menu() {
             "Wine=${_preview_docs[Wine]}" \
             "Proton=${_preview_docs[Proton]}" \
             "Gamescope=${_preview_docs[Gamescope]}" \
+            "Glibc=${_preview_docs[Glibc]}" \
             "Config=${_preview_docs[Config]}" \
             "Clean=${_preview_docs[Clean]}" \
             "Help=${_preview_docs[Help]}" \
@@ -1774,7 +1817,8 @@ __menu() {
             "Mesa=${_preview_repos[Mesa]}" \
             "Wine=${_preview_repos[Wine]}" \
             "Proton=${_preview_repos[Proton]}" \
-            "Gamescope=${_preview_repos[Gamescope]}"
+            "Gamescope=${_preview_repos[Gamescope]}" \
+            "Glibc=${_preview_repos[Glibc]}"
     )
     export _preview_repos_json
 
@@ -1934,6 +1978,10 @@ __main_direct_mode() {
             __prepare
             __install_pkg_key "gamescope"
             ;;
+        glibc | ge | --glibc | -ge)
+            __prepare
+            __glibc_install
+            ;;
         clean | --clean)
             __clean_temp_dir
             exit 0 >/dev/null 2>&1
@@ -1988,7 +2036,7 @@ __main_interactive_mode() {
 
     # Handle user choice from menu
     case $_user_choice in
-        Linux | Nvidia | Mesa | AMD | Wine | Proton | Gamescope)
+        Linux | Nvidia | Mesa | AMD | Wine | Proton | Gamescope | Glibc)
             # Display banner before installation from menu
             __banner
             __clear_line 120
@@ -2015,6 +2063,9 @@ __main_interactive_mode() {
             ;;
         Gamescope)
             __install_pkg_key "gamescope"
+            ;;
+        Glibc)
+            __glibc_install
             ;;
         Config)
             __menu_config
