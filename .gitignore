@@ -45,6 +45,7 @@ gnupg/
 .idea/
 .qodo/
 .zencoder/
+.zenflow/
 .codacy/
 .codacy.*
 
@@ -52,7 +53,6 @@ gnupg/
 
 # Internal files
 tkginstaller-bin/
-gotkg/
 
 # Git files
 !.github

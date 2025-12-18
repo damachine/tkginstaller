@@ -2,53 +2,53 @@
 
 ---
 
-**Dieses Paket stellt eine EAC-kompatible glibc-Variante bereit (glibc-eac) und vereinfacht das Bauen/Installieren über das mitgelieferte Skript.**
+**This package provides a glibc variant compatible with Easy Anti-Cheat (glibc-eac) and simplifies building/installing via the included script.**
 
 ---
 
-### Key Information:
+### Key Information
 
-- **Purpose:** Modified glibc to improve compatibility mit Easy Anti-Cheat (EAC) bei bestimmten Spielen.
+- **Purpose:** A modified glibc intended to improve compatibility with Easy Anti-Cheat (EAC) for certain games.
 - **Repository:** Frogging-Family: `https://github.com/Frogging-Family/glibc-eac`
-- **Build / Install:** Das Projekt stellt ein Skript `glibc_eac.sh` bereit. Laut upstream README:
+- **Build / Install:** The project provides a script `glibc_eac.sh`. According to the upstream README:
   - `./glibc_eac.sh` → build & install
-  - `./glibc_eac.sh build` → nur build (keine Installation)
-- **No config file:** Es gibt keine `customization.cfg` für dieses Paket.
+  - `./glibc_eac.sh build` → build only (no install)
+- **No config file:** There is no `customization.cfg` for this package.
 
 ---
 
 ### Quick Commands
 
 - **Install (build & install):**
-  `tkginstaller glibc` oder `tkginstaller ge`
+  `tkginstaller glibc` or `tkginstaller ge`
 - **Build only:**
-  `tkginstaller glibc` → auswählnummer: 2 (Only Build)
+  Run `tkginstaller glibc` and choose option **2** (Build only).
 
 ---
 
 ### Configuration
 
-- **Config:** Keine lokale Konfigurationsdatei für glibc-eac vorhanden.
+- **Config:** There is no local configuration file for glibc-eac.
 
 ---
 
 ### Troubleshooting
 
-- **Permissions:** Nicht als root ausführen.
-- **Dependencies:** Stelle sicher, dass grundlegende Build-Tools (gcc, make, libc-devel, etc.) installiert sind.
-- **Build errors:** Bei Fehlern schaue in das Ausgabeverzeichnis im Cache (`~/.tkginstaller/.cache/glibc`), bzw. in die Konsolenausgabe.
+- **Permissions:** Do not run the installer as root.
+- **Dependencies:** Ensure basic build tools are installed (gcc, make, libc-devel, etc.).
+- **Build errors:** Check the output in the cache directory (`~/.tkginstaller/.cache/glibc`) or review console output for details.
 
 ---
 
 ### Tips
 
-- Verwende `./glibc_eac.sh build` zuerst, um sicherzustellen, dass der Build erfolgreich ist, bevor du installierst.
-- Halte ein Backup deiner System-glibc (falls du lokal Installationen planst) und vergewissere dich, dass du ein funktionierendes Wiederherstellungs-szenario hast.
+- Use `./glibc_eac.sh build` first to verify the build succeeds before installing.
+- Keep a backup of your system glibc if you plan to perform local installations and ensure you have a recovery plan.
 
 ---
 
 **🌐 Online Preview**
 
-#### ***See upstream README at:***
+#### See upstream README at:
 
 #### [Frogging-Family/glibc-eac](https://github.com/Frogging-Family/glibc-eac/blob/main/README.md)
