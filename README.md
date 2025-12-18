@@ -50,13 +50,14 @@ tkginstaller
 # Use direct CLI mode (skip TUI), run with arguments
 tkginstaller [package]
 
-# Use full names or shortcuts (l, n, m, w, p, g)
+# Use full names or shortcuts (l, n, m, w, p, g, ge)
 tkginstaller linux      # or shortcut
 tkginstaller nvidia
 tkginstaller mesa
 tkginstaller wine
 tkginstaller proton
 tkginstaller gamescope
+tkginstaller glibc
 
 # Edit a package's configuration file:
 tkginstaller [package] [action]
