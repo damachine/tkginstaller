@@ -5,18 +5,17 @@
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
 ──  KISS the 🐸  ──
 
-<strong>This AIO installer is intended to serve as an helper to
-perform the building, installing, and customizing of the
-TKG/Frogminer packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories.</strong>
+<strong>A simple helper for managing TKG/Frogminer packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories</strong>
 
    <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/Version-0.29.3-yellow?style=flat&logo=linux"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://github.com/search?q=org%3AFrogging-Family+author%3Adamachine&type=commits"><img src="https://img.shields.io/badge/Frogging--Family-Contributor-green?style=flat&logo=github"></a>
    
-Features
- <strong>- Easy-to-use, AIO package manager for the TKG repositories</strong>
- <strong>- Uses fzf TUI or DIRECT command-line mode</strong>
- <strong>- Supports multiple distributions</strong>
- <strong>- Manage each <mark>customization.cfg</mark> package file (Beta) 🔥</strong>
-    <sub>Download, adjust and compare</sub>
+TL:DR
+ - Easy-to-use
+    <sup>Build, install/update and customize</sup>
+ - Run <strong><mark>TUI fzf</mark></strong> or <strong><mark>DIRECT command</mark></strong> mode
+ - Manage each <strong><mark>customization.cfg</mark></strong> package file (Beta) 🔥
+    <sup>Download, adjust and compare</sup>
+ - Supports multiple distributions
 </pre>
 
 <details>
