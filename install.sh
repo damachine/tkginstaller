@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 set -euo pipefail
 IFS=$'\n\t'
+# shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
 # -----------------------------------------------------------------------------
 # author : damachine (damachin3 at proton dot me)
