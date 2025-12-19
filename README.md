@@ -50,10 +50,13 @@ tkginstaller
 # Use direct CLI mode (skip TUI), run with arguments
 tkginstaller [package]
 
-# Use full names or shortcuts (l, n, m, w, p, g, ge)
+# Use full names or shortcuts:
+# (l=linux, n=nvidia, m=mesa, ag=amdgpu, av=amdvlk, w=wine, p=proton, g=gamescope, ge=glibc)
 tkginstaller linux      # or shortcut
 tkginstaller nvidia
 tkginstaller mesa
+tkginstaller amdgpu
+tkginstaller amdvlk
 tkginstaller wine
 tkginstaller proton
 tkginstaller gamescope
@@ -62,11 +65,11 @@ tkginstaller glibc
 # Edit a package's configuration file:
 tkginstaller [package] [action]
 
-# Use full names or shortcuts (c, e for config/edit)
+# Use full names or shortcuts: (c=config, e=edit)
+tkginstaller config         # Enter TUI to select package
 tkginstaller linux config   # or shortcut
 tkginstaller config linux
 tkginstaller mesa edit
-tkginstaller config         # Enter TUI to select package
 
 # Clean up all temporary files and restart installer
 tkginstaller clean
