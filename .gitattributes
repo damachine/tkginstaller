@@ -1,0 +1,71 @@
+# =============================================================================
+# Git Attributes for TKG-Installer
+# =============================================================================
+
+# Automatic line ending normalization
+* text=auto
+
+# Shell scripts always with LF (Unix line endings)
+*.sh text eol=lf
+*.bash text eol=lf
+tkginstaller text eol=lf
+install.sh text eol=lf
+
+# Markdown files
+*.md text eol=lf linguist-documentation
+
+# Configuration files
+*.yml text eol=lf
+*.yaml text eol=lf
+*.cfg text eol=lf
+*.conf text eol=lf
+
+# Git configuration
+.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# Documentation
+docs/* linguist-documentation
+*.md linguist-documentation
+README.md linguist-documentation
+LICENSE text eol=lf
+
+# Checksums
+SHA256SUMS text eol=lf
+
+# GitHub Workflows/Actions
+.github/workflows/* linguist-generated
+.github/FUNDING.yml text eol=lf
+
+# Binary files (if present)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+
+# Archives
+*.zip binary
+*.tar binary
+*.gz binary
+*.bz2 binary
+*.xz binary
+*.zst binary
+*.7z binary
+*.rar binary
+
+# Language statistics for GitHub
+# Mark main scripts as Shell
+tkginstaller linguist-language=Shell
+install.sh linguist-language=Shell
+
+# Vendor/Third-party code exclusion (if present)
+# vendor/* linguist-vendored
+
+# Export behavior (for git archive)
+.gitattributes export-ignore
+.gitignore export-ignore
+.github export-ignore
+docs export-ignore
+*.md export-ignore
