@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # TKG-Installer VERSION definition
-readonly _tkg_installer_version="v0.29.5"
+readonly _tkg_installer_version="v0.29.6"
 
 # -----------------------------------------------------------------------------
 # author : damachine (damachin3 at proton dot me)
@@ -342,7 +342,7 @@ __msg_pkg() {
 if [[ "$(id -u)" -eq 0 ]]; then
     __banner "$_orange"
     __msg_warning "You are running as root!${_break}"
-    __msg_plain " Running this script as root is not recommended for security reasons.${_break}"
+    __msg_plain " Running this script as root is not recommended.${_break}"
     __msg_prompt "Do you really want to continue as root? [y/N]: "
     trap 'echo;echo; __msg_plain "${_red}Aborted by user.\n";sleep 1.5s; exit 1' INT
     read -r _user_answer
@@ -389,16 +389,18 @@ __help() {
 ${_green_neon}${_uline_on}HELP${_uline_off}:${_reset} ${_green_light}TKG-Installer usage and commands${_reset}
 
 ${_green_neon}1) Interactive mode${_reset}
-   Run without arguments to enter the menu:
+   Use fzf-based TUI mode:
    ${_gray}tkginstaller${_reset}
 
 ${_green_neon}2) Direct mode${_reset}
-   Run specific packages directly:
+   Use direct CLI mode (skip TUI), run with arguments:
    ${_gray}tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p|amdvlk|av|amdgpu|ag|gamescope|g|glibc|ge]${_reset}
 
 ${_green_neon}3) Config editing${_reset}
-   Edit configuration files:
-   ${_gray}tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p|amdvlk|av|amdgpu|ag|gamescope|g|glibc|ge] [config|c|edit|e]${_reset}
+   Enter fzf-based TUI mode to edit a package's configuration:
+   ${_gray}tkginstaller config${_reset}
+   Edit a package's configuration file directly:
+   ${_gray}tkginstaller [config|c|edit|e] [linux|l|nvidia|n|mesa|m|wine|w|proton|p|amdvlk|av|amdgpu|ag|gamescope|g|glibc|ge]${_reset}
 
 ${_green_neon}4) Clean temporary files${_reset}
    Remove all temporary files created during installations:
