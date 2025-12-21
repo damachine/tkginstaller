@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # TKG-Installer VERSION definition
-readonly _tkg_installer_version="v0.29.6"
+readonly _tkg_installer_version="v0.29.7"
 
 # -----------------------------------------------------------------------------
 # author : damachine (damachin3 at proton dot me)
@@ -394,19 +394,19 @@ ${_green_neon}1) Interactive mode${_reset}
 
 ${_green_neon}2) Direct mode${_reset}
    Use direct CLI mode (skip TUI), run with arguments:
-   ${_gray}tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p|amdvlk|av|amdgpu|ag|gamescope|g|glibc|ge]${_reset}
+   ${_gray}tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p|amdgpu|ag|amdvlk|av|gamescope|g|glibc|ge]${_reset}
 
 ${_green_neon}3) Config editing${_reset}
    Enter fzf-based TUI mode to edit a package's configuration:
    ${_gray}tkginstaller config${_reset}
    Edit a package's configuration file directly:
-   ${_gray}tkginstaller [config|c|edit|e] [linux|l|nvidia|n|mesa|m|wine|w|proton|p|amdvlk|av|amdgpu|ag|gamescope|g|glibc|ge]${_reset}
+   ${_gray}tkginstaller [config|c|edit|e] [linux|l|nvidia|n|mesa|m|wine|w|proton|p|amdgpu|ag|amdvlk|av|gamescope|g|glibc|ge]${_reset}
 
 ${_green_neon}4) Clean temporary files${_reset}
    Remove all temporary files created during installations:
    ${_gray}tkginstaller clean${_reset}
 
-${_orange}Shortcuts:${_reset} ${_gray}l${_reset}=linux, ${_gray}n${_reset}=nvidia, ${_gray}m${_reset}=mesa, ${_gray}w${_reset}=wine, ${_gray}p${_reset}=proton, ${_gray}c${_reset}=config, ${_gray}e${_reset}=edit, ${_gray}g${_reset}=gamescope, ${_gray}ge${_reset}=glibc-eac
+${_orange}Shortcuts:${_reset} ${_orange}l${_reset}=linux, ${_orange}n${_reset}=nvidia, ${_orange}m${_reset}=mesa, ${_orange}ag${_reset}=amdgpu, ${_orange}av${_reset}=amdvlk, ${_orange}w${_reset}=wine, ${_orange}p${_reset}=proton, ${_orange}g${_reset}=gamescope, ${_orange}ge${_reset}=glibc-eac, ${_orange}c${_reset}=config, ${_orange}e${_reset}=edit
 
 EOF
 }
@@ -712,21 +712,78 @@ __install_package() {
             __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Git pull failed, trying fresh clone...${_reset}${_break}"
             cd "${_tkg_tmp_dir}" >/dev/null 2>&1 || return 1
             rm -rf "${_repo_dir}" 2>/dev/null || true
-            git clone "$_repo_url" >/dev/null 2>&1 || {
-                __msg_error "Cloning failed for: $_package_name${_break}"
-                __msg_plain " Please check your internet connection and try again."
+            # Attempt clone with retries/backoff
+            local _clone_attempts=0
+            local _clone_max=3
+            while ((_clone_attempts < _clone_max)); do
+                if git clone "$_repo_url" >/dev/null 2>&1; then
+                    break
+                fi
+                _clone_attempts=$((_clone_attempts + 1))
+                __msg_warning "Cloning failed for: $_package_name (attempt ${_clone_attempts}/${_clone_max}). Retrying in $((_clone_attempts * 2))s..."
+                sleep $((_clone_attempts * 2))
+            done
+            if [[ ! -d "${_repo_dir}/.git" ]]; then
+                __msg_error "Cloning failed for: $_package_name after ${_clone_max} attempts.${_break}"
+                __msg_plain " Please check your internet connection or proxy and try again."
                 return 1
-            }
+            fi
         }
         cd "${_tkg_tmp_dir}" >/dev/null 2>&1 || return 1
     else
-        # Fresh clone
+        # Fresh clone (attempt to reuse partial directory if present)
         __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Cloning ${_gray}$_package_name${_reset} ${_green_light}from Frogging-Family repository...${_reset}${_break}"
-        git clone "$_repo_url" >/dev/null 2>&1 || {
-            __msg_error "Cloning failed for: $_package_name${_break}"
-            __msg_plain " Please check your internet connection and try again."
-            return 1
-        }
+
+        # If a directory exists but has no git metadata, try to init and fetch into it
+        if [[ -d "${_repo_dir}" && ! -d "${_repo_dir}/.git" ]]; then
+            __msg_info "Found existing directory '${_repo_dir}' without git metadata; attempting to initialize and fetch..."
+            local _reuse_attempts=0
+            local _reuse_max=3
+            local _reuse_ok=false
+            while ((_reuse_attempts < _reuse_max)); do
+                if git -C "${_repo_dir}" init >/dev/null 2>&1 && git -C "${_repo_dir}" remote remove origin >/dev/null 2>&1 || true && git -C "${_repo_dir}" remote add origin "$_repo_url" >/dev/null 2>&1 && git -C "${_repo_dir}" fetch --depth=1 origin >/dev/null 2>&1; then
+                    _reuse_ok=true
+                    break
+                fi
+                _reuse_attempts=$((_reuse_attempts + 1))
+                __msg_warning "Reuse attempt ${_reuse_attempts}/${_reuse_max} failed; retrying in $((_reuse_attempts * 2))s..."
+                sleep $((_reuse_attempts * 2))
+            done
+
+            if [[ "${_reuse_ok}" == "true" ]]; then
+                __msg_info "Successfully initialized and fetched into '${_repo_dir}'. Proceeding."
+            else
+                __msg_warning "Failed to reuse existing directory '${_repo_dir}'."
+                __msg_prompt "Remove '${_repo_dir}' and attempt fresh clone? [y/N]: "
+                __prompt_answer "n"
+                if [[ "${_user_answer,,}" =~ ^(y|yes)$ ]]; then
+                    __msg_info "Removing '${_repo_dir}' and trying fresh clone..."
+                    rm -rf "${_repo_dir}" 2>/dev/null || true
+                else
+                    __msg_warning "Skipping clone due to existing directory problem."
+                    return 1
+                fi
+            fi
+        fi
+
+        # If still no git metadata, do fresh clone with retries
+        if [[ ! -d "${_repo_dir}/.git" ]]; then
+            local _clone_attempts=0
+            local _clone_max=3
+            while ((_clone_attempts < _clone_max)); do
+                if git clone "$_repo_url" >/dev/null 2>&1; then
+                    break
+                fi
+                _clone_attempts=$((_clone_attempts + 1))
+                __msg_warning "Cloning failed for: $_package_name (attempt ${_clone_attempts}/${_clone_max}). Retrying in $((_clone_attempts * 2))s..."
+                sleep $((_clone_attempts * 2))
+            done
+            if [[ ! -d "${_repo_dir}/.git" ]]; then
+                __msg_error "Cloning failed for: $_package_name after ${_clone_max} attempts.${_break}"
+                __msg_plain " Please check your internet connection or proxy and try again."
+                return 1
+            fi
+        fi
     fi
 
     # Enter repository directory
@@ -751,7 +808,7 @@ __install_package() {
 
     # Build and install the package
     __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Building and installing ${_gray}$_package_name${_reset} ${_green_light}for ${_gray}$_distro_name, ${_reset}${_orange}this may take a while...${_reset}${_break}"
-    eval "$_build_command"
+    eval "${_build_command}"
     local _status=$?
 
     # Display completion status
@@ -795,24 +852,12 @@ __prompt_timer() {
 
     # Simple progress display without complex bar
     while [[ $_seconds_left -gt 0 && $_abort_flag == false ]]; do
-        # Calculate simple progress percentage
-        local _progress_pct=$((((_timeout - _seconds_left) * 100) / _timeout))
+        # Display styled prompt (show only seconds)
+        printf "\r${_gray}%s ${_reset}  ${_orange}%02d${_gray}s ${_reset}  %s" \
+            "$_prompt_options" "$_seconds_left"
 
-        # Display simple prompt with dots
-        local _dots=""
-        case $((_seconds_left % 4)) in
-            3) _dots="   " ;;
-            2) _dots=".  " ;;
-            1) _dots=".. " ;;
-            0) _dots="..." ;;
-        esac
-
-        # Display styled prompt
-        printf "\r${_gray}%s${_reset} ${_green_dark}%d%%${_reset} ${_orange}%02d${_gray}s${_reset} %s" \
-            "$_prompt_options" "$_progress_pct" "$_seconds_left" "$_dots"
-
-        if read -r -t 1 _user_answer; then
-            __clear_line 120 ""
+        if read -r -t 1 -n 1 _key; then
+            _user_answer="$_key"
             break
         fi
         ((_seconds_left--))
@@ -827,6 +872,11 @@ __prompt_timer() {
 
     # Default if no answer
     : "${_user_answer:=$_default}"
+
+    # Normalize and sanitize user input: remove whitespace, non-digits, keep first digit only
+    _user_answer="${_user_answer//[[:space:]]/}"
+    _user_answer="${_user_answer//[^0-9]/}"
+    _user_answer="${_user_answer:0:1}"
 
     # Restore previous INT trap
     if [[ -n "$_old_trap_int" ]]; then
@@ -1075,15 +1125,18 @@ __dxvk_tools_prepare() {
         else
             __msg_info " ${_green_light}Cloning dxvk-tools repository to '${_dxvk_dir}'...${_reset}${_break}"
             if ! git clone "${_frog_pkg_repo[dxvk]}" "$_dxvk_dir" >/dev/null 2>&1; then
-                __msg_error "Failed to clone dxvk-tools repository${_break}"
-                return 1
+                __msg_warning "Failed to clone dxvk-tools repository — skipping dxvk-tools steps and continuing with Proton-TKG${_break}"
+                cd "${_tkg_tmp_dir}" >/dev/null 2>&1 || true
+                return 0
             fi
         fi
 
         # Change to dxvk-tools directory and build
         cd "$_dxvk_dir" || {
-            __msg_error "Failed to enter dxvk-tools directory${_break}"
-            return 1
+            __msg_warning "Failed to enter dxvk-tools directory — skipping dxvk-tools steps and continuing with Proton-TKG${_break}"
+            cd "${_tkg_tmp_dir}" >/dev/null 2>&1 || true
+            # Do not treat this as fatal; continue without dxvk-tools
+            return 0
         }
     else
         # User selected 'No' or nothing to build
@@ -1123,9 +1176,9 @@ __dxvk_tools_prepare() {
         __prompt_answer "n"
 
         if [[ "${_user_answer,,}" =~ ^(y|yes)$ ]]; then
-            __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}Exporting DXVK DLLs for Proton-TKG...${_reset}${_break}"
+            __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Exporting DXVK DLLs for Proton-TKG...${_reset}${_break}"
             if ./updxvk proton-tkg; then
-                __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}Export completed successfully${_reset}${_break}"
+                __msg_info "${_break}${_green_neon}${_uline_on}NOTE${_uline_off}:${_reset} ${_green_light}Export completed successfully${_reset}"
                 __msg_info "${_break}${_green_neon}${_uline_on}TIP${_uline_off}:${_reset} ${_green_light}DXVK DLLs are ready for Proton-TKG build${_reset}${_break}"
             else
                 __msg_error "Export failed${_break}"
@@ -1135,12 +1188,18 @@ __dxvk_tools_prepare() {
     else
         __msg_info "${_break}${_orange}No builds performed, skipping export step${_reset}${_break}"
     fi
+
+    # Return to temporary dir to keep working directory consistent for following steps
+    cd "${_tkg_tmp_dir}" >/dev/null 2>&1 || true
 }
 
 # Proton-TKG installation
 __proton_install() {
     # Inform user about external configuration usage
     __msg_pkg "Proton-TKG" "${_frog_repo_url}/wine-tkg-git"
+
+    # Ensure Proton repo is prepared (clone/update) BEFORE DXVK steps so build script exists
+    __install_package "${_frog_pkg_repo[proton]}" "Proton-TKG (prepare)" "" "${_frog_pkg_workdir[proton]}" >/dev/null 2>&1
 
     # Optional DXVK/vkd3d preparation (user can skip with default option)
     __dxvk_tools_prepare || __msg_warning "dxvk-tools preparation cancelled or failed, continuing with Proton-TKG build${_break}"
