@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # TKG-Installer VERSION definition
-readonly _tkg_installer_version="v0.29.7"
+readonly _tkg_installer_version="v0.29.8"
 
 # -----------------------------------------------------------------------------
 # author : damachine (damachin3 at proton dot me)
@@ -630,7 +630,7 @@ __clean_temp_dir() {
     if [[ "$_cache_count" -eq 0 ]]; then
         __msg_plain "${_green_neon}Cleanup complete ${_gray}(nothing to remove, cache already clean)${_reset}${_break}"
     else
-        __msg_plain "${_green_neon}Cleanup complete ${_gray}(${_cache_count} cached files removed, ${_cache_size_human} freed)${_reset}${_break}"
+        __msg_plain "${_green_neon}Cleanup complete ${_gray}(${_orange}${_cache_count}${_reset} ${_gray}cached files removed, ${_orange}${_cache_size_human}${_reset}${_gray} freed)${_reset}${_break}"
     fi
 }
 
@@ -850,15 +850,27 @@ __prompt_timer() {
     # Set trap to abort cleanly
     trap '__clear_line 120 ""; echo; echo; __msg_plain "${_red}Aborted by user!${_break}"; _abort_flag=true; break' INT
 
-    # Simple progress display without complex bar
+    # Simple progress display
     while [[ $_seconds_left -gt 0 && $_abort_flag == false ]]; do
-        # Display styled prompt (show only seconds)
+        # Display prompt
         printf "\r${_gray}%s ${_reset}  ${_orange}%02d${_gray}s ${_reset}  %s" \
             "$_prompt_options" "$_seconds_left"
 
         if read -r -t 1 -n 1 _key; then
-            _user_answer="$_key"
-            break
+            # If Enter pressed (no character), accept default immediately
+            if [[ -z "$_key" ]]; then
+                _user_answer="${_default}"
+                __clear_line 120 ""
+                break
+            fi
+            # Accept only digit keys
+            if [[ "$_key" =~ ^[0-9]$ ]]; then
+                _user_answer="$_key"
+                break
+            else
+                # Non-digit pressed
+                continue
+            fi
         fi
         ((_seconds_left--))
     done
@@ -868,15 +880,16 @@ __prompt_timer() {
         sleep 1.5s
         exit 130
     fi
-    __clear_line 120 ""
 
     # Default if no answer
     : "${_user_answer:=$_default}"
 
-    # Normalize and sanitize user input: remove whitespace, non-digits, keep first digit only
+    # Normalize and sanitize user input
     _user_answer="${_user_answer//[[:space:]]/}"
     _user_answer="${_user_answer//[^0-9]/}"
     _user_answer="${_user_answer:0:1}"
+
+    __clear_line 120 ""
 
     # Restore previous INT trap
     if [[ -n "$_old_trap_int" ]]; then
