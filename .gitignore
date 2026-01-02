@@ -95,7 +95,6 @@ $RECYCLE.BIN/
 .zencoder/
 .zenflow/
 .codacy/
-.codacy.*
 
 # -----------------------------------------------------------------------------
 # Project-Specific Files

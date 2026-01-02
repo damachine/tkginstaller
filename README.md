@@ -7,7 +7,7 @@
 
 <strong>A simple helper for managing TKG/Frogminer packages from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories</strong>
 
-   <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/Version-0.29.8-yellow?style=flat&logo=linux"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://github.com/search?q=org%3AFrogging-Family+author%3Adamachine&type=commits"><img src="https://img.shields.io/badge/Frogging--Family-Contributor-green?style=flat&logo=github"></a>
+   <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/Version-0.29.9-yellow?style=flat&logo=linux"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://github.com/search?q=org%3AFrogging-Family+author%3Adamachine&type=commits"><img src="https://img.shields.io/badge/Frogging--Family-Collaborator-green?style=flat&logo=github"></a>
    
 <strong>TL:DR</strong>
  - All-in-one and easy to use
@@ -101,7 +101,7 @@ curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/insta
 # All distributions (manual cleanup)
 # If the above doesn't work, manually remove files
 rm ~/.local/bin/tkginstaller  # or your installation path
-rm -rf ~/.tkginstaller
+rm -rf ~/.tkginstaller        # cache folder
 # Remove alias from shell config
 sed -i '/# TKG-Installer alias/,+1d' ~/.bashrc ~/.zshrc
 source ~/.bashrc ~/.zshrc
@@ -113,7 +113,7 @@ source ~/.bashrc ~/.zshrc
 ###### DISCLAIMER
 
 <pre>
-This AIO installer is released under the MIT license.
+This tool is released under the MIT license.
 
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg"></a>
   
