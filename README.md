@@ -101,7 +101,7 @@ curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/insta
 # All distributions (manual cleanup)
 # If the above doesn't work, manually remove files
 rm ~/.local/bin/tkginstaller  # or your installation path
-rm -rf ~/.tkginstaller
+rm -rf ~/.tkginstaller        # cache folder
 # Remove alias from shell config
 sed -i '/# TKG-Installer alias/,+1d' ~/.bashrc ~/.zshrc
 source ~/.bashrc ~/.zshrc
@@ -113,7 +113,7 @@ source ~/.bashrc ~/.zshrc
 ###### DISCLAIMER
 
 <pre>
-This AIO installer is released under the MIT license.
+This tool is released under the MIT license.
 
 <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg"></a>
   
