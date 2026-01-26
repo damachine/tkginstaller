@@ -10,10 +10,10 @@ from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> reposi
 
    <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/Version-0.30.0-yellow?style=flat&logo=linux"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://github.com/search?q=org%3AFrogging-Family+author%3Adamachine&type=commits"><img src="https://img.shields.io/badge/Frogging--Family-Collaborator-green?style=flat&logo=github"></a>
    
-<strong>TL:DR</strong>
- - For easy use all frog packages in one pond 
- - Run direct <strong><mark>CLI</mark></strong> commands or via fzf-based <strong><mark>TUI</mark></strong>
- - An thingy <strong><mark>customization.cfg</mark></strong> manager
+<strong>TL;DR</strong>
+ - For easy use all the frog packages in one pond 
+ - Run direct one-liner <strong><mark>CLI</mark></strong> commands or via fzf-finder <strong><mark>TUI</mark></strong>
+ - Intigrated the thingy <strong><mark>customization.cfg</mark></strong> manager
  - Multi-distro support
 </pre>
 
@@ -43,38 +43,31 @@ curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/insta
 ##### USAGE
 
 ```yaml
-# Use fzf-based TUI mode, simply run
+# Use fzf-finder TUI mode, simply run
 tkginstaller
 
-# Use direct CLI mode (skip TUI), run with arguments
+# Use direct one-liner CLI mode (skip TUI), run with arguments
 tkginstaller [package]
-
-# Use full names or shortcuts:
-# (l=linux, n=nvidia, m=mesa, ag=amdgpu, av=amdvlk, w=wine, p=proton, g=gamescope, ge=glibc)
+# e.g
 tkginstaller linux      # or shortcut
 tkginstaller nvidia
-tkginstaller mesa
-tkginstaller amdgpu
-tkginstaller amdvlk
-tkginstaller wine
-tkginstaller proton
-tkginstaller gamescope
-tkginstaller glibc
 
-# Edit a package's configuration file:
-tkginstaller [package] [action]
+# Edit a package's configuration file
+tkginstaller [config] [package]
+# e.g
+tkginstaller config         # Enter fzf-finder TUI to select package
+tkginstaller config linux   # or shortcut
 
-# Use full names or shortcuts: (c=config, e=edit)
-tkginstaller config         # Enter TUI to select package
-tkginstaller linux config   # or shortcut
-tkginstaller config linux
-tkginstaller mesa edit
-
-# Clean up all temporary files and restart installer
+# Clean up all temporary files
 tkginstaller clean
 
-# Use 'help' or its shortcuts (h, --help, -h)
+# Show help
 tkginstaller help
+
+# All names and shortcuts to use:
+# l=linux, n=nvidia, m=mesa, ag=amdgpu, av=amdvlk, w=wine, p=proton, g=gamescope, ge=glibc
+# c=config, e=edit
+# h, --help, -h
 ```
 
 # 
@@ -98,8 +91,8 @@ curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/insta
 ```
 ```yaml
 # All distributions (manual cleanup)
-# If the above doesn't work, manually remove files
-rm ~/.local/bin/tkginstaller  # or your installation path
+# Manually remove all files
+rm /patch/to/tkginstaller     # where you put it
 rm -rf ~/.tkginstaller        # cache folder
 # Remove alias from shell config
 sed -i '/# TKG-Installer alias/,+1d' ~/.bashrc ~/.zshrc
