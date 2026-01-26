@@ -11,9 +11,9 @@ from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> reposi
    <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/Version-0.30.0-yellow?style=flat&logo=linux"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://github.com/search?q=org%3AFrogging-Family+author%3Adamachine&type=commits"><img src="https://img.shields.io/badge/Frogging--Family-Collaborator-green?style=flat&logo=github"></a>
    
 <strong>TL:DR</strong>
- - All frog packages in one pond for easy use
+ - For easy use all frog packages in one pond 
  - Run direct <strong><mark>CLI</mark></strong> commands or via fzf-based <strong><mark>TUI</mark></strong>
- - An enhanced AIO <strong><mark>customization.cfg</mark></strong> manager
+ - An thingy <strong><mark>customization.cfg</mark></strong> manager
  - Multi-distro support
 </pre>
 
