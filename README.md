@@ -3,17 +3,16 @@
 ░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
-──  KISS the 🐸  ──
+──  🐸  ──
 
-<strong>A simple helper for Download, build, install/update, customize and tweak any package
-from the <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories</strong>
+<strong>A small helper that makes working with <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories easy</strong>
 
    <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/Version-0.30.0-yellow?style=flat&logo=linux"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://github.com/search?q=org%3AFrogging-Family+author%3Adamachine&type=commits"><img src="https://img.shields.io/badge/Frogging--Family-Collaborator-green?style=flat&logo=github"></a>
    
 <strong>TL;DR</strong>
- - For easy use all the frog packages in one pond 
- - Run direct one-liner <strong><mark>CLI</mark></strong> commands or via fzf-finder <strong><mark>TUI</mark></strong>
- - Intigrated the thingy <strong><mark>customization.cfg</mark></strong> manager
+ - All frog packages in one pond 🐸 
+ - Run quick one-liner <strong><mark>CLI</mark></strong> commands or an interactive fzf-finder <strong><mark>TUI</mark></strong>
+ - Built-in <strong><mark>customization.cfg</mark></strong> manager
  - Multi-distro support
 </pre>
 
