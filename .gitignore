@@ -1,166 +1,35 @@
-# =============================================================================
-# Git Ignore for TKG-Installer
-# =============================================================================
-
-# -----------------------------------------------------------------------------
-# Compiled/Build Artifacts
-# -----------------------------------------------------------------------------
-bin/
-build/
-.cache/
-.makepkg/
-*/pkg/
-pkg/*
+!.github
+!.gitignore
+!.gitattributes
+!install.sh
+tkginstaller-bin/
+*~
+.*
+*.orig
+*.log
+*.run
 *.tgz
 *.xz
-*.zip
-*.gz
-*.zst
-*.bz2
-*.7z
-*.rar
 *.pkg
-*.pkg.*
-*.tar.gz
-*.files
-*.run
-
-# -----------------------------------------------------------------------------
-# Temporary Files
-# -----------------------------------------------------------------------------
-*~
 *.bak
-*.orig
+*.tar.gz
+*.tar.zst
 *.old
-*.tmp
-*.swp
-*.swo
-temp/
-logs/*
-
-# -----------------------------------------------------------------------------
-# Operating System Specific Files
-# -----------------------------------------------------------------------------
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-._*
-
-# Windows
-Thumbs.db
-Thumbs.db:encryptable
-ehthumbs.db
-ehthumbs_vista.db
-Desktop.ini
-$RECYCLE.BIN/
-
-# Linux
-.directory
-.Trash-*
-.nfs*
-
-# -----------------------------------------------------------------------------
-# Editor/IDE Configurations
-# -----------------------------------------------------------------------------
-# VS Code
+*.db
+*.files
+src/
+pkg/
 .vscode/
 *.code-workspace
-
-# JetBrains IDEs (IntelliJ, PyCharm, etc.)
-.idea/
-*.iml
-*.iws
-
-# Vim
 *.swp
 *.swo
 *~
 .*.sw?
-
-# Emacs
-*~
-\#*\#
-.\#*
-
-# Kate
 *.kate-swp
-
-# Sublime Text
-*.sublime-project
-*.sublime-workspace
-
-# AI Assistants
-.qodo/
-.zencoder/
-.zenflow/
-.codacy/
-
-# -----------------------------------------------------------------------------
-# Project-Specific Files
-# -----------------------------------------------------------------------------
-# TKG-Installer internal directory
-tkginstaller-bin/
-
-# Build logs
-*.log
-
-# Environment variables & secrets
-.env
-.env.local
-.env.*.local
-secrets.yml
-secrets.yaml
-
-# GPG/Signing
 gnupg/
-
-# -----------------------------------------------------------------------------
-# Git-Specific Exceptions
-# -----------------------------------------------------------------------------
-# Keep Git directory and important files
-!.github
-!.gitignore
-!.gitattributes
 
 # GitHub-specific ignores
 # AI Copilot instructions (only relevant for developers)
 .github/copilot-instructions.md
 .github/instructions/copilot-instructions.md
 .github/instructions/BEST_PRACTICES.instructions.md
-.github/instructions/codacy.instructions.md
-
-# -----------------------------------------------------------------------------
-# Additional Build/Cache Directories
-# -----------------------------------------------------------------------------
-node_modules/
-.npm
-.yarn
-vendor/
-
-# Python (if used)
-__pycache__/
-*.py[cod]
-*$py.class
-.Python
-*.egg-info/
-
-# Ruby (if used)
-.bundle/
-vendor/bundle/
-
-# -----------------------------------------------------------------------------
-# Documentation Build
-# -----------------------------------------------------------------------------
-_site/
-.jekyll-cache/
-.sass-cache/
-
-# -----------------------------------------------------------------------------
-# Test Artifacts
-# -----------------------------------------------------------------------------
-coverage/
-.coverage
-htmlcov/
-*.cover
-.pytest_cache/
