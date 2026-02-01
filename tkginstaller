@@ -11,7 +11,7 @@
 # -----------------------------------------------------------------------------
 
 # TKG-Installer VERSION definition
-readonly _tkg_installer_version="v0.30.0"
+readonly _tkg_installer_version="v0.30.1"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -380,6 +380,74 @@ EOF
 # CORE UTILITY FUNCTIONS
 # =============================================================================
 
+# Safe directory change with error handling
+__cd_safe() {
+    local _target="$1"
+    local _error_msg="${2:-Failed to enter directory: ${_target}}"
+    cd "${_target}" || {
+        __msg_error "${_error_msg}${_break}"
+        return 1
+    }
+}
+
+# Git clone with retry logic
+__git_clone_retry() {
+    local _repo_url="$1"
+    local _target_dir="${2:-}"
+    local _max_attempts="${3:-3}"
+    local _attempt=0
+
+    while ((_attempt < _max_attempts)); do
+        if [[ -n "${_target_dir}" ]]; then
+            git clone "${_repo_url}" "${_target_dir}" >/dev/null 2>&1 && return 0
+        else
+            git clone "${_repo_url}" >/dev/null 2>&1 && return 0
+        fi
+        _attempt=$((_attempt + 1))
+        __msg_warning "Clone failed (attempt ${_attempt}/${_max_attempts}). Retrying in $((_attempt * 2))s..."
+        sleep $((_attempt * 2))
+    done
+    return 1
+}
+
+# Build menu for installation method selection
+# Sets _menu_choice global variable (not returned via echo due to subshell stdin issues)
+# Usage: __build_menu "Package Name" "opt1_label" "opt1_desc" ["opt2_label" "opt2_desc" "opt9_label" "opt9_desc"]
+__build_menu() {
+    local _pkg_name="$1"
+    local _opt1_label="${2:-makepkg -si}"
+    local _opt1_desc="${3:-recommended for Arch}"
+    local _opt2_label="${4:-}"
+    local _opt2_desc="${5:-custom build script}"
+    local _opt9_label="${6:-}"
+    local _opt9_desc="${7:-}"
+
+    __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which build method do you want to use?${_reset}${_break}"
+    __msg_plain " Detected distro: ${_gray}${_distro_name}${_reset}${_break}"
+    __msg_plain " ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ ${_opt1_label}  ${_green_light}${_opt1_desc}${_reset}"
+
+    [[ -n "${_opt2_label}" ]] && __msg_plain " ${_orange}2${_reset} │ ${_opt2_label}  ${_gray}${_opt2_desc}${_reset}"
+    [[ -n "${_opt9_label}" ]] && __msg_plain " ${_gray}9${_reset} │ ${_opt9_label}  ${_gray}${_opt9_desc}${_reset}"
+    __msg_plain " ${_red}0${_reset} │ Cancel${_break}"
+
+    local _choices="[${_green_neon}${_uline_on}1${_uline_off}${_reset}"
+    [[ -n "${_opt2_label}" ]] && _choices+="/${_orange}2${_reset}"
+    [[ -n "${_opt9_label}" ]] && _choices+="/${_gray}9${_reset}"
+    _choices+="/${_red}0${_reset}]"
+
+    __prompt_timer "${_choices}" 60 1
+    _menu_choice="${_user_answer}"
+}
+
+# Export associative array as newline-separated key=value for fzf preview
+__export_map() {
+    local -n _map_ref="$1"
+    local _key
+    for _key in "${!_map_ref[@]}"; do
+        printf '%s=%s\n' "${_key}" "${_map_ref[${_key}]}"
+    done
+}
+
 # Pre-installation checks
 __prepare() {
     _load_preview="${1:-false}"
@@ -650,135 +718,57 @@ __install_package() {
     local _build_command="$3"
     local _work_directory="${4:-}"
 
-    # Enter temporary directory
-    cd "${_tkg_tmp_dir}" || {
-        __msg_error "Failed to enter temporary directory: ${_tkg_tmp_dir}${_break}"
-        return 1
-    }
+    __cd_safe "${_tkg_tmp_dir}" || return 1
 
-    # Clone or update repository (git pull if exists, clone if not)
     local _repo_dir
     _repo_dir=$(basename "${_repo_url}" .git)
 
+    # Clone or update repository
     if [[ -d "${_repo_dir}/.git" ]]; then
-        # Repository exists - update with git pull (recommended by linux-tkg)
         __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Updating ${_gray}${_package_name}${_reset} ${_green_light}(git pull)...${_reset}${_break}"
-        cd "${_repo_dir}" || {
-            __msg_error "Cannot enter repository directory: ${_repo_dir}${_break}"
-            return 1
-        }
-        git pull || {
+        __cd_safe "${_repo_dir}" || return 1
+
+        if ! git pull; then
             __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Git pull failed, trying fresh clone...${_reset}${_break}"
-            cd "${_tkg_tmp_dir}" || {
-                __msg_error "Failed to enter temporary directory: ${_tkg_tmp_dir}${_break}"
+            __cd_safe "${_tkg_tmp_dir}" || return 1
+            rm -rf "${_repo_dir}"
+            __git_clone_retry "${_repo_url}" || {
+                __msg_error "Cloning failed for: ${_package_name}${_break}"
                 return 1
             }
-            rm -rf "${_repo_dir}"
-            # Attempt clone with retries/backoff
-            local _clone_attempts=0
-            local _clone_max=3
-            while ((_clone_attempts < _clone_max)); do
-                if git clone "${_repo_url}" >/dev/null 2>&1; then
-                    break
-                fi
-                _clone_attempts=$((_clone_attempts + 1))
-                __msg_warning "Cloning failed for: ${_package_name} (attempt ${_clone_attempts}/${_clone_max}). Retrying in $((_clone_attempts * 2))s..."
-                sleep $((_clone_attempts * 2))
-            done
-            if [[ ! -d "${_repo_dir}/.git" ]]; then
-                __msg_error "Cloning failed for: ${_package_name} after ${_clone_max} attempts.${_break}"
-                __msg_plain " Please check your internet connection or proxy and try again."
-                return 1
-            fi
-        }
-        cd "${_tkg_tmp_dir}" || {
-            __msg_error "Failed to enter temporary directory: ${_tkg_tmp_dir}${_break}"
-            return 1
-        }
+        fi
+        __cd_safe "${_tkg_tmp_dir}" || return 1
     else
-        # Fresh clone (attempt to reuse partial directory if present)
         __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Cloning ${_gray}${_package_name}${_reset} ${_green_light}from Frogging-Family repository...${_reset}${_break}"
 
-        # If a directory exists but has no git metadata, try to init and fetch into it
-        if [[ -d "${_repo_dir}" && ! -d "${_repo_dir}/.git" ]]; then
-            __msg_info "Found existing directory '${_repo_dir}' without git metadata; attempting to initialize and fetch..."
-            local _reuse_attempts=0
-            local _reuse_max=3
-            local _reuse_ok=false
-            while ((_reuse_attempts < _reuse_max)); do
-                if git -C "${_repo_dir}" init >/dev/null 2>&1 && git -C "${_repo_dir}" remote remove origin >/dev/null 2>&1 && git -C "${_repo_dir}" remote add origin "${_repo_url}" >/dev/null 2>&1 && git -C "${_repo_dir}" fetch --depth=1 origin >/dev/null 2>&1; then
-                    _reuse_ok=true
-                    break
-                fi
-                _reuse_attempts=$((_reuse_attempts + 1))
-                __msg_warning "Reuse attempt ${_reuse_attempts}/${_reuse_max} failed; retrying in $((_reuse_attempts * 2))s..."
-                sleep $((_reuse_attempts * 2))
-            done
-
-            if [[ "${_reuse_ok}" == "true" ]]; then
-                __msg_info "Successfully initialized and fetched into '${_repo_dir}'. Proceeding."
-            else
-                __msg_warning "Failed to reuse existing directory '${_repo_dir}'."
-                __msg_prompt "Remove '${_repo_dir}' and attempt fresh clone? [y/N]: "
-                __prompt_answer "n"
-                if [[ "${_user_answer,,}" =~ ^(y|yes)$ ]]; then
-                    __msg_info "Removing '${_repo_dir}' and trying fresh clone..."
-                    rm -rf "${_repo_dir}"
-                else
-                    __msg_warning "Skipping clone due to existing directory problem."
-                    return 1
-                fi
-            fi
+        # Handle existing directory without git metadata
+        if [[ -d "${_repo_dir}" ]]; then
+            __msg_warning "Found directory '${_repo_dir}' without git metadata"
+            __msg_prompt "Remove and try fresh clone? [y/N]: "
+            __prompt_answer "n"
+            [[ "${_user_answer,,}" =~ ^(y|yes)$ ]] && rm -rf "${_repo_dir}" || return 1
         fi
 
-        # If still no git metadata, do fresh clone with retries
-        if [[ ! -d "${_repo_dir}/.git" ]]; then
-            local _clone_attempts=0
-            local _clone_max=3
-            while ((_clone_attempts < _clone_max)); do
-                if git clone "${_repo_url}" >/dev/null 2>&1; then
-                    break
-                fi
-                _clone_attempts=$((_clone_attempts + 1))
-                __msg_warning "Cloning failed for: ${_package_name} (attempt ${_clone_attempts}/${_clone_max}). Retrying in $((_clone_attempts * 2))s..."
-                sleep $((_clone_attempts * 2))
-            done
-            if [[ ! -d "${_repo_dir}/.git" ]]; then
-                __msg_error "Cloning failed for: ${_package_name} after ${_clone_max} attempts.${_break}"
-                __msg_plain " Please check your internet connection or proxy and try again."
-                return 1
-            fi
-        fi
-    fi
-
-    # Enter repository directory
-    cd "${_repo_dir}" || {
-        __msg_error "Cloned repository directory not found: ${_repo_dir}${_break}"
-        __msg_plain " Please check your path or permissions and try again."
-        return 1
-    }
-
-    # Navigate to working directory (wine/proton)
-    if [[ -n "${_work_directory}" ]]; then
-        cd "${_work_directory}" || {
-            __msg_error "Working directory not found: ${_work_directory}${_break}"
-            __msg_plain " Please check your path or permissions and try again."
+        __git_clone_retry "${_repo_url}" || {
+            __msg_error "Cloning failed for: ${_package_name}${_break}"
             return 1
         }
     fi
 
-    # Display onefetch
+    __cd_safe "${_repo_dir}" || return 1
+    [[ -n "${_work_directory}" ]] && { __cd_safe "${_work_directory}" || return 1; }
+
+    # Display onefetch info
     if command -v onefetch >/dev/null 2>&1; then
         onefetch --no-bold --no-title --no-art --no-color-palette --http-url --email --nerd-fonts --text-colors 15 15 15 15 15 8 2>/dev/null | sed -u 's/^/ /'
-        sleep 1.5s # Short delay
+        sleep 1.5s
     fi
 
-    # Build and install the package
-    __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Building and installing ${_gray}${_package_name}${_reset} ${_green_light}for ${_gray}${_distro_name}, ${_reset}${_orange}this may take a while...${_reset}${_break}"
+    # Build and install
+    __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Building ${_gray}${_package_name}${_reset} ${_green_light}for ${_gray}${_distro_name}${_reset}${_orange}, this may take a while...${_reset}${_break}"
     eval "${_build_command}"
     local _status=$?
 
-    # Display completion status
     __status "${_status}" "${_package_name}"
     return "${_status}"
 }
@@ -814,16 +804,16 @@ __prompt_timer() {
     _user_answer=""
     local _abort_flag=false
 
-    # Set trap to abort cleanly
-    trap '__clear_line 120 ""; echo; echo; __msg_plain "${_red}Aborted by user!${_break}"; _abort_flag=true; break' INT
-
     # Simple progress display
     while [[ ${_seconds_left} -gt 0 && ${_abort_flag} == false ]]; do
+        # Set trap inside loop so break works correctly
+        trap '__clear_line 120 ""; echo; echo; __msg_plain "${_red}Aborted by user!${_break}"; _abort_flag=true; break' INT
+
         # Display prompt
         printf "\r${_gray}%s ${_reset}  ${_orange}%02d${_gray}s ${_reset}  %s" \
             "${_prompt_options}" "${_seconds_left}"
 
-        if read -r -t 1 -n 1 _key; then
+        if read -r -t 1 -n 1 _key </dev/tty; then
             # If Enter pressed (no character), accept default immediately
             if [[ -z "${_key}" ]]; then
                 _user_answer="${_default}"
@@ -875,359 +865,205 @@ __prompt_answer() {
 
 # Linux-TKG installation
 __linux_install() {
-    # Inform user about external configuration
     __msg_pkg "Linux-TKG" "${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
 
-    # Determine build command
     local _build_command
-    local _pkg_type=""
 
     if [[ "${_is_arch_based}" == "true" ]]; then
-        # Arch-based distributions build system to use
-        __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which installations method do you want to perform${_reset}${_break}"
-        __msg_plain " Detected distro: ${_gray}${_distro_name}${_reset}${_break}"
-        __msg_plain " ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ makepkg -si           ${_green_light}recommended for Arch${_reset}"
-        __msg_plain " ${_orange}2${_reset} │ install.sh install    ${_gray}(generic script)${_reset}"
-        __msg_plain " ${_gray}9${_reset} │ install.sh uninstall  ${_gray}(show uninstall help)${_reset}"
-        __msg_plain " ${_red}0${_reset} │ Cancel${_break}"
+        __build_menu "Linux-TKG" \
+            "makepkg -si" "recommended for Arch" \
+            "install.sh install" "(generic script)" \
+            "install.sh uninstall" "(show uninstall help)"
 
-        __prompt_timer "[${_green_neon}${_uline_on}1${_uline_off}${_reset}/${_orange}2${_reset}/${_gray}9${_reset}/${_red}0${_reset}]" 60 1
-
-        case "${_user_answer}" in
+        case "${_menu_choice}" in
             0)
-                __msg_info "${_break}${_break}${_orange}Cancelled by user${_reset}${_break}"
+                __msg_info "${_break}${_orange}Cancelled by user${_reset}${_break}"
                 __exit 1
                 ;;
-            2)
-                _build_command="chmod +x install.sh && ./install.sh install"
-                ;;
-            9)
-                _build_command="chmod +x install.sh && ./install.sh uninstall-help"
-                ;;
-            *)
-                _build_command="makepkg -si"
-                ;;
+            2) _build_command="chmod +x install.sh && ./install.sh install" ;;
+            9) _build_command="chmod +x install.sh && ./install.sh uninstall-help" ;;
+            *) _build_command="makepkg -si" ;;
         esac
     else
-        # Detect DEB or RPM based distributions
+        local _pkg_type=""
         case "${_distro_id,,}" in
-            debian | ubuntu | linuxmint | pop | elementary | mx | raspbian)
-                _pkg_type="DEB"
-                ;;
-            fedora | rhel | centos | rocky | alma | opensuse* | suse*)
-                _pkg_type="RPM"
-                ;;
+            debian | ubuntu | linuxmint | pop | elementary | mx | raspbian) _pkg_type="DEB" ;;
+            fedora | rhel | centos | rocky | alma | opensuse* | suse*) _pkg_type="RPM" ;;
         esac
 
-        # Show info for DEB/RPM based distros
-        if [[ -n "${_pkg_type}" ]]; then
-            __msg_info "${_break}${_green_neon}${_uline_on}INFO${_uline_off}:${_reset}${_green_light} ${_pkg_type}-based distribution detected: ${_gray}${_distro_name}${_reset}${_break}"
-            __msg_plain " The install.sh script will create ${_gray}.${_pkg_type,,}${_reset} packages,"
-            __msg_plain " move them to the ${_gray}${_pkg_type}S${_reset} subfolder, then prompt to install.${_break}"
-        else
-            __msg_info "${_break}${_green_neon}${_uline_on}INFO${_uline_off}:${_reset}${_green_light} Linux distribution detected: ${_gray}${_distro_name}${_reset}${_break}"
-        fi
-
-        # Non-Arch distributions use install.sh
+        [[ -n "${_pkg_type}" ]] && __msg_info "${_break}${_green_neon}${_uline_on}INFO${_uline_off}:${_reset}${_green_light} ${_pkg_type}-based distribution detected: ${_gray}${_distro_name}${_reset}${_break}"
         _build_command="chmod +x install.sh && ./install.sh install"
     fi
 
-    # Execute installation process
     __install_package "${_frog_pkg_repo[linux]}" "linux-tkg" "${_build_command}"
     local _status=$?
 
     # Offer uninstall info for non-Arch distros after successful installation
     if [[ "${_is_arch_based}" != "true" && ${_status} -eq 0 ]]; then
         __msg_info "${_break}${_green_neon}${_uline_on}TIP${_uline_off}:${_reset}${_green_light} Uninstalling custom kernels has to be done manually.${_break}"
-        __msg_plain " The install.sh script can help with useful information:${_break}"
-        __msg_plain " ${_gray}cd ${_tkg_tmp_dir}/linux-tkg && ./install.sh uninstall-help${_reset}${_break}"
-        __msg_prompt "${_break}Show uninstall info now? [y/N]: "
+        __msg_prompt "Show uninstall info now? [y/N]: "
         read -r _show_info
-        if [[ "${_show_info,,}" =~ ^(y|yes)$ ]]; then
-            __msg_info "${_break}${_green_neon}${_uline_on}UNINSTALL-HELP${_uline_off}:${_reset}${_break}"
-            cd "${_tkg_tmp_dir}/linux-tkg" && ./install.sh uninstall-help
-        fi
+        [[ "${_show_info,,}" =~ ^(y|yes)$ ]] && { cd "${_tkg_tmp_dir}/linux-tkg" && ./install.sh uninstall-help; }
     fi
 
     return "${_status:-0}"
 }
 
-# Nvidia-all installation
-__nvidia_install() {
-    __install_pkg_key "nvidia"
-}
-
-# Mesa-TKG installation
-__mesa_install() {
-    __install_pkg_key "mesa"
-}
-
-# AMDGPU-PRO installation
-__amdgpu_pro_install() {
-    __install_pkg_key "amdgpu"
-}
-
-# AMDVLK-OPT installation
-__amdvlk_opt_install() {
-    __install_pkg_key "amdvlk"
-}
-
-# Gamescope installation
-__gamescope_install() {
-    __install_pkg_key "gamescope"
-}
+# Simple package installers - direct delegation to __install_pkg_key
+__nvidia_install() { __install_pkg_key "nvidia"; }
+__mesa_install() { __install_pkg_key "mesa"; }
+__amdgpu_pro_install() { __install_pkg_key "amdgpu"; }
+__amdvlk_opt_install() { __install_pkg_key "amdvlk"; }
+__gamescope_install() { __install_pkg_key "gamescope"; }
 
 # Wine-TKG installation
 __wine_install() {
-    # Inform user about external configuration usage
     __msg_pkg "Wine-TKG" "${_frog_repo_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
 
-    # Determine build command
     local _build_command
 
     if [[ "${_is_arch_based}" == "true" ]]; then
-        # Arch-based distributions build system to use
-        __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which build system do you want to use${_reset}${_break}"
-        __msg_plain " Detected distro: ${_gray}${_distro_name}${_reset}${_break}"
-        __msg_plain " ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ makepkg -si           ${_green_light}recommended for Arch${_reset}"
-        __msg_plain " ${_orange}2${_reset} │ non-makepkg-build.sh  ${_gray}(custom build script)${_reset}"
-        __msg_plain " ${_red}0${_reset} │ Cancel${_break}"
+        __build_menu "Wine-TKG" \
+            "makepkg -si" "recommended for Arch" \
+            "non-makepkg-build.sh" "(custom build script)"
 
-        # Get user choice with timeout
-        __prompt_timer "[${_green_neon}${_uline_on}1${_uline_off}${_reset}/${_orange}2${_reset}/${_red}0${_reset}]" 60 1
-
-        case "${_user_answer}" in
+        case "${_menu_choice}" in
             0)
-                __msg_info "${_break}${_break}${_orange}Cancelled by user${_reset}${_break}"
+                __msg_info "${_break}${_orange}Cancelled by user${_reset}${_break}"
                 __exit 1
                 ;;
-            2)
-                _build_command="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
-                ;;
-            *)
-                _build_command="makepkg -si"
-                ;;
+            2) _build_command="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh" ;;
+            *) _build_command="makepkg -si" ;;
         esac
     else
-        # Non-Arch distributions
         _build_command="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
     fi
 
-    # Execute installation
     __install_package "${_frog_pkg_repo[wine]}" "wine-tkg-git" "${_build_command}" "${_frog_pkg_workdir[wine]}"
 }
 
 # glibc-eac installation
 __glibc_install() {
-    # Determine build command
+    __build_menu "Glibc-eac" \
+        "glibc_eac.sh" "recommended (Build & Install)" \
+        "glibc_eac.sh build" "(Build only, no install)"
+
     local _build_command
-
-    # Inform user about external configuration usage
-    __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}How do you want to build glibc-eac?${_reset}${_break}"
-    __msg_plain " Detected distro: ${_gray}${_distro_name}${_reset}${_break}"
-    __msg_plain " ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ glibc_eac.sh         ${_green_light}recommended (Build & Install)${_reset}"
-    __msg_plain " ${_orange}2${_reset} │ glibc_eac.sh build   ${_gray}(Build only, no install)${_reset}"
-    __msg_plain " ${_red}0${_reset} │ Cancel${_break}"
-
-    # Get user choice with timeout
-    __prompt_timer "[${_green_neon}${_uline_on}1${_uline_off}${_reset}/${_orange}2${_reset}/${_red}0${_reset}]" 60 1
-
-    case "${_user_answer}" in
+    case "${_menu_choice}" in
         0)
-            __msg_info "${_break}${_break}${_orange}Cancelled by user${_reset}${_break}"
+            __msg_info "${_break}${_orange}Cancelled by user${_reset}${_break}"
             __exit 1
             ;;
-        2)
-            _build_command="chmod +x glibc_eac.sh && ./glibc_eac.sh build"
-            ;;
-        *)
-            _build_command="chmod +x glibc_eac.sh && ./glibc_eac.sh"
-            ;;
+        2) _build_command="chmod +x glibc_eac.sh && ./glibc_eac.sh build" ;;
+        *) _build_command="chmod +x glibc_eac.sh && ./glibc_eac.sh" ;;
     esac
 
-    # Execute installation
     __install_package "${_frog_pkg_repo[glibc]}" "glibc-eac" "${_build_command}"
 }
 
 # DXVK-Tools preparation (optional pre-build for Proton-TKG)
 __dxvk_tools_prepare() {
-    # Present build options menu FIRST (before cloning)
     __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which DXVK/vkd3d build option do you want?${_reset}${_break}"
-    __msg_plain " ${_orange}${_uline_on}0${_uline_off}${_reset} │ No (skip)              ${_gray}Skip all builds, continue with Proton-TKG${_reset}"
-    __msg_plain " ${_green_neon}1${_reset} │ Yes (build both)       ${_green_light}Build DXVK + vkd3d-proton${_reset}"
-    __msg_plain " ${_orange}2${_reset} │ Custom                 ${_gray}Choose individually which to build${_reset}"
+    __msg_plain " ${_orange}${_uline_on}0${_uline_off}${_reset} │ No (skip)       ${_gray}Skip, continue with Proton-TKG${_reset}"
+    __msg_plain " ${_green_neon}1${_reset} │ Yes (both)      ${_green_light}Build DXVK + vkd3d-proton${_reset}"
+    __msg_plain " ${_orange}2${_reset} │ Custom          ${_gray}Choose individually${_reset}"
     __msg_plain " ${_red}9${_reset} │ Cancel${_break}"
 
-    __msg_info "${_green_neon}${_uline_on}NOTE${_uline_off}:${_reset} ${_green_light}By default, Proton-TKG downloads latest official DXVK release from GitHub.${_reset}${_break}"
-    __msg_plain " You have nothing to do, it's all good. However, if you want to build/use a"
-    __msg_plain " development or modified version of DXVK, it's recommended to use dxvk-tools.${_break}"
-
-    __msg_info "${_orange}${_uline_on}IMPORTANT${_uline_off}:${_reset} ${_orange}To use the prebuilt DXVK/vkd3d tools in Proton-TKG:${_reset}${_break}"
-    __msg_plain " Set ${_gray}_use_dxvk=\"prebuilt\"${_reset} in your ${_gray}proton-tkg.cfg${_reset} configuration file."
-    __msg_plain " Location: ${_gray}~/.config/frogminer/proton-tkg.cfg${_reset}${_break}"
-    __msg_plain " More info: ${_gray}https://github.com/Frogging-Family/wine-tkg-git/tree/master/proton-tkg#the-prebuilt-dxvk-problem${_reset}${_break}"
+    __msg_info "${_green_neon}${_uline_on}NOTE${_uline_off}:${_reset} ${_green_light}Proton-TKG downloads official DXVK by default.${_reset}${_break}"
+    __msg_plain " Set ${_gray}_use_dxvk=\"prebuilt\"${_reset} in ${_gray}proton-tkg.cfg${_reset} to use custom builds.${_break}"
 
     __prompt_timer "[${_orange}${_uline_on}0${_uline_off}${_reset}/${_green_neon}1${_reset}/${_orange}2${_reset}/${_red}9${_reset}]" 60 0
 
-    local _build_dxvk=false
-    local _build_vkd3d=false
-    local _built_something=false
+    local _build_dxvk=false _build_vkd3d=false _built_something=false
 
     case "${_user_answer}" in
         9)
-            __msg_info "${_break}${_break}${_orange}Cancelled by user${_reset}${_break}"
+            __msg_info "${_break}${_orange}Cancelled${_reset}${_break}"
             __exit 1
             ;;
         0)
-            __msg_info "${_break}${_orange}Skipping DXVK/vkd3d builds, continue with Proton-TKG${_reset}"
+            __msg_info "${_break}${_orange}Skipping DXVK/vkd3d${_reset}"
             return 0
             ;;
         2)
-            # Custom selection - ask individually
-            __msg_prompt "${_break}Build ${_reset}${_gray}'DXVK'${_reset} (DirectX to Vulkan)? [y/N]: "
+            __msg_prompt "${_break}Build DXVK? [y/N]: "
             __prompt_answer "n"
             [[ "${_user_answer,,}" =~ ^(y|yes)$ ]] && _build_dxvk=true
-
-            __msg_prompt "Build ${_reset}${_gray}'vkd3d-proton'${_reset} (Direct3D 12 to Vulkan)? [y/N]: "
+            __msg_prompt "Build vkd3d-proton? [y/N]: "
             __prompt_answer "n"
             [[ "${_user_answer,,}" =~ ^(y|yes)$ ]] && _build_vkd3d=true
             ;;
         *)
-            # Build both (Option 1)
             _build_dxvk=true
             _build_vkd3d=true
             ;;
     esac
 
-    # Clone dxvk-tools ONLY if user wants to build something (Option 1 or 3)
-    if [[ "${_build_dxvk}" == "true" ]] || [[ "${_build_vkd3d}" == "true" ]]; then
-        __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Preparing dxvk-tools${_reset}${_break}"
-        __msg_plain " DXVK-tools allows building custom DXVK and vkd3d-proton versions"
+    # Nothing to build
+    [[ "${_build_dxvk}" != "true" && "${_build_vkd3d}" != "true" ]] && return 0
 
-        local _dxvk_dir="${_tkg_tmp_dir}/dxvk-tools"
-        if [[ -d "${_dxvk_dir}" ]]; then
-            __msg_info " ${_green_light}dxvk-tools directory already exists, using existing clone${_reset}${_break}"
-        else
-            __msg_info " ${_green_light}Cloning dxvk-tools repository to '${_dxvk_dir}'...${_reset}${_break}"
-            if ! git clone "${_frog_pkg_repo[dxvk]}" "${_dxvk_dir}" >/dev/null 2>&1; then
-                __msg_warning "Failed to clone dxvk-tools repository — skipping dxvk-tools steps and continuing with Proton-TKG${_break}"
-                cd "${_tkg_tmp_dir}" || {
-                    __msg_warning "Failed to enter temporary directory: ${_tkg_tmp_dir}${_break}"
-                    return 0
-                }
-                return 0
-            fi
-        fi
-
-        # Change to dxvk-tools directory and build
-        cd "${_dxvk_dir}" || {
-            __msg_warning "Failed to enter dxvk-tools directory — skipping dxvk-tools steps and continuing with Proton-TKG${_break}"
-            cd "${_tkg_tmp_dir}" || {
-                __msg_warning "Failed to enter temporary directory: ${_tkg_tmp_dir}${_break}"
-                return 0
-            }
-            # Do not treat this as fatal; continue without dxvk-tools
+    # Clone/prepare dxvk-tools
+    local _dxvk_dir="${_tkg_tmp_dir}/dxvk-tools"
+    if [[ ! -d "${_dxvk_dir}" ]]; then
+        __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Cloning dxvk-tools...${_reset}${_break}"
+        __git_clone_retry "${_frog_pkg_repo[dxvk]}" "${_dxvk_dir}" || {
+            __msg_warning "Clone failed, skipping dxvk-tools${_break}"
             return 0
         }
-    else
-        # User selected 'No' or nothing to build
-        return 0
     fi
 
-    # Short delay for better UX
-    sleep 1.5s
+    __cd_safe "${_dxvk_dir}" || return 0
+    sleep 1s
 
-    # Build DXVK if selected
+    # Build selected components
     if [[ "${_build_dxvk}" == "true" ]]; then
         __msg_info "${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Building DXVK...${_reset}${_break}"
         if ./updxvk build; then
-            __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}DXVK build completed successfully${_reset}${_break}"
             _built_something=true
         else
-            __msg_error "DXVK build failed${_break}"
-            __msg_plain " Continuing anyway...${_break}"
+            __msg_warning "DXVK build failed${_break}"
         fi
     fi
 
-    # Build vkd3d-proton if selected
     if [[ "${_build_vkd3d}" == "true" ]]; then
         __msg_info "${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Building vkd3d-proton...${_reset}${_break}"
         if ./upvkd3d-proton build; then
-            __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}vkd3d-proton build completed successfully${_reset}${_break}"
             _built_something=true
         else
-            __msg_error "vkd3d-proton build failed${_reset}${_break}"
-            __msg_plain " Continuing anyway...${_break}"
+            __msg_warning "vkd3d build failed${_break}"
         fi
     fi
 
-    # Only ask about export if something was built
+    # Export if something was built
     if [[ "${_built_something}" == "true" ]]; then
-        __msg_prompt "${_break}Do you want to ${_reset}${_gray}'export for Proton-TKG'${_reset}? [y/N]: "
+        __msg_prompt "${_break}Export for Proton-TKG? [y/N]: "
         __prompt_answer "n"
-
-        if [[ "${_user_answer,,}" =~ ^(y|yes)$ ]]; then
-            __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Exporting DXVK DLLs for Proton-TKG...${_reset}${_break}"
-            if ./updxvk proton-tkg; then
-                __msg_info "${_break}${_green_neon}${_uline_on}NOTE${_uline_off}:${_reset} ${_green_light}Export completed successfully${_reset}"
-                __msg_info "${_break}${_green_neon}${_uline_on}TIP${_uline_off}:${_reset} ${_green_light}DXVK DLLs are ready for Proton-TKG build${_reset}${_break}"
-            else
-                __msg_error "Export failed${_break}"
-                __msg_plain " Continuing with Proton-TKG build anyway...${_break}"
-            fi
-        fi
-    else
-        __msg_info "${_break}${_orange}No builds performed, skipping export step${_reset}${_break}"
+        [[ "${_user_answer,,}" =~ ^(y|yes)$ ]] && ./updxvk proton-tkg
     fi
 
-    # Return to temporary dir to keep working directory consistent for following steps
-    cd "${_tkg_tmp_dir}" || {
-        __msg_warning "Failed to enter temporary directory: ${_tkg_tmp_dir}${_break}"
-        return 0
-    }
+    __cd_safe "${_tkg_tmp_dir}" || return 0
 }
 
 # Proton-TKG installation
 __proton_install() {
-    # Inform user about external configuration usage
     __msg_pkg "Proton-TKG" "${_frog_repo_url}/wine-tkg-git"
 
-    # Ensure Proton repo is prepared (clone/update) BEFORE DXVK steps so build script exists
+    # Prepare Proton repo first
     __install_package "${_frog_pkg_repo[proton]}" "Proton-TKG (prepare)" "" "${_frog_pkg_workdir[proton]}" >/dev/null 2>&1
 
-    # Optional DXVK/vkd3d preparation (user can skip with default option)
-    __dxvk_tools_prepare || __msg_warning "dxvk-tools preparation cancelled or failed, continuing with Proton-TKG build${_break}"
+    # Optional DXVK/vkd3d preparation
+    __dxvk_tools_prepare || __msg_warning "dxvk-tools skipped${_break}"
 
-    # Determine build command
-    local _build_command="./proton-tkg.sh"
-    local _clean_command="./proton-tkg.sh clean"
-
-    # Build and install
-    __install_package "${_frog_pkg_repo[proton]}" "Proton-TKG" "${_build_command}" "${_frog_pkg_workdir[proton]}"
+    # Build Proton
+    __install_package "${_frog_pkg_repo[proton]}" "Proton-TKG" "./proton-tkg.sh" "${_frog_pkg_workdir[proton]}"
     local _status=$?
 
+    # Offer cleanup after successful build
     if [[ ${_status} -eq 0 ]]; then
-        # Ask user if clean command should be executed
-        __msg_prompt "Do you want to run ${_reset}${_gray}'./proton-tkg.sh clean'${_reset} after building Proton-TKG? [y/N]: "
-        local _old_trap_int=""
-        _old_trap_int=$(trap -p INT 2>/dev/null)
-        trap 'return 130' INT
-        read -r _user_answer || {
-            eval "${_old_trap_int:-trap - INT}"
-            return 130
-        }
-        # Restore previous trap
-        if [[ -n "${_old_trap_int}" ]]; then eval "${_old_trap_int}"; else trap - INT; fi
-
-        if [[ "${_user_answer,,}" =~ ^(y|yes)$ ]]; then
-            __install_package "${_frog_pkg_repo[proton]}" "Proton-TKG" "${_clean_command}" "${_frog_pkg_workdir[proton]}"
-            local _clean_status=$?
-            if [[ ${_clean_status} -eq 0 ]]; then
-                __msg_info "${_break}${_green_neon}▶${_reset} ${_green_light}Cleaning completed successfully.${_reset}${_break}"
-            else
-                __msg_error "Cleaning failed (code: ${_clean_status}).${_break}"
-            fi
-        fi
+        __msg_prompt "Run './proton-tkg.sh clean'? [y/N]: "
+        read -r _user_answer
+        [[ "${_user_answer,,}" =~ ^(y|yes)$ ]] &&
+            __install_package "${_frog_pkg_repo[proton]}" "Proton-TKG" "./proton-tkg.sh clean" "${_frog_pkg_workdir[proton]}"
     fi
 }
 
@@ -1280,84 +1116,37 @@ __editor() {
 # AMD Graphics Driver submenu
 __menu_amd() {
     clear
-    # Define AMD menu options
-    local _amd_menu_options=(
-        "AMDGPU-PRO |💎 ${_green_neon}AMDGPU-PRO   ${_gray} AMD Vulkan-only graphics driver (Pro)"
-        "AMDVLK-OPT |🔷 ${_green_neon}AMDVLK-OPT   ${_gray} AMD standalone Vulkan driver (buildfromsource)"
-        "return     |⏪ ${_green_neon}Return"
-    )
+    local _amd_menu_content="AMDGPU-PRO |💎 ${_green_neon}AMDGPU-PRO   ${_gray} AMD Vulkan-only (Pro)
+AMDVLK-OPT |🔷 ${_green_neon}AMDVLK-OPT   ${_gray} AMD Vulkan (buildfromsource)
+return     |⏪ ${_green_neon}Return"
 
-    local _amd_menu_content
-    _amd_menu_content=$(printf '%s\n' "${_amd_menu_options[@]}")
+    export _amd_repos_json="AMDGPU-PRO=amdgpu-pro-vulkan-only/master
+AMDVLK-OPT=amdvlk-opt/master"
 
-    # Define preview repositories for AMD submenu
-    declare -A _amd_preview_repos=(
-        [AMDGPU - PRO]="amdgpu-pro-vulkan-only/master"
-        [AMDVLK - OPT]="amdvlk-opt/master"
-    )
+    # shellcheck disable=SC2016
+    local _preview='key=$(echo {} | cut -d"|" -f1 | xargs)
+[[ "$key" == "return" ]] && { echo "Back to main menu..."; exit 0; }
+repo=$(echo "${_amd_repos_json}" | grep "^${key}=" | cut -d= -f2-)
+[[ -n "$repo" ]] && glow --width 80 --style "'"${_glow_style:-dark}"'" "'"${_frog_raw_url}"'/${repo}/README.md"'
 
-    # Export preview repos for subshell
-    local _amd_repos_json
-    _amd_repos_json=$(
-        printf '%s\n' \
-            "AMDGPU-PRO=${_amd_preview_repos[AMDGPU - PRO]}" \
-            "AMDVLK-OPT=${_amd_preview_repos[AMDVLK - OPT]}"
-    )
-    export _amd_repos_json
+    local _header="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ AMD Drivers${_uline_off}${_reset}${_break}${_break}${_green_light}   Select AMD driver:"
+    local _footer="  ${_green_light}[Enter] select, [Ctrl+P] preview, [ESC] exit"
 
-    # Define preview command for AMD submenu
-    # shellcheck disable=SC2016 # Need to use single quotes for fzf preview
-    local _amd_preview_command='
-        key=$(echo {} | cut -d"|" -f1 | xargs)
-        [[ "$key" == "return" ]] && { echo "Back to main menu..."; exit 0; }
-        
-        repo=$(echo "${_amd_repos_json}" | grep "^${key}=" | cut -d= -f2-)
-        [[ -n "$repo" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_frog_raw_url}"'/${repo}/README.md"
-    '
-
-    # Define header and footer for AMD submenu
-    local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ AMD Graphics Drivers${_uline_off}${_reset}${_break}${_break}\
-${_green_light}    Select an AMD graphics driver to build and install:${_break}${_break}\
-${_green_light}    Press [Ctrl+P] to toggle preview${_break}${_break}\
-${_green_light}   Select an option below:"
-
-    local _footer_text="  ${_green_light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}\
-  Press [Enter] to select, [Ctrl+P] to toggle preview, [ESC] to exit${_break}${_break}\
-  ${_green_light}Website:${_reset} ${_gray}https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family"
-
-    local _border_label_text="${_tkg_installer_version}"
-    local _preview_window_settings='right:wrap:60%'
-    local _fzf_bind='ctrl-p:toggle-preview'
-
-    # Run fzf menu
-    local _amd_choice
-    _amd_choice=$(__fzf_menu "${_amd_menu_content}" "${_amd_preview_command}" "${_header_text}" "${_footer_text}" "${_border_label_text}" "${_preview_window_settings}" "${_fzf_bind}")
-
-    # Unset exported variables
+    local _choice
+    _choice=$(__fzf_menu "${_amd_menu_content}" "${_preview}" "${_header}" "${_footer}" "${_tkg_installer_version}" 'right:wrap:60%')
     unset _amd_repos_json
 
-    # Handle empty choice (ESC pressed)
-    if [[ -z "${_amd_choice}" ]]; then
-        return 0
-    fi
+    [[ -z "${_choice}" ]] && return 0
+    _choice=$(echo "${_choice}" | cut -d"|" -f1 | xargs)
 
-    # Extract driver key from choice
-    _amd_choice=$(echo "${_amd_choice}" | cut -d"|" -f1 | xargs)
-
-    # Handle user choice from AMD submenu
-    case ${_amd_choice} in
+    case ${_choice} in
         AMDGPU-PRO)
             __banner
-            __clear_line 120 ""
             __amdgpu_pro_install
             ;;
         AMDVLK-OPT)
             __banner
-            __clear_line 120 ""
             __amdvlk_opt_install
-            ;;
-        return)
-            return 0
             ;;
     esac
 }
@@ -1557,220 +1346,184 @@ ${_green_light}   Select an option below:"
     done
 }
 
-# Helper function to detect deprecated config variables
-__old_config() {
-    local _config_file="$1"
-    local _upstream_url="$2"
-    local _package_name="$3"
+# Check local config against upstream for deprecated and new variables
+__check_config() {
+    local _config_file="$1" _upstream_url="$2" _package_name="$3"
 
-    # Check if config file exists
-    if [[ ! -f "${_config_file}" ]]; then
-        return 0
-    fi
+    [[ ! -f "${_config_file}" ]] && return 0
 
     # Download upstream config
     local _tmp_upstream="/tmp/upstream_customization.cfg"
-    if ! curl -fsSL "${_upstream_url}" -o "${_tmp_upstream}" 2>/dev/null; then
+    curl -fsSL "${_upstream_url}" -o "${_tmp_upstream}" 2>/dev/null || {
         __msg_warning "Could not download upstream config for comparison"
         return 1
-    fi
+    }
 
-    # Extract variable names from local file
-    local _local_vars
-    _local_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_config_file}" 2>/dev/null | sort -u)
+    # Extract variable names from local and upstream configs
+    # Pattern matches both active (VAR=) and commented (#VAR=) variables
+    local _local_vars _upstream_vars _upstream_vars_for_deprecated
+    _local_vars=$(grep -oP '^#?\s*\K[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_config_file}" 2>/dev/null | sort -u)
+    _upstream_vars=$(grep -oP '^#?\s*\K[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_tmp_upstream}" 2>/dev/null | sort -u)
+    _upstream_vars_for_deprecated="${_upstream_vars}"
 
-    # Extract variable names from upstream file(s)
-    local _upstream_vars
-    _upstream_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_tmp_upstream}" 2>/dev/null | sort -u)
+    # Fetch additional config files for extended variable detection
+    local _extra_urls=()
+    case "${_package_name}" in
+        Linux-TKG)
+            local _prepare_url="${_frog_raw_url}/linux-tkg/master/linux-tkg-config/prepare"
+            local _tmp_prepare="/tmp/linux-tkg-prepare"
+            if curl -fsSL "${_prepare_url}" -o "${_tmp_prepare}" 2>/dev/null; then
+                # Extract officially deprecated vars (only for deprecated check)
+                local _officially_deprecated
+                _officially_deprecated=$(sed -n '/_deprecated_config_vars=($/,/^)$/p' "${_tmp_prepare}" | grep -oP '^\s*"_\K[^"]+' | sed 's/^/_/')
+                [[ -n "${_officially_deprecated}" ]] && _upstream_vars_for_deprecated+=$'\n'"${_officially_deprecated}"
 
-    # For linux-tkg, also check _deprecated_config_vars from prepare file
-    local _officially_deprecated=""
-    if [[ "${_package_name}" == "Linux-TKG" ]]; then
-        local _prepare_url="${_frog_raw_url}/linux-tkg/master/linux-tkg-config/prepare"
-        local _tmp_prepare="/tmp/linux-tkg-prepare"
-        if curl -fsSL "${_prepare_url}" -o "${_tmp_prepare}" 2>/dev/null; then
-            # Extract deprecated variables from _deprecated_config_vars array
-            _officially_deprecated=$(sed -n '/_deprecated_config_vars=($/,/^)$/p' "${_tmp_prepare}" | grep -oP '^\s*"_\K[^"]+' | sed 's/^/_/')
-            rm -f "${_tmp_prepare}"
-        fi
-    fi
-
-    # Check for advanced customization file variables for Wine-TKG and Proton-TKG
-    if [[ "${_package_name}" == "Wine-TKG" ]]; then
-        # Check advanced-customization.cfg
-        local _adv_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/advanced-customization.cfg"
-        local _tmp_adv="/tmp/upstream_advanced.cfg"
-        if curl -fsSL "${_adv_url}" -o "${_tmp_adv}" 2>/dev/null; then
-            local _adv_vars
-            _adv_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_tmp_adv}" 2>/dev/null)
-            if [[ -n "${_adv_vars}" ]]; then
-                _upstream_vars=$(printf "%s\n%s" "${_upstream_vars}" "${_adv_vars}" | sort -u)
+                # Extract prepare-specific variables (only for deprecated check, not for "new")
+                local _prepare_vars
+                _prepare_vars=$(grep -oP '^#?\s*\K[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_tmp_prepare}" 2>/dev/null)
+                [[ -n "${_prepare_vars}" ]] && _upstream_vars_for_deprecated+=$'\n'"${_prepare_vars}"
+                rm -f "${_tmp_prepare}"
             fi
-            rm -f "${_tmp_adv}"
-        fi
-        # Check sample-external-config.cfg
-        local _ext_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/sample-external-config.cfg"
-        local _tmp_ext="/tmp/upstream_external.cfg"
-        if curl -fsSL "${_ext_url}" -o "${_tmp_ext}" 2>/dev/null; then
-            local _ext_vars
-            _ext_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_tmp_ext}" 2>/dev/null)
-            if [[ -n "${_ext_vars}" ]]; then
-                _upstream_vars=$(printf "%s\n%s" "${_upstream_vars}" "${_ext_vars}" | sort -u)
-            fi
-            rm -f "${_tmp_ext}"
-        fi
-    elif [[ "${_package_name}" == "Proton-TKG" ]]; then
-        # Check advanced-customization.cfg
-        local _adv_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/advanced-customization.cfg"
-        local _tmp_adv="/tmp/upstream_advanced.cfg"
-        if curl -fsSL "${_adv_url}" -o "${_tmp_adv}" 2>/dev/null; then
-            local _adv_vars
-            _adv_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_tmp_adv}" 2>/dev/null)
-            if [[ -n "${_adv_vars}" ]]; then
-                _upstream_vars=$(printf "%s\n%s" "${_upstream_vars}" "${_adv_vars}" | sort -u)
-            fi
-            rm -f "${_tmp_adv}"
-        fi
-        # Check sample-external-config.cfg
-        local _ext_url="${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/sample-external-config.cfg"
-        local _tmp_ext="/tmp/upstream_external.cfg"
-        if curl -fsSL "${_ext_url}" -o "${_tmp_ext}" 2>/dev/null; then
-            local _ext_vars
-            _ext_vars=$(grep -oP '^[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_tmp_ext}" 2>/dev/null)
-            if [[ -n "${_ext_vars}" ]]; then
-                _upstream_vars=$(printf "%s\n%s" "${_upstream_vars}" "${_ext_vars}" | sort -u)
-            fi
-            rm -f "${_tmp_ext}"
-        fi
-    fi
+            ;;
+        Wine-TKG)
+            _extra_urls=(
+                "${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/advanced-customization.cfg"
+                "${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/sample-external-config.cfg"
+            )
+            ;;
+        Proton-TKG)
+            _extra_urls=(
+                "${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/advanced-customization.cfg"
+                "${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/sample-external-config.cfg"
+            )
+            ;;
+    esac
 
-    # Find deprecated variables (in local but not in upstream)
+    # Fetch and merge extra config vars (for both new and deprecated)
+    for _url in "${_extra_urls[@]}"; do
+        local _tmp_extra="/tmp/extra_cfg_$$.cfg"
+        if curl -fsSL "${_url}" -o "${_tmp_extra}" 2>/dev/null; then
+            local _extra_vars
+            _extra_vars=$(grep -oP '^#?\s*\K[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_tmp_extra}" 2>/dev/null)
+            [[ -n "${_extra_vars}" ]] && {
+                _upstream_vars+=$'\n'"${_extra_vars}"
+                _upstream_vars_for_deprecated+=$'\n'"${_extra_vars}"
+            }
+            rm -f "${_tmp_extra}"
+        fi
+    done
+
+    # Sort and deduplicate
+    _upstream_vars=$(echo "${_upstream_vars}" | sort -u)
+    _upstream_vars_for_deprecated=$(echo "${_upstream_vars_for_deprecated}" | sort -u)
+
+    # Find deprecated variables (local vars not in any upstream source)
     local _deprecated_vars
-    _deprecated_vars=$(comm -23 <(echo "${_local_vars}") <(echo "${_upstream_vars}") 2>/dev/null)
+    _deprecated_vars=$(comm -23 <(echo "${_local_vars}") <(echo "${_upstream_vars_for_deprecated}") 2>/dev/null)
 
-    # Combine with officially deprecated variables for linux-tkg
-    if [[ -n "${_officially_deprecated}" ]]; then
-        local _combined_deprecated
-        _combined_deprecated=$(echo "${_local_vars}" | grep -F -x -f <(echo "${_officially_deprecated}") | sort -u)
+    # Find new variables (upstream cfg vars not in local - excludes prepare vars)
+    local _new_vars
+    _new_vars=$(comm -13 <(echo "${_local_vars}") <(echo "${_upstream_vars}") 2>/dev/null)
 
-        if [[ -n "${_combined_deprecated}" ]]; then
-            _deprecated_vars=$(printf "%s\n%s" "${_deprecated_vars}" "${_combined_deprecated}" | sort -u)
-        fi
-    fi
+    # Check if any changes detected
+    local _has_changes=false
+    [[ -n "${_deprecated_vars}" || -n "${_new_vars}" ]] && _has_changes=true
 
-    # Notify user if deprecated variables found
-    if [[ -n "${_deprecated_vars}" ]]; then
+    # Display results if changes found
+    if [[ "${_has_changes}" == "true" ]]; then
         __banner "${_orange}"
-        __msg_warning "Found deprecated config variables in your local config:${_reset}${_gray} ${_config_file} ${_reset}${_break}"
-        while IFS= read -r _var; do
-            __msg_plain " ${_gray}${_var}${_reset}"
-        done <<<"${_deprecated_vars}"
-        __msg_plain "${_break} These variables are no longer used in upstream.${_break} \
-Please check this to ensure correctness! Then they can be removed from your local config.${_break}"
-        __msg_prompt "Press any key to continue...${_break}"
+        __msg_info "${_green_neon}${_uline_on}CONFIG CHECK${_uline_off}:${_reset} ${_gray}${_config_file}${_reset}${_break}"
+
+        # Show deprecated variables
+        if [[ -n "${_deprecated_vars}" ]]; then
+            __msg_warning "Deprecated variables (no longer used upstream):${_break}"
+            while IFS= read -r _var; do
+                [[ -n "${_var}" ]] && __msg_plain " ${_red}✗${_reset} ${_gray}${_var}${_reset}"
+            done <<<"${_deprecated_vars}"
+            echo
+        fi
+
+        # Show new variables
+        if [[ -n "${_new_vars}" ]]; then
+            __msg_info_neon "New variables available upstream:${_break}"
+            while IFS= read -r _var; do
+                [[ -n "${_var}" ]] && __msg_plain " ${_green_neon}+${_reset} ${_gray}${_var}${_reset}"
+            done <<<"${_new_vars}"
+            echo
+        fi
+
+        __msg_plain "${_green_light}${_uline_on}NOTE:${_uline_off} Review upstream config for details:${_reset}"
+        __msg_plain " ${_gray}${_upstream_url}${_reset}"
+
+        # Show additional config URLs for Wine and Proton
+        for _url in "${_extra_urls[@]}"; do
+            __msg_plain " ${_gray}${_url}${_reset}"
+        done
+        echo
+        __msg_prompt "Press any key to continue..."
         read -n 1 -s -r
     fi
 
-    # Cleanup tmp upstream files
     rm -f "${_tmp_upstream}"
 }
 
-# Helper function to handle individual config file editing and downloading if missing
+# Handle config file editing and downloading
 __handle_config() {
-    local _config_name="${1}"
-    local _config_path="${2}"
-    local _config_url="${3}"
+    local _config_name="$1" _config_path="$2" _config_url="$3"
 
-    # Check for deprecated variables before editing
-    if [[ -f "${_config_path}" ]]; then
-        __old_config "${_config_path}" "${_config_url}" "${_config_name}"
+    # Check for deprecated and new variables
+    [[ -f "${_config_path}" ]] && {
+        __check_config "${_config_path}" "${_config_url}" "${_config_name}"
         clear
-    fi
+    }
 
-    # Notify user
     __banner
-    __msg_info "${_green_neon}${_uline_on}OPEN${_uline_off}:${_reset}${_gray} ${_config_name}${_reset}${_green_light} external configuration file${_break}"
-    sleep 1.5s
+    __msg_info "${_green_neon}${_uline_on}OPEN${_uline_off}:${_reset}${_gray} ${_config_name}${_reset}${_green_light} configuration file${_break}"
+    sleep 1s
     clear
 
-    # Check if configuration file exists
     if [[ -f "${_config_path}" ]]; then
-        # Edit existing configuration file
-        __editor "${_config_path}" || {
-            __msg_info "${_green_neon}${_uline_on}OPEN${_uline_off}:${_reset}${_gray} ${_config_name}${_reset}${_green_light} external configuration file${_break}"
-            return 1
-        }
+        __editor "${_config_path}" || return 1
     else
-        # Download and create new configuration file
+        # File doesn't exist - offer download
         __banner "${_orange}"
-        __msg_warning "External configuration file does not exist.${_break}"
-        __msg_plain " Local path: ${_gray}file://${_config_path}"
-        __msg_plain " Remote URL: ${_gray}${_config_url}${_break}"
-
-        # Prompt user for download
-        __msg_prompt "Do you want to download the default configuration? [y/N]: "
-
-        local _old_trap_int=""
-        _old_trap_int=$(trap -p INT 2>/dev/null)
-        trap 'echo;echo; __msg_plain "${_red}Aborted by user.";sleep 1.5s; clear; return 0' INT
+        __msg_warning "Configuration file does not exist.${_break}"
+        __msg_plain " Local:  ${_gray}${_config_path}${_reset}"
+        __msg_plain " Remote: ${_gray}${_config_url}${_reset}${_break}"
+        __msg_prompt "Download default configuration? [y/N]: "
         __prompt_answer "n"
-        if [[ -n "${_old_trap_int}" ]]; then eval "${_old_trap_int}"; else trap - INT; fi
 
-        # Handle user response for downloading the config file
-        case "${_user_answer,,}" in
-            y | yes)
-                # Create the configuration directory
-                mkdir -p "$(dirname "${_config_path}")" || {
-                    __error_config "Creating configuration directory failed: ${_config_path}${_break} Please check the path and your permissions then try again.${_break}"
-                    return 1
-                }
-
-                # Check for curl availability
-                if ! command -v curl >/dev/null 2>&1; then
-                    __error_config "curl is not installed. Please install curl to download configuration files.${_break}"
-                    return 1
-                fi
-
-                # Download config with timeout (project guideline)
-                # shellcheck disable=SC2086 # _curl_opts must be unquoted for word splitting
-                if curl ${_curl_opts} "${_config_url}" -o "${_config_path}" 2>/dev/null; then
-                    clear
-                    __banner
-                    __msg_info "External configuration ready at:${_reset}${_gray} ${_config_path}"
-                    sleep 1.5s
-                    clear
-
-                    # Open the downloaded configuration file
-                    __editor "${_config_path}" || {
-                        __error_config "Opening external configuration file:${_reset}${_gray} ${_config_name}${_break} Please check if the file exists and is accessible.${_break}"
-                        return 1
-                    }
-                else
-                    # Failed to download configuration file
-                    __error_config "Downloading external configuration from ${_config_url} failed!${_break} Please check your internet connection and try again.${_break}"
-                    return 1
-                fi
-                ;;
-            *)
-                # User chose not to download the configuration file
-                clear
-                __banner "${_orange}"
-                __msg_info_orange "Download cancelled. No configuration file created.${_break}"
-                __msg_plain " No changes were made.${_break}"
-                __msg_prompt "Press any key to continue...${_break}"
-                read -n 1 -s -r
-                clear
+        if [[ "${_user_answer,,}" =~ ^(y|yes)$ ]]; then
+            mkdir -p "$(dirname "${_config_path}")" || {
+                __error_config "Failed to create directory"
                 return 1
-                ;;
-        esac
+            }
+            # shellcheck disable=SC2086
+            if curl ${_curl_opts} "${_config_url}" -o "${_config_path}" 2>/dev/null; then
+                clear
+                __banner
+                __msg_info "Configuration downloaded: ${_gray}${_config_path}${_reset}"
+                sleep 1s
+                clear
+                __editor "${_config_path}" || return 1
+            else
+                __error_config "Download failed from ${_config_url}"
+                return 1
+            fi
+        else
+            clear
+            __msg_info_orange "Download cancelled.${_break}"
+            __msg_prompt "Press any key..."
+            read -n 1 -s -r
+            clear
+            return 1
+        fi
     fi
 
-    # Notify user
     __banner
-    __msg_info "${_green_neon}${_uline_on}CLOSE${_uline_off}:${_reset}${_gray} ${_config_name}${_reset}${_green_light} external configuration file${_break}"
-    sleep 1.5s
+    __msg_info "${_green_neon}${_uline_on}CLOSE${_uline_off}:${_reset}${_gray} ${_config_name}${_reset}${_green_light} configuration file${_break}"
+    sleep 1s
     clear
-    return 0
 }
 
 # =============================================================================
@@ -1819,63 +1572,24 @@ __menu() {
     _menu_content=$(printf '%s\n' "${_menu_options[@]}")
 
     # Define preview mappings
+    # Define preview mappings - docs and repos
     declare -A _preview_docs=(
-        [Linux]="linux"
-        [Nvidia]="nvidia"
-        [Mesa]="mesa"
-        [AMD]="amd"
-        [Wine]="wine"
-        [Proton]="proton"
-        [Gamescope]="gamescope"
-        [Glibc]="glibc"
-        [Config]="config"
-        [Clean]="clean"
-        [Help]="help"
-        [Close]="close"
+        [Linux]=linux [Nvidia]=nvidia [Mesa]=mesa [AMD]=amd [Wine]=wine
+        [Proton]=proton [Gamescope]=gamescope [Glibc]=glibc
+        [Config]=config [Clean]=clean [Help]=help [Close]=close
     )
-
     declare -A _preview_repos=(
-        [Linux]="linux-tkg/master"
-        [Nvidia]="nvidia-all/master"
-        [Mesa]="mesa-git/master"
-        [Wine]="wine-tkg-git/master/wine-tkg-git"
-        [Proton]="wine-tkg-git/master/proton-tkg"
-        [Gamescope]="gamescope-git/master"
-        [Glibc]="glibc-eac/main"
+        [Linux]="linux-tkg/master" [Nvidia]="nvidia-all/master" [Mesa]="mesa-git/master"
+        [Wine]="wine-tkg-git/master/wine-tkg-git" [Proton]="wine-tkg-git/master/proton-tkg"
+        [Gamescope]="gamescope-git/master" [Glibc]="glibc-eac/main"
     )
 
-    # Export preview mappings for subshell
-    local _preview_docs_json
-    _preview_docs_json=$(
-        printf '%s\n' \
-            "Linux=${_preview_docs[Linux]}" \
-            "Nvidia=${_preview_docs[Nvidia]}" \
-            "Mesa=${_preview_docs[Mesa]}" \
-            "AMD=${_preview_docs[AMD]}" \
-            "Wine=${_preview_docs[Wine]}" \
-            "Proton=${_preview_docs[Proton]}" \
-            "Gamescope=${_preview_docs[Gamescope]}" \
-            "Glibc=${_preview_docs[Glibc]}" \
-            "Config=${_preview_docs[Config]}" \
-            "Clean=${_preview_docs[Clean]}" \
-            "Help=${_preview_docs[Help]}" \
-            "Close=${_preview_docs[Close]}"
-    )
-    export _preview_docs_json
-
-    # Define preview repositories
-    local _preview_repos_json
-    _preview_repos_json=$(
-        printf '%s\n' \
-            "Linux=${_preview_repos[Linux]}" \
-            "Nvidia=${_preview_repos[Nvidia]}" \
-            "Mesa=${_preview_repos[Mesa]}" \
-            "Wine=${_preview_repos[Wine]}" \
-            "Proton=${_preview_repos[Proton]}" \
-            "Gamescope=${_preview_repos[Gamescope]}" \
-            "Glibc=${_preview_repos[Glibc]}"
-    )
-    export _preview_repos_json
+    # Export preview mappings for fzf subshell (function __export_map is defined earlier)
+    export _preview_docs_json _preview_repos_json
+    # shellcheck disable=SC2218
+    _preview_docs_json=$(__export_map _preview_docs)
+    # shellcheck disable=SC2218
+    _preview_repos_json=$(__export_map _preview_repos)
 
     # Simplified preview command using exported mappings
     # shellcheck disable=SC2016 # Need to use single quotes for fzf preview
@@ -1995,48 +1709,29 @@ __main_direct_mode() {
         exit 0
     fi
 
-    # Handle regular install commands
+    # Handle regular install commands using lookup table
+    declare -A _install_funcs=(
+        [linux]=__linux_install [l]=__linux_install [--linux]=__linux_install [-l]=__linux_install
+        [nvidia]=__nvidia_install [n]=__nvidia_install [--nvidia]=__nvidia_install [-n]=__nvidia_install
+        [mesa]=__mesa_install [m]=__mesa_install [--mesa]=__mesa_install [-m]=__mesa_install
+        [amdgpu]=__amdgpu_pro_install [ag]=__amdgpu_pro_install [--amdgpu]=__amdgpu_pro_install [-ag]=__amdgpu_pro_install
+        [amdvlk]=__amdvlk_opt_install [av]=__amdvlk_opt_install [--amdvlk]=__amdvlk_opt_install [-av]=__amdvlk_opt_install
+        [wine]=__wine_install [w]=__wine_install [--wine]=__wine_install [-w]=__wine_install
+        [proton]=__proton_install [p]=__proton_install [--proton]=__proton_install [-p]=__proton_install
+        [dxvk]=__dxvk_tools_prepare [d]=__dxvk_tools_prepare [--dxvk]=__dxvk_tools_prepare [-d]=__dxvk_tools_prepare
+        [gamescope]=__gamescope_install [g]=__gamescope_install [--gamescope]=__gamescope_install [-g]=__gamescope_install
+        [glibc]=__glibc_install [ge]=__glibc_install [--glibc]=__glibc_install [-ge]=__glibc_install
+    )
+
+    # Check if command maps to an install function
+    if [[ -n "${_install_funcs[${_arg1}]:-}" ]]; then
+        __prepare
+        "${_install_funcs[${_arg1}]}"
+        return
+    fi
+
+    # Handle special commands
     case "${_arg1}" in
-        linux | l | --linux | -l)
-            __prepare
-            __linux_install
-            ;;
-        nvidia | n | --nvidia | -n)
-            __prepare
-            __nvidia_install
-            ;;
-        mesa | m | --mesa | -m)
-            __prepare
-            __mesa_install
-            ;;
-        amdgpu | ag | --amdgpu | -ag)
-            __prepare
-            __amdgpu_pro_install
-            ;;
-        amdvlk | av | --amdvlk | -av)
-            __prepare
-            __amdvlk_opt_install
-            ;;
-        wine | w | --wine | -w)
-            __prepare
-            __wine_install
-            ;;
-        proton | p | --proton | -p)
-            __prepare
-            __proton_install
-            ;;
-        dxvk | d | --dxvk | -d)
-            __prepare
-            __dxvk_tools_prepare
-            ;;
-        gamescope | g | --gamescope | -g)
-            __prepare
-            __gamescope_install
-            ;;
-        glibc | ge | --glibc | -ge)
-            __prepare
-            __glibc_install
-            ;;
         clean | --clean)
             __clean_temp_dir
             exit 0 >/dev/null 2>&1
@@ -2045,14 +1740,11 @@ __main_direct_mode() {
             # Handle help command
             ;;
         *)
-            # Invalid argument handling and usage instructions display
             __banner "${_orange}"
             __msg_warning "Invalid argument:${_reset}${_gray} ${1:-} ${2:-}${_reset}${_break}"
             __msg_plain " The argument is either invalid or incomplete."
             __msg_plain " All available arguments run:${_break}"
             __msg_plain "$0 help${_break}"
-
-            # Disable exit trap before cleanup and exit to avoid duplicate cleanup messages on exit
             trap - INT TERM EXIT HUP
             __clean
             exit 1
@@ -2089,38 +1781,29 @@ __main_interactive_mode() {
     # Remove temporary choice file
     rm -f "${_tkg_choice_file}"
 
-    # Handle user choice from menu
+    # Define install handlers
+    declare -A _menu_handlers=(
+        [Linux]=__linux_install [Nvidia]=__nvidia_install [Mesa]=__mesa_install
+        [Wine]=__wine_install [Proton]=__proton_install
+        [Gamescope]=__gamescope_install [Glibc]=__glibc_install
+    )
+
+    # Handle standard installations
+    if [[ -n "${_menu_handlers[${_user_choice}]:-}" ]]; then
+        __banner
+        __clear_line 120
+        "${_menu_handlers[${_user_choice}]}"
+        return
+    fi
+
+    # Handle special menu options
     case ${_user_choice} in
-        Linux | Nvidia | Mesa | AMD | Wine | Proton | Gamescope | Glibc)
-            # Display banner before installation from menu
+        AMD)
             __banner
             __clear_line 120
-            ;;&
-        Linux)
-            __linux_install
-            ;;
-        Nvidia)
-            __nvidia_install
-            ;;
-        Mesa)
-            __mesa_install
-            ;;
-        AMD)
             __menu_amd
             clear
             exec "$0"
-            ;;
-        Wine)
-            __wine_install
-            ;;
-        Proton)
-            __proton_install
-            ;;
-        Gamescope)
-            __gamescope_install
-            ;;
-        Glibc)
-            __glibc_install
             ;;
         Config)
             __menu_config
@@ -2128,7 +1811,6 @@ __main_interactive_mode() {
             exec "$0"
             ;;
         Help)
-            # Remove exit trap
             trap - INT TERM EXIT HUP
             __help
             __clean
