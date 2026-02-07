@@ -27,9 +27,6 @@ pkg/
 .*.sw?
 *.kate-swp
 gnupg/
-
-# GitHub-specific ignores
-# AI Copilot instructions (only relevant for developers)
 .github/copilot-instructions.md
-.github/instructions/copilot-instructions.md
-.github/instructions/BEST_PRACTICES.instructions.md
+.github/instructions/*
+.github/agents/*
