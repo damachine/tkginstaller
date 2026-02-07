@@ -11,7 +11,7 @@
 # -----------------------------------------------------------------------------
 
 # TKG-Installer VERSION definition
-readonly _tkg_installer_version="v0.30.1"
+readonly _tkg_installer_version="v0.30.2"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -422,12 +422,18 @@ __build_menu() {
     local _opt9_label="${6:-}"
     local _opt9_desc="${7:-}"
 
+    # Calculate maximum label length for proper alignment
+    local _max_label_length=0
+    for _label in "${_opt1_label}" "${_opt2_label}" "${_opt9_label}"; do
+        [[ -n "${_label}" ]] && ((${#_label} > _max_label_length)) && _max_label_length=${#_label}
+    done
+
     __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which build method do you want to use?${_reset}${_break}"
     __msg_plain " Detected distro: ${_gray}${_distro_name}${_reset}${_break}"
-    __msg_plain " ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ ${_opt1_label}  ${_green_light}${_opt1_desc}${_reset}"
+    __msg_plain " ${_green_neon}${_uline_on}1${_uline_off}${_reset} │ $(printf "%-${_max_label_length}s" "${_opt1_label}")  ${_green_light}${_opt1_desc}${_reset}"
 
-    [[ -n "${_opt2_label}" ]] && __msg_plain " ${_orange}2${_reset} │ ${_opt2_label}  ${_gray}${_opt2_desc}${_reset}"
-    [[ -n "${_opt9_label}" ]] && __msg_plain " ${_gray}9${_reset} │ ${_opt9_label}  ${_gray}${_opt9_desc}${_reset}"
+    [[ -n "${_opt2_label}" ]] && __msg_plain " ${_orange}2${_reset} │ $(printf "%-${_max_label_length}s" "${_opt2_label}")  ${_gray}${_opt2_desc}${_reset}"
+    [[ -n "${_opt9_label}" ]] && __msg_plain " ${_gray}9${_reset} │ $(printf "%-${_max_label_length}s" "${_opt9_label}")  ${_gray}${_opt9_desc}${_reset}"
     __msg_plain " ${_red}0${_reset} │ Cancel${_break}"
 
     local _choices="[${_green_neon}${_uline_on}1${_uline_off}${_reset}"
@@ -1223,7 +1229,7 @@ __menu_config() {
         local _menu_content
         _menu_content=$(printf '%s\n' "${_menu_options[@]}")
 
-        # Export config URLs for preview command (build full URLs from global paths)
+        # Export config URLs for preview command
         local _pkg_urls_json
         _pkg_urls_json=$(
             printf '%s\n' \
@@ -1360,7 +1366,6 @@ __check_config() {
     }
 
     # Extract variable names from local and upstream configs
-    # Pattern matches both active (VAR=) and commented (#VAR=) variables
     local _local_vars _upstream_vars _upstream_vars_for_deprecated
     _local_vars=$(grep -oP '^#?\s*\K[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_config_file}" 2>/dev/null | sort -u)
     _upstream_vars=$(grep -oP '^#?\s*\K[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_tmp_upstream}" 2>/dev/null | sort -u)
@@ -1378,7 +1383,7 @@ __check_config() {
                 _officially_deprecated=$(sed -n '/_deprecated_config_vars=($/,/^)$/p' "${_tmp_prepare}" | grep -oP '^\s*"_\K[^"]+' | sed 's/^/_/')
                 [[ -n "${_officially_deprecated}" ]] && _upstream_vars_for_deprecated+=$'\n'"${_officially_deprecated}"
 
-                # Extract prepare-specific variables (only for deprecated check, not for "new")
+                # Extract prepare-specific variables only for deprecated check not for new
                 local _prepare_vars
                 _prepare_vars=$(grep -oP '^#?\s*\K[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_tmp_prepare}" 2>/dev/null)
                 [[ -n "${_prepare_vars}" ]] && _upstream_vars_for_deprecated+=$'\n'"${_prepare_vars}"
@@ -1399,7 +1404,7 @@ __check_config() {
             ;;
     esac
 
-    # Fetch and merge extra config vars (for both new and deprecated)
+    # Fetch and merge extra config vars for both new and deprecated checks
     for _url in "${_extra_urls[@]}"; do
         local _tmp_extra="/tmp/extra_cfg_$$.cfg"
         if curl -fsSL "${_url}" -o "${_tmp_extra}" 2>/dev/null; then
@@ -1417,11 +1422,11 @@ __check_config() {
     _upstream_vars=$(echo "${_upstream_vars}" | sort -u)
     _upstream_vars_for_deprecated=$(echo "${_upstream_vars_for_deprecated}" | sort -u)
 
-    # Find deprecated variables (local vars not in any upstream source)
+    # Find deprecated variables
     local _deprecated_vars
     _deprecated_vars=$(comm -23 <(echo "${_local_vars}") <(echo "${_upstream_vars_for_deprecated}") 2>/dev/null)
 
-    # Find new variables (upstream cfg vars not in local - excludes prepare vars)
+    # Find new variables
     local _new_vars
     _new_vars=$(comm -13 <(echo "${_local_vars}") <(echo "${_upstream_vars}") 2>/dev/null)
 
