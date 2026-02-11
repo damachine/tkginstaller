@@ -26,15 +26,12 @@ install.sh text eol=lf
 
 # Documentation
 docs/* linguist-documentation
-*.md linguist-documentation
 README.md linguist-documentation
 LICENSE text eol=lf
 
 # Checksums
 SHA256SUMS text eol=lf
 
-# GitHub Workflows/Actions
-.github/workflows/* linguist-generated
 .github/FUNDING.yml text eol=lf
 
 # Binary files (if present)
@@ -67,5 +64,3 @@ install.sh linguist-language=Shell
 .gitattributes export-ignore
 .gitignore export-ignore
 .github export-ignore
-docs export-ignore
-*.md export-ignore
