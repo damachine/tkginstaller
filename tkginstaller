@@ -4,14 +4,11 @@
 #IFS=$'\n\t'
 #shopt -s nullglob globstar
 
-# -----------------------------------------------------------------------------
-# author : damachine (damachin3 at proton dot me)
+# Maintainer: damachin3 (damachine3 at proton dot me)
 # website: https://github.com/damachine/tkginstaller
-# license: MIT License (https://opensource.org/licenses/MIT)
-# -----------------------------------------------------------------------------
 
 # TKG-Installer VERSION definition
-readonly _tkg_installer_version="v0.30.2"
+readonly _tkg_installer_version="v0.30.3"
 
 # =============================================================================
 # ENVIRONMENT SETUP
