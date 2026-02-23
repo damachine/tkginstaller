@@ -5,12 +5,11 @@
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
 ──  🐸  ──
 
-<strong>A small helper that makes working with <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories easy</strong>
+<strong>A small wrapper that makes working with <a href="https://github.com/Frogging-Family">Frogging-Family</a> repositories easy</strong>
 
-   <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/Version-0.30.3-yellow?style=flat&logo=linux"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://github.com/search?q=org%3AFrogging-Family+author%3Adamachine&type=commits"><img src="https://img.shields.io/badge/Frogging--Family-Collaborator-green?style=flat&logo=github"></a>
+   <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/Version-0.30.4-yellow?style=flat&logo=linux"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://github.com/search?q=org%3AFrogging-Family+author%3Adamachine&type=commits"><img src="https://img.shields.io/badge/Frogging--Family-Collaborator-green?style=flat&logo=github"></a>
    
-<strong>TL;DR</strong>
- - All frog packages in one pond 🐸 
+<strong>Features</strong>
  - Run quick one-liner <strong><mark>CLI</mark></strong> commands or an interactive fzf-finder <strong><mark>TUI</mark></strong>
  - Built-in <strong><mark>customization.cfg</mark></strong> manager
  - Multi-distro support
@@ -18,11 +17,10 @@
 
 <details>
   <summary>Demo Video</summary>
-   
-https://github.com/user-attachments/assets/f2ef500c-0d4b-4021-a5b0-e9b5f7306b25
+comming soon...
 </details>
 
-# 
+<br />
 
 ##### INSTALLATION
 
@@ -31,13 +29,14 @@ https://github.com/user-attachments/assets/f2ef500c-0d4b-4021-a5b0-e9b5f7306b25
 # Install via AUR helper (recommended)
 yay -S tkginstaller-git
 ```
+
 ```yaml
 # All distributions
 # Install via automated installation helper
 curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/install.sh | bash
 ```
 
-# 
+<br />
 
 ##### USAGE
 
@@ -69,17 +68,18 @@ tkginstaller help
 # h, --help, -h
 ```
 
-# 
+<br />
 
 ##### UNINSTALL
 
 <details>
   <summary>Expand</summary>
-   
+
 ```yaml
 # Arch Linux-based distributions (AUR)
 yay -R tkginstaller-git
 ```
+
 ```yaml
 # All distributions (installed via install.sh)
 # Use the built-in uninstall function
@@ -88,6 +88,7 @@ curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/insta
 # Or if you have the install.sh downloaded
 ./install.sh --uninstall
 ```
+
 ```yaml
 # All distributions (manual cleanup)
 # Manually remove all files
@@ -97,9 +98,10 @@ rm -rf ~/.tkginstaller        # cache folder
 sed -i '/# TKG-Installer alias/,+1d' ~/.bashrc ~/.zshrc
 source ~/.bashrc ~/.zshrc
 ```
+
 </details>
 
-# 
+<br />
 
 ###### DISCLAIMER
 

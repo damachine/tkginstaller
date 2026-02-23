@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TKG-Installer VERSION definition
-readonly _tkg_installer_version="v0.30.3"
+readonly _tkg_installer_version="v0.30.4"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -27,22 +27,7 @@ _curl_opts="--max-time 10 --connect-timeout 5 -fsSL"
 # Export only variables used in fzf preview commands
 export _tkg_tmp_dir _local_config_dir _tkg_raw_url _frog_raw_url _curl_opts
 
-# Human-readable display names
-declare -gA _pkg_display_name=(
-    [linux]="Linux-TKG"
-    [nvidia]="Nvidia-all"
-    [mesa]="Mesa-TKG"
-    [amdgpu]="AMDGPU-PRO"
-    [amdvlk]="AMDVLK-OPT"
-    [wine]="Wine-TKG"
-    [proton]="Proton-TKG"
-    [dxvk]="DXVK"
-    [vkd3d]="Vkd3d-proton"
-    [gamescope]="Gamescope"
-    [glibc]="Glibc-eeac"
-)
-
-# Git repository URLs (requires _frog_repo_url from __init_globals)
+# Git repository URL
 declare -gA _frog_pkg_repo=(
     [linux]="${_frog_repo_url}/linux-tkg.git"
     [nvidia]="${_frog_repo_url}/nvidia-all.git"
@@ -56,7 +41,7 @@ declare -gA _frog_pkg_repo=(
     [glibc]="${_frog_repo_url}/glibc-eac.git"
 )
 
-# Configuration file paths (relative to _frog_raw_url)
+# Configuration file paths
 declare -gA _frog_pkg_config=(
     [linux]="linux-tkg/master/customization.cfg"
     [nvidia]="nvidia-all/master/customization.cfg"
@@ -102,15 +87,15 @@ declare -gA _frog_pkg_local_config=(
 # Normalize package argument to internal key
 __normalize_package() {
     case "${1,,}" in
-        linux | l | --linux | -l) echo "linux" ;;
-        nvidia | n | --nvidia | -n) echo "nvidia" ;;
-        mesa | m | --mesa | -m) echo "mesa" ;;
-        amdgpu | ag | --amdgpu | -ag) echo "amdgpu" ;;
-        amdvlk | av | --amdvlk | -av) echo "amdvlk" ;;
-        wine | w | --wine | -w) echo "wine" ;;
-        proton | p | --proton | -p) echo "proton" ;;
-        gamescope | g | --gamescope | -g) echo "gamescope" ;;
-        glibc | ge | --glibc | -ge) echo "glibc" ;;
+        linux | l) echo "linux" ;;
+        nvidia | n) echo "nvidia" ;;
+        mesa | m) echo "mesa" ;;
+        amdgpu | ag) echo "amdgpu" ;;
+        amdvlk | av) echo "amdvlk" ;;
+        wine | w) echo "wine" ;;
+        proton | p) echo "proton" ;;
+        gamescope | g) echo "gamescope" ;;
+        glibc | ge) echo "glibc" ;;
         *) echo "" ;;
     esac
 }
@@ -780,7 +765,7 @@ __install_package() {
 __install_pkg_key() {
     local _key="$1"
     local _repo="${_frog_pkg_repo[${_key}]}"
-    local _name="${_pkg_display_name[${_key}]}"
+    local _name="${_key}"
     local _cmd="${_frog_pkg_cmd[${_key}]:-${_frog_pkg_cmd_default}}"
     local _workdir="${_frog_pkg_workdir[${_key}]:-}"
     local _config_url="${_frog_pkg_config[${_key}]:-}"
@@ -1342,7 +1327,7 @@ ${_green_light}   Select an option below:"
         # Handle config editing using global package mappings
         if [[ -n "${_frog_pkg_config[${_config_file}]:-}" ]]; then
             __handle_config \
-                "${_pkg_display_name[${_config_file}]}" \
+                "${_config_file}" \
                 "${_local_config_dir}/${_frog_pkg_local_config[${_config_file}]}" \
                 "$(__get_config_url "${_config_file}")"
         fi
@@ -1694,7 +1679,7 @@ __main_direct_mode() {
         local _config_path="${_local_config_dir}/${_package}.cfg"
         local _config_url
         _config_url=$(__get_config_url "${_package}")
-        local _config_name="${_pkg_display_name[${_package}]}"
+        local _config_name="${_package}"
 
         # Disable exit trap before editing config
         trap - INT TERM EXIT HUP
@@ -1713,16 +1698,16 @@ __main_direct_mode() {
 
     # Handle regular install commands using lookup table
     declare -A _install_funcs=(
-        [linux]=__linux_install [l]=__linux_install [--linux]=__linux_install [-l]=__linux_install
-        [nvidia]=__nvidia_install [n]=__nvidia_install [--nvidia]=__nvidia_install [-n]=__nvidia_install
-        [mesa]=__mesa_install [m]=__mesa_install [--mesa]=__mesa_install [-m]=__mesa_install
-        [amdgpu]=__amdgpu_pro_install [ag]=__amdgpu_pro_install [--amdgpu]=__amdgpu_pro_install [-ag]=__amdgpu_pro_install
-        [amdvlk]=__amdvlk_opt_install [av]=__amdvlk_opt_install [--amdvlk]=__amdvlk_opt_install [-av]=__amdvlk_opt_install
-        [wine]=__wine_install [w]=__wine_install [--wine]=__wine_install [-w]=__wine_install
-        [proton]=__proton_install [p]=__proton_install [--proton]=__proton_install [-p]=__proton_install
-        [dxvk]=__dxvk_tools_prepare [d]=__dxvk_tools_prepare [--dxvk]=__dxvk_tools_prepare [-d]=__dxvk_tools_prepare
-        [gamescope]=__gamescope_install [g]=__gamescope_install [--gamescope]=__gamescope_install [-g]=__gamescope_install
-        [glibc]=__glibc_install [ge]=__glibc_install [--glibc]=__glibc_install [-ge]=__glibc_install
+        [linux]=__linux_install [l]=__linux_install
+        [nvidia]=__nvidia_install [n]=__nvidia_install
+        [mesa]=__mesa_install [m]=__mesa_install
+        [amdgpu]=__amdgpu_pro_install [ag]=__amdgpu_pro_install
+        [amdvlk]=__amdvlk_opt_install [av]=__amdvlk_opt_install
+        [wine]=__wine_install [w]=__wine_install
+        [proton]=__proton_install [p]=__proton_install
+        [dxvk]=__dxvk_tools_prepare [d]=__dxvk_tools_prepare
+        [gamescope]=__gamescope_install [g]=__gamescope_install
+        [glibc]=__glibc_install [ge]=__glibc_install
     )
 
     # Check if command maps to an install function
