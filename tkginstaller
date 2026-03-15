@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TKG-Installer VERSION definition
-readonly _tkg_installer_version="v0.30.4"
+readonly _tkg_installer_version="v0.30.5"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -22,6 +22,8 @@ _tkg_repo_url=https://github.com/damachine/tkginstaller
 _tkg_raw_url=https://raw.githubusercontent.com/damachine/tkginstaller/refs/heads/master/docs
 _frog_repo_url=https://github.com/Frogging-Family
 _frog_raw_url=https://raw.githubusercontent.com/Frogging-Family
+_damachine_linux_tkg_repo=https://github.com/damachine/linux-tkg.git
+_damachine_nvidia_all_repo=https://github.com/damachine/nvidia-all.git
 _curl_opts="--max-time 10 --connect-timeout 5 -fsSL"
 
 # Export only variables used in fzf preview commands
@@ -855,6 +857,17 @@ __prompt_answer() {
 __linux_install() {
     __msg_pkg "Linux-TKG" "${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
 
+    # Repository source selection
+    local _linux_repo="${_frog_pkg_repo[linux]}"
+    __msg_info "${_break}${_green_neon}${_uline_on}SOURCE${_uline_off}:${_reset} ${_green_light}Which Linux-TKG repository do you want to use?${_reset}${_break}"
+    __msg_plain " ${_green_neon}${_uline_on}0${_uline_off}${_reset} │ Upstream       ${_gray}${_frog_repo_url}/linux-tkg${_reset}"
+    __msg_plain " ${_orange}1${_reset} │ Staging fork   ${_gray}https://github.com/damachine/linux-tkg${_reset}${_break}"
+    __prompt_timer "[${_green_neon}${_uline_on}0${_uline_off}${_reset}/${_orange}1${_reset}]" 60 0
+    case "${_user_answer}" in
+        1) _linux_repo="${_damachine_linux_tkg_repo}" ;;
+        *) _linux_repo="${_frog_pkg_repo[linux]}" ;;
+    esac
+
     local _build_command
 
     if [[ "${_is_arch_based}" == "true" ]]; then
@@ -883,7 +896,7 @@ __linux_install() {
         _build_command="chmod +x install.sh && ./install.sh install"
     fi
 
-    __install_package "${_frog_pkg_repo[linux]}" "linux-tkg" "${_build_command}"
+    __install_package "${_linux_repo}" "linux-tkg" "${_build_command}"
     local _status=$?
 
     # Offer uninstall info for non-Arch distros after successful installation
@@ -897,8 +910,21 @@ __linux_install() {
     return "${_status:-0}"
 }
 
-# Simple package installers - direct delegation to __install_pkg_key
-__nvidia_install() { __install_pkg_key "nvidia"; }
+# Nvidia-all installation
+__nvidia_install() {
+    # --- Repository source selection ---
+    local _nvidia_repo="${_frog_pkg_repo[nvidia]}"
+    __msg_info "${_break}${_green_neon}${_uline_on}SOURCE${_uline_off}:${_reset} ${_green_light}Which nvidia-all repository do you want to use?${_reset}${_break}"
+    __msg_plain " ${_green_neon}${_uline_on}0${_uline_off}${_reset} │ Upstream       ${_gray}${_frog_repo_url}/nvidia-all${_reset}"
+    __msg_plain " ${_orange}1${_reset} │ Staging fork   ${_gray}https://github.com/damachine/nvidia-all${_reset}${_break}"
+    __prompt_timer "[${_green_neon}${_uline_on}0${_uline_off}${_reset}/${_orange}1${_reset}]" 60 0
+    case "${_user_answer}" in
+        1) _nvidia_repo="${_damachine_nvidia_all_repo}" ;;
+        *) _nvidia_repo="${_frog_pkg_repo[nvidia]}" ;;
+    esac
+
+    __install_package "${_nvidia_repo}" "nvidia-all" "${_frog_pkg_cmd_default}"
+}
 __mesa_install() { __install_pkg_key "mesa"; }
 __amdgpu_pro_install() { __install_pkg_key "amdgpu"; }
 __amdvlk_opt_install() { __install_pkg_key "amdvlk"; }
