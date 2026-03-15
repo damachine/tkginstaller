@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TKG-Installer VERSION definition
-readonly _tkg_installer_version="v0.30.5"
+readonly _tkg_installer_version="v0.30.6"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -912,7 +912,9 @@ __linux_install() {
 
 # Nvidia-all installation
 __nvidia_install() {
-    # --- Repository source selection ---
+    __msg_pkg "Nvidia-all" "${_frog_repo_url}/nvidia-all/blob/master/customization.cfg"
+
+    # Repository source selection
     local _nvidia_repo="${_frog_pkg_repo[nvidia]}"
     __msg_info "${_break}${_green_neon}${_uline_on}SOURCE${_uline_off}:${_reset} ${_green_light}Which nvidia-all repository do you want to use?${_reset}${_break}"
     __msg_plain " ${_green_neon}${_uline_on}0${_uline_off}${_reset} │ Upstream       ${_gray}${_frog_repo_url}/nvidia-all${_reset}"
