@@ -12,7 +12,7 @@
 <strong>what it does</strong>
  - quick CLI one-liners or full fzf <strong><mark>TUI</mark></strong> — your call
  - <strong><mark>customization.cfg</mark></strong> handled, no cap
- - staging forks for <strong><mark>[linux-tkg](https://github.com/damachine/linux-tkg) & [nvidia-all](https://github.com/damachine/nvidia-all)</mark></strong> w/ extra sauce
+ - staging forks for <strong><a href="https://github.com/damachine/linux-tkg"><mark>linux-tkg</mark></a> & <a href="https://github.com/damachine/nvidia-all"><mark>nvidia-all</mark></a></strong> w/ extra sauce
  - works on basically any distro, no drama
 </pre>
 
