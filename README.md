@@ -7,13 +7,13 @@
 
 <strong>bash wrapper to build & install <a href="https://github.com/Frogging-Family">Frogging-Family</a> stuff with ease</strong>
 
-   <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/Version-0.30.6-yellow?style=flat&logo=linux"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://github.com/search?q=org%3AFrogging-Family+author%3Adamachine&type=commits"><img src="https://img.shields.io/badge/Frogging--Family-Collaborator-green?style=flat&logo=github"></a>
+   <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/Version-0.40.0-yellow?style=flat&logo=linux"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://github.com/search?q=org%3AFrogging-Family+author%3Adamachine&type=commits"><img src="https://img.shields.io/badge/Frogging--Family-Collaborator-green?style=flat&logo=github"></a>
    
 <strong>what it does</strong>
  - quick CLI one-liners or full fzf <strong><mark>TUI</mark></strong> — your call
  - <strong><mark>customization.cfg</mark></strong> handled, no cap
- - staging forks for <strong><a href="https://github.com/damachine/linux-tkg"><mark>linux-tkg</mark></a> & <a href="https://github.com/damachine/nvidia-all"><mark>nvidia-all</mark></a></strong> w/ extra sauce
- - works on basically any distro, no drama
+ - staging forks optional added for <strong><a href="https://github.com/damachine/linux-tkg"><mark>linux-tkg</mark></a> & <a href="https://github.com/damachine/nvidia-all"><mark>nvidia-all</mark></a></strong> w/ extra sauce
+ - multi-distro support, restricted to supported tkg packages (see docs)
 </pre>
 
 <details>
@@ -48,8 +48,9 @@ tkginstaller
 # Use direct one-liner CLI mode (skip TUI), run with arguments
 tkginstaller [package]
 # e.g
-tkginstaller linux      # or shortcut
+tkginstaller linux          # or shortcut
 tkginstaller nvidia
+tkginstaller linux-nvidia   # or shortcut ln
 
 # Edit a package's configuration file
 tkginstaller [config] [package]
@@ -64,7 +65,7 @@ tkginstaller clean
 tkginstaller help
 
 # All names and shortcuts to use:
-# l=linux, n=nvidia, m=mesa, ag=amdgpu, av=amdvlk, w=wine, p=proton, g=gamescope, ge=glibc
+# l=linux, n=nvidia, ln=linux-nvidia, m=mesa, ag=amdgpu, av=amdvlk, w=wine, p=proton, g=gamescope, ge=glibc
 # c=config, e=edit
 # h, --help, -h
 ```
@@ -113,6 +114,4 @@ This tool is released under the MIT license.
   
 Individual TKG/Frogminer packages have their own licenses:
  - See respective repositories at <a href="https://github.com/Frogging-Family">Frogging-Family</a>
-
-<strong><em>💚 Your support ⭐️ keeps this project alive and improving — thank you! 🙏</em></strong>
 </pre>
