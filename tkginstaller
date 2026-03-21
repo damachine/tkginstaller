@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TKG-Installer VERSION definition
-readonly _tkg_installer_version="v0.30.6"
+readonly _tkg_installer_version="v0.40.0"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -24,12 +24,17 @@ _frog_repo_url=https://github.com/Frogging-Family
 _frog_raw_url=https://raw.githubusercontent.com/Frogging-Family
 _damachine_linux_tkg_repo=https://github.com/damachine/linux-tkg.git
 _damachine_nvidia_all_repo=https://github.com/damachine/nvidia-all.git
+
+# nvidia-open version map — keep in sync with damachine/linux-tkg PKGBUILD
+readonly _nvidia_open_latest_version="595.45.04" # "latest"
+readonly _nvidia_open_vulkan_version="595.44.03" # "vulkan"
+readonly _nvidia_open_legacy_version="580.142"   # "legacy"
 _curl_opts="--max-time 10 --connect-timeout 5 -fsSL"
 
 # Export only variables used in fzf preview commands
 export _tkg_tmp_dir _local_config_dir _tkg_raw_url _frog_raw_url _curl_opts
 
-# Git repository URL
+# Package repo URLs
 declare -gA _frog_pkg_repo=(
     [linux]="${_frog_repo_url}/linux-tkg.git"
     [nvidia]="${_frog_repo_url}/nvidia-all.git"
@@ -57,16 +62,15 @@ declare -gA _frog_pkg_config=(
     [gamescope]="gamescope-git/master/customization.cfg"
 )
 
-# Optional: Subdirectory to enter after git clone
+# Subdir to enter after clone
 declare -gA _frog_pkg_workdir=(
     [amdvlk]="amdvlk-buildfromsource"
     [wine]="wine-tkg-git"
     [proton]="proton-tkg"
 )
 
-# Default build command for packages using __install_pkg_key
+# Default build command
 readonly _frog_pkg_cmd_default="makepkg -si"
-# Only specify package-specific overrides here (leave empty if same as default)
 declare -gA _frog_pkg_cmd=(
     # Example override:
     # [wine]="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
@@ -136,7 +140,7 @@ __init_style() {
             _tput_seq=$(
                 tput sgr0
                 tput setaf "$idx"
-            ) # Reset attributes, then set foreground color
+            )
             printf '%s' "${_tput_seq}"
             return 0
         fi
@@ -175,7 +179,7 @@ __init_style() {
     _line=""
     for ((i = 0; i < "${_line_len}"; i++)); do _line+="─"; done
 
-    # Export only variables must be used in fzf preview commands to work properly
+    # Export vars needed in fzf preview subshells
     export _break _reset _green_light _green_neon _green_mint _green_dark _orange _gray _uline_on _uline_off _cols _line
 }
 
@@ -252,7 +256,7 @@ __msg() {
             ;;
     esac
 
-    # Print formatted line with color and reset
+    # Print message
     printf '%b\n' "${__color}${_prefix}${_msg}${_reset}"
 }
 
@@ -337,7 +341,7 @@ ${_green_neon}1) Interactive mode${_reset}
 
 ${_green_neon}2) Direct mode${_reset}
    Use direct CLI mode (skip TUI), run with arguments:
-   ${_gray}tkginstaller [linux|l|nvidia|n|mesa|m|wine|w|proton|p|amdgpu|ag|amdvlk|av|gamescope|g|glibc|ge]${_reset}
+   ${_gray}tkginstaller [linux|l|nvidia|n|linux-nvidia|ln|mesa|m|wine|w|proton|p|amdgpu|ag|amdvlk|av|gamescope|g|glibc|ge]${_reset}
 
 ${_green_neon}3) Config editing${_reset}
    Enter fzf-based TUI mode to edit a package's configuration:
@@ -349,7 +353,7 @@ ${_green_neon}4) Clean temporary files${_reset}
    Remove all temporary files created during installations:
    ${_gray}tkginstaller clean${_reset}
 
-${_orange}Shortcuts:${_reset} ${_orange}l${_reset}=linux, ${_orange}n${_reset}=nvidia, ${_orange}m${_reset}=mesa, ${_orange}ag${_reset}=amdgpu, ${_orange}av${_reset}=amdvlk, ${_orange}w${_reset}=wine, ${_orange}p${_reset}=proton, ${_orange}g${_reset}=gamescope, ${_orange}ge${_reset}=glibc-eac, ${_orange}c${_reset}=config, ${_orange}e${_reset}=edit
+${_orange}Shortcuts:${_reset} ${_orange}l${_reset}=linux, ${_orange}n${_reset}=nvidia, ${_orange}ln${_reset}=linux-nvidia, ${_orange}m${_reset}=mesa, ${_orange}ag${_reset}=amdgpu, ${_orange}av${_reset}=amdvlk, ${_orange}w${_reset}=wine, ${_orange}p${_reset}=proton, ${_orange}g${_reset}=gamescope, ${_orange}ge${_reset}=glibc-eac, ${_orange}c${_reset}=config, ${_orange}e${_reset}=edit
 
 EOF
 }
@@ -406,7 +410,7 @@ __build_menu() {
     local _opt9_label="${6:-}"
     local _opt9_desc="${7:-}"
 
-    # Calculate maximum label length for proper alignment
+    # Align option labels
     local _max_label_length=0
     for _label in "${_opt1_label}" "${_opt2_label}" "${_opt9_label}"; do
         [[ -n "${_label}" ]] && ((${#_label} > _max_label_length)) && _max_label_length=${#_label}
@@ -429,7 +433,7 @@ __build_menu() {
     _menu_choice="${_user_answer}"
 }
 
-# Export associative array as newline-separated key=value for fzf preview
+# Dump assoc array as key=value for fzf preview
 __export_map() {
     local -n _map_ref="$1"
     local _key
@@ -525,16 +529,14 @@ __prepare() {
             _pkg_name_dep+=("${_pkg_map_dep[${_dependency}]:-${_dependency}}")
         done
 
-        # Display installation command
         __msg_plain "${_install_cmd_dep} ${_pkg_name_dep[*]}${_break}"
 
-        # Exit with error code
         exit 1 >/dev/null 2>&1
     fi
 
     # Setup temporary directory
     rm -f "${_tkg_choice_file}"
-    # Cache is preserved to allow git pull updates instead of fresh clones
+    # Preserve cache for git pull reuse
     mkdir -p "${_tkg_tmp_dir}" || {
         for i in {1..7}; do
             __clear_line 120 ""
@@ -564,7 +566,7 @@ __status() {
     local _minutes=$((_duration / 60))
     local _seconds=$((_duration % 60))
 
-    # Finisher message display
+    # Print status and duration
     __msg_info_orange "${_break}Action completed: $(date '+%Y-%m-%d %H:%M:%S')"
     if [[ ${_status} -eq 0 ]]; then
         if [[ -n "${_package_name}" ]]; then
@@ -582,16 +584,16 @@ __status() {
     __msg_info_orange "Duration: ${_minutes} min ${_seconds} sec"
 }
 
-# Setup exit trap for cleanup on script termination and errors
+# Trap for clean exit
 __exit() {
     local _exit_code=${1:-$?}
     trap - INT TERM EXIT HUP
 
-    # Message handling on exit with banner and status first
+    # Show banner and status on error
     if [[ ${_exit_code} -ne 0 ]]; then
         __banner "${_red}"
 
-        # Show completion info for interrupted processes
+        # Show duration on interrupt
         local _duration="${SECONDS:-0}"
         local _minutes=$((_duration / 60))
         local _seconds=$((_duration % 60))
@@ -605,19 +607,18 @@ __exit() {
         __msg_plain "${_green_neon}Closed... Finish${_break}"
     fi
 
-    # Perform cleanup
     __clean
     wait
     exit "${_exit_code}"
 }
 
-# Ensure signals lead to __exit with non-zero code so __exit shows error output.
+# Route signals through __exit
 trap 'trap - INT TERM EXIT HUP; __exit 130' INT TERM HUP
 trap '__exit $?' EXIT
 
 # Cleanup handler
 __clean() {
-    # Remove temporary files but preserve cache directory for git pull updates
+    # Remove choice tmpfile only
     rm -f "${_tkg_choice_file}"
 
     # Unset all variables
@@ -631,29 +632,48 @@ __clean_temp_dir() {
     __msg_info "Cleaning all temporary files...${_break}"
     __msg_plain " Location:${_reset}${_gray} ${_tkg_tmp_dir}${_reset}${_break}"
     local _cache_count=0
-    local _cache_size_bytes=0
     local _cache_size_human=""
 
     if [[ -d "${_tkg_tmp_dir}" ]]; then
         _cache_count=$(find "${_tkg_tmp_dir}" -type f 2>/dev/null | wc -l || echo 0)
-        _cache_size_bytes=$(du -sb "${_tkg_tmp_dir}" 2>/dev/null | cut -f1 || echo 0)
         _cache_size_human=$(du -sh "${_tkg_tmp_dir}" 2>/dev/null | cut -f1 || echo "0B")
     fi
 
     rm -f "${_tkg_choice_file}"
-    rm -rf "${_tkg_tmp_dir}"
+
+    # Detect chattr +i immutable patch files; inform user and suppress rm -rf errors
+    local -a _immutable_files=()
+    if [[ -d "${_tkg_tmp_dir}" ]] && command -v lsattr >/dev/null 2>&1; then
+        while IFS= read -r -d '' _f; do
+            if lsattr "${_f}" 2>/dev/null | cut -d' ' -f1 | grep -qF 'i'; then
+                _immutable_files+=("${_f#"${_tkg_tmp_dir}/"}")
+            fi
+        done < <(find "${_tkg_tmp_dir}" -type f \( -name '*.myfrag' -o -name '*.mypatch' \) -print0 2>/dev/null)
+    fi
+
+    if [[ ${#_immutable_files[@]} -gt 0 ]]; then
+        __msg_plain " ${_green_neon}Keeping ${#_immutable_files[@]} immutable patch file(s) ${_gray}(chattr +i — root-protected):${_reset}"
+        for _rel in "${_immutable_files[@]}"; do
+            __msg_plain "  ${_gray}${_rel}${_reset}"
+        done
+        __msg_plain "${_break}${_orange}  These files are protected by the kernel${_reset} ${_gray}(revert: chattr -i file(s)).${_reset}${_break}"
+    fi
+
+    # Immutable files survive rm -rf; suppress non-zero exit
+    rm -rf "${_tkg_tmp_dir}" 2>/dev/null || true
     sleep 1.5s
 
-    if [[ "${_cache_count}" -eq 0 ]]; then
+    local _removed=$((_cache_count - ${#_immutable_files[@]}))
+    if [[ "${_removed}" -le 0 ]]; then
         __msg_plain "${_green_neon}Cleanup complete ${_gray}(nothing to remove, cache already clean)${_reset}${_break}"
     else
-        __msg_plain "${_green_neon}Cleanup complete ${_gray}(${_orange}${_cache_count}${_reset} ${_gray}cached files removed, ${_orange}${_cache_size_human}${_reset}${_gray} freed)${_reset}${_break}"
+        __msg_plain "${_green_neon}Cleanup complete ${_gray}(${_orange}${_removed}${_reset} ${_gray}cached files removed, ${_orange}${_cache_size_human}${_reset}${_gray} freed)${_reset}${_break}"
     fi
 }
 
 # Fuzzy finder menu wrapper function
 __fzf_menu() {
-    # $1: Menü-Inhalt, $2: Preview-Command, $3: Header, $4: Footer, $5: Label (optional), $6: Preview-Window-Settings (optional)
+    # $1=content $2=preview $3=header $4=footer [$5=label $6=window $7=bind]
     local _menu_content="$1"
     local _preview_command="$2"
     local _header_text="$3"
@@ -662,7 +682,6 @@ __fzf_menu() {
     local _preview_window_settings="${6:-right:wrap:55%}"
     local _fzf_bind="${7:-ctrl-p:toggle-preview}"
 
-    # Run fzf with consistent styling and options
     fzf \
         --with-shell='bash -c' \
         --style default \
@@ -707,6 +726,7 @@ __install_package() {
     local _package_name="$2"
     local _build_command="$3"
     local _work_directory="${4:-}"
+    local _post_build_hook="${5:-}"
 
     __cd_safe "${_tkg_tmp_dir}" || return 1
 
@@ -733,16 +753,47 @@ __install_package() {
 
         # Handle existing directory without git metadata
         if [[ -d "${_repo_dir}" ]]; then
-            __msg_warning "Found directory '${_repo_dir}' without git metadata"
-            __msg_prompt "Remove and try fresh clone? [y/N]: "
-            __prompt_answer "n"
-            [[ "${_user_answer,,}" =~ ^(y|yes)$ ]] && rm -rf "${_repo_dir}" || return 1
-        fi
+            # Check for immutable patch files; graft .git if found
+            local _has_immutable=false
+            if command -v lsattr >/dev/null 2>&1; then
+                while IFS= read -r -d '' _chk; do
+                    if lsattr "${_chk}" 2>/dev/null | cut -d' ' -f1 | grep -qF 'i'; then
+                        _has_immutable=true
+                        break
+                    fi
+                done < <(find "${_repo_dir}" -type f \( -name '*.myfrag' -o -name '*.mypatch' \) -print0 2>/dev/null)
+            fi
 
-        __git_clone_retry "${_repo_url}" || {
-            __msg_error "Cloning failed for: ${_package_name}${_break}"
-            return 1
-        }
+            if [[ "${_has_immutable}" == "true" ]]; then
+                # Graft .git from sibling clone; immutable files stay in place
+                printf '\033[A          %b\n' "${_green_light}immutable patch files detected — grafting .git...${_reset}${_break}"
+                local _tmp_clone="${_repo_dir}.tkg_clone_$$"
+                __git_clone_retry "${_repo_url}" "${_tmp_clone}" || {
+                    __msg_error "Cloning failed for: ${_package_name}${_break}"
+                    rm -rf "${_tmp_clone}"
+                    return 1
+                }
+                mv "${_tmp_clone}/.git" "${_repo_dir}/.git"
+                rm -rf "${_tmp_clone}"
+                # Restore tracked files; git skips immutable ones
+                git -C "${_repo_dir}" checkout -f HEAD 2>/dev/null || true
+            else
+                __msg_warning "Found directory '${_repo_dir}' without git metadata"
+                __msg_prompt "Remove and try fresh clone? [y/N]: "
+                __prompt_answer "n"
+                [[ "${_user_answer,,}" =~ ^(y|yes)$ ]] && rm -rf "${_repo_dir}" || return 1
+
+                __git_clone_retry "${_repo_url}" || {
+                    __msg_error "Cloning failed for: ${_package_name}${_break}"
+                    return 1
+                }
+            fi
+        else
+            __git_clone_retry "${_repo_url}" || {
+                __msg_error "Cloning failed for: ${_package_name}${_break}"
+                return 1
+            }
+        fi
     fi
 
     __cd_safe "${_repo_dir}" || return 1
@@ -759,6 +810,11 @@ __install_package() {
     eval "${_build_command}"
     local _status=$?
 
+    # Run post-build hook in repo dir (e.g. capture values before PKGBUILD cleanup)
+    if [[ -n "${_post_build_hook}" ]]; then
+        eval "${_post_build_hook}"
+    fi
+
     __status "${_status}" "${_package_name}"
     return "${_status}"
 }
@@ -772,12 +828,11 @@ __install_pkg_key() {
     local _workdir="${_frog_pkg_workdir[${_key}]:-}"
     local _config_url="${_frog_pkg_config[${_key}]:-}"
 
-    # Inform user about external configuration if available
+    # Show config URL if set
     if [[ -n "${_config_url}" ]]; then
         __msg_pkg "${_name}" "${_config_url}"
     fi
 
-    # Execute installation process
     __install_package "${_repo}" "${_key}" "${_cmd}" "${_workdir}"
 }
 
@@ -804,7 +859,7 @@ __prompt_timer() {
             "${_prompt_options}" "${_seconds_left}"
 
         if read -r -t 1 -n 1 _key </dev/tty; then
-            # If Enter pressed (no character), accept default immediately
+            # Enter = accept default
             if [[ -z "${_key}" ]]; then
                 _user_answer="${_default}"
                 __clear_line 120 ""
@@ -831,7 +886,7 @@ __prompt_timer() {
     # Default if no answer
     : "${_user_answer:=${_default}}"
 
-    # Normalize and sanitize user input
+    # Sanitize input
     _user_answer="${_user_answer//[[:space:]]/}"
     _user_answer="${_user_answer//[^0-9]/}"
     _user_answer="${_user_answer:0:1}"
@@ -899,7 +954,7 @@ __linux_install() {
     __install_package "${_linux_repo}" "linux-tkg" "${_build_command}"
     local _status=$?
 
-    # Offer uninstall info for non-Arch distros after successful installation
+    # Offer uninstall help for non-Arch
     if [[ "${_is_arch_based}" != "true" && ${_status} -eq 0 ]]; then
         __msg_info "${_break}${_green_neon}${_uline_on}TIP${_uline_off}:${_reset}${_green_light} Uninstalling custom kernels has to be done manually.${_break}"
         __msg_prompt "Show uninstall info now? [y/N]: "
@@ -927,6 +982,131 @@ __nvidia_install() {
 
     __install_package "${_nvidia_repo}" "nvidia-all" "${_frog_pkg_cmd_default}"
 }
+
+# Linux-TKG + Nvidia-all combined installation (damachine fork)
+__linux_nvidia_install() {
+    __msg_pkg "Linux-TKG + Nvidia-all" "https://github.com/damachine/linux-tkg/blob/staging/customization.cfg"
+    __msg_info "${_break}${_green_neon}${_uline_on}COMBINED${_uline_off}:${_reset} ${_green_light}This will install ${_gray}Linux-TKG${_reset}${_green_light} then ${_gray}Nvidia-all${_reset}${_green_light} from the damachine staging fork.${_reset}"
+
+    # Background watcher: copies BIG_UGLY_FROGMINER the moment it appears during prepare()
+    # (post-build hook is too late — _NUKR cleanup runs inside makepkg before it returns)
+    local _bfm_copy_tmp
+    _bfm_copy_tmp=$(mktemp "${_tkg_tmp_dir}/.bfm_XXXXXX")
+    local _linux_tkg_dir="${_tkg_tmp_dir}/linux-tkg"
+    (
+        _n=0
+        while [[ ! -f "${_linux_tkg_dir}/BIG_UGLY_FROGMINER" && ${_n} -lt 3600 ]]; do
+            sleep 0.5
+            ((_n++))
+        done
+        cp "${_linux_tkg_dir}/BIG_UGLY_FROGMINER" "${_bfm_copy_tmp}" 2>/dev/null || true
+    ) &
+    local _bfm_watcher_pid=$!
+
+    # Build linux-tkg
+    __install_package "${_damachine_linux_tkg_repo}" "linux-tkg" "${_frog_pkg_cmd_default}"
+    local _linux_status=$?
+
+    kill "${_bfm_watcher_pid}" 2>/dev/null || true
+    wait "${_bfm_watcher_pid}" 2>/dev/null || true
+
+    if [[ ${_linux_status} -ne 0 ]]; then
+        __msg_error "Linux-TKG build failed — skipping Nvidia-all installation.${_break}"
+        rm -f "${_bfm_copy_tmp}"
+        return "${_linux_status}"
+    fi
+
+    # Extract _nvidia_open and version from captured BIG_UGLY_FROGMINER copy
+    local _nvidia_open=""
+    local _driver_version_val=""
+    if [[ -s "${_bfm_copy_tmp}" ]]; then
+        _nvidia_open=$(grep '^_nvidia_open=' "${_bfm_copy_tmp}" | tail -1 | sed "s/^_nvidia_open=//;s/'//g;s/\"//g")
+        _driver_version_val=$(grep '^_nvidia_open_version=' "${_bfm_copy_tmp}" | tail -1 | sed "s/^_nvidia_open_version=//;s/'//g;s/\"//g")
+    fi
+    rm -f "${_bfm_copy_tmp}"
+
+    # Fallback: BIG_UGLY_FROGMINER was never created (reinstall-without-rebuild case)
+    # Query the installed linux-tkg-nvidia-open module via modinfo to get the driver version
+    if [[ -z "${_driver_version_val}" ]] && pacman -Q linux-tkg-nvidia-open &>/dev/null; then
+        local _ltkg_moddir
+        _ltkg_moddir=$(pacman -Ql linux-tkg-nvidia-open 2>/dev/null | awk '{print $2}' |
+            grep '^/usr/lib/modules/' | sed 's|^\(/usr/lib/modules/[^/]*\).*|\1|' | sort -u | head -1)
+        if [[ -n "${_ltkg_moddir}" ]]; then
+            local _nvidia_ko
+            _nvidia_ko=$(find "${_ltkg_moddir}" -name 'nvidia.ko*' 2>/dev/null | head -1)
+            if [[ -n "${_nvidia_ko}" ]]; then
+                _driver_version_val=$(modinfo "${_nvidia_ko}" 2>/dev/null | awk '/^version:/{print $2; exit}')
+            fi
+        fi
+        [[ -z "${_nvidia_open}" && -n "${_driver_version_val}" ]] && _nvidia_open="detected"
+    fi
+
+    # Skip driver build if open module was built; use resolved version
+    local _utils_only="false"
+    if [[ -n "${_nvidia_open}" && "${_nvidia_open}" != "false" ]]; then
+        _utils_only="true"
+        # Final fallback to hardcoded constants if version still unknown
+        if [[ -z "${_driver_version_val}" ]]; then
+            case "${_nvidia_open}" in
+                latest) _driver_version_val="${_nvidia_open_latest_version}" ;;
+                vulkan) _driver_version_val="${_nvidia_open_vulkan_version}" ;;
+                legacy) _driver_version_val="${_nvidia_open_legacy_version}" ;;
+            esac
+        fi
+        __msg_info "${_break}${_green_neon}${_uline_on}INFO${_uline_off}:${_reset} ${_green_light}nvidia-open module detected (${_gray}${_nvidia_open}${_reset}${_green_light}) — nvidia-all will build utils only (version: ${_gray}${_driver_version_val}${_reset}${_green_light}).${_reset}"
+    fi
+
+    local _preset_cfg="${_tkg_tmp_dir}/nvidia_all/pre-customization.cfg"
+    mkdir -p "${_tkg_tmp_dir}/nvidia_all"
+
+    cat >"${_preset_cfg}" <<NVIDIA_CUSTOMIZATION_CFG
+# nvidia-all preset config — generated by tkginstaller (linux-nvidia combined install)
+# Edit values in the __write_nvidia_preset_cfg() heredoc inside tkginstaller to customize.
+#
+# _EXT_CONFIG_PATH is explicitly cleared so ~/.config/frogminer/nvidia-all.cfg does NOT
+# override this file. Remove this line only if you want your personal nvidia-all.cfg applied.
+_EXT_CONFIG_PATH="~/.tkg_installer_ignored_config_path/nvidia-all.cfg"
+CUSTOM_GCC_PATH=""
+_series_in_pkgname=""
+_kerneloverride=""
+_local_package_storing="false"
+_build_utils_package_only="true"
+_lib32="true"
+_opencl="true"
+_nvsettings="true"
+_eglwayland="external"
+_eglgbm="external"
+_eglx11="external"
+_driver_version_tag="${_driver_version_val}"
+_open_source_modules="false"
+_module_signing="false"
+_blacklist_nouveau="false"
+_modprobe="true"
+_modprobe_mobile="false"
+_perf_optimizations="true"
+_nvidia_patch_enc_fbc="true"
+_bsb_dsc_fix="true"
+_only_update_if_newer=""
+_dkms="false"
+_target_kernel=""
+_gcc15_fix="false"
+_disable_libalpm_hook=""
+_gcc14_fix="false"
+_54_prime_fixing_attempt="false"
+_62142_fix="false"
+NVIDIA_CUSTOMIZATION_CFG
+
+    local _build_command_nvidia="mv \"${_preset_cfg}\" customization.cfg && makepkg -si"
+
+    __install_package "${_damachine_nvidia_all_repo}" "nvidia-all" "${_build_command_nvidia}"
+    local _nvidia_status=$?
+
+    rm -rf "${_tkg_tmp_dir}/nvidia_all"
+
+    __status "${_nvidia_status}" "Linux-TKG + Nvidia-all"
+    return "${_nvidia_status}"
+}
+
 __mesa_install() { __install_pkg_key "mesa"; }
 __amdgpu_pro_install() { __install_pkg_key "amdgpu"; }
 __amdvlk_opt_install() { __install_pkg_key "amdvlk"; }
@@ -977,7 +1157,7 @@ __glibc_install() {
     __install_package "${_frog_pkg_repo[glibc]}" "glibc-eac" "${_build_command}"
 }
 
-# DXVK-Tools preparation (optional pre-build for Proton-TKG)
+# DXVK-Tools pre-build for Proton-TKG
 __dxvk_tools_prepare() {
     __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which DXVK/vkd3d build option do you want?${_reset}${_break}"
     __msg_plain " ${_orange}${_uline_on}0${_uline_off}${_reset} │ No (skip)       ${_gray}Skip, continue with Proton-TKG${_reset}"
@@ -1087,7 +1267,7 @@ __proton_install() {
 # EDITOR MANAGEMENT FUNCTION
 # =============================================================================
 
-# Helper function to handle individual config file editing and downloading if missing
+# Config error display helper
 __error_config() {
     local _msg="$1"
     clear
@@ -1103,14 +1283,14 @@ __editor() {
     local _target_file="${1}"
     local _editor_parts=()
 
-    # Parse ${editor} variable and split into command + arguments
+    # Split $EDITOR into command + args
     if [[ -n "${EDITOR-}" ]]; then
         IFS=' ' read -r -a _editor_parts <<<"${EDITOR}"
     fi
 
-    # Validate editor command exists, otherwise find fallback
+    # Find fallback if $EDITOR not set or unavailable
     if [[ -z "${_editor_parts[0]:-}" ]] || ! command -v "${_editor_parts[0]}" >/dev/null 2>&1; then
-        # Try common editors in order of preference
+        # Try common editors
         for editor in nano micro vim vi; do
             if command -v "${editor}" >/dev/null 2>&1; then
                 _editor_parts=("${editor}")
@@ -1125,7 +1305,7 @@ __editor() {
         fi
     fi
 
-    # Execute editor with target file
+    # Launch editor
     "${_editor_parts[@]}" "${_target_file}"
 }
 
@@ -1218,7 +1398,7 @@ __menu_config() {
             "linux    |🐧 ${_green_neon}Linux      ${_gray} customization.cfg ${_reset}->${_orange} 'linux-tkg.cfg'  "
         )
 
-        # Add Nvidia and Mesa options only for Arch-based distros
+        # Arch-only options
         if [[ "${_is_arch_based}" == "true" ]]; then
             _menu_options+=(
                 "nvidia   |💻 ${_green_neon}Nvidia     ${_gray} customization.cfg ${_reset}->${_orange} 'nvidia-all.cfg'"
@@ -1239,7 +1419,7 @@ __menu_config() {
         local _menu_content
         _menu_content=$(printf '%s\n' "${_menu_options[@]}")
 
-        # Export config URLs for preview command
+        # Export config URLs for preview
         local _pkg_urls_json
         _pkg_urls_json=$(
             printf '%s\n' \
@@ -1254,7 +1434,7 @@ __menu_config() {
         )
         export _pkg_urls_json
 
-        # Export local config filenames for preview command
+        # Export local config filenames for preview
         local _pkg_local_cfg_json
         _pkg_local_cfg_json=$(
             printf '%s\n' \
@@ -1269,17 +1449,17 @@ __menu_config() {
         )
         export _pkg_local_cfg_json
 
-        # Define preview command components
+        # Preview command components
         local _info_config="${_green_neon}Comparing remote and local ${_reset}${_gray}customization.cfg${_reset}${_green_neon}, press [Enter] to open and edit ${_reset}${_break}${_break}${_green_light} Remote:${_reset}${_gray} \${_remote_url} ${_reset}${_break}${_orange}≠${_reset}${_green_light} Local:${_reset}${_gray} file://\${_config_file_path} ${_reset}${_break}${_green_dark}${_line}${_break}"
 
-        # Define error message for missing config file
+        # Missing config error message
         local _error_config_not_exist="${_orange}No external configuration file found.${_reset}${_break}${_break}${_green_light} This configuration file is required for customizing the -TKG- package.${_break}${_green_light} Press [Enter] to download the missing${_reset}${_gray} customization.cfg${_reset}${_green_light} file, according to -TKG- package standards.${_reset}${_break}${_green_dark}${_line}${_break}"
 
-        # Define bat and wdiff commands for preview
+        # bat/wdiff diff preview commands
         local _bat_cmd="bat --style=plain --language=cfg --wrap character --terminal-width ${_cols} --force-colorization --theme='Visual Studio Dark+'"
         local _diff_cmd="wdiff --terminal --statistics --start-delete='${_red}' --end-delete='${_reset}' --start-insert='${_green_light}' --end-insert='${_reset}'"
 
-        # Simplified preview command using exported URLs
+        # Preview command
         # shellcheck disable=SC2016 # Need to use single quotes for fzf preview
         local _preview_command='
             key=$(echo {} | cut -d"|" -f1 | xargs)
@@ -1304,7 +1484,7 @@ __menu_config() {
             fi
         '
 
-        # Define header texts
+        # Header
         local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Customizing (Beta)${_uline_off}${_reset}${_break}${_break}\
 ${_green_light}    - Customize to your preferred settings${_break}\
 ${_green_light}    - Download missing file(s)${_break}\
@@ -1313,12 +1493,12 @@ ${_green_light}    According to -TKG/Frogminer- package standards file(s)${_brea
 ${_green_light}    Please make sure to adjust the settings correctly!${_break}    More visit: ${_reset}${_gray}https://github.com/Frogging-Family${_reset}${_break}${_break}${_break}\
 ${_green_light}   Select an option below:"
 
-        # Define footer texts
+        # Footer
         local _footer_text="  ${_green_light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}\
   Press [Enter] to select, [Ctrl+P] ${_green_light}to toggle the preview window, [ESC] to exit${_break}${_break}\
   ${_green_light}Website:${_reset} ${_gray}https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family"
 
-        # Define border label text
+        # Border label
         local _border_label_text="${_tkg_installer_version}"
         local _preview_window_settings='right:wrap:75%'
         local _fzf_bind='ctrl-p:toggle-preview'
@@ -1327,7 +1507,7 @@ ${_green_light}   Select an option below:"
         local _config_choice
         _config_choice=$(__fzf_menu "${_menu_content}" "${_preview_command}" "${_header_text}" "${_footer_text}" "${_border_label_text}" "${_preview_window_settings}" "${_fzf_bind}")
 
-        # Unset exported var _pkg_local_cfg_jsoniables
+        # Unset exported vars
         unset _pkg_urls_json
 
         # Handle empty choice (ESC pressed)
@@ -1352,7 +1532,7 @@ ${_green_light}   Select an option below:"
             return 0
         fi
 
-        # Handle config editing using global package mappings
+        # Edit selected config
         if [[ -n "${_frog_pkg_config[${_config_file}]:-}" ]]; then
             __handle_config \
                 "${_config_file}" \
@@ -1362,7 +1542,7 @@ ${_green_light}   Select an option below:"
     done
 }
 
-# Check local config against upstream for deprecated and new variables
+# Compare local config with upstream for drift
 __check_config() {
     local _config_file="$1" _upstream_url="$2" _package_name="$3"
 
@@ -1375,13 +1555,13 @@ __check_config() {
         return 1
     }
 
-    # Extract variable names from local and upstream configs
+    # Extract var names from both configs
     local _local_vars _upstream_vars _upstream_vars_for_deprecated
     _local_vars=$(grep -oP '^#?\s*\K[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_config_file}" 2>/dev/null | sort -u)
     _upstream_vars=$(grep -oP '^#?\s*\K[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_tmp_upstream}" 2>/dev/null | sort -u)
     _upstream_vars_for_deprecated="${_upstream_vars}"
 
-    # Fetch additional config files for extended variable detection
+    # Fetch extra configs for extended var detection
     local _extra_urls=()
     case "${_package_name}" in
         Linux-TKG)
@@ -1393,7 +1573,7 @@ __check_config() {
                 _officially_deprecated=$(sed -n '/_deprecated_config_vars=($/,/^)$/p' "${_tmp_prepare}" | grep -oP '^\s*"_\K[^"]+' | sed 's/^/_/')
                 [[ -n "${_officially_deprecated}" ]] && _upstream_vars_for_deprecated+=$'\n'"${_officially_deprecated}"
 
-                # Extract prepare-specific variables only for deprecated check not for new
+                # Add prepare vars to deprecated check only
                 local _prepare_vars
                 _prepare_vars=$(grep -oP '^#?\s*\K[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_tmp_prepare}" 2>/dev/null)
                 [[ -n "${_prepare_vars}" ]] && _upstream_vars_for_deprecated+=$'\n'"${_prepare_vars}"
@@ -1414,7 +1594,7 @@ __check_config() {
             ;;
     esac
 
-    # Fetch and merge extra config vars for both new and deprecated checks
+    # Merge extra config vars
     for _url in "${_extra_urls[@]}"; do
         local _tmp_extra="/tmp/extra_cfg_$$.cfg"
         if curl -fsSL "${_url}" -o "${_tmp_extra}" 2>/dev/null; then
@@ -1470,7 +1650,7 @@ __check_config() {
         __msg_plain "${_green_light}${_uline_on}NOTE:${_uline_off} Review upstream config for details:${_reset}"
         __msg_plain " ${_gray}${_upstream_url}${_reset}"
 
-        # Show additional config URLs for Wine and Proton
+        # Show extra config URLs
         for _url in "${_extra_urls[@]}"; do
             __msg_plain " ${_gray}${_url}${_reset}"
         done
@@ -1561,52 +1741,53 @@ __menu() {
 
     # Define menu options
     local _menu_options=(
-        "Linux     |🐧 ${_green_neon}Linux      ${_gray} Linux custom kernels for better desktop and gaming experience"
+        "Linux     |🐧 ${_green_neon}Linux         ${_gray} Linux custom kernels for better desktop and gaming experience"
     )
 
     if [[ "${_is_arch_based}" == "true" ]]; then
         _menu_options+=(
-            "Nvidia      |💻 ${_green_neon}Nvidia     ${_gray} Nvidia open-source or proprietary graphics drivers"
-            "Mesa        |🧩 ${_green_neon}Mesa       ${_gray} AMD and Intel open-source graphics driver"
-            "AMD         |💎 ${_green_neon}AMD        ${_gray} AMDGPU-PRO and Vulkan drivers (Pro & OPT)"
+            "Nvidia        |💻 ${_green_neon}Nvidia        ${_gray} Nvidia open-source or proprietary graphics drivers"
+            "Linux+Nvidia  |🐧 ${_green_neon}Linux+Nvidia  ${_gray} Linux-TKG + Nvidia-all combined (damachine fork)"
+            "Mesa          |🧩 ${_green_neon}Mesa          ${_gray} AMD and Intel open-source graphics driver"
+            "AMD           |💎 ${_green_neon}AMD           ${_gray} AMDGPU-PRO and Vulkan drivers (Pro & OPT)"
         )
     fi
 
     _menu_options+=(
-        "Wine      |🍷 ${_green_neon}Wine       ${_gray} Windows compatibility layer to run Windows apps on Linux"
-        "Proton    |🎮 ${_green_neon}Proton     ${_gray} Run Windows games on the Linux system via Steam"
-        "Gamescope |🕹️ ${_green_neon}Gamescope  ${_gray} Build and install Gamescope from Frogging-Family"
-        "Glibc     |🔗 ${_green_neon}Glibc-eac  ${_gray} Install EAC compatible version of glibc"
-        "Config    |🔧 ${_green_neon}Config     ${_gray} Enter external configuration files menu (Expert)"
-        "Clean     |🧹 ${_green_neon}Clean      ${_gray} Removes all temporary files for a clean installation"
-        "Help      |❓ ${_green_neon}Help       ${_gray} Displays help and usage information about TKG-Installer"
+        "Wine      |🍷 ${_green_neon}Wine          ${_gray} Windows compatibility layer to run Windows apps on Linux"
+        "Proton    |🎮 ${_green_neon}Proton        ${_gray} Run Windows games on the Linux system via Steam"
+        "Gamescope |🕹️ ${_green_neon}Gamescope     ${_gray} Build and install Gamescope from Frogging-Family"
+        "Glibc     |🔗 ${_green_neon}Glibc-eac     ${_gray} Install EAC compatible version of glibc"
+        "Config    |🔧 ${_green_neon}Config        ${_gray} Enter external configuration files menu (Expert)"
+        "Clean     |🧹 ${_green_neon}Clean         ${_gray} Removes all temporary files for a clean installation"
+        "Help      |❓ ${_green_neon}Help          ${_gray} Displays help and usage information about TKG-Installer"
         "Close     |❎ ${_green_neon}Close"
     )
 
     local _menu_content
     _menu_content=$(printf '%s\n' "${_menu_options[@]}")
 
-    # Define preview mappings
-    # Define preview mappings - docs and repos
+    # Preview doc/repo mappings
     declare -A _preview_docs=(
-        [Linux]=linux [Nvidia]=nvidia [Mesa]=mesa [AMD]=amd [Wine]=wine
+        [Linux]=linux [Nvidia]=nvidia [Linux+Nvidia]=linux-nvidia [Mesa]=mesa [AMD]=amd [Wine]=wine
         [Proton]=proton [Gamescope]=gamescope [Glibc]=glibc
         [Config]=config [Clean]=clean [Help]=help [Close]=close
     )
     declare -A _preview_repos=(
-        [Linux]="linux-tkg/master" [Nvidia]="nvidia-all/master" [Mesa]="mesa-git/master"
+        [Linux]="linux-tkg/master" [Nvidia]="nvidia-all/master" [Linux+Nvidia]="linux-tkg/master"
+        [Mesa]="mesa-git/master"
         [Wine]="wine-tkg-git/master/wine-tkg-git" [Proton]="wine-tkg-git/master/proton-tkg"
         [Gamescope]="gamescope-git/master" [Glibc]="glibc-eac/main"
     )
 
-    # Export preview mappings for fzf subshell (function __export_map is defined earlier)
+    # Export for fzf subshell
     export _preview_docs_json _preview_repos_json
     # shellcheck disable=SC2218
     _preview_docs_json=$(__export_map _preview_docs)
     # shellcheck disable=SC2218
     _preview_repos_json=$(__export_map _preview_repos)
 
-    # Simplified preview command using exported mappings
+    # Preview command
     # shellcheck disable=SC2016 # Need to use single quotes for fzf preview
     local _preview_command='
         key=$(echo {} | cut -d"|" -f1 | xargs)
@@ -1617,22 +1798,22 @@ __menu() {
         # Show local doc
         [[ -n "$doc" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_tkg_raw_url}"'/${doc}.md"
 
-        # Show remote README if package has repo
+        # Show remote README
         repo=$(echo "${_preview_repos_json}" | grep "^${key}=" | cut -d= -f2-)
         [[ -n "$repo" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_frog_raw_url}"'/${repo}/README.md"
     '
-    # Define header texts
+    # Header
     local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Main${_uline_off}${_reset}${_break}${_break}\
     ${_green_light}- Build, install and customize -TKG/Frogminer- packages${_break}\
 ${_green_light}    - Manual in the preview window on the right${_break}${_break}${_break}\
 ${_green_light}   Select an option below:"
 
-    # Define footer texts
+    # Footer
     local _footer_text="  ${_green_light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${_break}\
   Press [Enter] to select, [Ctrl+P] ${_green_light}to toggle the preview window, [ESC] to exit${_break}${_break}\
   ${_green_light}Website:${_reset} ${_gray}https://github.com/damachine/tkginstaller${_reset} | ${_gray}https://github.com/Frogging-Family${_reset}"
 
-    # Define border label text
+    # Border label
     local _border_label_text="${_tkg_installer_version}"
     local _preview_window_settings='right:wrap:55%'
     local _fzf_bind='ctrl-p:toggle-preview'
@@ -1641,7 +1822,7 @@ ${_green_light}   Select an option below:"
     local _main_choice
     _main_choice=$(__fzf_menu "${_menu_content}" "${_preview_command}" "${_header_text}" "${_footer_text}" "${_border_label_text}" "${_preview_window_settings}" "${_fzf_bind}")
 
-    # Cleanup exported variables
+    # Cleanup exports
     unset _preview_docs_json _preview_repos_json
 
     # Handle user choice
@@ -1665,11 +1846,11 @@ __main_direct_mode() {
     local _arg2="${2:-}"
     _arg2="${_arg2,,}"
 
-    # Accept both [package] [config] and [config] [package] order for arguments
+    # Support both arg orderings
     local _package=""
     local _config_arg=""
 
-    # Check for config argument using helper functions
+    # Detect config argument
     if __is_config_arg "${_arg1}"; then
         _config_arg="${_arg1}"
         _package=$(__normalize_package "${_arg2}")
@@ -1678,8 +1859,8 @@ __main_direct_mode() {
         _package=$(__normalize_package "${_arg1}")
     fi
 
-    # Allow only supported second-args (config/edit/customize)
-    if [[ "${_arg1}" =~ ^(linux|l|nvidia|n|mesa|m|wine|w|proton|p)$ ]] && [[ -n "${_arg2}" ]] &&
+    # Reject unsupported second args
+    if [[ "${_arg1}" =~ ^(linux|l|nvidia|n|linux-nvidia|ln|mesa|m|wine|w|proton|p)$ ]] && [[ -n "${_arg2}" ]] &&
         ! [[ "${_arg2}" =~ ^(config|c|edit|e|customize|cu)$ ]]; then
         __banner "${_orange}"
         __msg_warning "Invalid argument:${_reset}${_gray} ${_arg1:-} ${_arg2:-}${_reset}${_break}"
@@ -1691,9 +1872,8 @@ __main_direct_mode() {
         exit 1
     fi
 
-    # If user asked only "config" (no package) -> open interactive config menu
+    # "config" alone opens interactive config menu
     if [[ -n "${_config_arg}" && -z "${_package}" ]]; then
-        # Prepare environment and open config menu in interactive mode (with preview)
         trap - INT TERM EXIT HUP
         __prepare true
         clear
@@ -1702,7 +1882,7 @@ __main_direct_mode() {
         exit 0
     fi
 
-    # Handle config editing using centralized mappings
+    # Edit config for given package
     if [[ -n "${_package}" && -n "${_config_arg}" ]]; then
         local _config_path="${_local_config_dir}/${_package}.cfg"
         local _config_url
@@ -1712,10 +1892,9 @@ __main_direct_mode() {
         # Disable exit trap before editing config
         trap - INT TERM EXIT HUP
 
-        # Handle config file editing directly
         __handle_config "${_config_name}" "${_config_path}" "${_config_url}"
 
-        # Display exit messages
+        # Exit messages
         __banner
         __msg_plain "${_green_mint}Closed... Finish${_break}"
 
@@ -1724,10 +1903,11 @@ __main_direct_mode() {
         exit 0
     fi
 
-    # Handle regular install commands using lookup table
+    # Install command lookup
     declare -A _install_funcs=(
         [linux]=__linux_install [l]=__linux_install
         [nvidia]=__nvidia_install [n]=__nvidia_install
+        [linux-nvidia]=__linux_nvidia_install [ln]=__linux_nvidia_install
         [mesa]=__mesa_install [m]=__mesa_install
         [amdgpu]=__amdgpu_pro_install [ag]=__amdgpu_pro_install
         [amdvlk]=__amdvlk_opt_install [av]=__amdvlk_opt_install
@@ -1738,7 +1918,7 @@ __main_direct_mode() {
         [glibc]=__glibc_install [ge]=__glibc_install
     )
 
-    # Check if command maps to an install function
+    # Dispatch to install function
     if [[ -n "${_install_funcs[${_arg1}]:-}" ]]; then
         __prepare
         "${_install_funcs[${_arg1}]}"
@@ -1769,7 +1949,7 @@ __main_direct_mode() {
 
 # Main function for interactive mode
 __main_interactive_mode() {
-    # Initialize dynamic preview content for fzf menus
+    # Init and display fzf menu
     __prepare true
     clear
     __menu || {
@@ -1781,13 +1961,13 @@ __main_interactive_mode() {
         exit 1
     }
 
-    # Process user selection from menu
+    # Read user selection
     local _user_choice=""
     if [[ -f "${_tkg_choice_file}" ]]; then
         _user_choice=$(<"${_tkg_choice_file}")
     fi
 
-    # Handle empty choice (ESC/Ctrl-C pressed)
+    # Empty = ESC/Ctrl-C
     if [[ -z "${_user_choice:-}" ]]; then
         clear
         __exit 0
@@ -1798,7 +1978,8 @@ __main_interactive_mode() {
 
     # Define install handlers
     declare -A _menu_handlers=(
-        [Linux]=__linux_install [Nvidia]=__nvidia_install [Mesa]=__mesa_install
+        [Linux]=__linux_install [Nvidia]=__nvidia_install [Linux+Nvidia]=__linux_nvidia_install
+        [Mesa]=__mesa_install
         [Wine]=__wine_install [Proton]=__proton_install
         [Gamescope]=__gamescope_install [Glibc]=__glibc_install
     )
@@ -1841,7 +2022,7 @@ __main_interactive_mode() {
     esac
 }
 
-# Main function handles command line arguments and menu interaction
+# Entry point
 __main() {
     if [[ $# -gt 0 ]]; then
         __main_direct_mode "$@"
