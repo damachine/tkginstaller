@@ -11,9 +11,9 @@
    
 <strong>what it does</strong>
  - quick CLI one-liners or full fzf <strong><mark>TUI</mark></strong> — your call
- - <strong><mark>customization.cfg</mark></strong> handled, no cap
- - staging forks optional added for <strong><a href="https://github.com/damachine/linux-tkg"><mark>linux-tkg</mark></a> & <a href="https://github.com/damachine/nvidia-all"><mark>nvidia-all</mark></a></strong> w/ extra sauce
- - multi-distro support, restricted to supported tkg packages (see docs)
+ - <strong><mark>customization.cfg</mark></strong> — peek it, load it, tweak it, diff it
+ - optional staging forks added for <strong><a href="https://github.com/damachine/linux-tkg"><mark>linux-tkg</mark></a> & <a href="https://github.com/damachine/nvidia-all"><mark>nvidia-all</mark></a></strong> w/ extra spice
+ - multi-distro support, restricted to supported tkg packages
 </pre>
 
 <details>
@@ -64,9 +64,7 @@ tkginstaller clean
 # Show help
 tkginstaller help
 
-# All names and shortcuts to use:
-# l=linux, n=nvidia, ln=linux-nvidia, m=mesa, ag=amdgpu, av=amdvlk, w=wine, p=proton, g=gamescope, ge=glibc
-# c=config, e=edit
+# To see all available options and shortcuts run:
 # h, --help, -h
 ```
 
