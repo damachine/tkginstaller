@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TKG-Installer VERSION definition
-readonly _tkg_installer_version="v0.40.0"
+readonly _tkg_installer_version="v0.40.1"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -26,7 +26,7 @@ _damachine_linux_tkg_repo=https://github.com/damachine/linux-tkg.git
 _damachine_nvidia_all_repo=https://github.com/damachine/nvidia-all.git
 
 # nvidia-open version map — keep in sync with damachine/linux-tkg PKGBUILD
-readonly _nvidia_open_latest_version="595.45.04" # "latest"
+readonly _nvidia_open_latest_version="595.58.03" # "latest"
 readonly _nvidia_open_vulkan_version="595.44.03" # "vulkan"
 readonly _nvidia_open_legacy_version="580.142"   # "legacy"
 _curl_opts="--max-time 10 --connect-timeout 5 -fsSL"
