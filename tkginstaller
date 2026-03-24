@@ -7,8 +7,8 @@
 # Maintainer: damachin3 (damachine3 at proton dot me)
 # website: https://github.com/damachine/tkginstaller
 
-# TKG-Installer VERSION definition
-readonly _tkg_installer_version="v0.40.1"
+# TkG-Installer VERSION definition
+readonly _tkg_installer_version="v0.40.2"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -26,9 +26,11 @@ _damachine_linux_tkg_repo=https://github.com/damachine/linux-tkg.git
 _damachine_nvidia_all_repo=https://github.com/damachine/nvidia-all.git
 
 # nvidia-open version map — keep in sync with damachine/linux-tkg PKGBUILD
-readonly _nvidia_open_latest_version="595.58.03" # "latest"
-readonly _nvidia_open_vulkan_version="595.44.03" # "vulkan"
-readonly _nvidia_open_legacy_version="580.142"   # "legacy"
+_nvidia_open_latest_version="595.58.03"
+_nvidia_open_vulkan_version="595.44.03"
+_nvidia_open_legacy_version="580.142"
+
+# curl options for config fetching and other web requests
 _curl_opts="--max-time 10 --connect-timeout 5 -fsSL"
 
 # Export only variables used in fzf preview commands
@@ -272,12 +274,12 @@ __msg_plain() { __msg 'plain' "$@"; }
 
 # Display package information
 __msg_pkg() {
-    local _pkg_name="${1:-TKG package}"
+    local _pkg_name="${1:-TkG package}"
     local _config_url="${2:-${_frog_repo_url}}"
 
     __msg_info "${_break}${_green_neon}${_uline_on}INFO${_uline_off}:${_reset} ${_green_light}Configuration Options for ${_pkg_name}${_reset}${_break}"
     __msg_plain " A wide range of options are available!"
-    __msg_plain " TKG packages can be precisely tailored to your system.${_reset}${_break}"
+    __msg_plain " TkG packages can be precisely tailored to your system.${_reset}${_break}"
     __msg_plain " Set up ${_gray}customization.cfg${_reset} using one of the following options:${_reset}${_break}"
     __msg_plain " ${_orange}A${_reset} │ tkginstaller -> Config -> ${_pkg_name,,}${_reset}  ${_gray}(interactive)${_reset}"
     __msg_plain " ${_orange}B${_reset} │ tkginstaller ${_pkg_name,,} config        ${_gray}(direct)${_reset}${_break}"
@@ -333,7 +335,7 @@ fi
 __help() {
     __banner
     cat <<EOF
-${_green_neon}${_uline_on}HELP${_uline_off}:${_reset} ${_green_light}TKG-Installer usage and commands${_reset}
+${_green_neon}${_uline_on}HELP${_uline_off}:${_reset} ${_green_light}TkG-Installer usage and commands${_reset}
 
 ${_green_neon}1) Interactive mode${_reset}
    Use fzf-based TUI mode:
@@ -547,7 +549,7 @@ __prepare() {
         exit 1 >/dev/null 2>&1
     }
 
-    # Entering TKG-Installer
+    # Entering TkG-Installer
     if [[ "${_load_preview}" == "true" ]]; then
         __msg_plain "${_green_neon}Entering interactive menu${_reset}"
     else
@@ -908,13 +910,13 @@ __prompt_answer() {
     : "${_user_answer:=${_default}}"
 }
 
-# Linux-TKG installation
+# Linux-TkG installation
 __linux_install() {
-    __msg_pkg "Linux-TKG" "${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
+    __msg_pkg "Linux-TkG" "${_frog_repo_url}/linux-tkg/blob/master/customization.cfg"
 
     # Repository source selection
     local _linux_repo="${_frog_pkg_repo[linux]}"
-    __msg_info "${_break}${_green_neon}${_uline_on}SOURCE${_uline_off}:${_reset} ${_green_light}Which Linux-TKG repository do you want to use?${_reset}${_break}"
+    __msg_info "${_break}${_green_neon}${_uline_on}SOURCE${_uline_off}:${_reset} ${_green_light}Which Linux-TkG repository do you want to use?${_reset}${_break}"
     __msg_plain " ${_green_neon}${_uline_on}0${_uline_off}${_reset} │ Upstream       ${_gray}${_frog_repo_url}/linux-tkg${_reset}"
     __msg_plain " ${_orange}1${_reset} │ Staging fork   ${_gray}https://github.com/damachine/linux-tkg${_reset}${_break}"
     __prompt_timer "[${_green_neon}${_uline_on}0${_uline_off}${_reset}/${_orange}1${_reset}]" 60 0
@@ -926,7 +928,7 @@ __linux_install() {
     local _build_command
 
     if [[ "${_is_arch_based}" == "true" ]]; then
-        __build_menu "Linux-TKG" \
+        __build_menu "Linux-TkG" \
             "makepkg -si" "recommended for Arch" \
             "install.sh install" "(generic script)" \
             "install.sh uninstall" "(show uninstall help)"
@@ -983,13 +985,12 @@ __nvidia_install() {
     __install_package "${_nvidia_repo}" "nvidia-all" "${_frog_pkg_cmd_default}"
 }
 
-# Linux-TKG + Nvidia-all combined installation (damachine fork)
+# Linux-TkG + Nvidia-all combined installation (damachine fork)
 __linux_nvidia_install() {
-    __msg_pkg "Linux-TKG + Nvidia-all" "https://github.com/damachine/linux-tkg/blob/staging/customization.cfg"
-    __msg_info "${_break}${_green_neon}${_uline_on}COMBINED${_uline_off}:${_reset} ${_green_light}This will install ${_gray}Linux-TKG${_reset}${_green_light} then ${_gray}Nvidia-all${_reset}${_green_light} from the damachine staging fork.${_reset}"
+    __msg_pkg "Linux-TkG + Nvidia-all" "https://github.com/damachine/linux-tkg/blob/staging/customization.cfg"
+    __msg_info "${_break}${_green_neon}${_uline_on}COMBINED${_uline_off}:${_reset} ${_green_light}This will install ${_gray}Linux-TkG ${_reset}${_green_light}then ${_gray} Nvidia-all${_reset}${_green_light} from the damachine staging fork.${_reset}"
 
-    # Background watcher: copies BIG_UGLY_FROGMINER the moment it appears during prepare()
-    # (post-build hook is too late — _NUKR cleanup runs inside makepkg before it returns)
+    # Background watcher
     local _bfm_copy_tmp
     _bfm_copy_tmp=$(mktemp "${_tkg_tmp_dir}/.bfm_XXXXXX")
     local _linux_tkg_dir="${_tkg_tmp_dir}/linux-tkg"
@@ -1011,7 +1012,7 @@ __linux_nvidia_install() {
     wait "${_bfm_watcher_pid}" 2>/dev/null || true
 
     if [[ ${_linux_status} -ne 0 ]]; then
-        __msg_error "Linux-TKG build failed — skipping Nvidia-all installation.${_break}"
+        __msg_error "Linux-TkG build failed — skipping Nvidia-all installation.${_break}"
         rm -f "${_bfm_copy_tmp}"
         return "${_linux_status}"
     fi
@@ -1025,8 +1026,7 @@ __linux_nvidia_install() {
     fi
     rm -f "${_bfm_copy_tmp}"
 
-    # Fallback: BIG_UGLY_FROGMINER was never created (reinstall-without-rebuild case)
-    # Query the installed linux-tkg-nvidia-open module via modinfo to get the driver version
+    # Fallback
     if [[ -z "${_driver_version_val}" ]] && pacman -Q linux-tkg-nvidia-open &>/dev/null; then
         local _ltkg_moddir
         _ltkg_moddir=$(pacman -Ql linux-tkg-nvidia-open 2>/dev/null | awk '{print $2}' |
@@ -1069,7 +1069,7 @@ _EXT_CONFIG_PATH="~/.tkg_installer_ignored_config_path/nvidia-all.cfg"
 CUSTOM_GCC_PATH=""
 _series_in_pkgname=""
 _kerneloverride=""
-_local_package_storing="false"
+_local_package_storing=""
 _build_utils_package_only="true"
 _lib32="true"
 _opencl="true"
@@ -1080,12 +1080,12 @@ _eglx11="external"
 _driver_version_tag="${_driver_version_val}"
 _open_source_modules="false"
 _module_signing="false"
-_blacklist_nouveau="false"
+_blacklist_nouveau="true"
 _modprobe="true"
-_modprobe_mobile="false"
+_modprobe_mobile=""
 _perf_optimizations="true"
-_nvidia_patch_enc_fbc="true"
-_bsb_dsc_fix="true"
+_nvidia_patch_enc_fbc=""
+_bsb_dsc_fix=""
 _only_update_if_newer=""
 _dkms="false"
 _target_kernel=""
@@ -1103,7 +1103,7 @@ NVIDIA_CUSTOMIZATION_CFG
 
     rm -rf "${_tkg_tmp_dir}/nvidia_all"
 
-    __status "${_nvidia_status}" "Linux-TKG + Nvidia-all"
+    __status "${_nvidia_status}" "Linux-TkG + Nvidia-all"
     return "${_nvidia_status}"
 }
 
@@ -1112,14 +1112,14 @@ __amdgpu_pro_install() { __install_pkg_key "amdgpu"; }
 __amdvlk_opt_install() { __install_pkg_key "amdvlk"; }
 __gamescope_install() { __install_pkg_key "gamescope"; }
 
-# Wine-TKG installation
+# Wine-TkG installation
 __wine_install() {
-    __msg_pkg "Wine-TKG" "${_frog_repo_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
+    __msg_pkg "Wine-TkG" "${_frog_repo_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
 
     local _build_command
 
     if [[ "${_is_arch_based}" == "true" ]]; then
-        __build_menu "Wine-TKG" \
+        __build_menu "Wine-TkG" \
             "makepkg -si" "recommended for Arch" \
             "non-makepkg-build.sh" "(custom build script)"
 
@@ -1157,15 +1157,15 @@ __glibc_install() {
     __install_package "${_frog_pkg_repo[glibc]}" "glibc-eac" "${_build_command}"
 }
 
-# DXVK-Tools pre-build for Proton-TKG
+# DXVK-Tools pre-build for Proton-TkG
 __dxvk_tools_prepare() {
     __msg_info "${_break}${_green_neon}${_uline_on}CHOICE${_uline_off}:${_reset} ${_green_light}Which DXVK/vkd3d build option do you want?${_reset}${_break}"
-    __msg_plain " ${_orange}${_uline_on}0${_uline_off}${_reset} │ No (skip)       ${_gray}Skip, continue with Proton-TKG${_reset}"
+    __msg_plain " ${_orange}${_uline_on}0${_uline_off}${_reset} │ No (skip)       ${_gray}Skip, continue with Proton-TkG${_reset}"
     __msg_plain " ${_green_neon}1${_reset} │ Yes (both)      ${_green_light}Build DXVK + vkd3d-proton${_reset}"
     __msg_plain " ${_orange}2${_reset} │ Custom          ${_gray}Choose individually${_reset}"
     __msg_plain " ${_red}9${_reset} │ Cancel${_break}"
 
-    __msg_info "${_green_neon}${_uline_on}NOTE${_uline_off}:${_reset} ${_green_light}Proton-TKG downloads official DXVK by default.${_reset}${_break}"
+    __msg_info "${_green_neon}${_uline_on}NOTE${_uline_off}:${_reset} ${_green_light}Proton-TkG downloads official DXVK by default.${_reset}${_break}"
     __msg_plain " Set ${_gray}_use_dxvk=\"prebuilt\"${_reset} in ${_gray}proton-tkg.cfg${_reset} to use custom builds.${_break}"
 
     __prompt_timer "[${_orange}${_uline_on}0${_uline_off}${_reset}/${_green_neon}1${_reset}/${_orange}2${_reset}/${_red}9${_reset}]" 60 0
@@ -1232,7 +1232,7 @@ __dxvk_tools_prepare() {
 
     # Export if something was built
     if [[ "${_built_something}" == "true" ]]; then
-        __msg_prompt "${_break}Export for Proton-TKG? [y/N]: "
+        __msg_prompt "${_break}Export for Proton-TkG? [y/N]: "
         __prompt_answer "n"
         [[ "${_user_answer,,}" =~ ^(y|yes)$ ]] && ./updxvk proton-tkg
     fi
@@ -1240,18 +1240,18 @@ __dxvk_tools_prepare() {
     __cd_safe "${_tkg_tmp_dir}" || return 0
 }
 
-# Proton-TKG installation
+# Proton-TkG installation
 __proton_install() {
-    __msg_pkg "Proton-TKG" "${_frog_repo_url}/wine-tkg-git"
+    __msg_pkg "Proton-TkG" "${_frog_repo_url}/wine-tkg-git"
 
     # Prepare Proton repo first
-    __install_package "${_frog_pkg_repo[proton]}" "Proton-TKG (prepare)" "" "${_frog_pkg_workdir[proton]}" >/dev/null 2>&1
+    __install_package "${_frog_pkg_repo[proton]}" "Proton-TkG (prepare)" "" "${_frog_pkg_workdir[proton]}" >/dev/null 2>&1
 
     # Optional DXVK/vkd3d preparation
     __dxvk_tools_prepare || __msg_warning "dxvk-tools skipped${_break}"
 
     # Build Proton
-    __install_package "${_frog_pkg_repo[proton]}" "Proton-TKG" "./proton-tkg.sh" "${_frog_pkg_workdir[proton]}"
+    __install_package "${_frog_pkg_repo[proton]}" "Proton-TkG" "./proton-tkg.sh" "${_frog_pkg_workdir[proton]}"
     local _status=$?
 
     # Offer cleanup after successful build
@@ -1259,7 +1259,7 @@ __proton_install() {
         __msg_prompt "Run './proton-tkg.sh clean'? [y/N]: "
         read -r _user_answer
         [[ "${_user_answer,,}" =~ ^(y|yes)$ ]] &&
-            __install_package "${_frog_pkg_repo[proton]}" "Proton-TKG" "./proton-tkg.sh clean" "${_frog_pkg_workdir[proton]}"
+            __install_package "${_frog_pkg_repo[proton]}" "Proton-TkG" "./proton-tkg.sh clean" "${_frog_pkg_workdir[proton]}"
     fi
 }
 
@@ -1325,7 +1325,7 @@ AMDVLK-OPT=amdvlk-opt/master"
 repo=$(echo "${_amd_repos_json}" | grep "^${key}=" | cut -d= -f2-)
 [[ -n "$repo" ]] && glow --width 80 --style "'"${_glow_style:-dark}"'" "'"${_frog_raw_url}"'/${repo}/README.md"'
 
-    local _header="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ AMD Drivers${_uline_off}${_reset}${_break}${_break}${_green_light}   Select AMD driver:"
+    local _header="🐸 ${_green_neon}${_uline_on}TkG-Installer ─ AMD Drivers${_uline_off}${_reset}${_break}${_break}${_green_light}   Select AMD driver:"
     local _footer="  ${_green_light}[Enter] select, [Ctrl+P] preview, [ESC] exit"
 
     local _choice
@@ -1453,7 +1453,7 @@ __menu_config() {
         local _info_config="${_green_neon}Comparing remote and local ${_reset}${_gray}customization.cfg${_reset}${_green_neon}, press [Enter] to open and edit ${_reset}${_break}${_break}${_green_light} Remote:${_reset}${_gray} \${_remote_url} ${_reset}${_break}${_orange}≠${_reset}${_green_light} Local:${_reset}${_gray} file://\${_config_file_path} ${_reset}${_break}${_green_dark}${_line}${_break}"
 
         # Missing config error message
-        local _error_config_not_exist="${_orange}No external configuration file found.${_reset}${_break}${_break}${_green_light} This configuration file is required for customizing the -TKG- package.${_break}${_green_light} Press [Enter] to download the missing${_reset}${_gray} customization.cfg${_reset}${_green_light} file, according to -TKG- package standards.${_reset}${_break}${_green_dark}${_line}${_break}"
+        local _error_config_not_exist="${_orange}No external configuration file found.${_reset}${_break}${_break}${_green_light} This configuration file is required for customizing the -TkG- package.${_break}${_green_light} Press [Enter] to download the missing${_reset}${_gray} customization.cfg${_reset}${_green_light} file, according to -TkG- package standards.${_reset}${_break}${_green_dark}${_line}${_break}"
 
         # bat/wdiff diff preview commands
         local _bat_cmd="bat --style=plain --language=cfg --wrap character --terminal-width ${_cols} --force-colorization --theme='Visual Studio Dark+'"
@@ -1485,11 +1485,11 @@ __menu_config() {
         '
 
         # Header
-        local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Customizing (Beta)${_uline_off}${_reset}${_break}${_break}\
+        local _header_text="🐸 ${_green_neon}${_uline_on}TkG-Installer ─ Customizing (Beta)${_uline_off}${_reset}${_break}${_break}\
 ${_green_light}    - Customize to your preferred settings${_break}\
 ${_green_light}    - Download missing file(s)${_break}\
 ${_green_light}    - Show difference between remote and local${_break}${_break}\
-${_green_light}    According to -TKG/Frogminer- package standards file(s)${_break}    stored in: ${_reset}${_gray}file://$HOME/.config/frogminer/${_reset}${_break}${_break}\
+${_green_light}    According to -TkG/Frogminer- package standards file(s)${_break}    stored in: ${_reset}${_gray}file://$HOME/.config/frogminer/${_reset}${_break}${_break}\
 ${_green_light}    Please make sure to adjust the settings correctly!${_break}    More visit: ${_reset}${_gray}https://github.com/Frogging-Family${_reset}${_break}${_break}${_break}\
 ${_green_light}   Select an option below:"
 
@@ -1564,7 +1564,7 @@ __check_config() {
     # Fetch extra configs for extended var detection
     local _extra_urls=()
     case "${_package_name}" in
-        Linux-TKG)
+        Linux-TkG)
             local _prepare_url="${_frog_raw_url}/linux-tkg/master/linux-tkg-config/prepare"
             local _tmp_prepare="/tmp/linux-tkg-prepare"
             if curl -fsSL "${_prepare_url}" -o "${_tmp_prepare}" 2>/dev/null; then
@@ -1580,13 +1580,13 @@ __check_config() {
                 rm -f "${_tmp_prepare}"
             fi
             ;;
-        Wine-TKG)
+        Wine-TkG)
             _extra_urls=(
                 "${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/advanced-customization.cfg"
                 "${_frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/sample-external-config.cfg"
             )
             ;;
-        Proton-TKG)
+        Proton-TkG)
             _extra_urls=(
                 "${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/advanced-customization.cfg"
                 "${_frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/sample-external-config.cfg"
@@ -1747,7 +1747,7 @@ __menu() {
     if [[ "${_is_arch_based}" == "true" ]]; then
         _menu_options+=(
             "Nvidia        |💻 ${_green_neon}Nvidia        ${_gray} Nvidia open-source or proprietary graphics drivers"
-            "Linux+Nvidia  |🐧 ${_green_neon}Linux+Nvidia  ${_gray} Linux-TKG + Nvidia-all combined (damachine fork)"
+            "Linux+Nvidia  |🐧 ${_green_neon}Linux+Nvidia  ${_gray} Linux-TkG + Nvidia-all combined (damachine fork)"
             "Mesa          |🧩 ${_green_neon}Mesa          ${_gray} AMD and Intel open-source graphics driver"
             "AMD           |💎 ${_green_neon}AMD           ${_gray} AMDGPU-PRO and Vulkan drivers (Pro & OPT)"
         )
@@ -1760,7 +1760,7 @@ __menu() {
         "Glibc     |🔗 ${_green_neon}Glibc-eac     ${_gray} Install EAC compatible version of glibc"
         "Config    |🔧 ${_green_neon}Config        ${_gray} Enter external configuration files menu (Expert)"
         "Clean     |🧹 ${_green_neon}Clean         ${_gray} Removes all temporary files for a clean installation"
-        "Help      |❓ ${_green_neon}Help          ${_gray} Displays help and usage information about TKG-Installer"
+        "Help      |❓ ${_green_neon}Help          ${_gray} Displays help and usage information about TkG-Installer"
         "Close     |❎ ${_green_neon}Close"
     )
 
@@ -1803,8 +1803,8 @@ __menu() {
         [[ -n "$repo" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_frog_raw_url}"'/${repo}/README.md"
     '
     # Header
-    local _header_text="🐸 ${_green_neon}${_uline_on}TKG-Installer ─ Main${_uline_off}${_reset}${_break}${_break}\
-    ${_green_light}- Build, install and customize -TKG/Frogminer- packages${_break}\
+    local _header_text="🐸 ${_green_neon}${_uline_on}TkG-Installer ─ Main${_uline_off}${_reset}${_break}${_break}\
+    ${_green_light}- Build, install and customize -TkG/Frogminer- packages${_break}\
 ${_green_light}    - Manual in the preview window on the right${_break}${_break}${_break}\
 ${_green_light}   Select an option below:"
 
