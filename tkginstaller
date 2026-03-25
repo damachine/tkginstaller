@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly _tkg_installer_version="v0.40.2"
+readonly _tkg_installer_version="v0.40.3"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -25,10 +25,12 @@ _frog_raw_url=https://raw.githubusercontent.com/Frogging-Family
 _damachine_linux_tkg_repo=https://github.com/damachine/linux-tkg.git
 _damachine_nvidia_all_repo=https://github.com/damachine/nvidia-all.git
 
-# nvidia-open version map — keep in sync with damachine/linux-tkg PKGBUILD
-_nvidia_open_latest_version="595.58.03"
-_nvidia_open_vulkan_version="595.44.03"
-_nvidia_open_legacy_version="580.142"
+# nvidia-open version map — keep in sync with damachine/nvidia-all PKGBUILD
+declare -gA _nvidia_open_versions=(
+    [latest]="595.58.03"
+    [vulkan]="595.44.03"
+    [legacy]="580.142"
+)
 
 # curl options for config fetching and other web requests
 _curl_opts="--max-time 10 --connect-timeout 5 -fsSL"
@@ -562,7 +564,7 @@ __prepare() {
 
 # Display completion status
 __status() {
-    local _status=${1:-$?}
+    local _status="${1:-0}"
     local _package_name="${2:-}"
     local _duration="${SECONDS:-0}"
     local _minutes=$((_duration / 60))
@@ -817,7 +819,10 @@ __install_package() {
         eval "${_post_build_hook}"
     fi
 
-    __status "${_status}" "${_package_name}"
+    if [[ "${_tkg_skip_status:-}" != "1" ]]; then
+        __status "${_status}" "${_package_name}"
+    fi
+    _tkg_skip_status=""
     return "${_status}"
 }
 
@@ -987,10 +992,12 @@ __nvidia_install() {
 
 # Linux-TkG + Nvidia-all combined installation (damachine fork)
 __linux_nvidia_install() {
+    local _combined_epoch
+    _combined_epoch=$(date +%s)
     __msg_pkg "Linux-TkG + Nvidia-all" "https://github.com/damachine/linux-tkg/blob/staging/customization.cfg"
-    __msg_info "${_break}${_green_neon}${_uline_on}COMBINED${_uline_off}:${_reset} ${_green_light}This will install ${_gray}Linux-TkG ${_reset}${_green_light}then ${_gray} Nvidia-all${_reset}${_green_light} from the damachine staging fork.${_reset}"
+    __msg_info "${_break}${_green_neon}${_uline_on}COMBINED${_uline_off}:${_reset} ${_green_light}This will install ${_gray}Linux-TkG ${_reset}${_green_light}then ${_gray}Nvidia-all${_reset}${_green_light} from the damachine staging fork.${_reset}"
 
-    # Background watcher
+    # Background watcher: capture BIG_UGLY_FROGMINER during linux-tkg build
     local _bfm_copy_tmp
     _bfm_copy_tmp=$(mktemp "${_tkg_tmp_dir}/.bfm_XXXXXX")
     local _linux_tkg_dir="${_tkg_tmp_dir}/linux-tkg"
@@ -1005,16 +1012,18 @@ __linux_nvidia_install() {
     local _bfm_watcher_pid=$!
 
     # Build linux-tkg
-    __install_package "${_damachine_linux_tkg_repo}" "linux-tkg" "${_frog_pkg_cmd_default}"
-    local _linux_status=$?
+    local _build_command="makepkg -si --noconfirm"
+    __install_package "${_damachine_linux_tkg_repo}" "linux-tkg" "${_build_command}"
+    local _status=$?
+    local _linux_duration="${SECONDS}"
 
     kill "${_bfm_watcher_pid}" 2>/dev/null || true
     wait "${_bfm_watcher_pid}" 2>/dev/null || true
 
-    if [[ ${_linux_status} -ne 0 ]]; then
+    if [[ ${_status} -ne 0 ]]; then
         __msg_error "Linux-TkG build failed — skipping Nvidia-all installation.${_break}"
         rm -f "${_bfm_copy_tmp}"
-        return "${_linux_status}"
+        return "${_status}"
     fi
 
     # Extract _nvidia_open and version from captured BIG_UGLY_FROGMINER copy
@@ -1026,36 +1035,20 @@ __linux_nvidia_install() {
     fi
     rm -f "${_bfm_copy_tmp}"
 
-    # Fallback
-    if [[ -z "${_driver_version_val}" ]] && pacman -Q linux-tkg-nvidia-open &>/dev/null; then
-        local _ltkg_moddir
-        _ltkg_moddir=$(pacman -Ql linux-tkg-nvidia-open 2>/dev/null | awk '{print $2}' |
-            grep '^/usr/lib/modules/' | sed 's|^\(/usr/lib/modules/[^/]*\).*|\1|' | sort -u | head -1)
-        if [[ -n "${_ltkg_moddir}" ]]; then
-            local _nvidia_ko
-            _nvidia_ko=$(find "${_ltkg_moddir}" -name 'nvidia.ko*' 2>/dev/null | head -1)
-            if [[ -n "${_nvidia_ko}" ]]; then
-                _driver_version_val=$(modinfo "${_nvidia_ko}" 2>/dev/null | awk '/^version:/{print $2; exit}')
-            fi
-        fi
-        [[ -z "${_nvidia_open}" && -n "${_driver_version_val}" ]] && _nvidia_open="detected"
+    # Fallback: resolve version from variant name if BIG_UGLY_FROGMINER had no explicit version
+    if [[ -z "${_driver_version_val}" && -n "${_nvidia_open}" && "${_nvidia_open}" != "false" ]]; then
+        _driver_version_val="${_nvidia_open_versions[${_nvidia_open}]}"
     fi
 
     # Skip driver build if open module was built; use resolved version
-    local _utils_only="false"
     if [[ -n "${_nvidia_open}" && "${_nvidia_open}" != "false" ]]; then
-        _utils_only="true"
-        # Final fallback to hardcoded constants if version still unknown
         if [[ -z "${_driver_version_val}" ]]; then
-            case "${_nvidia_open}" in
-                latest) _driver_version_val="${_nvidia_open_latest_version}" ;;
-                vulkan) _driver_version_val="${_nvidia_open_vulkan_version}" ;;
-                legacy) _driver_version_val="${_nvidia_open_legacy_version}" ;;
-            esac
+            __msg_warning "Could not determine nvidia-open driver version.${_break}"
         fi
         __msg_info "${_break}${_green_neon}${_uline_on}INFO${_uline_off}:${_reset} ${_green_light}nvidia-open module detected (${_gray}${_nvidia_open}${_reset}${_green_light}) — nvidia-all will build utils only (version: ${_gray}${_driver_version_val}${_reset}${_green_light}).${_reset}"
     fi
 
+    # Generate nvidia-all preset config
     local _preset_cfg="${_tkg_tmp_dir}/nvidia_all/pre-customization.cfg"
     mkdir -p "${_tkg_tmp_dir}/nvidia_all"
 
@@ -1096,15 +1089,35 @@ _54_prime_fixing_attempt="false"
 _62142_fix="false"
 NVIDIA_CUSTOMIZATION_CFG
 
-    local _build_command_nvidia="mv \"${_preset_cfg}\" customization.cfg && makepkg -si"
-
-    __install_package "${_damachine_nvidia_all_repo}" "nvidia-all" "${_build_command_nvidia}"
-    local _nvidia_status=$?
+    # Build nvidia-all
+    _build_command="mv \"${_preset_cfg}\" customization.cfg && makepkg -si --noconfirm"
+    _tkg_skip_status="1"
+    # shellcheck disable=SC2218 # __install_package is defined above; heredoc confuses shellcheck
+    __install_package "${_damachine_nvidia_all_repo}" "nvidia-all" "${_build_command}"
+    _status=$?
+    local _nvidia_duration="${SECONDS}"
 
     rm -rf "${_tkg_tmp_dir}/nvidia_all"
 
-    __status "${_nvidia_status}" "Linux-TkG + Nvidia-all"
-    return "${_nvidia_status}"
+    # Show combined summary: linux-tkg → nvidia-all → total
+    local _combined_total=$(($(date +%s) - _combined_epoch))
+    local _lx_min=$((_linux_duration / 60))
+    local _lx_sec=$((_linux_duration % 60))
+    local _nv_min=$((_nvidia_duration / 60))
+    local _nv_sec=$((_nvidia_duration % 60))
+    local _combined_min=$((_combined_total / 60))
+    local _combined_sec=$((_combined_total % 60))
+
+    __msg_info_orange "${_break}Action completed: $(date '+%Y-%m-%d %H:%M:%S')"
+    if [[ ${_status} -eq 0 ]]; then
+        __msg_info "Status: Linux-TkG + Nvidia-all successfully completed!"
+    else
+        __msg_error "Failed process: Linux-TkG + Nvidia-all (Code: ${_status})"
+    fi
+    __msg_info_orange "Duration Linux-TkG:  ${_lx_min} min ${_lx_sec} sec"
+    __msg_info_orange "Duration Nvidia-all: ${_nv_min} min ${_nv_sec} sec"
+    __msg_info_orange "Combined Duration:   ${_combined_min} min ${_combined_sec} sec"
+    return "${_status}"
 }
 
 __mesa_install() { __install_pkg_key "mesa"; }
