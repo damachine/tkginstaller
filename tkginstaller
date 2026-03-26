@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly _tkg_installer_version="v0.40.3"
+readonly _tkg_installer_version="v0.40.4"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -1077,8 +1077,8 @@ _blacklist_nouveau="true"
 _modprobe="true"
 _modprobe_mobile=""
 _perf_optimizations="true"
-_nvidia_patch_enc_fbc=""
-_bsb_dsc_fix=""
+_nvidia_patch_enc_fbc="true"
+_bsb_dsc_fix="true"
 _only_update_if_newer=""
 _dkms="false"
 _target_kernel=""
