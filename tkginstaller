@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly _tkg_installer_version="v0.41.0"
+readonly _tkg_installer_version="v0.41.1"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -1012,7 +1012,7 @@ __linux_nvidia_install() {
     local _bfm_watcher_pid=$!
 
     # Build linux-tkg
-    local _build_command="makepkg -si --noconfirm"
+    local _build_command="makepkg -si"
     __install_package "${_damachine_linux_tkg_repo}" "linux-tkg" "${_build_command}"
     local _status=$?
     local _linux_duration="${SECONDS}"
@@ -1091,7 +1091,7 @@ _62142_fix="false"
 NVIDIA_CUSTOMIZATION_CFG
 
     # Build nvidia-all
-    _build_command="mv \"${_preset_cfg}\" customization.cfg && makepkg -si --noconfirm"
+    _build_command="mv \"${_preset_cfg}\" customization.cfg && makepkg -si"
     _tkg_skip_status="1"
     # shellcheck disable=SC2218 # __install_package is defined above; heredoc confuses shellcheck
     __install_package "${_damachine_nvidia_all_repo}" "nvidia-all" "${_build_command}"
