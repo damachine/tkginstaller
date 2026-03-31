@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly _tkg_installer_version="v0.41.1"
+readonly _tkg_installer_version="v0.41.2"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -998,8 +998,8 @@ __linux_nvidia_install() {
     __msg_info "${_break}${_green_neon}${_uline_on}COMBINED${_uline_off}:${_reset} ${_green_light}This will install ${_gray}Linux-TkG ${_reset}${_green_light}then ${_gray}Nvidia-all${_reset}${_green_light} from the damachine staging fork.${_reset}"
 
     # Background watcher: capture BIG_UGLY_FROGMINER during linux-tkg build
-    local _bfm_copy_tmp
-    _bfm_copy_tmp=$(mktemp "${_tkg_tmp_dir}/.bfm_XXXXXX")
+    local _bufm_copy_tmp
+    _bufm_copy_tmp=$(mktemp "${_tkg_tmp_dir}/.bufm_XXXXXX")
     local _linux_tkg_dir="${_tkg_tmp_dir}/linux-tkg"
     (
         _n=0
@@ -1007,9 +1007,9 @@ __linux_nvidia_install() {
             sleep 0.5
             ((_n++))
         done
-        cp "${_linux_tkg_dir}/BIG_UGLY_FROGMINER" "${_bfm_copy_tmp}" 2>/dev/null || true
+        cp "${_linux_tkg_dir}/BIG_UGLY_FROGMINER" "${_bufm_copy_tmp}" 2>/dev/null || true
     ) &
-    local _bfm_watcher_pid=$!
+    local _bufm_watcher_pid=$!
 
     # Build linux-tkg
     local _build_command="makepkg -si"
@@ -1017,27 +1017,38 @@ __linux_nvidia_install() {
     local _status=$?
     local _linux_duration="${SECONDS}"
 
-    kill "${_bfm_watcher_pid}" 2>/dev/null || true
-    wait "${_bfm_watcher_pid}" 2>/dev/null || true
+    kill "${_bufm_watcher_pid}" 2>/dev/null || true
+    wait "${_bufm_watcher_pid}" 2>/dev/null || true
 
     if [[ ${_status} -ne 0 ]]; then
         __msg_error "Linux-TkG build failed — skipping Nvidia-all installation.${_break}"
-        rm -f "${_bfm_copy_tmp}"
+        rm -f "${_bufm_copy_tmp}"
         return "${_status}"
     fi
 
-    # Extract _nvidia_open and version from captured BIG_UGLY_FROGMINER copy
+    # Extract _nvidia_open and version from BIG_UGLY_FROGMINER.
+    # Prefer the final file after build, keep watcher copy as fallback.
     local _nvidia_open=""
     local _driver_version_val=""
-    if [[ -s "${_bfm_copy_tmp}" ]]; then
-        _nvidia_open=$(grep '^_nvidia_open=' "${_bfm_copy_tmp}" | tail -1 | sed "s/^_nvidia_open=//;s/'//g;s/\"//g")
-        _driver_version_val=$(grep '^_nvidia_open_version=' "${_bfm_copy_tmp}" | tail -1 | sed "s/^_nvidia_open_version=//;s/'//g;s/\"//g")
+    local _bufm_source_file="${_linux_tkg_dir}/BIG_UGLY_FROGMINER"
+    if [[ ! -s "${_bufm_source_file}" && -s "${_bufm_copy_tmp}" ]]; then
+        _bufm_source_file="${_bufm_copy_tmp}"
     fi
-    rm -f "${_bfm_copy_tmp}"
+
+    if [[ -s "${_bufm_source_file}" ]]; then
+        _nvidia_open=$(grep '^_nvidia_open=' "${_bufm_source_file}" | tail -1 | sed "s/^_nvidia_open=//;s/'//g;s/\"//g")
+        _driver_version_val=$(grep '^_nvidia_open_version=' "${_bufm_source_file}" | tail -1 | sed "s/^_nvidia_open_version=//;s/'//g;s/\"//g")
+    fi
+    rm -f "${_bufm_copy_tmp}"
 
     # Fallback: resolve version from variant name if BIG_UGLY_FROGMINER had no explicit version
     if [[ -z "${_driver_version_val}" && -n "${_nvidia_open}" && "${_nvidia_open}" != "false" ]]; then
         _driver_version_val="${_nvidia_open_versions[${_nvidia_open}]}"
+    fi
+
+    # Last-resort fallback from map (keeps value dynamic via _nvidia_open_versions).
+    if [[ -z "${_driver_version_val}" ]]; then
+        _driver_version_val="${_nvidia_open_versions[latest]:-}"
     fi
 
     # Skip driver build if open module was built; use resolved version
