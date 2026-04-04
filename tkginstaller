@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly _tkg_installer_version="v0.41.3"
+readonly _tkg_installer_version="v0.42.0"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -636,11 +636,43 @@ __clean_temp_dir() {
     __msg_info "Cleaning all temporary files...${_break}"
     __msg_plain " Location:${_reset}${_gray} ${_tkg_tmp_dir}${_reset}${_break}"
     local _cache_count=0
+    local _cache_size_bytes=0
     local _cache_size_human=""
 
-    if [[ -d "${_tkg_tmp_dir}" ]]; then
-        _cache_count=$(find "${_tkg_tmp_dir}" -type f 2>/dev/null | wc -l || echo 0)
-        _cache_size_human=$(du -sh "${_tkg_tmp_dir}" 2>/dev/null | cut -f1 || echo "0B")
+    # Read _kernel_work_folder / _kernel_source_folder early so we can measure them
+    local _ltkg_cfg="${HOME}/.config/frogminer/linux-tkg.cfg"
+    local _kwf="" _ksf=""
+    if [[ -f "${_ltkg_cfg}" ]]; then
+        _kwf=$(grep '^_kernel_work_folder=' "${_ltkg_cfg}" 2>/dev/null | tail -1 | sed "s/^_kernel_work_folder=//;s/'//g;s/\"//g")
+        _ksf=$(grep '^_kernel_source_folder=' "${_ltkg_cfg}" 2>/dev/null | tail -1 | sed "s/^_kernel_source_folder=//;s/'//g;s/\"//g")
+        _kwf="${_kwf/#\~/${HOME}}"
+        _ksf="${_ksf/#\~/${HOME}}"
+    fi
+
+    # Measure all target directories before deletion
+    local -a _measure_dirs=()
+    [[ -d "${_tkg_tmp_dir}" ]] && _measure_dirs+=("${_tkg_tmp_dir}")
+    [[ -d "/tmp/makepkg/nvidia-all" ]] && _measure_dirs+=("/tmp/makepkg/nvidia-all")
+    [[ -n "${_kwf}" && -d "${_kwf}/linux-tkg" ]] && _measure_dirs+=("${_kwf}/linux-tkg")
+    [[ -n "${_ksf}" && -d "${_ksf}/linux-tkg" ]] && _measure_dirs+=("${_ksf}/linux-tkg")
+
+    for _d in "${_measure_dirs[@]}"; do
+        local _cnt _sz
+        _cnt=$(find "${_d}" -type f 2>/dev/null | wc -l || echo 0)
+        _sz=$(du -sb "${_d}" 2>/dev/null | cut -f1 || echo 0)
+        ((_cache_count += _cnt))
+        ((_cache_size_bytes += _sz))
+    done
+
+    # Convert total bytes to human-readable
+    if ((_cache_size_bytes >= 1073741824)); then
+        _cache_size_human="$(awk "BEGIN{printf \"%.1fG\", ${_cache_size_bytes}/1073741824}")"
+    elif ((_cache_size_bytes >= 1048576)); then
+        _cache_size_human="$(awk "BEGIN{printf \"%.1fM\", ${_cache_size_bytes}/1048576}")"
+    elif ((_cache_size_bytes >= 1024)); then
+        _cache_size_human="$(awk "BEGIN{printf \"%.1fK\", ${_cache_size_bytes}/1024}")"
+    else
+        _cache_size_human="${_cache_size_bytes}B"
     fi
 
     rm -f "${_tkg_choice_file}"
@@ -660,18 +692,38 @@ __clean_temp_dir() {
         for _rel in "${_immutable_files[@]}"; do
             __msg_plain "  ${_gray}${_rel}${_reset}"
         done
-        __msg_plain "${_break}${_orange}  These files are protected by the kernel${_reset} ${_gray}(revert: chattr -i file(s)).${_reset}${_break}"
+        __msg_plain "${_orange}  These files are protected by the kernel${_reset} ${_gray}(revert: chattr -i file(s)).${_reset}${_break}"
     fi
 
     # Immutable files survive rm -rf; suppress non-zero exit
+    __msg_plain " ${_green_neon}Removing:${_reset} ${_gray}${_tkg_tmp_dir}${_reset}"
     rm -rf "${_tkg_tmp_dir}" 2>/dev/null || true
+
+    # Also clean /tmp/makepkg subdirs for linux-tkg and nvidia-* builds
+    local _makepkg_dir
+    for _makepkg_dir in /tmp/makepkg/linux-tkg /tmp/makepkg/nvidia-all /tmp/makepkg/nvidia-*-tkg; do
+        [[ -d "${_makepkg_dir}" ]] || continue
+        __msg_plain " ${_green_neon}Removing:${_reset} ${_gray}${_makepkg_dir}${_reset}"
+        rm -rf "${_makepkg_dir}" 2>/dev/null || true
+    done
+
+    # Also clean _kernel_work_folder and _kernel_source_folder if set in linux-tkg.cfg
+    if [[ -n "${_kwf}" && -d "${_kwf}/linux-tkg" ]]; then
+        __msg_plain " ${_green_neon}Removing:${_reset} ${_gray}${_kwf}/linux-tkg${_reset} ${_gray}(_kernel_work_folder)${_reset}"
+        rm -rf "${_kwf}/linux-tkg" 2>/dev/null || true
+    fi
+    if [[ -n "${_ksf}" && -d "${_ksf}/linux-tkg" ]]; then
+        __msg_plain " ${_green_neon}Removing:${_reset} ${_gray}${_ksf}/linux-tkg${_reset} ${_gray}(_kernel_source_folder)${_reset}"
+        rm -rf "${_ksf}/linux-tkg" 2>/dev/null || true
+    fi
+
     sleep 1.5s
 
     local _removed=$((_cache_count - ${#_immutable_files[@]}))
     if [[ "${_removed}" -le 0 ]]; then
-        __msg_plain "${_green_neon}Cleanup complete ${_gray}(nothing to remove, cache already clean)${_reset}${_break}"
+        __msg_plain "${_break}${_green_neon}Cleanup complete ${_gray}(nothing to remove, cache already clean)${_reset}${_break}"
     else
-        __msg_plain "${_green_neon}Cleanup complete ${_gray}(${_orange}${_removed}${_reset} ${_gray}cached files removed, ${_orange}${_cache_size_human}${_reset}${_gray} freed)${_reset}${_break}"
+        __msg_plain "${_break}${_green_neon}Cleanup complete ${_gray}(${_orange}${_removed}${_reset} ${_gray}cached files removed, ${_orange}${_cache_size_human}${_reset}${_gray} freed)${_reset}${_break}"
     fi
 }
 
@@ -825,6 +877,9 @@ __install_package() {
     _tkg_skip_status=""
     return "${_status}"
 }
+
+# Extract bare value from a config line (last match wins, strips quotes)
+__cfg_val() { grep "^${1}=" "${2}" 2>/dev/null | tail -1 | sed "s/^${1}=//;s/'//g;s/\"//g"; }
 
 # Generic package installation via registry
 __install_pkg_key() {
@@ -991,11 +1046,69 @@ __nvidia_install() {
 }
 
 # Linux-TkG + Nvidia-all combined installation (damachine fork)
+# shellcheck disable=SC2218  # false positive: all called functions are defined above
 __linux_nvidia_install() {
     local _combined_epoch
     _combined_epoch=$(date +%s)
     __msg_pkg "Linux-TkG + Nvidia-all" "https://github.com/damachine/linux-tkg/blob/staging/customization.cfg"
     __msg_info "${_break}${_green_neon}${_uline_on}COMBINED${_uline_off}:${_reset} ${_green_light}This will install ${_gray}Linux-TkG ${_reset}${_green_light}then ${_gray}Nvidia-all${_reset}${_green_light} from the damachine staging fork.${_reset}"
+
+    # ── Pre-flight: read _version and _nvidia_open from config chain ─────────────
+    # Mirrors linux-tkg PKGBUILD order: customization.cfg → EXT_CONFIG overrides.
+    # If either value is empty, prompt in tkginstaller style before build starts.
+    # Inject chosen values via a temp EXT_CONFIG so linux-tkg's own prompts are skipped.
+    local _linux_tkg_dir_pf="${_tkg_tmp_dir}/linux-tkg"
+    local _pf_version="" _pf_nvidia_open=""
+    local _pf_cfg_main="${_linux_tkg_dir_pf}/customization.cfg"
+    local _pf_cfg_ext="${HOME}/.config/frogminer/linux-tkg.cfg"
+
+    if [[ -f "${_pf_cfg_main}" ]]; then
+        _pf_version=$(__cfg_val '_version' "${_pf_cfg_main}")
+        _pf_nvidia_open=$(__cfg_val '_nvidia_open' "${_pf_cfg_main}")
+    fi
+    if [[ -f "${_pf_cfg_ext}" ]]; then
+        local _ev _eno
+        _ev=$(__cfg_val '_version' "${_pf_cfg_ext}")
+        _eno=$(__cfg_val '_nvidia_open' "${_pf_cfg_ext}")
+        [[ -n "${_ev}" ]] && _pf_version="${_ev}"
+        [[ -n "${_eno}" ]] && _pf_nvidia_open="${_eno}"
+    fi
+
+    # Prompt for _nvidia_open if still empty
+    if [[ -z "${_pf_nvidia_open}" ]]; then
+        __msg_info "${_break}${_green_neon}${_uline_on}NVIDIA OPEN MODULE${_uline_off}:${_reset} ${_green_light}Which NVIDIA open driver branch for the combined install?${_reset}${_break}"
+        __msg_plain " Supported kernels: ${_gray}6.12  6.18  6.19  7.0${_reset}  │  Requires Turing+ GPU (RTX 20xx or newer)"
+        __msg_plain " ${_gray}For other kernel versions use${_reset} ${_orange}legacy${_reset} ${_gray}or set${_reset} ${_gray}_nvidia_open${_reset} ${_gray}in${_reset} ${_gray}~/.config/frogminer/linux-tkg.cfg${_reset}${_break}"
+        __msg_plain " ${_green_neon}${_uline_on}0${_uline_off}${_reset} │ latest  ${_gray}(${_nvidia_open_versions[latest]})${_reset}"
+        __msg_plain " ${_orange}1${_reset} │ vulkan  ${_gray}(${_nvidia_open_versions[vulkan]}) — Vulkan developer beta${_reset}"
+        __msg_plain " ${_gray}2${_reset} │ legacy  ${_gray}(${_nvidia_open_versions[legacy]})${_reset}"
+        __msg_plain " ${_red}9${_reset} │ Cancel${_break}"
+        __prompt_timer "[${_green_neon}${_uline_on}0${_uline_off}${_reset}/${_orange}1${_reset}/${_gray}2${_reset}/${_red}9${_reset}]" 60 0
+        case "${_user_answer}" in
+            1) _pf_nvidia_open="vulkan" ;;
+            2) _pf_nvidia_open="legacy" ;;
+            9)
+                __msg_info "${_break}${_orange}Cancelled by user${_reset}${_break}"
+                __exit 1
+                ;;
+            *) _pf_nvidia_open="latest" ;;
+        esac
+        __msg_plain "${_break} Selected: ${_gray}${_pf_nvidia_open}${_reset}${_break}"
+    fi
+
+    # Build temp EXT_CONFIG: user's linux-tkg.cfg first, then our values on top.
+    # This preserves all other user settings while overriding _version/_nvidia_open.
+    local _linux_tkg_preset="${_tkg_tmp_dir}/linux_tkg_preset.cfg"
+    mkdir -p "${_tkg_tmp_dir}"
+    if [[ -f "${_pf_cfg_ext}" ]]; then
+        cat "${_pf_cfg_ext}" >"${_linux_tkg_preset}"
+        echo >>"${_linux_tkg_preset}"
+    else
+        : >"${_linux_tkg_preset}"
+    fi
+    # Append tkginstaller-chosen values (override any empties from user cfg)
+    [[ -n "${_pf_version}" ]] && printf '_version=%q\n' "${_pf_version}" >>"${_linux_tkg_preset}"
+    [[ -n "${_pf_nvidia_open}" ]] && printf '_nvidia_open=%q\n' "${_pf_nvidia_open}" >>"${_linux_tkg_preset}"
 
     # Background watcher: capture BIG_UGLY_FROGMINER during linux-tkg build
     local _bufm_copy_tmp
@@ -1011,8 +1124,8 @@ __linux_nvidia_install() {
     ) &
     local _bufm_watcher_pid=$!
 
-    # Build linux-tkg
-    local _build_command="makepkg -si"
+    # Build linux-tkg — always remove stale BIG_UGLY_FROGMINER first
+    local _build_command="rm -f BIG_UGLY_FROGMINER && _EXT_CONFIG_PATH=\"${_linux_tkg_preset}\" makepkg -si"
     __install_package "${_damachine_linux_tkg_repo}" "linux-tkg" "${_build_command}"
     local _status=$?
     local _linux_duration="${SECONDS}"
@@ -1026,8 +1139,7 @@ __linux_nvidia_install() {
         return "${_status}"
     fi
 
-    # Extract _nvidia_open and version from BIG_UGLY_FROGMINER.
-    # Prefer the final file after build, keep watcher copy as fallback.
+    # Extract _nvidia_open and version from BIG_UGLY_FROGMINER
     local _nvidia_open=""
     local _driver_version_val=""
     local _bufm_source_file="${_linux_tkg_dir}/BIG_UGLY_FROGMINER"
@@ -1041,7 +1153,7 @@ __linux_nvidia_install() {
     fi
     rm -f "${_bufm_copy_tmp}"
 
-    # Fallback: resolve version from variant name if BIG_UGLY_FROGMINER had no explicit version
+    # Fallback
     if [[ -z "${_driver_version_val}" && -n "${_nvidia_open}" && "${_nvidia_open}" != "false" ]]; then
         _driver_version_val="${_nvidia_open_versions[${_nvidia_open}]}"
     fi
@@ -1050,6 +1162,15 @@ __linux_nvidia_install() {
     if [[ -z "${_driver_version_val}" ]]; then
         _driver_version_val="${_nvidia_open_versions[latest]:-}"
     fi
+
+    # Map _nvidia_open variant to nvidia-all driver branch name
+    local _driver_branch_val=""
+    case "${_nvidia_open}" in
+        latest) _driver_branch_val="regular" ;;
+        vulkan) _driver_branch_val="vulkandev" ;;
+        legacy) _driver_branch_val="regular" ;;
+        *) _driver_branch_val="regular" ;;
+    esac
 
     # Skip driver build if open module was built; use resolved version
     if [[ -n "${_nvidia_open}" && "${_nvidia_open}" != "false" ]]; then
@@ -1082,7 +1203,9 @@ _libxnvctrl="true"
 _eglwayland="external"
 _eglgbm="external"
 _eglx11="external"
-_driver_version_tag="${_driver_version_val}"
+_driver_version="${_driver_version_val}"
+_driver_branch="${_driver_branch_val}"
+_md5sum="SKIP"
 _open_source_modules="false"
 _module_signing="false"
 _blacklist_nouveau="true"
@@ -1101,8 +1224,10 @@ _54_prime_fixing_attempt="false"
 _62142_fix="false"
 NVIDIA_CUSTOMIZATION_CFG
 
-    # Build nvidia-all
-    _build_command="mv \"${_preset_cfg}\" customization.cfg && makepkg -si"
+    # Build nvidia-all — remove stale options file first.
+    # nvidia-all PKGBUILD sources options AFTER customization.cfg; a leftover file from a
+    # previous run would override the _driver_version/_driver_branch we just computed.
+    _build_command="rm -f options && mv \"${_preset_cfg}\" customization.cfg && makepkg -si"
     _tkg_skip_status="1"
     # shellcheck disable=SC2218 # __install_package is defined above; heredoc confuses shellcheck
     __install_package "${_damachine_nvidia_all_repo}" "nvidia-all" "${_build_command}"
@@ -1840,7 +1965,7 @@ ${_green_light}   Select an option below:"
 
     # Border label
     local _border_label_text="${_tkg_installer_version}"
-    local _preview_window_settings='right:wrap:55%'
+    local _preview_window_settings='right:wrap:55%:hidden'
     local _fzf_bind='ctrl-p:toggle-preview'
 
     # Run fzf menu
