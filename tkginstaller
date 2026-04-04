@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly _tkg_installer_version="v0.41.2"
+readonly _tkg_installer_version="v0.41.3"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -28,7 +28,7 @@ _damachine_nvidia_all_repo=https://github.com/damachine/nvidia-all.git
 # nvidia-open version map — keep in sync with damachine/nvidia-all PKGBUILD
 declare -gA _nvidia_open_versions=(
     [latest]="595.58.03"
-    [vulkan]="595.44.03"
+    [vulkan]="595.44.05"
     [legacy]="580.142"
 )
 
