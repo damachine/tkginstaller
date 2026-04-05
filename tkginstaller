@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly _tkg_installer_version="v0.42.0"
+readonly _tkg_installer_version="v0.42.1"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -1046,17 +1046,14 @@ __nvidia_install() {
 }
 
 # Linux-TkG + Nvidia-all combined installation (damachine fork)
-# shellcheck disable=SC2218  # false positive: all called functions are defined above
+# shellcheck disable=SC2218
 __linux_nvidia_install() {
     local _combined_epoch
     _combined_epoch=$(date +%s)
     __msg_pkg "Linux-TkG + Nvidia-all" "https://github.com/damachine/linux-tkg/blob/staging/customization.cfg"
     __msg_info "${_break}${_green_neon}${_uline_on}COMBINED${_uline_off}:${_reset} ${_green_light}This will install ${_gray}Linux-TkG ${_reset}${_green_light}then ${_gray}Nvidia-all${_reset}${_green_light} from the damachine staging fork.${_reset}"
 
-    # ── Pre-flight: read _version and _nvidia_open from config chain ─────────────
     # Mirrors linux-tkg PKGBUILD order: customization.cfg → EXT_CONFIG overrides.
-    # If either value is empty, prompt in tkginstaller style before build starts.
-    # Inject chosen values via a temp EXT_CONFIG so linux-tkg's own prompts are skipped.
     local _linux_tkg_dir_pf="${_tkg_tmp_dir}/linux-tkg"
     local _pf_version="" _pf_nvidia_open=""
     local _pf_cfg_main="${_linux_tkg_dir_pf}/customization.cfg"
@@ -1078,7 +1075,7 @@ __linux_nvidia_install() {
     if [[ -z "${_pf_nvidia_open}" ]]; then
         __msg_info "${_break}${_green_neon}${_uline_on}NVIDIA OPEN MODULE${_uline_off}:${_reset} ${_green_light}Which NVIDIA open driver branch for the combined install?${_reset}${_break}"
         __msg_plain " Supported kernels: ${_gray}6.12  6.18  6.19  7.0${_reset}  │  Requires Turing+ GPU (RTX 20xx or newer)"
-        __msg_plain " ${_gray}For other kernel versions use${_reset} ${_orange}legacy${_reset} ${_gray}or set${_reset} ${_gray}_nvidia_open${_reset} ${_gray}in${_reset} ${_gray}~/.config/frogminer/linux-tkg.cfg${_reset}${_break}"
+        __msg_plain " ${_gray}For GPUs older than RTX 20xx (pre-Turing) use${_reset} ${_orange}legacy${_reset} ${_gray}or set${_reset} ${_gray}_nvidia_open${_reset} ${_gray}in${_reset} ${_gray}~/.config/frogminer/linux-tkg.cfg${_reset}${_break}"
         __msg_plain " ${_green_neon}${_uline_on}0${_uline_off}${_reset} │ latest  ${_gray}(${_nvidia_open_versions[latest]})${_reset}"
         __msg_plain " ${_orange}1${_reset} │ vulkan  ${_gray}(${_nvidia_open_versions[vulkan]}) — Vulkan developer beta${_reset}"
         __msg_plain " ${_gray}2${_reset} │ legacy  ${_gray}(${_nvidia_open_versions[legacy]})${_reset}"
@@ -1158,7 +1155,7 @@ __linux_nvidia_install() {
         _driver_version_val="${_nvidia_open_versions[${_nvidia_open}]}"
     fi
 
-    # Last-resort fallback from map (keeps value dynamic via _nvidia_open_versions).
+    # Last-resort fallback
     if [[ -z "${_driver_version_val}" ]]; then
         _driver_version_val="${_nvidia_open_versions[latest]:-}"
     fi
@@ -1225,11 +1222,9 @@ _62142_fix="false"
 NVIDIA_CUSTOMIZATION_CFG
 
     # Build nvidia-all — remove stale options file first.
-    # nvidia-all PKGBUILD sources options AFTER customization.cfg; a leftover file from a
-    # previous run would override the _driver_version/_driver_branch we just computed.
     _build_command="rm -f options && mv \"${_preset_cfg}\" customization.cfg && makepkg -si"
     _tkg_skip_status="1"
-    # shellcheck disable=SC2218 # __install_package is defined above; heredoc confuses shellcheck
+    # shellcheck disable=SC2218
     __install_package "${_damachine_nvidia_all_repo}" "nvidia-all" "${_build_command}"
     _status=$?
     local _nvidia_duration="${SECONDS}"
