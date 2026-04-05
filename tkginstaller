@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly _tkg_installer_version="v0.42.2"
+readonly _tkg_installer_version="v0.42.3"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -1175,7 +1175,7 @@ __linux_nvidia_install() {
     # nvidia-all makedeps (nvsettings always enabled)
     local _nv_makedeps=('linux-headers' 'patchelf'
         'jansson' 'gtk3' 'libxv' 'libvdpau' 'libxext' 'vulkan-headers')
-    __msg_info "${_break}${_green_neon}${_uline_on}MAKEDEPS${_uline_off}:${_reset} ${_green_light}Checking nvidia-all build dependencies…${_reset}${_break}"
+    __msg_info "${_break}${_green_neon}${_uline_on}MAKEDEPS${_uline_off}:${_reset} ${_green_light}Checking nvidia-all build dependencies…${_reset}"
     __ensure_packages "${_nv_makedeps[@]}" || return 1
 
     # build nvidia-all
@@ -1251,7 +1251,7 @@ NVIDIA_CUSTOMIZATION_CFG
         return 1
     fi
 
-    __msg_info "${_break}${_green_neon}${_uline_on}INSTALL${_uline_off}:${_reset} ${_green_light}Installing ${_gray}${#_all_pkgs[@]}${_reset}${_green_light} packages via ${_gray}pacman -U${_reset}${_green_light}:${_reset}${_break}"
+    __msg_info "${_break}${_green_neon}${_uline_on}INSTALL${_uline_off}:${_reset} ${_green_light}Installing ${_gray}${#_all_pkgs[@]}${_reset}${_green_light} packages via ${_gray}pacman -U${_reset}${_green_light}:${_reset}"
     for _pkg in "${_all_pkgs[@]}"; do
         __msg_plain "  ${_gray}$(basename "${_pkg}")${_reset}"
     done
