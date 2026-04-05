@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly _tkg_installer_version="v0.42.1"
+readonly _tkg_installer_version="v0.42.2"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -1045,38 +1045,69 @@ __nvidia_install() {
     __install_package "${_nvidia_repo}" "nvidia-all" "${_frog_pkg_cmd_default}"
 }
 
+# Check if packages are installed; install any missing ones via pacman --needed.
+__ensure_packages() {
+    local _missing=()
+    local _pkg
+    for _pkg in "$@"; do
+        pacman -Qq "${_pkg}" &>/dev/null || _missing+=("${_pkg}")
+    done
+    if [[ ${#_missing[@]} -gt 0 ]]; then
+        __msg_info "Installing missing build dependencies: ${_missing[*]}${_break}"
+        sudo pacman -S --needed --asdeps --noconfirm "${_missing[@]}" || return 1
+    fi
+}
+
 # Linux-TkG + Nvidia-all combined installation (damachine fork)
 # shellcheck disable=SC2218
 __linux_nvidia_install() {
     local _combined_epoch
     _combined_epoch=$(date +%s)
     __msg_pkg "Linux-TkG + Nvidia-all" "https://github.com/damachine/linux-tkg/blob/staging/customization.cfg"
-    __msg_info "${_break}${_green_neon}${_uline_on}COMBINED${_uline_off}:${_reset} ${_green_light}This will install ${_gray}Linux-TkG ${_reset}${_green_light}then ${_gray}Nvidia-all${_reset}${_green_light} from the damachine staging fork.${_reset}"
+    __msg_info "${_break}${_green_neon}${_uline_on}COMBINED${_uline_off}:${_reset} ${_green_light}Both packages will be ${_gray}built first${_reset}${_green_light}, then installed together via ${_gray}pacman -U${_reset}${_green_light} from the damachine staging fork.${_reset}${_break}"
 
-    # Mirrors linux-tkg PKGBUILD order: customization.cfg → EXT_CONFIG overrides.
-    local _linux_tkg_dir_pf="${_tkg_tmp_dir}/linux-tkg"
-    local _pf_version="" _pf_nvidia_open=""
-    local _pf_cfg_main="${_linux_tkg_dir_pf}/customization.cfg"
+    local _pf_version="" _pf_nvidia_open="" _pf_compiler=""
     local _pf_cfg_ext="${HOME}/.config/frogminer/linux-tkg.cfg"
 
-    if [[ -f "${_pf_cfg_main}" ]]; then
-        _pf_version=$(__cfg_val '_version' "${_pf_cfg_main}")
-        _pf_nvidia_open=$(__cfg_val '_nvidia_open' "${_pf_cfg_main}")
-    fi
+    # read user ext config
     if [[ -f "${_pf_cfg_ext}" ]]; then
-        local _ev _eno
+        local _ev _eno _ec
         _ev=$(__cfg_val '_version' "${_pf_cfg_ext}")
         _eno=$(__cfg_val '_nvidia_open' "${_pf_cfg_ext}")
+        _ec=$(__cfg_val '_compiler' "${_pf_cfg_ext}")
         [[ -n "${_ev}" ]] && _pf_version="${_ev}"
         [[ -n "${_eno}" ]] && _pf_nvidia_open="${_eno}"
+        [[ -n "${_ec}" ]] && _pf_compiler="${_ec}"
     fi
 
-    # Prompt for _nvidia_open if still empty
+    # override with repo customization.cfg if already cloned
+    local _linux_tkg_dir="${_tkg_tmp_dir}/linux-tkg"
+    local _pf_cfg_main="${_linux_tkg_dir}/customization.cfg"
+    if [[ -f "${_pf_cfg_main}" ]]; then
+        local _cv _cno _cc
+        _cv=$(__cfg_val '_version' "${_pf_cfg_main}")
+        _cno=$(__cfg_val '_nvidia_open' "${_pf_cfg_main}")
+        _cc=$(__cfg_val '_compiler' "${_pf_cfg_main}")
+        [[ -n "${_cv}" ]] && _pf_version="${_cv}"
+        [[ -n "${_cno}" ]] && _pf_nvidia_open="${_cno}"
+        [[ -n "${_cc}" ]] && _pf_compiler="${_cc}"
+        # ext config wins
+        if [[ -f "${_pf_cfg_ext}" ]]; then
+            _ev=$(__cfg_val '_version' "${_pf_cfg_ext}")
+            _eno=$(__cfg_val '_nvidia_open' "${_pf_cfg_ext}")
+            _ec=$(__cfg_val '_compiler' "${_pf_cfg_ext}")
+            [[ -n "${_ev}" ]] && _pf_version="${_ev}"
+            [[ -n "${_eno}" ]] && _pf_nvidia_open="${_eno}"
+            [[ -n "${_ec}" ]] && _pf_compiler="${_ec}"
+        fi
+    fi
+
+    # prompt for _nvidia_open if not set in config
     if [[ -z "${_pf_nvidia_open}" ]]; then
         __msg_info "${_break}${_green_neon}${_uline_on}NVIDIA OPEN MODULE${_uline_off}:${_reset} ${_green_light}Which NVIDIA open driver branch for the combined install?${_reset}${_break}"
         __msg_plain " Supported kernels: ${_gray}6.12  6.18  6.19  7.0${_reset}  │  Requires Turing+ GPU (RTX 20xx or newer)"
         __msg_plain " ${_gray}For GPUs older than RTX 20xx (pre-Turing) use${_reset} ${_orange}legacy${_reset} ${_gray}or set${_reset} ${_gray}_nvidia_open${_reset} ${_gray}in${_reset} ${_gray}~/.config/frogminer/linux-tkg.cfg${_reset}${_break}"
-        __msg_plain " ${_green_neon}${_uline_on}0${_uline_off}${_reset} │ latest  ${_gray}(${_nvidia_open_versions[latest]})${_reset}"
+        __msg_plain " ${_green_neon}${_uline_on}0${_uline_off}${_reset} │ latest  ${_gray}(${_nvidia_open_versions[latest]}) — selected${_reset} ${_green_neon}(default)${_reset}"
         __msg_plain " ${_orange}1${_reset} │ vulkan  ${_gray}(${_nvidia_open_versions[vulkan]}) — Vulkan developer beta${_reset}"
         __msg_plain " ${_gray}2${_reset} │ legacy  ${_gray}(${_nvidia_open_versions[legacy]})${_reset}"
         __msg_plain " ${_red}9${_reset} │ Cancel${_break}"
@@ -1090,11 +1121,34 @@ __linux_nvidia_install() {
                 ;;
             *) _pf_nvidia_open="latest" ;;
         esac
-        __msg_plain "${_break} Selected: ${_gray}${_pf_nvidia_open}${_reset}${_break}"
+        __msg_plain "${_break} Selected: ${_gray}${_pf_nvidia_open}${_reset}"
     fi
 
-    # Build temp EXT_CONFIG: user's linux-tkg.cfg first, then our values on top.
-    # This preserves all other user settings while overriding _version/_nvidia_open.
+    # resolve driver version and branch from version map
+    local _driver_version_val="${_nvidia_open_versions[${_pf_nvidia_open}]:-}"
+    if [[ -z "${_driver_version_val}" ]]; then
+        _driver_version_val="${_nvidia_open_versions[latest]:-}"
+    fi
+    local _driver_branch_val=""
+    case "${_pf_nvidia_open}" in
+        vulkan) _driver_branch_val="vulkandev" ;;
+        *) _driver_branch_val="regular" ;;
+    esac
+
+    # linux-tkg makedeps (kernel ≥ 6.12, rust always included)
+    local _ltkg_makedeps=(
+        'bc' 'bison' 'cpio' 'docbook-xsl' 'flex' 'git' 'graphviz'
+        'gettext' 'imagemagick' 'inetutils' 'libelf' 'pahole'
+        'patchutils' 'perl' 'python' 'python-sphinx' 'python-sphinx_rtd_theme'
+        'rust' 'rust-bindgen' 'rust-src' 'tar' 'wget' 'xmlto' 'xz' 'zstd'
+    )
+    if [[ "${_pf_compiler}" == "llvm" ]]; then
+        _ltkg_makedeps+=('clang' 'llvm' 'lld')
+    fi
+    __msg_info "${_break}${_green_neon}${_uline_on}MAKEDEPS${_uline_off}:${_reset} ${_green_light}Checking linux-tkg build dependencies…${_reset}"
+    __ensure_packages "${_ltkg_makedeps[@]}" || return 1
+
+    # build linux-tkg
     local _linux_tkg_preset="${_tkg_tmp_dir}/linux_tkg_preset.cfg"
     mkdir -p "${_tkg_tmp_dir}"
     if [[ -f "${_pf_cfg_ext}" ]]; then
@@ -1103,81 +1157,28 @@ __linux_nvidia_install() {
     else
         : >"${_linux_tkg_preset}"
     fi
-    # Append tkginstaller-chosen values (override any empties from user cfg)
+    # append chosen values to preset
     [[ -n "${_pf_version}" ]] && printf '_version=%q\n' "${_pf_version}" >>"${_linux_tkg_preset}"
     [[ -n "${_pf_nvidia_open}" ]] && printf '_nvidia_open=%q\n' "${_pf_nvidia_open}" >>"${_linux_tkg_preset}"
 
-    # Background watcher: capture BIG_UGLY_FROGMINER during linux-tkg build
-    local _bufm_copy_tmp
-    _bufm_copy_tmp=$(mktemp "${_tkg_tmp_dir}/.bufm_XXXXXX")
-    local _linux_tkg_dir="${_tkg_tmp_dir}/linux-tkg"
-    (
-        _n=0
-        while [[ ! -f "${_linux_tkg_dir}/BIG_UGLY_FROGMINER" && ${_n} -lt 3600 ]]; do
-            sleep 0.5
-            ((_n++))
-        done
-        cp "${_linux_tkg_dir}/BIG_UGLY_FROGMINER" "${_bufm_copy_tmp}" 2>/dev/null || true
-    ) &
-    local _bufm_watcher_pid=$!
-
-    # Build linux-tkg — always remove stale BIG_UGLY_FROGMINER first
-    local _build_command="rm -f BIG_UGLY_FROGMINER && _EXT_CONFIG_PATH=\"${_linux_tkg_preset}\" makepkg -si"
+    local _build_command="rm -f BIG_UGLY_FROGMINER && _EXT_CONFIG_PATH=\"${_linux_tkg_preset}\" makepkg -d"
+    _tkg_skip_status="1"
     __install_package "${_damachine_linux_tkg_repo}" "linux-tkg" "${_build_command}"
     local _status=$?
     local _linux_duration="${SECONDS}"
 
-    kill "${_bufm_watcher_pid}" 2>/dev/null || true
-    wait "${_bufm_watcher_pid}" 2>/dev/null || true
-
     if [[ ${_status} -ne 0 ]]; then
-        __msg_error "Linux-TkG build failed — skipping Nvidia-all installation.${_break}"
-        rm -f "${_bufm_copy_tmp}"
+        __msg_error "Linux-TkG build failed — skipping Nvidia-all build.${_break}"
         return "${_status}"
     fi
 
-    # Extract _nvidia_open and version from BIG_UGLY_FROGMINER
-    local _nvidia_open=""
-    local _driver_version_val=""
-    local _bufm_source_file="${_linux_tkg_dir}/BIG_UGLY_FROGMINER"
-    if [[ ! -s "${_bufm_source_file}" && -s "${_bufm_copy_tmp}" ]]; then
-        _bufm_source_file="${_bufm_copy_tmp}"
-    fi
+    # nvidia-all makedeps (nvsettings always enabled)
+    local _nv_makedeps=('linux-headers' 'patchelf'
+        'jansson' 'gtk3' 'libxv' 'libvdpau' 'libxext' 'vulkan-headers')
+    __msg_info "${_break}${_green_neon}${_uline_on}MAKEDEPS${_uline_off}:${_reset} ${_green_light}Checking nvidia-all build dependencies…${_reset}${_break}"
+    __ensure_packages "${_nv_makedeps[@]}" || return 1
 
-    if [[ -s "${_bufm_source_file}" ]]; then
-        _nvidia_open=$(grep '^_nvidia_open=' "${_bufm_source_file}" | tail -1 | sed "s/^_nvidia_open=//;s/'//g;s/\"//g")
-        _driver_version_val=$(grep '^_nvidia_open_version=' "${_bufm_source_file}" | tail -1 | sed "s/^_nvidia_open_version=//;s/'//g;s/\"//g")
-    fi
-    rm -f "${_bufm_copy_tmp}"
-
-    # Fallback
-    if [[ -z "${_driver_version_val}" && -n "${_nvidia_open}" && "${_nvidia_open}" != "false" ]]; then
-        _driver_version_val="${_nvidia_open_versions[${_nvidia_open}]}"
-    fi
-
-    # Last-resort fallback
-    if [[ -z "${_driver_version_val}" ]]; then
-        _driver_version_val="${_nvidia_open_versions[latest]:-}"
-    fi
-
-    # Map _nvidia_open variant to nvidia-all driver branch name
-    local _driver_branch_val=""
-    case "${_nvidia_open}" in
-        latest) _driver_branch_val="regular" ;;
-        vulkan) _driver_branch_val="vulkandev" ;;
-        legacy) _driver_branch_val="regular" ;;
-        *) _driver_branch_val="regular" ;;
-    esac
-
-    # Skip driver build if open module was built; use resolved version
-    if [[ -n "${_nvidia_open}" && "${_nvidia_open}" != "false" ]]; then
-        if [[ -z "${_driver_version_val}" ]]; then
-            __msg_warning "Could not determine nvidia-open driver version.${_break}"
-        fi
-        __msg_info "${_break}${_green_neon}${_uline_on}INFO${_uline_off}:${_reset} ${_green_light}nvidia-open module detected (${_gray}${_nvidia_open}${_reset}${_green_light}) — nvidia-all will build utils only (version: ${_gray}${_driver_version_val}${_reset}${_green_light}).${_reset}"
-    fi
-
-    # Generate nvidia-all preset config
+    # build nvidia-all
     local _preset_cfg="${_tkg_tmp_dir}/nvidia_all/pre-customization.cfg"
     mkdir -p "${_tkg_tmp_dir}/nvidia_all"
 
@@ -1221,8 +1222,8 @@ _54_prime_fixing_attempt="false"
 _62142_fix="false"
 NVIDIA_CUSTOMIZATION_CFG
 
-    # Build nvidia-all — remove stale options file first.
-    _build_command="rm -f options && mv \"${_preset_cfg}\" customization.cfg && makepkg -si"
+    # build only
+    _build_command="rm -f options && mv \"${_preset_cfg}\" customization.cfg && makepkg -d"
     _tkg_skip_status="1"
     # shellcheck disable=SC2218
     __install_package "${_damachine_nvidia_all_repo}" "nvidia-all" "${_build_command}"
@@ -1231,12 +1232,40 @@ NVIDIA_CUSTOMIZATION_CFG
 
     rm -rf "${_tkg_tmp_dir}/nvidia_all"
 
-    # Show combined summary: linux-tkg → nvidia-all → total
+    if [[ ${_status} -ne 0 ]]; then
+        __msg_error "Nvidia-all build failed — aborting combined install.${_break}"
+        return "${_status}"
+    fi
+
+    # step 3: collect all built packages and install at once
+    local _all_pkgs=()
+    while IFS= read -r -d '' _pkg; do
+        _all_pkgs+=("${_pkg}")
+    done < <(find "${_tkg_tmp_dir}/nvidia-all" -maxdepth 1 -name '*.pkg.tar*' -print0 2>/dev/null)
+    while IFS= read -r -d '' _pkg; do
+        _all_pkgs+=("${_pkg}")
+    done < <(find "${_tkg_tmp_dir}/linux-tkg" -maxdepth 1 -name '*.pkg.tar*' -print0 2>/dev/null)
+
+    if [[ ${#_all_pkgs[@]} -eq 0 ]]; then
+        __msg_error "No built packages found to install.${_break}"
+        return 1
+    fi
+
+    __msg_info "${_break}${_green_neon}${_uline_on}INSTALL${_uline_off}:${_reset} ${_green_light}Installing ${_gray}${#_all_pkgs[@]}${_reset}${_green_light} packages via ${_gray}pacman -U${_reset}${_green_light}:${_reset}${_break}"
+    for _pkg in "${_all_pkgs[@]}"; do
+        __msg_plain "  ${_gray}$(basename "${_pkg}")${_reset}"
+    done
+    __msg_plain "${_break}"
+
+    sudo pacman -U "${_all_pkgs[@]}"
+    _status=$?
+
+    # summary
     local _combined_total=$(($(date +%s) - _combined_epoch))
-    local _lx_min=$((_linux_duration / 60))
-    local _lx_sec=$((_linux_duration % 60))
     local _nv_min=$((_nvidia_duration / 60))
     local _nv_sec=$((_nvidia_duration % 60))
+    local _lx_min=$((_linux_duration / 60))
+    local _lx_sec=$((_linux_duration % 60))
     local _combined_min=$((_combined_total / 60))
     local _combined_sec=$((_combined_total % 60))
 
@@ -1246,9 +1275,9 @@ NVIDIA_CUSTOMIZATION_CFG
     else
         __msg_error "Failed process: Linux-TkG + Nvidia-all (Code: ${_status})"
     fi
-    __msg_info_orange "Duration Linux-TkG:  ${_lx_min} min ${_lx_sec} sec"
-    __msg_info_orange "Duration Nvidia-all: ${_nv_min} min ${_nv_sec} sec"
-    __msg_info_orange "Combined Duration:   ${_combined_min} min ${_combined_sec} sec"
+    __msg_info_orange "Duration Linux-TkG build:  ${_lx_min} min ${_lx_sec} sec"
+    __msg_info_orange "Duration Nvidia-all build: ${_nv_min} min ${_nv_sec} sec"
+    __msg_info_orange "Combined Duration:         ${_combined_min} min ${_combined_sec} sec"
     return "${_status}"
 }
 
