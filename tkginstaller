@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly _tkg_installer_version="v0.42.3"
+readonly _tkg_installer_version="v0.42.4"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -1237,7 +1237,7 @@ NVIDIA_CUSTOMIZATION_CFG
         return "${_status}"
     fi
 
-    # step 3: collect all built packages and install at once
+    # collect all built packages and install at once
     local _all_pkgs=()
     while IFS= read -r -d '' _pkg; do
         _all_pkgs+=("${_pkg}")
@@ -1259,6 +1259,13 @@ NVIDIA_CUSTOMIZATION_CFG
 
     sudo pacman -U "${_all_pkgs[@]}"
     _status=$?
+
+    # remove built packages after installation
+    if [[ ${_status} -eq 0 ]]; then
+        __msg_plain "${_break}${_green_neon}Cleaning up built packages...${_reset}"
+        find "${_tkg_tmp_dir}/linux-tkg" -maxdepth 1 -name '*.pkg.tar*' -delete 2>/dev/null || true
+        find "${_tkg_tmp_dir}/nvidia-all" -maxdepth 1 -name '*.pkg.tar*' -delete 2>/dev/null || true
+    fi
 
     # summary
     local _combined_total=$(($(date +%s) - _combined_epoch))
