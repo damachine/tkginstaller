@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly _tkg_installer_version="v0.42.4"
+readonly _tkg_installer_version="v0.50.0"
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -1208,7 +1208,7 @@ _open_source_modules="false"
 _module_signing="false"
 _blacklist_nouveau="true"
 _modprobe="true"
-_modprobe_mobile=""
+_modprobe_mobile="true"
 _perf_optimizations="true"
 _nvidia_patch_enc_fbc="true"
 _bsb_dsc_fix="true"
@@ -1928,7 +1928,7 @@ __menu() {
   if [[ "${_is_arch_based}" == "true" ]]; then
     _menu_options+=(
       "Nvidia        |💻 ${_green_neon}Nvidia        ${_gray} Nvidia open-source or proprietary graphics drivers"
-      "Linux+Nvidia  |🐧 ${_green_neon}Linux+Nvidia  ${_gray} Linux-TkG + Nvidia-all combined (damachine fork)"
+      "Linux + Nvidia|🐧 ${_green_neon}Linux+Nvidia  ${_gray} Linux-TkG + Nvidia-all combined (damachine fork)"
       "Mesa          |🧩 ${_green_neon}Mesa          ${_gray} AMD and Intel open-source graphics driver"
       "AMD           |💎 ${_green_neon}AMD           ${_gray} AMDGPU-PRO and Vulkan drivers (Pro & OPT)"
     )
