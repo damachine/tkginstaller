@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly _tkg_installer_version="v0.50.1"
+readonly _tkg_installer_version="v0.50.2"
 
 # =============================================================================
 # ENVIRONMENT SETUP
