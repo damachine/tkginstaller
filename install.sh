@@ -1,316 +1,109 @@
 #!/usr/bin/env bash
 set -euo pipefail
 IFS=$'\n\t'
-# shellcheck disable=SC2218 # Allow usage of printf with variable format strings
 
-# Maintainer: damachin3 (damachine3 at proton dot me)
-# website: https://github.com/damachine/tkginstaller
+# ----------------------------------------------------------------------
+# Purpose: Install only the tkginstaller script into a standard bin path
+# Usage:   ./install.sh [--uninstall]
+# ----------------------------------------------------------------------
 
-# Initialize color and style (copied from tkginstaller)
-__init_style() {
-  _break=$'\n'
-  _reset=$'\033[0m'
-  __color() {
-    local r=${1:-255} g=${2:-255} b=${3:-255} idx=${4:-7}
-    if [[ "${COLORTERM,,}" == *truecolor* || "${COLORTERM,,}" == *24bit* ]]; then
-      printf '\033[38;2;%d;%d;%dm' "$r" "$g" "$b"
-      return 0
-    fi
-    if command -v tput >/dev/null 2>&1; then
-      local _tput_seq
-      _tput_seq=$(
-        tput sgr0
-        tput setaf "$idx"
-      )
-      printf '%s' "${_tput_seq}"
-      return 0
-    fi
-    local _idx256
-    case "$idx" in
-      1) _idx256=196 ;; # bright red
-      2) _idx256=118 ;; # light green
-      3) _idx256=214 ;; # orange/yellow
-      4) _idx256=39 ;;  # bright blue
-      *) _idx256=15 ;;  # white
+_pkgname="tkginstaller"
+_srcdir="/usr/bin"
+_source="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"
+_tmpfile=""
+
+msg_info() {
+  printf '==> %s\n' "$*"
+}
+
+msg_error() {
+  printf 'ERROR: %s\n' "$*" >&2
+}
+
+usage() {
+  cat <<'EOF'
+Usage: ./install.sh [OPTIONS]
+
+Options:
+  --uninstall       Remove installed script
+  -h, --help        Show this help
+
+Examples:
+  sudo ./install.sh
+  sudo ./install.sh --uninstall
+EOF
+}
+
+parse_args() {
+  while (($#)); do
+    case "$1" in
+      --uninstall | -u)
+        _mode="uninstall"
+        shift
+        ;;
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      *)
+        msg_error "Unknown option: $1"
+        usage
+        exit 1
+        ;;
     esac
-    printf '\033[38;5;%dm' "$_idx256"
-  }
-
-  # Define TrueColor values, fallback to tput
-  _red="$(__color 220 60 60 1)"          # warm red
-  _green_light="$(__color 80 255 140 2)" # light green
-  _green_neon="$(__color 120 255 100 2)" # neon green
-  _green_mint="$(__color 152 255 200 6)" # mint green
-  _green_dark="$(__color 34 68 34 2)"    # dark green (#224422)
-  _orange="$(__color 255 190 60 3)"      # orange/yellow
-  _gray="$(__color 200 250 200 7)"       # gray
-
-  # Draw underline
-  _uline_on=$(tput smul 2>/dev/null || printf '\033[4m')
-  _uline_off=$(tput rmul 2>/dev/null || printf '\033[24m')
-}
-
-# Initialize colors
-__init_style
-
-# Configuration
-_tkg_repo_url="https://raw.githubusercontent.com/damachine/tkginstaller/master"
-_tkg_install_dir="${HOME}/.tkginstaller"
-_tkg_script_name="tkginstaller"
-
-# Functions
-__msg_info() { printf '%b\n' "${_green_light}$*${_reset}"; }
-__msg_error() { printf '%b\n' "${_red}ERROR: $*${_reset}"; }
-__msg_warning() { printf '%b\n' "${_orange}WARNING: $*${_reset}"; }
-__msg_step() { printf '%b\n' "${_gray} ➜➜ $*${_reset}"; }
-__msg_prompt() { printf '%b\n' "$*"; }
-
-__banner() {
-  local __color="${1:-$_green_neon}"
-  printf '%b\n' "${__color}"
-  cat <<"EOF"
-░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
-░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
-░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
-──  KISS the 🐸 ──
-EOF
-  printf '%b\n' "${_reset}"
-}
-
-# Check for root
-if [[ "$(id -u)" -eq 0 ]]; then
-  __banner "$_orange"
-  __msg_warning "You are running as root!${_break}"
-  __msg_prompt " Running this script as root is not recommended for security reasons.${_break}"
-  __msg_prompt "Do you really want to continue as root? [y/N]: "
-  trap 'echo;echo; __msg_prompt "${_red}Aborted by user.\n";sleep 1.5s; exit 1' INT
-  read -r _user_answer
-  trap - INT
-  if [[ ! "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
-    __msg_prompt "${_red}Aborted by user.${_break}"
-    exit 1
-  fi
-fi
-
-__cleanup() {
-  cd "$OLDPWD" 2>/dev/null || true
-  if [[ -n "${TEMP_DIR:-}" && -d "$TEMP_DIR" ]]; then
-    rm -rf "$TEMP_DIR"
-  fi
-}
-
-trap __cleanup EXIT INT TERM
-
-# Uninstall function
-__uninstall() {
-  __banner "$_orange"
-  __msg_warning "${_green_neon}${_uline_on}UNINSTALLATION${_uline_off}${_reset}${_break}"
-  __msg_prompt "This will remove:${_break}"
-  __msg_prompt " - Installation directory: ${_gray}${_tkg_install_dir}${_reset}"
-  __msg_prompt " - All files and cached data"
-  __msg_prompt " - Shell aliases from .zshrc/.bashrc${_break}"
-  __msg_prompt "Do you want to continue? [y/N]: "
-
-  trap 'echo;echo; __msg_prompt "${_red}Aborted by user.${_break}";exit 1' INT
-  if [[ -t 0 ]]; then
-    read -r _user_answer
-  else
-    __msg_info "[i] Non-interactive mode detected – proceeding with uninstallation automatically."
-    _user_answer="y"
-  fi
-  trap - INT
-
-  if [[ ! "$_user_answer" =~ ^([yY]|[yY][eE][sS])$ ]]; then
-    __msg_prompt "${_orange}Uninstallation cancelled.${_break}"
-    exit 0
-  fi
-
-  echo
-  __msg_step "Removing shell aliases..."
-
-  # List of shell config files to check
-  local shell_configs=(
-    "${HOME}/.zshrc"
-    "${HOME}/.bashrc"
-    "${HOME}/.bash_profile"
-    "${HOME}/.profile"
-  )
-
-  # Loop through each shell config files
-  local removed_alias=false
-  for config in "${shell_configs[@]}"; do
-    if [[ -f "$config" ]]; then
-      # Remove the TKG-Installer alias block (including comment and empty lines)
-      if grep -q "# TKG-Installer alias" "$config" 2>/dev/null; then
-        # Create temp file and remove the alias block
-        local tmp_file
-        tmp_file="$(mktemp)"
-        awk '
-                    /^# TKG-Installer alias$/ { skip=1; next }
-                    skip && /^alias.*tkginstaller/ { next }
-                    skip && /^$/ { skip=0; next }
-                    { print }
-                ' "$config" >"$tmp_file"
-        mv -f "$tmp_file" "$config"
-        __msg_info "[✓] Removed alias from $(basename "$config")"
-        removed_alias=true
-      fi
-    fi
   done
-
-  if [[ "$removed_alias" == false ]]; then
-    __msg_info "[✓] No aliases found in shell configs"
-  fi
-
-  echo
-  __msg_step "Removing installation directory..."
-
-  if [[ -d "$_tkg_install_dir" ]]; then
-    # Count files for info
-    local file_count
-    file_count=$(find "$_tkg_install_dir" -type f 2>/dev/null | wc -l || echo 0)
-
-    rm -rf "$_tkg_install_dir"
-    __msg_info "[✓] Removed ${_gray}${_tkg_install_dir}${_reset} (${file_count} files)"
-  else
-    __msg_info "[✓] Installation directory does not exist"
-  fi
-
-  echo
-  __msg_info "${_break}${_green_neon}${_uline_on}UNINSTALLATION COMPLETE!${_uline_off}${_reset}${_break}${_break}"
-  __msg_prompt "${_green_neon}Next steps:${_reset}"
-  __msg_prompt "1) Reload your shell config:"
-  __msg_prompt "   ${_gray}source ~/.zshrc${_reset} or ${_gray}source ~/.bashrc${_reset}${_break}"
-  __msg_prompt "2) The tkginstaller command is no longer available${_break}"
 }
 
-# Main installation
-__main() {
-  # Welcome message
-  __banner
-  printf "%s" "${_green_neon}Starting installation"
-  for _ in {1..3}; do
-    printf " ."
-    sleep 0.3s
-  done
-  printf "%b\n" "${_break}${_reset}"
+cleanup() {
+  if [[ -n "${_tmpfile}" && -f "${_tmpfile}" ]]; then
+    rm -f -- "${_tmpfile}"
+  fi
+}
 
-  # Check dependencies
-  __msg_step "Checking dependencies..."
-  for cmd in curl sha256sum; do
-    if ! command -v "$cmd" &>/dev/null; then
-      __msg_error "$cmd is not installed!"
+install() {
+  local _pkgdir
+  _pkgdir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
+  if [[ ! -f "${_pkgdir}/${_pkgname}" ]]; then
+    command -v curl >/dev/null 2>&1 || {
+      msg_error "Local source missing and curl is required for download fallback"
       exit 1
-    fi
-  done
-  __msg_info "[✓] Dependencies OK${_break}"
+    }
 
-  # Create installation directory
-  __msg_step "Creating installation directory: $_tkg_install_dir"
-  mkdir -p "$_tkg_install_dir"
-
-  # Create temporary directory
-  TEMP_DIR=$(mktemp -d)
-  cd "$TEMP_DIR"
-
-  # Download files
-  __msg_step "Downloading tkginstaller..."
-  if ! curl -fsSL "${_tkg_repo_url}/${_tkg_script_name}" -o "${_tkg_script_name}"; then
-    __msg_error "Failed to download tkginstaller"
-    exit 1
+    _tmpfile="$(mktemp)"
+    msg_info "Local source not found, downloading ${_pkgname}"
+    curl -fsSL "$_source" -o "${_tmpfile}"
+    msg_info "Installing ${_pkgname} -> ${_srcdir}/${_pkgname}"
+    install -Dm755 "${_tmpfile}" "${_srcdir}/${_pkgname}"
+    msg_info "Done"
+    return
   fi
 
-  __msg_step "Downloading checksum..."
-  if curl -fsSL "${_tkg_repo_url}/SHA256SUMS" -o "SHA256SUMS" 2>/dev/null; then
-    __msg_info "[✓] Download complete${_break}"
-
-    __msg_step "Verifying integrity..."
-    if sha256sum -c "SHA256SUMS" 2>&1 | grep -q "OK"; then
-      __msg_info "[✓] Checksum verification successful!${_break}"
-    else
-      __msg_error "Checksum verification FAILED!${_break}"
-      __msg_warning "The downloaded file does not match the expected checksum."
-      __msg_warning "This could indicate:"
-      __msg_warning " - File corruption during download"
-      __msg_warning " - Security compromise"
-      __msg_warning " - Network issues${_break}"
-      __msg_error "Installation aborted for security reasons."
-      exit 1
-    fi
-  else
-    __msg_warning "Checksum file not available (expected for development versions)"
-    __msg_warning "Skipping integrity verification${_break}"
-  fi
-
-  # Move to installation directory
-  __msg_step "Installing to: $_tkg_install_dir"
-  mv -f "${_tkg_script_name}" "${_tkg_install_dir}/"
-  mv -f "SHA256SUMS" "${_tkg_install_dir}/"
-  chmod +x "${_tkg_install_dir}/${_tkg_script_name}"
-  __msg_info "[✓] Installation complete${_break}"
-
-  # Setup shell alias
-  __msg_step "Setting up shell alias..."
-
-  # Detect shell - prioritize $SHELL variable (most reliable)
-  SHELL_RC=""
-  CURRENT_SHELL="$(basename "${SHELL}")"
-
-  case "$CURRENT_SHELL" in
-    zsh)
-      SHELL_RC="${HOME}/.zshrc"
-      ;;
-    bash)
-      SHELL_RC="${HOME}/.bashrc"
-      ;;
-    *)
-      # Fallback: check shell version variables
-      if [[ -n "${ZSH_VERSION:-}" ]]; then
-        SHELL_RC="${HOME}/.zshrc"
-      elif [[ -n "${BASH_VERSION:-}" ]]; then
-        SHELL_RC="${HOME}/.bashrc"
-      fi
-      ;;
-  esac
-
-  if [[ -n "$SHELL_RC" ]]; then
-    # Check if alias already exists
-    if grep -q "alias ${_tkg_script_name}=" "$SHELL_RC" 2>/dev/null; then
-      __msg_info "[✓] Alias already exists in $SHELL_RC"
-    else
-      # Append alias to shell RC file in a single here-doc block
-      cat >>"$SHELL_RC" <<EOF
-
-# TKG-Installer alias
-alias ${_tkg_script_name}='${_tkg_install_dir}/${_tkg_script_name}'
-EOF
-      __msg_info "[✓] Alias added to $SHELL_RC"
-    fi
-  else
-    __msg_warning "Could not detect shell configuration file."
-    __msg_warning "Add this manually to your shell config:"
-    __msg_prompt " ${_gray}alias ${_tkg_script_name}='${_tkg_install_dir}/${_tkg_script_name}'${_reset}${_break}"
-  fi
-
-  # Clean temp dir
-  __cleanup
-
-  __msg_info "${_break}${_break}${_green_neon}${_uline_on}INSTALLATION SUCCESSFUL!${_uline_off}${_reset}${_break}${_break}"
-  __msg_prompt "${_green_neon}${_uline_on}Next steps${_uline_off}:${_reset}"
-  __msg_prompt "1) Reload your shell config:"
-
-  if [[ -n "$SHELL_RC" ]]; then
-    __msg_prompt "   ${_gray}source $SHELL_RC${_reset}${_break}"
-  fi
-
-  __msg_prompt "2) Run the installer:"
-  __msg_prompt "   ${_gray}${_tkg_script_name}${_reset}${_break}"
-  __msg_prompt "Documentation: ${_gray}https://github.com/damachine/tkginstaller${_reset}${_break}"
+  msg_info "Installing ${_pkgname}"
+  install -Dm755 "${_pkgdir}/${_pkgname}" "${_srcdir}/${_pkgname}"
+  msg_info "Done"
 }
 
-# Main entry point
-if [[ "${1:-}" == "--uninstall" || "${1:-}" == "-u" ]]; then
-  __uninstall
-else
-  __main
-fi
+uninstall() {
+  if [[ -e "${_srcdir}/${_pkgname}" ]]; then
+    msg_info "Removing ${_pkgname}"
+    rm -f -- "${_srcdir}/${_pkgname}"
+    msg_info "Done"
+  else
+    msg_info "Nothing to remove: ${_srcdir}/${_pkgname}"
+  fi
+}
+
+main() {
+  local _mode="install"
+  trap cleanup EXIT
+  parse_args "$@"
+
+  if [[ "$_mode" == "uninstall" ]]; then
+    uninstall
+  else
+    install
+  fi
+}
+
+main "$@"

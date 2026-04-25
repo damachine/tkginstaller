@@ -8,7 +8,10 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly _tkg_installer_version="v0.50.3"
+readonly _tkg_installer_version="v0.50.4"
+
+# Keep original CLI args for one-shot auto-restart recovery
+declare -ga _tkg_start_args=("$@")
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -399,6 +402,16 @@ __git_clone_retry() {
     __msg_warning "Clone failed (attempt ${_attempt}/${_max_attempts}). Retrying in $((_attempt * 2))s..."
     sleep $((_attempt * 2))
   done
+
+  # One-shot self-heal: clean cache and restart once with same args
+  if [[ "${_TKG_AUTO_RESTARTED:-0}" != "1" ]]; then
+    __msg_warning "Clone failed ${_max_attempts} times. Running 'tkginstaller clean' and restarting once..."
+    __clean_temp_dir
+    __msg_info "Restarting installer once with previous arguments...${_break}"
+    exec env _TKG_AUTO_RESTARTED=1 "$0" "${_tkg_start_args[@]}"
+  fi
+
+  __msg_error "Clone failed again after automatic clean+restart.${_break}"
   return 1
 }
 

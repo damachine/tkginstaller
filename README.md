@@ -7,7 +7,7 @@
 
 <strong>bash wrapper to build & install <a href="https://github.com/Frogging-Family">Frogging-Family</a> stuff with ease</strong>
 
-   <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/Version-0.50.3-yellow?style=flat&logo=linux"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://github.com/search?q=org%3AFrogging-Family+author%3Adamachine&type=commits"><img src="https://img.shields.io/badge/Frogging--Family-Collaborator-green?style=flat&logo=github"></a>
+   <a href="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"><img src="https://img.shields.io/badge/Version-0.50.4-yellow?style=flat&logo=linux"></a> <a href="https://aur.archlinux.org/packages/tkginstaller-git"><img src="https://img.shields.io/aur/version/tkginstaller-git?&logo=arch-linux&label=AUR"></a> <a href="https://github.com/search?q=org%3AFrogging-Family+author%3Adamachine&type=commits"><img src="https://img.shields.io/badge/Frogging--Family-Collaborator-green?style=flat&logo=github"></a>
    
 <strong>what it does</strong>
  - quick CLI one-liners or full fzf <strong><mark>TUI</mark></strong> — your call
@@ -34,7 +34,8 @@ yay -S tkginstaller-git
 ```yaml
 # All distributions
 # Install via automated installation helper
-curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/install.sh | \
+  sudo bash
 ```
 
 <br />
@@ -83,20 +84,11 @@ yay -R tkginstaller-git
 ```yaml
 # All distributions (installed via install.sh)
 # Use the built-in uninstall function
-curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/install.sh | bash -s -- --uninstall
+curl -fsSL https://raw.githubusercontent.com/damachine/tkginstaller/master/install.sh | \
+  sudo bash -s -- --uninstall
 
 # Or if you have the install.sh downloaded
-./install.sh --uninstall
-```
-
-```yaml
-# All distributions (manual cleanup)
-# Manually remove all files
-rm /patch/to/tkginstaller     # where you put it
-rm -rf ~/.tkginstaller        # cache folder
-# Remove alias from shell config
-sed -i '/# TKG-Installer alias/,+1d' ~/.bashrc ~/.zshrc
-source ~/.bashrc ~/.zshrc
+sudo ./install.sh --uninstall
 ```
 
 </details>
