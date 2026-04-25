@@ -8,7 +8,7 @@ IFS=$'\n\t'
 # ----------------------------------------------------------------------
 
 _pkgname="tkginstaller"
-_srcdir="/usr/bin"
+_pkgdir="/usr/bin"
 _source="https://raw.githubusercontent.com/damachine/tkginstaller/master/tkginstaller"
 _tmpfile=""
 
@@ -61,10 +61,10 @@ cleanup() {
 }
 
 install() {
-  local _pkgdir
-  _pkgdir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+  local _srcdir
+  _srcdir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
-  if [[ ! -f "${_pkgdir}/${_pkgname}" ]]; then
+  if [[ ! -f "${_srcdir}/${_pkgname}" ]]; then
     command -v curl >/dev/null 2>&1 || {
       msg_error "Local source missing and curl is required for download fallback"
       exit 1
@@ -73,24 +73,24 @@ install() {
     _tmpfile="$(mktemp)"
     msg_info "Local source not found, downloading ${_pkgname}"
     curl -fsSL "$_source" -o "${_tmpfile}"
-    msg_info "Installing ${_pkgname} -> ${_srcdir}/${_pkgname}"
-    install -Dm755 "${_tmpfile}" "${_srcdir}/${_pkgname}"
+    msg_info "Installing ${_pkgname} -> ${_pkgdir}/${_pkgname}"
+    install -Dm755 "${_tmpfile}" "${_pkgdir}/${_pkgname}"
     msg_info "Done"
     return
   fi
 
   msg_info "Installing ${_pkgname}"
-  install -Dm755 "${_pkgdir}/${_pkgname}" "${_srcdir}/${_pkgname}"
+  install -Dm755 "${_srcdir}/${_pkgname}" "${_pkgdir}/${_pkgname}"
   msg_info "Done"
 }
 
 uninstall() {
-  if [[ -e "${_srcdir}/${_pkgname}" ]]; then
+  if [[ -e "${_pkgdir}/${_pkgname}" ]]; then
     msg_info "Removing ${_pkgname}"
-    rm -f -- "${_srcdir}/${_pkgname}"
+    rm -f -- "${_pkgdir}/${_pkgname}"
     msg_info "Done"
   else
-    msg_info "Nothing to remove: ${_srcdir}/${_pkgname}"
+    msg_info "Nothing to remove: ${_pkgdir}/${_pkgname}"
   fi
 }
 
