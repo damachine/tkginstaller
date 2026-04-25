@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly _tkg_installer_version="v0.50.4"
+readonly _tkg_installer_version="v0.51.0"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _tkg_start_args=("$@")
@@ -1192,7 +1192,7 @@ __linux_nvidia_install() {
   if [[ -f "${_pf_cfg_ext}" ]]; then
     local _ev _eno _ec
     _ev=$(__cfg_val '_version' "${_pf_cfg_ext}")
-    _eno=$(__cfg_val '_nvidia' "${_pf_cfg_ext}")
+    _eno=$(__cfg_val '_nvidia_pkg' "${_pf_cfg_ext}")
     _ec=$(__cfg_val '_compiler' "${_pf_cfg_ext}")
     [[ -n "${_ev}" ]] && _pf_version="${_ev}"
     [[ -n "${_eno}" ]] && _pf_nvidia="${_eno}"
@@ -1205,7 +1205,7 @@ __linux_nvidia_install() {
   if [[ -f "${_pf_cfg_main}" ]]; then
     local _cv _cno _cc
     _cv=$(__cfg_val '_version' "${_pf_cfg_main}")
-    _cno=$(__cfg_val '_nvidia' "${_pf_cfg_main}")
+    _cno=$(__cfg_val '_nvidia_pkg' "${_pf_cfg_main}")
     _cc=$(__cfg_val '_compiler' "${_pf_cfg_main}")
     [[ -n "${_cv}" ]] && _pf_version="${_cv}"
     [[ -n "${_cno}" ]] && _pf_nvidia="${_cno}"
@@ -1213,7 +1213,7 @@ __linux_nvidia_install() {
     # ext config wins
     if [[ -f "${_pf_cfg_ext}" ]]; then
       _ev=$(__cfg_val '_version' "${_pf_cfg_ext}")
-      _eno=$(__cfg_val '_nvidia' "${_pf_cfg_ext}")
+      _eno=$(__cfg_val '_nvidia_pkg' "${_pf_cfg_ext}")
       _ec=$(__cfg_val '_compiler' "${_pf_cfg_ext}")
       [[ -n "${_ev}" ]] && _pf_version="${_ev}"
       [[ -n "${_eno}" ]] && _pf_nvidia="${_eno}"
@@ -1221,13 +1221,13 @@ __linux_nvidia_install() {
     fi
   fi
 
-  # prompt for _nvidia if not set in config
+  # prompt for _nvidia_pkg if not set in config
   if [[ -n "${_pf_nvidia}" ]]; then
     if __resolve_nvidia_value "${_pf_nvidia}"; then
       _pf_nvidia="${_resolved_nvidia}"
       _pf_nvidia_variant="${_resolved_nvidia_variant}"
     else
-      __msg_warning "Ignoring invalid _nvidia value in config: ${_pf_nvidia}${_break}"
+      __msg_warning "Ignoring invalid _nvidia_pkg value in config: ${_pf_nvidia}${_break}"
       _pf_nvidia=""
     fi
   fi
@@ -1235,7 +1235,7 @@ __linux_nvidia_install() {
   if [[ -z "${_pf_nvidia}" ]]; then
     __msg_info "${_break}${_green_neon}${_uline_on}NVIDIA OPEN MODULE${_uline_off}:${_reset} ${_green_light}Which NVIDIA open driver version for the combined install?${_reset}${_break}"
     __msg_plain " Supported kernels: ${_gray}6.18  7.0${_reset}  │  Requires Turing+ GPU (GTX 16+ or RTX 20xx or newer)"
-    __msg_plain " ${_gray}Set${_reset} ${_gray}_nvidia${_reset} ${_gray}in${_reset} ${_gray}~/.config/frogminer/linux-tkg.cfg${_reset} ${_gray}to one of the numeric versions below.${_reset}${_break}"
+    __msg_plain " ${_gray}Set${_reset} ${_gray}_nvidia_pkg${_reset} ${_gray}in${_reset} ${_gray}~/.config/frogminer/linux-tkg.cfg${_reset} ${_gray}to one of the numeric versions below.${_reset}${_break}"
     __msg_plain " ${_green_neon}${_uline_on}0${_uline_off}${_reset} │ ${_nvidia_versions[latest]}  ${_gray}— default branch, selected${_reset} ${_green_neon}(default)${_reset}"
     __msg_plain " ${_orange}1${_reset} │ ${_nvidia_versions[vulkan]}  ${_gray}— Vulkan developer beta${_reset}"
     __msg_plain " ${_gray}2${_reset} │ ${_nvidia_versions[legacy]}  ${_gray}— legacy/LTS branch${_reset}"
@@ -1300,7 +1300,7 @@ __linux_nvidia_install() {
   fi
   # append chosen values to preset
   [[ -n "${_pf_version}" ]] && printf '_version=%q\n' "${_pf_version}" >>"${_linux_tkg_preset}"
-  [[ -n "${_pf_nvidia}" ]] && printf '_nvidia=%q\n' "${_pf_nvidia}" >>"${_linux_tkg_preset}"
+  [[ -n "${_pf_nvidia}" ]] && printf '_nvidia_pkg=%q\n' "${_pf_nvidia}" >>"${_linux_tkg_preset}"
 
   local _build_command="rm -f BIG_UGLY_FROGMINER && _EXT_CONFIG_PATH=\"${_linux_tkg_preset}\" makepkg -d"
   _tkg_skip_status="1"
