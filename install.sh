@@ -5,6 +5,7 @@ IFS=$'\n\t'
 # ----------------------------------------------------------------------
 # Purpose: Install only the tkginstaller script into a standard bin path
 # Usage:   ./install.sh [--uninstall]
+# Notes:   Run with sudo if you want to install to /usr/bin
 # ----------------------------------------------------------------------
 
 _pkgname="tkginstaller"
