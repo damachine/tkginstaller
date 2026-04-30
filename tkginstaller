@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly _tkg_installer_version="v0.51.2"
+readonly _tkg_installer_version="v0.51.3"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _tkg_start_args=("$@")
@@ -390,13 +390,22 @@ __git_clone_retry() {
   local _repo_url="$1"
   local _target_dir="${2:-}"
   local _max_attempts="${3:-3}"
+  local _branch="${4:-}"
   local _attempt=0
 
   while ((_attempt < _max_attempts)); do
     if [[ -n "${_target_dir}" ]]; then
-      git clone "${_repo_url}" "${_target_dir}" >/dev/null 2>&1 && return 0
+      if [[ -n "${_branch}" ]]; then
+        git clone --branch "${_branch}" --single-branch "${_repo_url}" "${_target_dir}" >/dev/null 2>&1 && return 0
+      else
+        git clone "${_repo_url}" "${_target_dir}" >/dev/null 2>&1 && return 0
+      fi
     else
-      git clone "${_repo_url}" >/dev/null 2>&1 && return 0
+      if [[ -n "${_branch}" ]]; then
+        git clone --branch "${_branch}" --single-branch "${_repo_url}" >/dev/null 2>&1 && return 0
+      else
+        git clone "${_repo_url}" >/dev/null 2>&1 && return 0
+      fi
     fi
     _attempt=$((_attempt + 1))
     __msg_warning "Clone failed (attempt ${_attempt}/${_max_attempts}). Retrying in $((_attempt * 2))s..."
@@ -796,6 +805,7 @@ __install_package() {
   local _build_command="$3"
   local _work_directory="${4:-}"
   local _post_build_hook="${5:-}"
+  local _repo_branch="${6:-}"
 
   __cd_safe "${_tkg_tmp_dir}" || return 1
 
@@ -807,16 +817,48 @@ __install_package() {
     __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Updating ${_gray}${_package_name}${_reset} ${_green_light}(git pull)...${_reset}${_break}"
     __cd_safe "${_repo_dir}" || return 1
 
-    if ! git pull; then
-      __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Git pull failed, trying fresh clone...${_reset}${_break}"
+    local _current_origin=""
+    local _current_branch=""
+    local _normalized_origin=""
+    local _normalized_repo="${_repo_url%.git}"
+
+    _current_origin="$(git remote get-url origin 2>/dev/null || true)"
+    _current_branch="$(git branch --show-current 2>/dev/null || true)"
+    _normalized_origin="${_current_origin%.git}"
+    _normalized_origin="${_normalized_origin%/}"
+    _normalized_repo="${_normalized_repo%/}"
+
+    if [[ "${_normalized_origin}" != "${_normalized_repo}" || (-n "${_repo_branch}" && "${_current_branch}" != "${_repo_branch}") ]]; then
+      __msg_info "${_break}${_green_neon}${_uline_on}CACHE${_uline_off}:${_reset} ${_green_light}Selected source changed, cleaning cached ${_gray}${_package_name}${_reset}${_green_light} checkout...${_reset}${_break}"
       __cd_safe "${_tkg_tmp_dir}" || return 1
       rm -rf "${_repo_dir}"
-      __git_clone_retry "${_repo_url}" || {
+      __git_clone_retry "${_repo_url}" "" 3 "${_repo_branch}" || {
         __msg_error "Cloning failed for: ${_package_name}${_break}"
         return 1
       }
+      __cd_safe "${_tkg_tmp_dir}" || return 1
+    else
+      if [[ -n "${_repo_branch}" ]]; then
+        if ! git pull --ff-only --no-rebase origin "${_repo_branch}"; then
+          __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Git pull failed, trying fresh clone...${_reset}${_break}"
+          __cd_safe "${_tkg_tmp_dir}" || return 1
+          rm -rf "${_repo_dir}"
+          __git_clone_retry "${_repo_url}" "" 3 "${_repo_branch}" || {
+            __msg_error "Cloning failed for: ${_package_name}${_break}"
+            return 1
+          }
+        fi
+      elif ! git pull --ff-only --no-rebase; then
+        __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Git pull failed, trying fresh clone...${_reset}${_break}"
+        __cd_safe "${_tkg_tmp_dir}" || return 1
+        rm -rf "${_repo_dir}"
+        __git_clone_retry "${_repo_url}" || {
+          __msg_error "Cloning failed for: ${_package_name}${_break}"
+          return 1
+        }
+      fi
+      __cd_safe "${_tkg_tmp_dir}" || return 1
     fi
-    __cd_safe "${_tkg_tmp_dir}" || return 1
   else
     __msg_info "${_break}${_green_neon}${_uline_on}PROGRESS${_uline_off}:${_reset} ${_green_light}Cloning ${_gray}${_package_name}${_reset} ${_green_light}from Frogging-Family repository...${_reset}${_break}"
 
@@ -837,7 +879,7 @@ __install_package() {
         # Graft .git from sibling clone; immutable files stay in place
         printf '\033[A          %b\n' "${_green_light}immutable patch files detected — grafting .git...${_reset}${_break}"
         local _tmp_clone="${_repo_dir}.tkg_clone_$$"
-        __git_clone_retry "${_repo_url}" "${_tmp_clone}" || {
+        __git_clone_retry "${_repo_url}" "${_tmp_clone}" 3 "${_repo_branch}" || {
           __msg_error "Cloning failed for: ${_package_name}${_break}"
           rm -rf "${_tmp_clone}"
           return 1
@@ -852,13 +894,13 @@ __install_package() {
         __prompt_answer "n"
         [[ "${_user_answer,,}" =~ ^(y|yes)$ ]] && rm -rf "${_repo_dir}" || return 1
 
-        __git_clone_retry "${_repo_url}" || {
+        __git_clone_retry "${_repo_url}" "" 3 "${_repo_branch}" || {
           __msg_error "Cloning failed for: ${_package_name}${_break}"
           return 1
         }
       fi
     else
-      __git_clone_retry "${_repo_url}" || {
+      __git_clone_retry "${_repo_url}" "" 3 "${_repo_branch}" || {
         __msg_error "Cloning failed for: ${_package_name}${_break}"
         return 1
       }
@@ -1019,13 +1061,20 @@ __linux_install() {
 
   # Repository source selection
   local _linux_repo="${_frog_pkg_repo[linux]}"
+  local _linux_branch="master"
   __msg_info "${_break}${_green_neon}${_uline_on}SOURCE${_uline_off}:${_reset} ${_green_light}Which Linux-TkG repository do you want to use?${_reset}${_break}"
   __msg_plain " ${_green_neon}${_uline_on}0${_uline_off}${_reset} │ Upstream       ${_gray}${_frog_repo_url}/linux-tkg${_reset}"
-  __msg_plain " ${_orange}1${_reset} │ Staging fork   ${_gray}https://github.com/damachine/linux-tkg${_reset}${_break}"
+  __msg_plain " ${_orange}1${_reset} │ Staging fork   ${_gray}https://github.com/damachine/linux-tkg${_reset} ${_orange}(branch: staging)${_reset}${_break}"
   __prompt_timer "[${_green_neon}${_uline_on}0${_uline_off}${_reset}/${_orange}1${_reset}]" 60 0
   case "${_user_answer}" in
-    1) _linux_repo="${_damachine_linux_tkg_repo}" ;;
-    *) _linux_repo="${_frog_pkg_repo[linux]}" ;;
+    1)
+      _linux_repo="${_damachine_linux_tkg_repo}"
+      _linux_branch="staging"
+      ;;
+    *)
+      _linux_repo="${_frog_pkg_repo[linux]}"
+      _linux_branch="master"
+      ;;
   esac
 
   local _build_command
@@ -1056,7 +1105,7 @@ __linux_install() {
     _build_command="chmod +x install.sh && ./install.sh install"
   fi
 
-  __install_package "${_linux_repo}" "linux-tkg" "${_build_command}"
+  __install_package "${_linux_repo}" "linux-tkg" "${_build_command}" "" "" "${_linux_branch}"
   local _status=$?
 
   # Offer uninstall help for non-Arch
@@ -1091,13 +1140,20 @@ __linux_autofdo_install() {
 
   # Repository source selection
   local _linux_repo="${_frog_pkg_repo[linux]}"
+  local _linux_branch="master"
   __msg_info "${_break}${_green_neon}${_uline_on}SOURCE${_uline_off}:${_reset} ${_green_light}Which Linux-TkG repository do you want to use?${_reset}${_break}"
   __msg_plain " ${_green_neon}${_uline_on}0${_uline_off}${_reset} │ Upstream       ${_gray}${_frog_repo_url}/linux-tkg${_reset}"
-  __msg_plain " ${_orange}1${_reset} │ Staging fork   ${_gray}https://github.com/damachine/linux-tkg${_reset}${_break}"
+  __msg_plain " ${_orange}1${_reset} │ Staging fork   ${_gray}https://github.com/damachine/linux-tkg${_reset} ${_orange}(branch: staging)${_reset}${_break}"
   __prompt_timer "[${_green_neon}${_uline_on}0${_uline_off}${_reset}/${_orange}1${_reset}]" 60 0
   case "${_user_answer}" in
-    1) _linux_repo="${_damachine_linux_tkg_repo}" ;;
-    *) _linux_repo="${_frog_pkg_repo[linux]}" ;;
+    1)
+      _linux_repo="${_damachine_linux_tkg_repo}"
+      _linux_branch="staging"
+      ;;
+    *)
+      _linux_repo="${_frog_pkg_repo[linux]}"
+      _linux_branch="master"
+      ;;
   esac
 
   # Build preset config — user config as base, AutoFDO overrides on top
@@ -1124,7 +1180,7 @@ AUTOFDO_PRESET_CFG
   fi
 
   local _build_command="rm -f BIG_UGLY_FROGMINER && _EXT_CONFIG_PATH=\"${_autofdo_preset}\" makepkg -si"
-  __install_package "${_linux_repo}" "linux-tkg" "${_build_command}"
+  __install_package "${_linux_repo}" "linux-tkg" "${_build_command}" "" "" "${_linux_branch}"
   local _status=$?
 
   # After Pass 1: show next-steps guide
@@ -1152,16 +1208,23 @@ __nvidia_install() {
 
   # Repository source selection
   local _nvidia_repo="${_frog_pkg_repo[nvidia]}"
+  local _nvidia_branch="master"
   __msg_info "${_break}${_green_neon}${_uline_on}SOURCE${_uline_off}:${_reset} ${_green_light}Which nvidia-all repository do you want to use?${_reset}${_break}"
   __msg_plain " ${_green_neon}${_uline_on}0${_uline_off}${_reset} │ Upstream       ${_gray}${_frog_repo_url}/nvidia-all${_reset}"
-  __msg_plain " ${_orange}1${_reset} │ Staging fork   ${_gray}https://github.com/damachine/nvidia-all${_reset}${_break}"
+  __msg_plain " ${_orange}1${_reset} │ Staging fork   ${_gray}https://github.com/damachine/nvidia-all${_reset} ${_orange}(branch: staging)${_reset}${_break}"
   __prompt_timer "[${_green_neon}${_uline_on}0${_uline_off}${_reset}/${_orange}1${_reset}]" 60 0
   case "${_user_answer}" in
-    1) _nvidia_repo="${_damachine_nvidia_all_repo}" ;;
-    *) _nvidia_repo="${_frog_pkg_repo[nvidia]}" ;;
+    1)
+      _nvidia_repo="${_damachine_nvidia_all_repo}"
+      _nvidia_branch="staging"
+      ;;
+    *)
+      _nvidia_repo="${_frog_pkg_repo[nvidia]}"
+      _nvidia_branch="master"
+      ;;
   esac
 
-  __install_package "${_nvidia_repo}" "nvidia-all" "${_frog_pkg_cmd_default}"
+  __install_package "${_nvidia_repo}" "nvidia-all" "${_frog_pkg_cmd_default}" "" "" "${_nvidia_branch}"
 }
 
 # Check if packages are installed; install any missing ones via pacman --needed.
@@ -1304,7 +1367,7 @@ __linux_nvidia_install() {
 
   local _build_command="rm -f BIG_UGLY_FROGMINER && _EXT_CONFIG_PATH=\"${_linux_tkg_preset}\" makepkg -d"
   _tkg_skip_status="1"
-  __install_package "${_damachine_linux_tkg_repo}" "linux-tkg" "${_build_command}"
+  __install_package "${_damachine_linux_tkg_repo}" "linux-tkg" "${_build_command}" "" "" "staging"
   local _status=$?
   local _linux_duration="${SECONDS}"
 
@@ -1367,7 +1430,7 @@ NVIDIA_CUSTOMIZATION_CFG
   _build_command="rm -f options && mv \"${_preset_cfg}\" customization.cfg && makepkg -d"
   _tkg_skip_status="1"
   # shellcheck disable=SC2218
-  __install_package "${_damachine_nvidia_all_repo}" "nvidia-all" "${_build_command}"
+  __install_package "${_damachine_nvidia_all_repo}" "nvidia-all" "${_build_command}" "" "" "staging"
   _status=$?
   local _nvidia_duration="${SECONDS}"
 
