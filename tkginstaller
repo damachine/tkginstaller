@@ -8,7 +8,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly _tkg_installer_version="v0.51.3"
+readonly _tkg_installer_version="v0.51.4"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _tkg_start_args=("$@")
@@ -31,7 +31,7 @@ _damachine_nvidia_all_repo=https://github.com/damachine/nvidia-all.git
 # nvidia-open version map — keep in sync with damachine/nvidia-all PKGBUILD
 declare -gA _nvidia_versions=(
   [latest]="595.71.05"
-  [vulkan]="595.44.05"
+  [vulkan]="595.44.06"
   [legacy]="580.159.03"
 )
 
