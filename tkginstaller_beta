@@ -1,0 +1,1411 @@
+#!/usr/bin/env bash
+
+# Maintainer: damachin3 (damachine3 at proton dot me)
+# website: https://github.com/damachine/tkginstaller
+
+VERSION="beta"
+FROG="https://github.com/Frogging-Family"
+FROG_RAW="https://raw.githubusercontent.com/Frogging-Family"
+STAGING_LINUX="https://github.com/damachine/linux-tkg.git"
+STAGING_NVIDIA="https://github.com/damachine/nvidia-all.git"
+CACHE="${HOME}/.tkginstaller/cache"
+CFG_DIR="${HOME}/.config/frogminer"
+GUM_FG="#80ff8c"   # neon green
+GUM_ERR="#dc3c3c"  # red
+GUM_WARN="#ffbe3c" # orange
+GUM_BORDER="#80ff8c"
+readonly -a CURL_OPTS=(
+  --max-time 10
+  --connect-timeout 5
+  -fsSL
+)
+IS_ARCH=false
+DISTRO_NAME=""
+DISTRO_ID=""
+
+# nvidia-open version map — keep in sync with damachine/nvidia-all PKGBUILD
+declare -A NVIDIA_OPEN_VERSIONS=(
+  [latest]="595.71.05"
+  [vulkan]="595.44.06"
+  [legacy]="580.159.03"
+)
+
+normalize_nvidia_open_value() {
+  local value="${1:-}"
+
+  RESOLVED_NVIDIA_OPEN=""
+  RESOLVED_NVIDIA_OPEN_VARIANT=""
+
+  case "$value" in
+    "" | "false")
+      return 0
+      ;;
+    latest | "${NVIDIA_OPEN_VERSIONS[latest]}")
+      RESOLVED_NVIDIA_OPEN="${NVIDIA_OPEN_VERSIONS[latest]}"
+      RESOLVED_NVIDIA_OPEN_VARIANT="latest"
+      ;;
+    vulkan | "${NVIDIA_OPEN_VERSIONS[vulkan]}")
+      RESOLVED_NVIDIA_OPEN="${NVIDIA_OPEN_VERSIONS[vulkan]}"
+      RESOLVED_NVIDIA_OPEN_VARIANT="vulkan"
+      ;;
+    legacy | "${NVIDIA_OPEN_VERSIONS[legacy]}")
+      RESOLVED_NVIDIA_OPEN="${NVIDIA_OPEN_VERSIONS[legacy]}"
+      RESOLVED_NVIDIA_OPEN_VARIANT="legacy"
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+
+  return 0
+}
+
+# --- Package registry ---
+# Format: label | git-url | subdir (or -) | raw-config-path | local-cfg-name
+declare -A LABEL REPO SUBDIR CFG LOCAL
+
+LABEL=(
+  [linux]="Linux-TKG"
+  [nvidia]="Nvidia-all"
+  [mesa]="Mesa-TKG"
+  [wine]="Wine-TKG"
+  [proton]="Proton-TKG"
+  [dxvk]="DXVK"
+  [vkd3d]="Vkd3d-proton"
+  [gamescope]="Gamescope"
+  [glibc]="Glibc-eac"
+  [amdgpu]="AMDGPU-PRO"
+  [amdvlk]="AMDVLK-OPT"
+)
+
+REPO=(
+  [linux]="${FROG}/linux-tkg.git"
+  [nvidia]="${FROG}/nvidia-all.git"
+  [mesa]="${FROG}/mesa-git.git"
+  [wine]="${FROG}/wine-tkg-git.git"
+  [proton]="${FROG}/wine-tkg-git.git"
+  [dxvk]="${FROG}/dxvk-tools.git"
+  [gamescope]="${FROG}/gamescope-git.git"
+  [glibc]="${FROG}/glibc-eac.git"
+  [amdgpu]="${FROG}/amdgpu-pro-vulkan-only.git"
+  [amdvlk]="${FROG}/amdvlk-opt.git"
+)
+
+SUBDIR=(
+  [wine]="wine-tkg-git"
+  [proton]="proton-tkg"
+  [amdvlk]="amdvlk-buildfromsource"
+)
+
+CFG=(
+  [linux]="linux-tkg/master/customization.cfg"
+  [nvidia]="nvidia-all/master/customization.cfg"
+  [mesa]="mesa-git/master/customization.cfg"
+  [wine]="wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
+  [proton]="wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
+  [dxvk]="dxvk-tools/master/updxvk.cfg"
+  [vkd3d]="dxvk-tools/master/upvkd3d-proton.cfg"
+  [gamescope]="gamescope-git/master/customization.cfg"
+  [amdgpu]="amdgpu-pro-vulkan-only/master/customization.cfg"
+  [amdvlk]="amdvlk-opt/master/amdvlk-buildfromsource/customization.cfg"
+)
+
+LOCAL=(
+  [linux]="linux-tkg.cfg"
+  [nvidia]="nvidia-all.cfg"
+  [mesa]="mesa-git.cfg"
+  [wine]="wine-tkg.cfg"
+  [proton]="proton-tkg.cfg"
+  [dxvk]="updxvk.cfg"
+  [vkd3d]="upvkd3d-proton.cfg"
+  [gamescope]="gamescope.cfg"
+  [amdgpu]="amdgpu-pro.cfg"
+  [amdvlk]="amdvlk-opt.cfg"
+)
+
+# --- Helpers ---
+
+# Styled message helpers
+msg() {
+  gum style --foreground "$GUM_FG" "$*"
+}
+
+warn() {
+  gum style --foreground "$GUM_WARN" "⚠  $*"
+}
+
+# Extract bare value from a config line (last match wins, strips quotes)
+cfg_val() {
+  grep "^${1}=" "${2}" 2>/dev/null |
+    tail -1 |
+    sed "s/^${1}=//;s/'//g;s/\"//g"
+}
+
+# Check installed packages; install missing via pacman --needed
+ensure_packages() {
+  local missing=()
+  local pkg
+  for pkg in "$@"; do
+    pacman -Qq "$pkg" &>/dev/null || missing+=("$pkg")
+  done
+  if ((${#missing[@]} > 0)); then
+    msg "Installing missing build dependencies: ${missing[*]}"
+    sudo pacman -S --needed --asdeps --noconfirm "${missing[@]}" || return 1
+  fi
+}
+
+# Git clone with retry (exponential backoff)
+git_clone_retry() {
+  local url="$1"
+  local target="${2:-}"
+  local max="${3:-3}"
+  local attempt=0
+
+  while ((attempt < max)); do
+    if [[ -n "$target" ]]; then
+      git clone "$url" "$target" && return 0
+    else
+      git clone "$url" && return 0
+    fi
+    ((attempt++))
+    warn "Clone failed (attempt ${attempt}/${max}). Retrying in $((attempt * 2))s..."
+    sleep $((attempt * 2))
+  done
+  return 1
+}
+
+# Fatal error — triggers cleanup via EXIT trap
+die() {
+  gum style --foreground "$GUM_ERR" "✗  $*" >&2
+  exit 1
+}
+
+# Smart editor launcher — respects $EDITOR, falls back gracefully
+open_editor() {
+  local target="$1"
+  local -a parts=()
+
+  # Split $EDITOR into command + args
+  if [[ -n "${EDITOR-}" ]]; then
+    IFS=' ' read -r -a parts <<<"$EDITOR"
+  fi
+
+  # Fallback if $EDITOR not set or unavailable
+  if [[ -z "${parts[0]:-}" ]] || ! command -v "${parts[0]}" &>/dev/null; then
+    for ed in nano micro vim vi; do
+      if command -v "$ed" &>/dev/null; then
+        parts=("$ed")
+        break
+      fi
+    done
+  fi
+
+  if [[ -z "${parts[0]:-}" ]]; then
+    warn "No editor found. Set \$EDITOR or install nano/micro/vim."
+    return 1
+  fi
+
+  "${parts[@]}" "$target"
+}
+
+# Show package info + config hints before install
+show_pkg_info() {
+  local pkg="$1"
+  local label="${LABEL[$pkg]:-$pkg}"
+  local cfg_url="${CFG[$pkg]:-}"
+
+  echo
+  gum style --foreground "$GUM_FG" --bold \
+    "Configuration Options for ${label}"
+  echo
+  msg "A wide range of options are available!"
+  msg "TkG packages can be precisely tailored to your system."
+  echo
+  msg "Set up customization.cfg using one of the following options:"
+  echo
+  gum style --foreground "$GUM_WARN" \
+    "A │ tkginstaller → Config → ${label}   (interactive)"
+  gum style --foreground "$GUM_WARN" \
+    "B │ tkginstaller ${pkg} config           (direct)"
+  echo
+  if [[ -n "$cfg_url" ]]; then
+    msg "Detailed instructions at:"
+    gum style --foreground "$GUM_WARN" "  ${FROG_RAW}/${cfg_url}"
+  fi
+  echo
+}
+
+# Compare local config with upstream — show deprecated + new vars
+check_config() {
+  local config_file="$1"
+  local upstream_url="$2"
+  local pkg_name="$3"
+
+  [[ ! -f "$config_file" ]] && return 0
+
+  # Download upstream config to temp
+  local tmp_upstream
+  tmp_upstream=$(mktemp /tmp/tkg_upstream_XXXXXX.cfg)
+  if ! curl "${CURL_OPTS[@]}" "$upstream_url" -o "$tmp_upstream" 2>/dev/null; then
+    warn "Could not download upstream config for comparison."
+    rm -f "$tmp_upstream"
+    return 1
+  fi
+
+  # Extract variable names from both configs
+  local local_vars upstream_vars upstream_vars_deprecated
+  local_vars=$(grep -oP '^#?\s*\K[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$config_file" 2>/dev/null | sort -u)
+  upstream_vars=$(grep -oP '^#?\s*\K[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$tmp_upstream" 2>/dev/null | sort -u)
+  upstream_vars_deprecated="$upstream_vars"
+
+  # Fetch extra config sources for extended var detection
+  local -a extra_urls=()
+  case "$pkg_name" in
+    linux)
+      local tmp_prepare
+      tmp_prepare=$(mktemp /tmp/tkg_prepare_XXXXXX)
+      if curl "${CURL_OPTS[@]}" "${FROG_RAW}/linux-tkg/master/linux-tkg-config/prepare" -o "$tmp_prepare" 2>/dev/null; then
+        local officially_deprecated
+        officially_deprecated=$(sed -n '/_deprecated_config_vars=($/,/^)$/p' "$tmp_prepare" | grep -oP '^\s*"_\K[^"]+' | sed 's/^/_/')
+        [[ -n "$officially_deprecated" ]] && upstream_vars_deprecated+=$'\n'"$officially_deprecated"
+        local prepare_vars
+        prepare_vars=$(grep -oP '^#?\s*\K[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$tmp_prepare" 2>/dev/null)
+        [[ -n "$prepare_vars" ]] && upstream_vars_deprecated+=$'\n'"$prepare_vars"
+        rm -f "$tmp_prepare"
+      fi
+      ;;
+    wine)
+      extra_urls=(
+        "${FROG_RAW}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/advanced-customization.cfg"
+        "${FROG_RAW}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/sample-external-config.cfg"
+      )
+      ;;
+    proton)
+      extra_urls=(
+        "${FROG_RAW}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/advanced-customization.cfg"
+        "${FROG_RAW}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/sample-external-config.cfg"
+      )
+      ;;
+  esac
+
+  # Merge extra config vars
+  for url in "${extra_urls[@]}"; do
+    local tmp_extra
+    tmp_extra=$(mktemp /tmp/tkg_extra_XXXXXX.cfg)
+    if curl "${CURL_OPTS[@]}" "$url" -o "$tmp_extra" 2>/dev/null; then
+      local extra_vars
+      extra_vars=$(grep -oP '^#?\s*\K[_a-zA-Z][_a-zA-Z0-9]*(?==)' "$tmp_extra" 2>/dev/null)
+      [[ -n "$extra_vars" ]] && {
+        upstream_vars+=$'\n'"$extra_vars"
+        upstream_vars_deprecated+=$'\n'"$extra_vars"
+      }
+      rm -f "$tmp_extra"
+    fi
+  done
+
+  # Sort and deduplicate
+  upstream_vars=$(echo "$upstream_vars" | sort -u)
+  upstream_vars_deprecated=$(echo "$upstream_vars_deprecated" | sort -u)
+
+  # Find deprecated + new variables
+  local deprecated_vars new_vars
+  deprecated_vars=$(comm -23 <(echo "$local_vars") <(echo "$upstream_vars_deprecated") 2>/dev/null)
+  new_vars=$(comm -13 <(echo "$local_vars") <(echo "$upstream_vars") 2>/dev/null)
+
+  # Nothing to report
+  [[ -z "$deprecated_vars" && -z "$new_vars" ]] && {
+    rm -f "$tmp_upstream"
+    return 0
+  }
+
+  # Display results
+  echo
+  gum style --foreground "$GUM_FG" --bold \
+    "CONFIG CHECK — ${config_file}"
+  echo
+
+  if [[ -n "$deprecated_vars" ]]; then
+    gum style --foreground "$GUM_WARN" --bold "Deprecated variables (no longer used upstream):"
+    echo
+    while IFS= read -r var; do
+      [[ -n "$var" ]] && gum style --foreground "$GUM_ERR" "  ✗  ${var}"
+    done <<<"$deprecated_vars"
+    echo
+  fi
+
+  if [[ -n "$new_vars" ]]; then
+    gum style --foreground "$GUM_FG" --bold "New variables available upstream:"
+    echo
+    while IFS= read -r var; do
+      [[ -n "$var" ]] && gum style --foreground "$GUM_FG" "  +  ${var}"
+    done <<<"$new_vars"
+    echo
+  fi
+
+  msg "Review upstream config for details:"
+  gum style --foreground "$GUM_WARN" "  ${upstream_url}"
+  for url in "${extra_urls[@]}"; do
+    gum style --foreground "$GUM_WARN" "  ${url}"
+  done
+  echo
+  gum input --placeholder "Press Enter to continue..."
+
+  rm -f "$tmp_upstream"
+}
+
+# Detect Linux distribution
+detect_distro() {
+  if [[ -f /etc/os-release ]]; then
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    DISTRO_NAME="$NAME"
+    DISTRO_ID="${ID:-unknown}"
+    local distro_like="${ID_LIKE:-}"
+  else
+    DISTRO_NAME="Unknown"
+    DISTRO_ID="unknown"
+    local distro_like=""
+  fi
+
+  if [[ "${DISTRO_ID,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${distro_like,,}" == *"arch"* ]]; then
+    IS_ARCH=true
+  else
+    IS_ARCH=false
+  fi
+}
+
+# Warn if running as root
+check_root() {
+  if [[ "$(id -u)" -eq 0 ]]; then
+    warn "You are running as root!"
+    echo
+    msg "Running this script as root is not recommended."
+    echo
+    if ! gum confirm "Continue as root?"; then
+      die "Aborted by user."
+    fi
+  fi
+}
+
+# Display help / usage information
+show_help() {
+  header
+  gum style --foreground "$GUM_FG" --bold "TKG-Installer — Usage & Commands"
+  echo
+  gum style --foreground "$GUM_FG" "1) Interactive mode"
+  msg "   tkginstaller"
+  echo
+  gum style --foreground "$GUM_FG" "2) Direct mode"
+  msg "   tkginstaller [linux|l|nvidia|n|linux-nvidia|ln|mesa|m|wine|w|proton|p|gamescope|g|glibc|ge|amdgpu|ag|amdvlk|av]"
+  echo
+  gum style --foreground "$GUM_FG" "3) Config editing"
+  msg "   tkginstaller config"
+  msg "   tkginstaller [config|c|edit|e] [package]"
+  echo
+  gum style --foreground "$GUM_FG" "4) Clean temporary files"
+  msg "   tkginstaller clean"
+  echo
+  gum style --foreground "$GUM_WARN" \
+    "Shortcuts: l=linux  n=nvidia  ln=linux-nvidia  m=mesa  w=wine  p=proton  g=gamescope  ge=glibc  ag=amdgpu  av=amdvlk  c=config  e=edit"
+}
+
+# Display build duration and result
+status() {
+  local code="${1:-0}"
+  local label="${2:-}"
+  local dur="${SECONDS:-0}"
+  local min=$((dur / 60)) sec=$((dur % 60))
+
+  echo
+  gum style --foreground "$GUM_WARN" "Completed: $(date '+%Y-%m-%d %H:%M:%S')"
+  if ((code == 0)); then
+    msg "✓  ${label:+${label} — }Build successful"
+  else
+    gum style --foreground "$GUM_ERR" "✗  ${label:+${label} — }Failed (exit ${code})"
+  fi
+  gum style --foreground "$GUM_WARN" "Duration: ${min} min ${sec} sec"
+}
+
+# Cleanup handler — remove temps, unset globals
+cleanup() {
+  rm -f "${CACHE}/.choice.tmp" 2>/dev/null
+  unset FROG FROG_RAW STAGING_LINUX STAGING_NVIDIA CACHE CFG_DIR \
+    GUM_FG GUM_ERR GUM_WARN GUM_BORDER VERSION 2>/dev/null
+}
+
+# Central exit handler — always called via EXIT trap
+on_exit() {
+  local code=${1:-$?}
+  trap - INT TERM EXIT HUP
+
+  if ((code != 0 && code != 130)); then
+    echo
+    gum style --border rounded --border-foreground "$GUM_ERR" \
+      --foreground "$GUM_ERR" --bold --padding "0 2" \
+      "TKG-Installer — Error (exit ${code})"
+    echo
+    local dur="${SECONDS:-0}"
+    gum style --foreground "$GUM_WARN" \
+      "$(date '+%Y-%m-%d %H:%M:%S')  |  Duration: $((dur / 60)) min $((dur % 60)) sec"
+    gum style --foreground "$GUM_ERR" \
+      "Exiting due to errors. Check the messages above."
+    echo
+  elif ((code == 130)); then
+    echo
+    gum style --foreground "$GUM_WARN" "Interrupted by user."
+  fi
+
+  cleanup
+  exit "$code"
+}
+
+# Wire traps — signals route through on_exit
+trap 'trap - INT TERM EXIT HUP; on_exit 130' INT TERM HUP
+trap 'on_exit $?' EXIT
+
+header() {
+  clear
+  gum style --foreground "$GUM_FG" "░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄"
+  gum style --foreground "$GUM_FG" "░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄"
+  gum style --foreground "$GUM_FG" "░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀"
+  gum style --foreground "$GUM_FG" "──  ${VERSION}  ──"
+  echo
+}
+
+check_deps() {
+  local missing=()
+  for dep in gum git makepkg curl; do
+    command -v "$dep" &>/dev/null || missing+=("$dep")
+  done
+  if ((${#missing[@]} > 0)); then
+    echo "Missing required dependencies: ${missing[*]}"
+    echo "Install with: sudo pacman -S ${missing[*]}"
+    exit 1
+  fi
+
+  # Optional deps — warn but don't fail
+  local opt_missing=()
+  for dep in onefetch schedtool ccache; do
+    command -v "$dep" &>/dev/null || opt_missing+=("$dep")
+  done
+  if ((${#opt_missing[@]} > 0)); then
+    warn "Optional tools not found: ${opt_missing[*]}"
+    msg "  Install for a better experience: sudo pacman -S ${opt_missing[*]}"
+    echo
+  fi
+}
+
+normalize() {
+  case "${1,,}" in
+    linux | l) echo "linux" ;;
+    nvidia | n) echo "nvidia" ;;
+    linux-nvidia | ln) echo "linux-nvidia" ;;
+    mesa | m) echo "mesa" ;;
+    wine | w) echo "wine" ;;
+    proton | p) echo "proton" ;;
+    dxvk | d) echo "dxvk" ;;
+    vkd3d | v | vkd3d-proton) echo "vkd3d" ;;
+    gamescope | g) echo "gamescope" ;;
+    glibc | ge | glibc-eac) echo "glibc" ;;
+    amdgpu | ag) echo "amdgpu" ;;
+    amdvlk | av) echo "amdvlk" ;;
+    config | c | edit | e | customize | cu) echo "config" ;;
+    help | h | --help | -h) echo "help" ;;
+    clean | --clean) echo "clean" ;;
+    *) echo "" ;;
+  esac
+}
+
+# --- Core functions ---
+
+# Ask upstream vs staging fork for linux or nvidia
+pick_repo() {
+  local pkg="$1"
+  local upstream="${REPO[$pkg]}"
+  local staging=""
+
+  case "$pkg" in
+    linux) staging="${STAGING_LINUX}" ;;
+    nvidia) staging="${STAGING_NVIDIA}" ;;
+    *)
+      echo "$upstream"
+      return
+      ;;
+  esac
+
+  local choice
+  choice=$(gum choose \
+    --header "${LABEL[$pkg]} — which repository?" \
+    --header.foreground "$GUM_FG" \
+    --cursor.foreground "$GUM_FG" \
+    "Upstream  (Frogging-Family)" \
+    "Staging   (damachine fork)")
+
+  case "$choice" in
+    Staging*) echo "$staging" ;;
+    *) echo "$upstream" ;;
+  esac
+}
+
+fetch_repo() {
+  local pkg="$1"
+  local repo_url="${2:-${REPO[$pkg]}}"
+  local dir="${CACHE}/${pkg}"
+
+  mkdir -p "$CACHE"
+
+  if [[ -d "${dir}/.git" ]]; then
+    # Update existing clone; fall back to fresh clone on failure
+    msg "Updating ${LABEL[$pkg]} (git pull)..."
+    if ! git -C "$dir" pull --ff-only 2>/dev/null; then
+      warn "Git pull failed, trying fresh clone..."
+      rm -rf "$dir"
+      git_clone_retry "$repo_url" "$dir" || die "Cloning failed for: ${LABEL[$pkg]}"
+    fi
+  elif [[ -d "$dir" ]]; then
+    # Directory exists but without .git — handle immutable patches
+    local has_immutable=false
+    if command -v lsattr &>/dev/null; then
+      while IFS= read -r -d '' chk; do
+        if lsattr "$chk" 2>/dev/null | cut -d' ' -f1 | grep -qF 'i'; then
+          has_immutable=true
+          break
+        fi
+      done < <(find "$dir" -type f \( -name '*.myfrag' -o -name '*.mypatch' \) -print0 2>/dev/null)
+    fi
+
+    if [[ "$has_immutable" == "true" ]]; then
+      msg "Immutable patch files detected — grafting .git..."
+      local tmp_clone="${dir}.tkg_clone_$$"
+      git_clone_retry "$repo_url" "$tmp_clone" || {
+        rm -rf "$tmp_clone"
+        die "Cloning failed for: ${LABEL[$pkg]}"
+      }
+      mv "$tmp_clone/.git" "$dir/.git"
+      rm -rf "$tmp_clone"
+      git -C "$dir" checkout -f HEAD 2>/dev/null
+    else
+      if gum confirm "Found '${pkg}' without git metadata. Remove and re-clone?"; then
+        rm -rf "$dir"
+        git_clone_retry "$repo_url" "$dir" || die "Cloning failed for: ${LABEL[$pkg]}"
+      else
+        die "Cannot continue without valid git repository."
+      fi
+    fi
+  else
+    # Fresh clone with retry
+    msg "Cloning ${LABEL[$pkg]}..."
+    git_clone_retry "$repo_url" "$dir" || die "Cloning failed for: ${LABEL[$pkg]}"
+  fi
+
+  # Display onefetch info if available
+  if command -v onefetch &>/dev/null; then
+    onefetch -C "$dir" --no-bold --no-title --no-art --no-color-palette \
+      --http-url --nerd-fonts --text-colors 15 15 15 15 15 8 2>/dev/null |
+      sed -u 's/^/ /'
+  fi
+}
+
+copy_config() {
+  local pkg="$1"
+  local lcfg="${LOCAL[$pkg]:-}"
+  [[ -z "$lcfg" ]] && return 0
+
+  local src="${CFG_DIR}/${lcfg}"
+  local dir="${CACHE}/${pkg}${SUBDIR[$pkg]:+/${SUBDIR[$pkg]}}"
+
+  if [[ -f "$src" ]]; then
+    cp "$src" "${dir}/"
+    gum style --foreground "$GUM_FG" "✓  Using local config: ${lcfg}"
+  fi
+}
+
+run_install() {
+  local pkg="$1"
+  local build_cmd="${2:-makepkg -si}"
+  local skip_status="${3:-}"
+  [[ -z "${REPO[$pkg]:-}" ]] && die "Unknown package: $pkg"
+
+  show_pkg_info "$pkg"
+
+  SECONDS=0
+  local repo_url
+  repo_url=$(pick_repo "$pkg")
+  [[ -z "$repo_url" ]] && die "Cancelled."
+
+  fetch_repo "$pkg" "$repo_url"
+  local builddir="${CACHE}/${pkg}${SUBDIR[$pkg]:+/${SUBDIR[$pkg]}}"
+  copy_config "$pkg"
+
+  cd "$builddir"
+  echo
+  gum style --foreground "$GUM_FG" --bold "Building ${LABEL[$pkg]} ..."
+  echo
+  eval "$build_cmd"
+  local rc=$?
+
+  if [[ "$skip_status" != "1" ]]; then
+    status "$rc" "${LABEL[$pkg]}"
+  fi
+  return "$rc"
+}
+
+# Linux-TKG install — build method choice based on distribution
+run_linux() {
+  local build_cmd
+  if [[ "$IS_ARCH" == "true" ]]; then
+    local method
+    method=$(gum choose \
+      --header "Linux-TKG — build method:" \
+      --header.foreground "$GUM_FG" \
+      --cursor.foreground "$GUM_FG" \
+      "makepkg -si          (recommended for Arch)" \
+      "install.sh install   (generic script)" \
+      "install.sh uninstall-help" \
+      "Cancel")
+
+    case "$method" in
+      makepkg*) build_cmd="makepkg -si" ;;
+      *uninstall*) build_cmd="chmod +x install.sh && ./install.sh uninstall-help" ;;
+      install*) build_cmd="chmod +x install.sh && ./install.sh install" ;;
+      Cancel | "") return 1 ;;
+    esac
+  else
+    local pkg_type=""
+    case "${DISTRO_ID,,}" in
+      debian | ubuntu | linuxmint | pop | elementary | mx | raspbian) pkg_type="DEB" ;;
+      fedora | rhel | centos | rocky | alma | opensuse* | suse*) pkg_type="RPM" ;;
+    esac
+    [[ -n "$pkg_type" ]] && msg "${pkg_type}-based distribution detected: ${DISTRO_NAME}"
+    build_cmd="chmod +x install.sh && ./install.sh install"
+  fi
+
+  run_install "linux" "$build_cmd"
+  local rc=$?
+
+  # Offer uninstall help for non-Arch
+  if [[ "$IS_ARCH" != "true" && $rc -eq 0 ]]; then
+    echo
+    msg "Tip: Uninstalling custom kernels has to be done manually."
+    if gum confirm "Show uninstall info now?"; then
+      cd "${CACHE}/linux" && ./install.sh uninstall-help
+    fi
+  fi
+
+  return "$rc"
+}
+
+# Wine-TKG install — build method choice
+run_wine() {
+  local build_cmd
+  if [[ "$IS_ARCH" == "true" ]]; then
+    local method
+    method=$(gum choose \
+      --header "Wine-TKG — build method:" \
+      --header.foreground "$GUM_FG" \
+      --cursor.foreground "$GUM_FG" \
+      "makepkg -si              (recommended for Arch)" \
+      "non-makepkg-build.sh      (custom build script)" \
+      "Cancel")
+
+    case "$method" in
+      makepkg*) build_cmd="makepkg -si" ;;
+      non-make*) build_cmd="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh" ;;
+      Cancel | "") return 1 ;;
+    esac
+  else
+    build_cmd="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
+  fi
+
+  run_install "wine" "$build_cmd"
+}
+
+# Glibc-eac install — build method choice
+run_glibc() {
+  local method
+  method=$(gum choose \
+    --header "Glibc-eac — build method:" \
+    --header.foreground "$GUM_FG" \
+    --cursor.foreground "$GUM_FG" \
+    "glibc_eac.sh               (Build & Install)" \
+    "glibc_eac.sh build         (Build only)" \
+    "Cancel")
+
+  local build_cmd
+  case "$method" in
+    *"Build only"*) build_cmd="chmod +x glibc_eac.sh && ./glibc_eac.sh build" ;;
+    glibc*) build_cmd="chmod +x glibc_eac.sh && ./glibc_eac.sh" ;;
+    Cancel | "") return 1 ;;
+  esac
+
+  run_install "glibc" "$build_cmd"
+}
+
+# DXVK/vkd3d-proton pre-build for Proton-TKG
+prep_dxvk() {
+  echo
+  msg "Note: Proton-TKG downloads official DXVK by default."
+  msg "Set _use_dxvk=\"prebuilt\" in proton-tkg.cfg to use custom builds."
+  echo
+
+  local choice
+  choice=$(gum choose \
+    --header "DXVK/vkd3d — pre-build for Proton-TKG:" \
+    --header.foreground "$GUM_FG" \
+    --cursor.foreground "$GUM_FG" \
+    "Both      (DXVK + vkd3d-proton)" \
+    "DXVK only" \
+    "vkd3d only" \
+    "Skip      (continue with Proton)" \
+    "Cancel")
+
+  local build_dxvk=false build_vkd3d=false
+
+  case "$choice" in
+    Both*)
+      build_dxvk=true
+      build_vkd3d=true
+      ;;
+    DXVK*) build_dxvk=true ;;
+    vkd3d*) build_vkd3d=true ;;
+    Skip*) return 0 ;;
+    Cancel | "") return 1 ;;
+  esac
+
+  # Clone/update dxvk-tools
+  fetch_repo "dxvk" "${REPO[dxvk]}"
+  cd "${CACHE}/dxvk"
+
+  local built_something=false
+
+  if [[ "$build_dxvk" == "true" ]]; then
+    msg "Building DXVK..."
+    if ./updxvk build; then
+      built_something=true
+    else
+      warn "DXVK build failed"
+    fi
+  fi
+
+  if [[ "$build_vkd3d" == "true" ]]; then
+    msg "Building vkd3d-proton..."
+    if ./upvkd3d-proton build; then
+      built_something=true
+    else
+      warn "vkd3d build failed"
+    fi
+  fi
+
+  if [[ "$built_something" == "true" ]]; then
+    if gum confirm "Export builds for Proton-TKG?"; then
+      ./updxvk proton-tkg
+    fi
+  fi
+}
+
+# Proton-TKG install — with optional DXVK/vkd3d preparation
+run_proton() {
+  # Pre-clone proton repo so prep_dxvk can find the workdir
+  show_pkg_info "proton"
+  fetch_repo "proton"
+
+  # Optional DXVK/vkd3d preparation
+  prep_dxvk || warn "dxvk-tools prep skipped"
+
+  # Build Proton
+  run_install "proton" "./proton-tkg.sh"
+  local rc=$?
+
+  # Offer cleanup after successful build
+  if ((rc == 0)); then
+    if gum confirm "Run 'proton-tkg.sh clean'?"; then
+      run_install "proton" "./proton-tkg.sh clean" "1"
+    fi
+  fi
+
+  return "$rc"
+}
+
+run_config() {
+  local pkg="$1"
+  [[ -z "${CFG[$pkg]:-}" ]] && die "No config available for: $pkg"
+
+  local dest="${CFG_DIR}/${LOCAL[$pkg]}"
+  local upstream_url="${FROG_RAW}/${CFG[$pkg]}"
+  mkdir -p "$CFG_DIR"
+
+  if [[ -f "$dest" ]]; then
+    gum style --foreground "$GUM_FG" "✓  Local config found: ${LOCAL[$pkg]}"
+    echo
+
+    # Check for config drift against upstream (non-fatal if offline)
+    check_config "$dest" "$upstream_url" "$pkg"
+
+    # Offer re-download
+    if gum confirm --default=false "Re-download upstream config? (overwrites local)"; then
+      gum spin --spinner dot \
+        --title "Downloading ${LABEL[$pkg]} config..." \
+        -- curl "${CURL_OPTS[@]}" "$upstream_url" -o "$dest"
+      gum style --foreground "$GUM_FG" "✓  Downloaded: $dest"
+    fi
+  else
+    if gum confirm "Download ${LABEL[$pkg]} config?"; then
+      gum spin --spinner dot \
+        --title "Downloading ${LABEL[$pkg]} config..." \
+        -- curl "${CURL_OPTS[@]}" "$upstream_url" -o "$dest"
+      gum style --foreground "$GUM_FG" "✓  Saved: $dest"
+    else
+      msg "Skipped download."
+      return 0
+    fi
+  fi
+
+  echo
+  if gum confirm "Open in editor?"; then
+    open_editor "$dest"
+  fi
+}
+
+# Clean temporary files and cache (migrated from __clean_temp_dir)
+clean_cache() {
+  header
+  msg "Cleaning all temporary files..."
+  echo
+  gum style --foreground "$GUM_WARN" "Location: ${CACHE}"
+  echo
+
+  # Read kernel work/source folders from linux-tkg.cfg
+  local ltkg_cfg="${CFG_DIR}/linux-tkg.cfg"
+  local kwf="" ksf=""
+  if [[ -f "$ltkg_cfg" ]]; then
+    kwf=$(grep '^_kernel_work_folder=' "$ltkg_cfg" 2>/dev/null | tail -1 | sed "s/^_kernel_work_folder=//;s/'//g;s/\"//g")
+    ksf=$(grep '^_kernel_source_folder=' "$ltkg_cfg" 2>/dev/null | tail -1 | sed "s/^_kernel_source_folder=//;s/'//g;s/\"//g")
+    kwf="${kwf/#\~/${HOME}}"
+    ksf="${ksf/#\~/${HOME}}"
+  fi
+
+  # Collect all target directories for measurement
+  local -a targets=()
+  [[ -d "$CACHE" ]] && targets+=("$CACHE")
+  for d in /tmp/makepkg/linux-tkg /tmp/makepkg/nvidia-all /tmp/makepkg/nvidia-*-tkg; do
+    [[ -d "$d" ]] && targets+=("$d")
+  done
+  [[ -n "$kwf" && -d "${kwf}/linux-tkg" ]] && targets+=("${kwf}/linux-tkg")
+  [[ -n "$ksf" && -d "${ksf}/linux-tkg" ]] && targets+=("${ksf}/linux-tkg")
+
+  # Measure total files and bytes before deletion
+  local file_count=0 total_bytes=0
+  for d in "${targets[@]}"; do
+    local cnt sz
+    cnt=$(find "$d" -type f 2>/dev/null | wc -l || echo 0)
+    sz=$(du -sb "$d" 2>/dev/null | cut -f1 || echo 0)
+    ((file_count += cnt))
+    ((total_bytes += sz))
+  done
+
+  # Human-readable size
+  local size_human
+  if ((total_bytes >= 1073741824)); then
+    size_human="$(awk "BEGIN{printf \"%.1fG\", ${total_bytes}/1073741824}")"
+  elif ((total_bytes >= 1048576)); then
+    size_human="$(awk "BEGIN{printf \"%.1fM\", ${total_bytes}/1048576}")"
+  elif ((total_bytes >= 1024)); then
+    size_human="$(awk "BEGIN{printf \"%.1fK\", ${total_bytes}/1024}")"
+  else
+    size_human="${total_bytes}B"
+  fi
+
+  # Detect immutable patch files (chattr +i)
+  local -a immutable=()
+  if [[ -d "$CACHE" ]] && command -v lsattr &>/dev/null; then
+    while IFS= read -r -d '' f; do
+      if lsattr "$f" 2>/dev/null | cut -d' ' -f1 | grep -qF 'i'; then
+        immutable+=("${f#"${CACHE}/"}")
+      fi
+    done < <(find "$CACHE" -type f \( -name '*.myfrag' -o -name '*.mypatch' \) -print0 2>/dev/null)
+  fi
+
+  if ((${#immutable[@]} > 0)); then
+    warn "Keeping ${#immutable[@]} immutable patch file(s) (chattr +i):"
+    for rel in "${immutable[@]}"; do
+      gum style --foreground "$GUM_WARN" "  $rel"
+    done
+    gum style --foreground "$GUM_WARN" "  Revert with: chattr -i <file>"
+    echo
+  fi
+
+  # Remove cache directory
+  if [[ -d "$CACHE" ]]; then
+    msg "Removing: ${CACHE}"
+    rm -rf "$CACHE" 2>/dev/null
+  fi
+
+  # Remove /tmp/makepkg build dirs
+  for d in /tmp/makepkg/linux-tkg /tmp/makepkg/nvidia-all /tmp/makepkg/nvidia-*-tkg; do
+    [[ -d "$d" ]] || continue
+    msg "Removing: ${d}"
+    rm -rf "$d" 2>/dev/null
+  done
+
+  # Remove kernel work/source folders
+  if [[ -n "$kwf" && -d "${kwf}/linux-tkg" ]]; then
+    msg "Removing: ${kwf}/linux-tkg (_kernel_work_folder)"
+    rm -rf "${kwf}/linux-tkg" 2>/dev/null
+  fi
+  if [[ -n "$ksf" && -d "${ksf}/linux-tkg" ]]; then
+    msg "Removing: ${ksf}/linux-tkg (_kernel_source_folder)"
+    rm -rf "${ksf}/linux-tkg" 2>/dev/null
+  fi
+
+  # Summary
+  local removed=$((file_count - ${#immutable[@]}))
+  echo
+  if ((removed <= 0)); then
+    msg "✓  Cleanup complete (cache already clean)"
+  else
+    msg "✓  Cleanup complete: ${removed} files removed, ${size_human} freed"
+  fi
+}
+
+# Combined Linux-TKG + Nvidia-all install (build both, then pacman -U)
+run_linux_nvidia() {
+  SECONDS=0
+  local epoch_start
+  epoch_start=$(date +%s)
+
+  gum style --foreground "$GUM_FG" --bold \
+    "Linux-TKG + Nvidia-all combined install (damachine staging fork)"
+  echo
+
+  # --- Config merging: ext config → repo config → ext wins ---
+  local pf_version="" pf_nvidia_open="" pf_nvidia_open_variant="" pf_compiler=""
+  local ext_cfg="${CFG_DIR}/linux-tkg.cfg"
+
+  # Read user ext config
+  if [[ -f "$ext_cfg" ]]; then
+    local ev eno ec
+    ev=$(cfg_val '_version' "$ext_cfg")
+    eno=$(cfg_val '_nvidia_open' "$ext_cfg")
+    ec=$(cfg_val '_compiler' "$ext_cfg")
+    [[ -n "$ev" ]] && pf_version="$ev"
+    [[ -n "$eno" ]] && pf_nvidia_open="$eno"
+    [[ -n "$ec" ]] && pf_compiler="$ec"
+  fi
+
+  # Override with repo customization.cfg if already cloned
+  local linux_cfg="${CACHE}/linux/customization.cfg"
+  if [[ -f "$linux_cfg" ]]; then
+    local cv cno cc
+    cv=$(cfg_val '_version' "$linux_cfg")
+    cno=$(cfg_val '_nvidia_open' "$linux_cfg")
+    cc=$(cfg_val '_compiler' "$linux_cfg")
+    [[ -n "$cv" ]] && pf_version="$cv"
+    [[ -n "$cno" ]] && pf_nvidia_open="$cno"
+    [[ -n "$cc" ]] && pf_compiler="$cc"
+    # ext config takes priority
+    if [[ -f "$ext_cfg" ]]; then
+      ev=$(cfg_val '_version' "$ext_cfg")
+      eno=$(cfg_val '_nvidia_open' "$ext_cfg")
+      ec=$(cfg_val '_compiler' "$ext_cfg")
+      [[ -n "$ev" ]] && pf_version="$ev"
+      [[ -n "$eno" ]] && pf_nvidia_open="$eno"
+      [[ -n "$ec" ]] && pf_compiler="$ec"
+    fi
+  fi
+
+  # --- Prompt for _nvidia_open if not set in config ---
+  if [[ -n "$pf_nvidia_open" ]]; then
+    if normalize_nvidia_open_value "$pf_nvidia_open"; then
+      pf_nvidia_open="$RESOLVED_NVIDIA_OPEN"
+      pf_nvidia_open_variant="$RESOLVED_NVIDIA_OPEN_VARIANT"
+    else
+      warn "Ignoring invalid _nvidia_open value in config: $pf_nvidia_open"
+      pf_nvidia_open=""
+    fi
+  fi
+
+  if [[ -z "$pf_nvidia_open" ]]; then
+    echo
+    gum style --foreground "$GUM_FG" --bold "NVIDIA Open Module — which driver version?"
+    echo
+    msg "Supported kernels: 6.12  6.18  6.19  7.0  │  Requires Turing+ GPU (RTX 20xx+)"
+    msg "Set _nvidia_open in ~/.config/frogminer/linux-tkg.cfg to one of the numeric versions below"
+    echo
+
+    local nv_choice
+    nv_choice=$(gum choose \
+      --header "Select NVIDIA open driver version:" \
+      --header.foreground "$GUM_FG" \
+      --cursor.foreground "$GUM_FG" \
+      "${NVIDIA_OPEN_VERSIONS[latest]} — default branch" \
+      "${NVIDIA_OPEN_VERSIONS[vulkan]} — Vulkan developer beta" \
+      "${NVIDIA_OPEN_VERSIONS[legacy]} — legacy/LTS branch" \
+      "Cancel")
+
+    case "$nv_choice" in
+      "${NVIDIA_OPEN_VERSIONS[latest]}"*)
+        pf_nvidia_open="${NVIDIA_OPEN_VERSIONS[latest]}"
+        pf_nvidia_open_variant="latest"
+        ;;
+      "${NVIDIA_OPEN_VERSIONS[vulkan]}"*)
+        pf_nvidia_open="${NVIDIA_OPEN_VERSIONS[vulkan]}"
+        pf_nvidia_open_variant="vulkan"
+        ;;
+      "${NVIDIA_OPEN_VERSIONS[legacy]}"*)
+        pf_nvidia_open="${NVIDIA_OPEN_VERSIONS[legacy]}"
+        pf_nvidia_open_variant="legacy"
+        ;;
+      Cancel | "") die "Cancelled by user." ;;
+    esac
+    msg "Selected: ${pf_nvidia_open}"
+  fi
+
+  # Resolve driver version and branch from version map
+  local driver_version="$pf_nvidia_open"
+  if [[ -z "${pf_nvidia_open_variant:-}" ]]; then
+    normalize_nvidia_open_value "$pf_nvidia_open"
+    pf_nvidia_open="$RESOLVED_NVIDIA_OPEN"
+    pf_nvidia_open_variant="$RESOLVED_NVIDIA_OPEN_VARIANT"
+    driver_version="$RESOLVED_NVIDIA_OPEN"
+  fi
+  local driver_branch=""
+  case "$pf_nvidia_open_variant" in
+    vulkan) driver_branch="vulkandev" ;;
+    *) driver_branch="regular" ;;
+  esac
+
+  # --- Makedeps: linux-tkg ---
+  local -a ltkg_makedeps=(
+    'bc' 'bison' 'cpio' 'docbook-xsl' 'flex' 'git' 'graphviz'
+    'gettext' 'imagemagick' 'inetutils' 'libelf' 'pahole'
+    'patchutils' 'perl' 'python' 'python-sphinx' 'python-sphinx_rtd_theme'
+    'rust' 'rust-bindgen' 'rust-src' 'tar' 'wget' 'xmlto' 'xz' 'zstd'
+  )
+  [[ "$pf_compiler" == "llvm" ]] && ltkg_makedeps+=('clang' 'llvm' 'lld')
+  msg "Checking linux-tkg build dependencies…"
+  ensure_packages "${ltkg_makedeps[@]}" || return 1
+
+  # --- Build linux-tkg (build only) ---
+  local linux_preset="${CACHE}/linux_tkg_preset.cfg"
+  mkdir -p "$CACHE"
+  if [[ -f "$ext_cfg" ]]; then
+    cat "$ext_cfg" >"$linux_preset"
+    echo >>"$linux_preset"
+  else
+    : >"$linux_preset"
+  fi
+  [[ -n "$pf_version" ]] && printf '_version=%q\n' "$pf_version" >>"$linux_preset"
+  [[ -n "$pf_nvidia_open" ]] && printf '_nvidia_open=%q\n' "$pf_nvidia_open" >>"$linux_preset"
+
+  local build_cmd="rm -f BIG_UGLY_FROGMINER && _EXT_CONFIG_PATH=\"${linux_preset}\" makepkg -d"
+  fetch_repo "linux" "$STAGING_LINUX"
+  local linux_dir="${CACHE}/linux"
+  copy_config "linux"
+  cd "$linux_dir"
+  echo
+  gum style --foreground "$GUM_FG" --bold "Building Linux-TKG ..."
+  echo
+  eval "$build_cmd"
+  local rc=$?
+  local linux_dur="$SECONDS"
+
+  if ((rc != 0)); then
+    die "Linux-TKG build failed — skipping Nvidia-all build."
+  fi
+
+  # --- Makedeps: nvidia-all ---
+  local -a nv_makedeps=(
+    'linux-headers' 'patchelf'
+    'jansson' 'gtk3' 'libxv' 'libvdpau' 'libxext' 'vulkan-headers'
+  )
+  msg "Checking nvidia-all build dependencies…"
+  ensure_packages "${nv_makedeps[@]}" || return 1
+
+  # --- Build nvidia-all (build only) ---
+  SECONDS=0
+  local nvidia_preset_dir="${CACHE}/nvidia_all_preset"
+  local nvidia_preset="${nvidia_preset_dir}/pre-customization.cfg"
+  mkdir -p "$nvidia_preset_dir"
+
+  cat >"$nvidia_preset" <<NVIDIA_CUSTOMIZATION_CFG
+# nvidia-all preset config — generated by tkginstaller (linux-nvidia combined install)
+_EXT_CONFIG_PATH="~/.tkg_installer_ignored_config_path/nvidia-all.cfg"
+CUSTOM_GCC_PATH=""
+_series_in_pkgname=""
+_kerneloverride=""
+_local_package_storing=""
+_build_utils_package_only="true"
+_lib32="true"
+_opencl="true"
+_nvsettings="true"
+_libxnvctrl="true"
+_eglwayland="external"
+_eglgbm="external"
+_eglx11="external"
+_driver_version="${driver_version}"
+_driver_branch="${driver_branch}"
+_md5sum="SKIP"
+_open_source_modules="false"
+_module_signing="false"
+_blacklist_nouveau="true"
+_modprobe="true"
+_modprobe_mobile=""
+_perf_optimizations="true"
+_nvidia_patch_enc_fbc="true"
+_bsb_dsc_fix="true"
+_only_update_if_newer=""
+_dkms="false"
+_target_kernel=""
+_gcc15_fix="false"
+_disable_libalpm_hook=""
+_gcc14_fix="false"
+_54_prime_fixing_attempt="false"
+_62142_fix="false"
+NVIDIA_CUSTOMIZATION_CFG
+
+  build_cmd="rm -f options && mv \"${nvidia_preset}\" customization.cfg && makepkg -d"
+  fetch_repo "nvidia" "$STAGING_NVIDIA"
+  local nvidia_dir="${CACHE}/nvidia"
+  copy_config "nvidia"
+  cd "$nvidia_dir"
+  echo
+  gum style --foreground "$GUM_FG" --bold "Building Nvidia-all ..."
+  echo
+  eval "$build_cmd"
+  rc=$?
+  local nvidia_dur="$SECONDS"
+
+  rm -rf "$nvidia_preset_dir"
+
+  if ((rc != 0)); then
+    die "Nvidia-all build failed — aborting combined install."
+  fi
+
+  # --- Collect all built packages and install at once ---
+  local -a pkgs=()
+  while IFS= read -r -d '' p; do
+    pkgs+=("$p")
+  done < <(find "$nvidia_dir" "$linux_dir" -maxdepth 1 -name '*.pkg.tar*' -print0 2>/dev/null)
+
+  if ((${#pkgs[@]} == 0)); then
+    die "No built packages found."
+  fi
+
+  echo
+  gum style --foreground "$GUM_FG" --bold \
+    "Installing ${#pkgs[@]} packages via pacman -U ..."
+  for p in "${pkgs[@]}"; do
+    msg "  $(basename "$p")"
+  done
+  echo
+
+  sudo pacman -U "${pkgs[@]}"
+  rc=$?
+
+  # Cleanup built packages on success
+  if ((rc == 0)); then
+    msg "Cleaning up built packages..."
+    find "$linux_dir" "$nvidia_dir" -maxdepth 1 -name '*.pkg.tar*' -delete 2>/dev/null
+  fi
+
+  # --- Combined summary ---
+  local total=$(($(date +%s) - epoch_start))
+  echo
+  gum style --foreground "$GUM_WARN" "Completed: $(date '+%Y-%m-%d %H:%M:%S')"
+  if ((rc == 0)); then
+    msg "✓  Linux-TKG + Nvidia-all — installed successfully"
+  else
+    gum style --foreground "$GUM_ERR" "✗  Linux-TKG + Nvidia-all — failed (exit ${rc})"
+  fi
+  gum style --foreground "$GUM_WARN" \
+    "Linux-TKG build:  $((linux_dur / 60)) min $((linux_dur % 60)) sec"
+  gum style --foreground "$GUM_WARN" \
+    "Nvidia-all build: $((nvidia_dur / 60)) min $((nvidia_dur % 60)) sec"
+  gum style --foreground "$GUM_WARN" \
+    "Combined total:   $((total / 60)) min $((total % 60)) sec"
+
+  return "$rc"
+}
+
+# --- Config menu ---
+
+config_menu() {
+  while true; do
+    header
+    local choices=()
+    for k in linux nvidia mesa wine proton dxvk vkd3d gamescope glibc amdgpu amdvlk; do
+      [[ -n "${CFG[$k]:-}" ]] && choices+=("${LABEL[$k]}")
+    done
+    choices+=("Back")
+
+    local lbl
+    lbl=$(gum choose \
+      --header "Edit config for:" \
+      --header.foreground "$GUM_FG" \
+      --cursor.foreground "$GUM_FG" \
+      "${choices[@]}")
+
+    [[ "$lbl" == "Back" || -z "$lbl" ]] && break
+
+    local pkg=""
+    for k in "${!LABEL[@]}"; do
+      [[ "${LABEL[$k]}" == "$lbl" ]] && pkg="$k" && break
+    done
+    [[ -z "$pkg" ]] && continue
+
+    run_config "$pkg"
+    echo
+    gum input --placeholder "Press Enter to continue..."
+  done
+}
+
+# --- Menu ---
+
+pick_pkg() {
+  local choices=()
+  choices+=("Linux+Nvidia")
+  for k in linux nvidia mesa wine proton dxvk vkd3d gamescope glibc amdgpu amdvlk; do
+    [[ -n "${REPO[$k]:-}${CFG[$k]:-}" ]] && choices+=("${LABEL[$k]}")
+  done
+  choices+=("Clean")
+  choices+=("Exit")
+
+  gum choose \
+    --header "Select a package:" \
+    --header.foreground "$GUM_FG" \
+    --cursor.foreground "$GUM_FG" \
+    --height 14 \
+    "${choices[@]}"
+}
+
+label_to_key() {
+  local lbl="$1"
+  [[ "$lbl" == "Linux+Nvidia" ]] && echo "linux-nvidia" && return
+  for k in "${!LABEL[@]}"; do
+    [[ "${LABEL[$k]}" == "$lbl" ]] && echo "$k" && return
+  done
+  echo ""
+}
+
+pick_action() {
+  local pkg="$1"
+  local label="${LABEL[$pkg]:-$pkg}"
+  local opts=()
+
+  # Config-only packages (no REPO entry) get only Edit Config
+  if [[ -z "${REPO[$pkg]:-}" ]]; then
+    opts=("Edit Config" "Back")
+  elif [[ "$pkg" == "linux-nvidia" ]]; then
+    opts=("Install / Build" "Back")
+  elif [[ -n "${CFG[$pkg]:-}" ]]; then
+    opts=("Install / Build" "Edit Config" "Back")
+  else
+    opts=("Install / Build" "Back")
+  fi
+
+  gum choose \
+    --header "${label} — what to do?" \
+    --header.foreground "$GUM_FG" \
+    --cursor.foreground "$GUM_FG" \
+    "${opts[@]}"
+}
+
+menu() {
+  while true; do
+    header
+    local lbl
+    lbl=$(pick_pkg)
+
+    [[ "$lbl" == "Exit" || -z "$lbl" ]] && break
+    [[ "$lbl" == "Clean" ]] && {
+      clean_cache
+      echo
+      gum input --placeholder "Press Enter to continue..."
+      continue
+    }
+
+    local pkg
+    pkg=$(label_to_key "$lbl")
+    [[ -z "$pkg" ]] && continue
+
+    local action
+    action=$(pick_action "$pkg")
+
+    case "$action" in
+      "Install / Build")
+        case "$pkg" in
+          linux-nvidia) run_linux_nvidia ;;
+          linux) run_linux ;;
+          wine) run_wine ;;
+          glibc) run_glibc ;;
+          proton) run_proton ;;
+          dxvk) prep_dxvk ;;
+          *) run_install "$pkg" ;;
+        esac
+        ;;
+      "Edit Config") run_config "$pkg" ;;
+      "Back" | "") continue ;;
+    esac
+  done
+}
+
+# --- Entry point ---
+
+main() {
+  check_deps
+  detect_distro
+  check_root
+
+  # Direct mode: tkginstaller [command] [pkg]
+  if (($# > 0)); then
+    local cmd
+    cmd=$(normalize "$1")
+    [[ -z "$cmd" ]] && die "Unknown command: $1"
+
+    case "$cmd" in
+      help)
+        show_help
+        return 0
+        ;;
+      clean)
+        clean_cache
+        return 0
+        ;;
+      config)
+        # tkginstaller config [pkg]
+        if [[ -n "${2:-}" ]]; then
+          local cpkg
+          cpkg=$(normalize "$2")
+          [[ -z "$cpkg" ]] && die "Unknown package: $2"
+          run_config "$cpkg"
+        else
+          config_menu
+        fi
+        return 0
+        ;;
+      *)
+        # tkginstaller [pkg] [config]
+        if [[ "${2:-}" =~ ^(config|c|edit|e)$ ]]; then
+          run_config "$cmd"
+        elif [[ "$cmd" == "linux-nvidia" ]]; then
+          run_linux_nvidia
+        else
+          case "$cmd" in
+            linux) run_linux ;;
+            wine) run_wine ;;
+            glibc) run_glibc ;;
+            proton) run_proton ;;
+            dxvk) prep_dxvk ;;
+            *) run_install "$cmd" ;;
+          esac
+        fi
+        return
+        ;;
+    esac
+  fi
+
+  # Interactive TUI
+  menu
+}
+
+main "$@"
