@@ -4,7 +4,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly tkg_installer_version="v0.52.3"
+readonly tkg_installer_version="v0.52.4"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _tkg_start_args=("$@")
@@ -1219,7 +1219,25 @@ __nvidia_install() {
       ;;
   esac
 
-  __install_package "${_nvidia_repo}" "nvidia-all" "${_frog_pkg_cmd_default}" "" "" "${_nvidia_branch}"
+  local _build_command="${_frog_pkg_cmd_default}"
+
+  # install.sh is only available in the damachine staging fork
+  if [[ "${_nvidia_branch}" == "staging" ]]; then
+    __build_menu "Nvidia-all" \
+      "makepkg -si" "Arch-based (recommended)" \
+      "bash install.sh" "all distributions (Debian, Ubuntu, Fedora, SUSE, Arch)"
+
+    case "${_menu_choice}" in
+      0)
+        msginfo "${break}${orange}Cancelled by user${reset}${break}"
+        __exit 1
+        ;;
+      2) _build_command="bash install.sh" ;;
+      *) _build_command="makepkg -si" ;;
+    esac
+  fi
+
+  __install_package "${_nvidia_repo}" "nvidia-all" "${_build_command}" "" "" "${_nvidia_branch}"
 }
 
 # Check if packages are installed; install any missing ones via pacman --needed.
