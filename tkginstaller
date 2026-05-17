@@ -4,7 +4,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly tkg_installer_version="v0.52.4"
+readonly tkg_installer_version="v0.52.5"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _tkg_start_args=("$@")
@@ -2140,16 +2140,11 @@ __menu() {
   # Define menu options
   local _menu_options=(
     "Linux     |🐧 ${neon}Linux         ${gray} Linux custom kernels for better desktop and gaming experience"
+    "Nvidia        |💻 ${neon}Nvidia        ${gray} Nvidia open-source or proprietary graphics drivers"
+    "Linux + Nvidia|🐧 ${neon}Linux+Nvidia  ${gray} Linux-TkG + Nvidia-all combined (damachine fork)"
+    "Mesa          |🧩 ${neon}Mesa          ${gray} AMD and Intel open-source graphics driver"
+    "AMD           |💎 ${neon}AMD           ${gray} AMDGPU-PRO and Vulkan drivers (Pro & OPT)"
   )
-
-  if [[ "${_is_arch_based}" == "true" ]]; then
-    _menu_options+=(
-      "Nvidia        |💻 ${neon}Nvidia        ${gray} Nvidia open-source or proprietary graphics drivers"
-      "Linux + Nvidia|🐧 ${neon}Linux+Nvidia  ${gray} Linux-TkG + Nvidia-all combined (damachine fork)"
-      "Mesa          |🧩 ${neon}Mesa          ${gray} AMD and Intel open-source graphics driver"
-      "AMD           |💎 ${neon}AMD           ${gray} AMDGPU-PRO and Vulkan drivers (Pro & OPT)"
-    )
-  fi
 
   _menu_options+=(
     "Wine      |🍷 ${neon}Wine          ${gray} Windows compatibility layer to run Windows apps on Linux"

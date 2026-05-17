@@ -35,7 +35,7 @@ Examples:
 EOF
 }
 
-parse_args() {
+_args() {
   while (($#)); do
     case "$1" in
       --uninstall | -u)
@@ -61,7 +61,7 @@ cleanup() {
   fi
 }
 
-install() {
+_install() {
   local _srcdir
   _srcdir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -85,7 +85,7 @@ install() {
   msg_info "Done"
 }
 
-uninstall() {
+_uninstall() {
   if [[ -e "${_pkgdir}/${_pkgname}" ]]; then
     msg_info "Removing ${_pkgname}"
     rm -f -- "${_pkgdir}/${_pkgname}"
@@ -98,12 +98,12 @@ uninstall() {
 main() {
   local _mode="install"
   trap cleanup EXIT
-  parse_args "$@"
+  _args "$@"
 
   if [[ "$_mode" == "uninstall" ]]; then
-    uninstall
+    _uninstall
   else
-    install
+    _install
   fi
 }
 
