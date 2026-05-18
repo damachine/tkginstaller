@@ -4,7 +4,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly tkg_installer_version="v0.52.6"
+readonly tkg_installer_version="v0.53.0"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _tkg_start_args=("$@")
@@ -1757,6 +1757,184 @@ repo=$(echo "${_amd_repos_json}" | grep "^${key}=" | cut -d= -f2-)
   esac
 }
 
+# Log file browser: package selection → file selection → pager view
+# shellcheck disable=SC2218
+__menu_logs() {
+  # Map package key → log directory (relative to tkg_tmp_dir)
+  local _log_subdirs_json
+  _log_subdirs_json=$(printf '%s\n' \
+    "linux=linux-tkg/logs" \
+    "nvidia=nvidia-all/logs" \
+    "wine=wine-tkg-git/logs" \
+    "proton=wine-tkg-git/logs")
+  export _log_subdirs_json
+
+  # ── Level 1: package selection ────────────────────────────────────────────
+  while true; do
+    # Build menu with live availability status
+    local _pkg_menu=""
+    local _keys=(linux nvidia wine proton)
+    local _icons=("🐧" "💻" "🍷" "🎮")
+    local _labels=("Linux-TkG  " "Nvidia-all " "Wine-TkG   " "Proton-TkG ")
+    local i=0
+    for _key in "${_keys[@]}"; do
+      local _subdir
+      _subdir=$(printf '%s\n' "${_log_subdirs_json}" | grep "^${_key}=" | cut -d= -f2-)
+      local _full_dir="${tkg_tmp_dir}/${_subdir}"
+      local _status_str
+      if [[ -d "${_full_dir}" ]] && [[ -n "$(ls -A "${_full_dir}" 2>/dev/null)" ]]; then
+        local _cnt
+        _cnt=$(find "${_full_dir}" -maxdepth 1 -type f 2>/dev/null | wc -l)
+        _status_str="${neon}${_cnt} log file(s)${reset}"
+      else
+        _status_str="${orange}no logs${reset}"
+      fi
+      _pkg_menu+="${_key}|${_icons[$i]} ${neon}${_labels[$i]}${gray} ${_full_dir} ${reset}${_status_str}"$'\n'
+      ((i++))
+    done
+    _pkg_menu+="return|⏪ ${neon}Return"
+
+    # Preview: list files in the selected package log directory
+    # shellcheck disable=SC2016
+    local _preview_pkg='
+      key=$(echo {} | cut -d"|" -f1 | xargs)
+      [[ "$key" == "return" ]] && { printf "%b\n" "'"${light}"'Return to config menu.'"${reset}"'"; exit 0; }
+      _subdir=$(printf "%s\n" "${_log_subdirs_json}" | grep "^${key}=" | cut -d= -f2-)
+      _dir="'"${tkg_tmp_dir}"'/${_subdir}"
+      if [[ -d "${_dir}" ]] && ls "${_dir}"/* >/dev/null 2>&1; then
+        printf "%b\n" "'"${light}"'Log files in '"${gray}"'${_dir}'"${reset}"':\n"
+        find "${_dir}" -maxdepth 1 -type f | sort | while IFS= read -r _f; do
+          _sz=$(du -sh "${_f}" 2>/dev/null | cut -f1)
+          _mt=$(date -r "${_f}" "+%Y-%m-%d %H:%M" 2>/dev/null || stat -c "%y" "${_f}" 2>/dev/null | cut -d. -f1)
+          printf "%b\n" "  '"${neon}"'→'"${reset}"' '"${gray}"'$(basename "${_f}")'"${reset}"'  '"${orange}"'${_sz}'"${reset}"'  '"${light}"'${_mt}'"${reset}"'"
+        done
+      else
+        printf "%b\n" "'"${orange}"'No log files found.'"${reset}"'\n'"${gray}"'Expected: '"${reset}"'${_dir}"
+      fi
+    '
+
+    local _header_logs="🐸 ${neon}${uline_on}TkG-Installer ─ Logs${uline_off}${reset}${break}${break}\
+${light}    Browse build and system logs stored in:${break}\
+${gray}    ${tkg_tmp_dir}/<package>/logs/${reset}${break}${break}\
+${light}   Select a package to view its logs:"
+
+    local _footer_logs="  ${light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${break}\
+  Press [Enter] to select, [Ctrl+P] ${light}to toggle the preview window, [ESC] to exit${break}${break}\
+  ${light}Website:${reset} ${gray}https://github.com/damachine/tkginstaller${reset}"
+
+    local _pkg_choice
+    _pkg_choice=$(__fzf_menu \
+      "${_pkg_menu}" \
+      "${_preview_pkg}" \
+      "${_header_logs}" \
+      "${_footer_logs}" \
+      "${tkg_installer_version}" \
+      "right:wrap:55%" \
+      "ctrl-p:toggle-preview")
+
+    if [[ -z "${_pkg_choice}" ]]; then
+      unset _log_subdirs_json
+      return 0
+    fi
+
+    local _pkg_key
+    _pkg_key=$(echo "${_pkg_choice}" | cut -d"|" -f1 | xargs)
+
+    if [[ "${_pkg_key}" == "return" ]]; then
+      unset _log_subdirs_json
+      return 0
+    fi
+
+    # Resolve log directory for selected package
+    local _selected_subdir
+    _selected_subdir=$(printf '%s\n' "${_log_subdirs_json}" | grep "^${_pkg_key}=" | cut -d= -f2-)
+    local _selected_log_dir="${tkg_tmp_dir}/${_selected_subdir}"
+
+    if [[ ! -d "${_selected_log_dir}" ]] ||
+      [[ -z "$(ls -A "${_selected_log_dir}" 2>/dev/null)" ]]; then
+      __banner "${orange}"
+      msgwarning "No log files found for ${_pkg_key}:${break}"
+      msgplain " ${gray}${_selected_log_dir}${reset}${break}"
+      msgprompt "Press any key to continue..."
+      read -n 1 -s -r
+      clear
+      continue
+    fi
+
+    # ── Level 2: log file selection ─────────────────────────────────────────
+    local _file_menu=""
+    while IFS= read -r _logfile; do
+      local _fname
+      _fname=$(basename "${_logfile}")
+      _file_menu+="${_logfile}|📄 ${neon}${_fname}${reset}"$'\n'
+    done < <(find "${_selected_log_dir}" -maxdepth 1 -type f | sort)
+    _file_menu+="return|⏪ ${neon}Return"
+
+    # Preview: show file content with bat (or cat fallback)
+    local _bat_log_cmd="bat --style=plain --language=log --wrap character --terminal-width ${cols} --force-colorization --theme='Visual Studio Dark+'"
+    # shellcheck disable=SC2016
+    local _preview_file='
+      key=$(echo {} | cut -d"|" -f1 | xargs)
+      [[ "$key" == "return" ]] && { printf "%b\n" "'"${light}"'Return to package selection.'"${reset}"'"; exit 0; }
+      if [[ -f "${key}" ]]; then
+        '"${_bat_log_cmd}"' "${key}" 2>/dev/null || cat "${key}"
+      else
+        printf "%b\n" "'"${orange}"'File not found:'"${reset}"' ${key}"
+      fi
+    '
+
+    local _header_files="${neon}${uline_on}TkG-Installer ─ Logs ─ ${_pkg_key}${uline_off}${reset}${break}${break}\
+${light}    Log directory:${reset} ${gray}${_selected_log_dir}${reset}${break}${break}\
+${light}   Select a log file to view:"
+
+    local _footer_files="  ${light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${break}\
+  Press [Enter] to open in pager, [Ctrl+P] ${light}to toggle the preview, [ESC] to go back${break}${break}\
+  ${light}Website:${reset} ${gray}https://github.com/damachine/tkginstaller${reset}"
+
+    local _file_loop=true
+    while [[ "${_file_loop}" == "true" ]]; do
+      local _file_choice
+      _file_choice=$(__fzf_menu \
+        "${_file_menu}" \
+        "${_preview_file}" \
+        "${_header_files}" \
+        "${_footer_files}" \
+        "${tkg_installer_version}" \
+        "right:wrap:65%" \
+        "ctrl-p:toggle-preview")
+
+      if [[ -z "${_file_choice}" ]]; then
+        _file_loop=false
+        break
+      fi
+
+      local _file_path
+      _file_path=$(echo "${_file_choice}" | cut -d"|" -f1 | xargs)
+
+      if [[ "${_file_path}" == "return" ]]; then
+        _file_loop=false
+        break
+      fi
+
+      # Open file with bat pager or less
+      if command -v bat >/dev/null 2>&1; then
+        bat \
+          --style=full \
+          --language=log \
+          --wrap=character \
+          --terminal-width="${cols}" \
+          --force-colorization \
+          --theme='Visual Studio Dark+' \
+          --paging=always \
+          "${_file_path}" 2>/dev/null
+      else
+        less "${_file_path}"
+      fi
+    done
+    # Return to level 1 (package selection)
+  done
+}
+
 # Configuration file editor menu
 __menu_config() {
   while true; do
@@ -2164,6 +2342,7 @@ __menu() {
     "Gamescope |🕹️ ${neon}Gamescope     ${gray} Build and install Gamescope from Frogging-Family"
     "Glibc     |🔗 ${neon}Glibc-eac     ${gray} Install EAC compatible version of glibc"
     "Config    |🔧 ${neon}Config        ${gray} Enter external configuration files menu (Expert)"
+    "Logs      |📋 ${neon}Logs          ${gray} Browse build and system logs per package"
     "Clean     |🧹 ${neon}Clean         ${gray} Removes all temporary files for a clean installation"
     "Help      |❓ ${neon}Help          ${gray} Displays help and usage information about TkG-Installer"
     "Close     |❎ ${neon}Close"
@@ -2176,7 +2355,7 @@ __menu() {
   declare -A _preview_docs=(
     [Linux]=linux [Nvidia]=nvidia [Linux + Nvidia]=linux-nvidia [Mesa]=mesa [AMD]=amd [Wine]=wine
     [Proton]=proton [Gamescope]=gamescope [Glibc]=glibc
-    [Config]=config [Clean]=clean [Help]=help [Close]=close
+    [Config]=config [Clean]=clean [Help]=help [Close]=close [Logs]=logs
   )
   declare -A _preview_repos=(
     [Linux]="linux-tkg/master" [Nvidia]="nvidia-all/master" [Linux + Nvidia]="linux-tkg/master"
@@ -2425,6 +2604,11 @@ __main_interactive_mode() {
       ;;
     Config)
       __menu_config
+      clear
+      exec "$0"
+      ;;
+    Logs)
+      __menu_logs
       clear
       exec "$0"
       ;;
