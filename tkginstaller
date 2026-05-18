@@ -4,7 +4,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly tkg_installer_version="v0.52.5"
+readonly tkg_installer_version="v0.52.6"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _tkg_start_args=("$@")
@@ -477,10 +477,22 @@ __prepare() {
   printf "%b\n" "${reset}"
 
   # Check required dependencies
-  local _dep=(git onefetch)
+  # onefetch and bat are not in Debian/Ubuntu default repos and already
+  # handled gracefully in code — skip them as hard deps on those distros
+  local _dep=(git)
+  case "${_distro_id,,}" in
+    debian | ubuntu | linuxmint | pop | elementary | mx | raspbian) ;;
+    *) _dep+=(onefetch) ;;
+  esac
   if [[ "${_load_preview}" == "true" ]]; then
-    # Add optional dependencies
-    _dep+=(bat curl glow fzf wdiff)
+    case "${_distro_id,,}" in
+      debian | ubuntu | linuxmint | pop | elementary | mx | raspbian)
+        _dep+=(curl glow fzf wdiff)
+        ;;
+      *)
+        _dep+=(bat curl glow fzf wdiff)
+        ;;
+    esac
   fi
 
   # Define package names per distro
