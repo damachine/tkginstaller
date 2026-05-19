@@ -13,7 +13,7 @@ if [ ! -x "$(command -v sudo)" ]; then
 fi
 
 # TkG-Installer VERSION definition
-readonly tkg_installer_version="v0.53.2"
+readonly tkg_installer_version="v0.53.3"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _tkg_start_args=("$@")
@@ -541,7 +541,7 @@ __prepare() {
 
   # Welcome message
   __banner
-  __check_update
+  # __check_update  # TODO: temporarily disabled
   printf "%s" "${neon}Starting"
   for _ in {1..3}; do
     printf " ."
@@ -1533,6 +1533,7 @@ _gcc15_fix="false"
 _gcc14_fix="false"
 _54_prime_fixing_attempt="false"
 _62142_fix="false"
+_md5sum="SKIP"
 NVIDIA_CUSTOMIZATION_CFG
 
   # build only
