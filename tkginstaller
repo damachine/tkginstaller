@@ -13,7 +13,7 @@ if [ ! -x "$(command -v sudo)" ]; then
 fi
 
 # TkG-Installer VERSION definition
-readonly tkg_installer_version="v0.53.1"
+readonly tkg_installer_version="v0.53.2"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _tkg_start_args=("$@")
@@ -1502,10 +1502,13 @@ __linux_nvidia_install() {
 # override this file. Remove this line only if you want your personal nvidia-all.cfg applied.
 _EXT_CONFIG_PATH="~/.tkg_installer_ignored_config_path/nvidia-all.cfg"
 CUSTOM_GCC_PATH=""
-_series_in_pkgname=""
+CUSTOM_LLVM_PATH=""
 _kerneloverride=""
-_local_package_storing=""
+_target_kernel=""
+_series_in_pkgname=""
+_local_package_storing="false"
 _build_utils_package_only="true"
+_auto_build_nonarch_package=""
 _lib32="true"
 _opencl="true"
 _nvsettings="true"
@@ -1515,7 +1518,6 @@ _eglgbm="external"
 _eglx11="external"
 _driver_version="${_driver_version_val}"
 _driver_branch="${_driver_branch_val}"
-_md5sum="SKIP"
 _open_source_modules="false"
 _module_signing="false"
 _blacklist_nouveau="true"
@@ -1526,9 +1528,8 @@ _nvidia_patch_enc_fbc="true"
 _bsb_dsc_fix="true"
 _only_update_if_newer=""
 _dkms="false"
-_target_kernel=""
-_gcc15_fix="false"
 _disable_libalpm_hook=""
+_gcc15_fix="false"
 _gcc14_fix="false"
 _54_prime_fixing_attempt="false"
 _62142_fix="false"
