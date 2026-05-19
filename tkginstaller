@@ -3,8 +3,17 @@
 # Maintainer: damachin3 (damachine3 at proton dot me)
 # website: https://github.com/damachine/tkginstaller
 
+# Command used for superuser privileges (sudo, doas, su)
+if [ ! -x "$(command -v sudo)" ]; then
+  if [ -x "$(command -v doas)" ]; then
+    sudo() { doas "$@"; }
+  elif [ -x "$(command -v su)" ] && [ -x "$(command -v xargs)" ]; then
+    sudo() { echo "$@" | xargs -I {} su -c '{}'; }
+  fi
+fi
+
 # TkG-Installer VERSION definition
-readonly tkg_installer_version="v0.53.0"
+readonly tkg_installer_version="v0.53.1"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _tkg_start_args=("$@")
@@ -160,7 +169,7 @@ __init_style() {
   }
 
   # Define TrueColor values, fallback to tput
-  _red="$(__color 220 60 60 1)"    # warm red
+  red="$(__color 220 60 60 1)"     # warm red
   light="$(__color 80 255 140 2)"  # light green
   neon="$(__color 120 255 100 2)"  # neon green
   mint="$(__color 152 255 200 6)"  # mint green
@@ -218,7 +227,7 @@ __msg() {
   fi
 
   # Ensure colors exist
-  : "${reset:=''}" "${_red:=''}" "${light:=''}" "${neon:=''}" "${mint:=''}" "${dark:=''}" "${orange:=''}" "${gray:=''}" "${uline_on:=''}" "${uline_off:=''}"
+  : "${reset:=''}" "${red:=''}" "${light:=''}" "${neon:=''}" "${mint:=''}" "${dark:=''}" "${orange:=''}" "${gray:=''}" "${uline_on:=''}" "${uline_off:=''}"
 
   # Map level
   local __color="" _prefix=""
@@ -249,7 +258,7 @@ __msg() {
       _prefix="${uline_on}WARNING${uline_off}:${__color} "
       ;;
     error)
-      __color="${_red}"
+      __color="${red}"
       _prefix="${uline_on}ERROR${uline_off}:${__color} "
       ;;
     *)
@@ -293,7 +302,7 @@ if [[ "$(id -u)" -eq 0 ]]; then
   msgwarning "You are running as root!${break}"
   msgplain " Running this script as root is not recommended.${break}"
   msgprompt "Do you really want to continue as root? [y/N]: "
-  trap 'echo;echo; msgplain "${_red}Aborted by user.\n";sleep 1.5s; exit 1' INT
+  trap 'echo;echo; msgplain "${red}Aborted by user.\n";sleep 1.5s; exit 1' INT
   read -r _user_answer
   trap - INT
   if [[ "${_user_answer}" =~ ^([yY]|[yY][eE][sS])$ ]]; then
@@ -301,12 +310,12 @@ if [[ "$(id -u)" -eq 0 ]]; then
     :
   elif [[ "${_user_answer}" =~ ^([nN]|[nN][oO])$ ]]; then
     # Explicit no
-    msgplain "${break}${_red}Aborted by user.${break}"
+    msgplain "${break}${red}Aborted by user.${break}"
     exit 1
   else
     # Invalid input - treat as no (default)
     msgplain "${break}${orange}Invalid input. Defaulting to 'No'.${break}"
-    msgplain "${_red}Aborted.${break}"
+    msgplain "${red}Aborted.${break}"
     exit 1
   fi
 fi
@@ -443,12 +452,12 @@ __build_menu() {
 
   [[ -n "${_opt2_label}" ]] && msgplain " ${orange}2${reset} │ $(printf "%-${_max_label_length}s" "${_opt2_label}")  ${gray}${_opt2_desc}${reset}"
   [[ -n "${_opt9_label}" ]] && msgplain " ${gray}9${reset} │ $(printf "%-${_max_label_length}s" "${_opt9_label}")  ${gray}${_opt9_desc}${reset}"
-  msgplain " ${_red}0${reset} │ Cancel${break}"
+  msgplain " ${red}0${reset} │ Cancel${break}"
 
   local _choices="[${neon}${uline_on}1${uline_off}${reset}"
   [[ -n "${_opt2_label}" ]] && _choices+="/${orange}2${reset}"
   [[ -n "${_opt9_label}" ]] && _choices+="/${gray}9${reset}"
-  _choices+="/${_red}0${reset}]"
+  _choices+="/${red}0${reset}]"
 
   __prompt_timer "${_choices}" 60 1
   _menu_choice="${_user_answer}"
@@ -463,12 +472,76 @@ __export_map() {
   done
 }
 
+# Check for a newer version
+__check_update() {
+  local _cache_dir="${HOME}/.tkginstaller"
+  local _cache_file="${_cache_dir}/.version_cache"
+  local _cache_ttl=86400 # 24 hours in seconds
+  local _found_version=""
+
+  # Read cached remote version
+  if [[ -f "${_cache_file}" ]]; then
+    local _now _mtime _age
+    _now=$(date +%s)
+    _mtime=$(stat -c %Y "${_cache_file}" 2>/dev/null || echo 0)
+    _age=$((_now - _mtime))
+    if ((_age < _cache_ttl)); then
+      local _cached_version
+      _cached_version=$(grep -m1 '^remote=' "${_cache_file}" 2>/dev/null | cut -d= -f2-)
+      if [[ -n "${_cached_version}" && "${_cached_version}" != "${tkg_installer_version}" ]]; then
+        _found_version="${_cached_version}"
+      else
+        return 0
+      fi
+    fi
+  fi
+
+  # Fetch remote version when cache is cold
+  if [[ -z "${_found_version}" ]]; then
+    local _remote_version
+    # shellcheck disable=SC2086
+    _remote_version=$(curl ${_curl_opts} --max-time 4 \
+      "https://raw.githubusercontent.com/damachine/tkginstaller/refs/heads/master/tkginstaller" \
+      2>/dev/null |
+      grep -m1 '^readonly tkg_installer_version=' |
+      sed 's/.*"\(.*\)".*/\1/')
+
+    # Persist result to cache
+    mkdir -p "${_cache_dir}"
+    printf 'remote=%s\n' "${_remote_version:-}" >"${_cache_file}"
+
+    if [[ -n "${_remote_version}" && "${_remote_version}" != "${tkg_installer_version}" ]]; then
+      _found_version="${_remote_version}"
+    fi
+  fi
+
+  # No update
+  [[ -z "${_found_version}" ]] && return 0
+
+  # Show notification
+  msgplain "${neon}${uline_on}UPDATE AVAILABLE${uline_off}:${reset} ${light}${_found_version}${reset} — ${orange}current: ${tkg_installer_version}${reset}"
+  msgplain " ${gray}https://github.com/damachine/tkginstaller${reset}${break}"
+
+  # countdown with skip option
+  local _i _k
+  for ((_i = 10; _i > 0; _i--)); do
+    printf "\r${gray}Continuing in ${orange}%02d${gray}s${reset}  ${gray}[Enter] to skip...${reset}" "${_i}"
+    if read -r -t 1 -n 1 _k </dev/tty 2>/dev/null; then
+      __clear_line 120 ""
+      break
+    fi
+  done
+  __clear_line 120 ""
+  printf "%b\n" "${reset}"
+}
+
 # Pre-installation checks
 __prepare() {
   _load_preview="${1:-false}"
 
   # Welcome message
   __banner
+  __check_update
   printf "%s" "${neon}Starting"
   for _ in {1..3}; do
     printf " ."
@@ -477,8 +550,6 @@ __prepare() {
   printf "%b\n" "${reset}"
 
   # Check required dependencies
-  # onefetch and bat are not in Debian/Ubuntu default repos and already
-  # handled gracefully in code — skip them as hard deps on those distros
   local _dep=(git)
   case "${_distro_id,,}" in
     debian | ubuntu | linuxmint | pop | elementary | mx | raspbian) ;;
@@ -553,7 +624,7 @@ __prepare() {
     for i in {1..7}; do
       __clear_line 120 ""
     done
-    __banner "${_red}"
+    __banner "${red}"
     msgerror "Missing dependencies detected.${break}"
     msgplain " Please install the following dependencies first:${break}"
 
@@ -574,7 +645,7 @@ __prepare() {
     for i in {1..7}; do
       __clear_line 120 ""
     done
-    __banner "${_red}"
+    __banner "${red}"
     msgerror "Creating temporary directory failed: ${tkg_tmp_dir}${break}"
     msgplain " Please check your permissions and try again.${break}"
     exit 1 >/dev/null 2>&1
@@ -624,7 +695,7 @@ __exit() {
 
   # Show banner and status on error
   if [[ ${_exit_code} -ne 0 ]]; then
-    __banner "${_red}"
+    __banner "${red}"
 
     # Show duration on interrupt
     local _duration="${SECONDS:-0}"
@@ -634,7 +705,7 @@ __exit() {
     msgerror "Failed process (Code: ${_exit_code})"
     msgorange "Duration: ${_minutes} min ${_seconds} sec${break}"
 
-    msgplain "${_red} Exiting due to errors. Please check the messages above for details.${break}"
+    msgplain "${red} Exiting due to errors. Please check the messages above for details.${break}"
   else
     __banner
     msgplain "${neon}Closed... Finish${break}"
@@ -847,22 +918,34 @@ __install_package() {
     else
       if [[ -n "${_repo_branch}" ]]; then
         if ! git pull --ff-only --no-rebase origin "${_repo_branch}"; then
-          msginfo "${break}${neon}${uline_on}PROGRESS${uline_off}:${reset} ${light}Git pull failed, trying fresh clone...${reset}${break}"
+          msgwarning "Fast-forward failed (diverged/force-pushed) — resetting to origin/${_repo_branch}..."
+          if git fetch origin "${_repo_branch}" && git reset --hard "origin/${_repo_branch}"; then
+            msginfo "${break}${neon}${uline_on}PROGRESS${uline_off}:${reset} ${light}Reset to ${gray}origin/${_repo_branch}${reset} ${light}successful.${reset}${break}"
+          else
+            msginfo "${break}${neon}${uline_on}PROGRESS${uline_off}:${reset} ${light}Fetch+reset failed, trying fresh clone...${reset}${break}"
+            __cd_safe "${tkg_tmp_dir}" || return 1
+            rm -rf "${_repo_dir}"
+            __git_clone_retry "${_repo_url}" "" 3 "${_repo_branch}" || {
+              msgerror "Cloning failed for: ${_package_name}${break}"
+              return 1
+            }
+          fi
+        fi
+      elif ! git pull --ff-only --no-rebase; then
+        local _default_branch
+        _default_branch="$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|origin/||')"
+        msgwarning "Fast-forward failed (diverged/force-pushed) — resetting to origin/${_default_branch:-HEAD}..."
+        if git fetch origin && git reset --hard "origin/${_default_branch:-HEAD}"; then
+          msginfo "${break}${neon}${uline_on}PROGRESS${uline_off}:${reset} ${light}Reset to ${gray}origin/${_default_branch:-HEAD}${reset} ${light}successful.${reset}${break}"
+        else
+          msginfo "${break}${neon}${uline_on}PROGRESS${uline_off}:${reset} ${light}Fetch+reset failed, trying fresh clone...${reset}${break}"
           __cd_safe "${tkg_tmp_dir}" || return 1
           rm -rf "${_repo_dir}"
-          __git_clone_retry "${_repo_url}" "" 3 "${_repo_branch}" || {
+          __git_clone_retry "${_repo_url}" || {
             msgerror "Cloning failed for: ${_package_name}${break}"
             return 1
           }
         fi
-      elif ! git pull --ff-only --no-rebase; then
-        msginfo "${break}${neon}${uline_on}PROGRESS${uline_off}:${reset} ${light}Git pull failed, trying fresh clone...${reset}${break}"
-        __cd_safe "${tkg_tmp_dir}" || return 1
-        rm -rf "${_repo_dir}"
-        __git_clone_retry "${_repo_url}" || {
-          msgerror "Cloning failed for: ${_package_name}${break}"
-          return 1
-        }
       fi
       __cd_safe "${tkg_tmp_dir}" || return 1
     fi
@@ -1006,7 +1089,7 @@ __prompt_timer() {
   # Simple progress display
   while [[ ${_seconds_left} -gt 0 && ${_abort_flag} == false ]]; do
     # Set trap inside loop so break works correctly
-    trap '__clear_line 120 ""; echo; echo; msgplain "${_red}Aborted by user!${break}"; _abort_flag=true; break' INT
+    trap '__clear_line 120 ""; echo; echo; msgplain "${red}Aborted by user!${break}"; _abort_flag=true; break' INT
 
     # Display prompt
     printf "\r${gray}%s ${reset}  ${orange}%02d${gray}s ${reset}  %s" \
@@ -1327,8 +1410,8 @@ __linux_nvidia_install() {
     msgplain " ${neon}${uline_on}0${uline_off}${reset} │ ${_nvidia_versions[latest]}  ${gray}— default branch, selected${reset} ${neon}(default)${reset}"
     msgplain " ${orange}1${reset} │ ${_nvidia_versions[vulkan]}  ${gray}— Vulkan developer beta${reset}"
     msgplain " ${gray}2${reset} │ ${_nvidia_versions[legacy]}  ${gray}— legacy/LTS branch${reset}"
-    msgplain " ${_red}9${reset} │ Cancel${break}"
-    __prompt_timer "[${neon}${uline_on}0${uline_off}${reset}/${orange}1${reset}/${gray}2${reset}/${_red}9${reset}]" 60 0
+    msgplain " ${red}9${reset} │ Cancel${break}"
+    __prompt_timer "[${neon}${uline_on}0${uline_off}${reset}/${orange}1${reset}/${gray}2${reset}/${red}9${reset}]" 60 0
     case "${_user_answer}" in
       1)
         _pf_nvidia="${_nvidia_versions[vulkan]}"
@@ -1573,12 +1656,12 @@ __dxvk_tools_prepare() {
   msgplain " ${orange}${uline_on}0${uline_off}${reset} │ No (skip)       ${gray}Skip, continue with Proton-TkG${reset}"
   msgplain " ${neon}1${reset} │ Yes (both)      ${light}Build DXVK + vkd3d-proton${reset}"
   msgplain " ${orange}2${reset} │ Custom          ${gray}Choose individually${reset}"
-  msgplain " ${_red}9${reset} │ Cancel${break}"
+  msgplain " ${red}9${reset} │ Cancel${break}"
 
   msginfo "${neon}${uline_on}NOTE${uline_off}:${reset} ${light}Proton-TkG downloads official DXVK by default.${reset}${break}"
   msgplain " Set ${gray}_use_dxvk=\"prebuilt\"${reset} in ${gray}proton-tkg.cfg${reset} to use custom builds.${break}"
 
-  __prompt_timer "[${orange}${uline_on}0${uline_off}${reset}/${neon}1${reset}/${orange}2${reset}/${_red}9${reset}]" 60 0
+  __prompt_timer "[${orange}${uline_on}0${uline_off}${reset}/${neon}1${reset}/${orange}2${reset}/${red}9${reset}]" 60 0
 
   local _build_dxvk=false _build_vkd3d=false _built_something=false
 
@@ -1681,7 +1764,7 @@ __proton_install() {
 __error_config() {
   local _msg="$1"
   clear
-  __banner "${_red}"
+  __banner "${red}"
   msgerror "${_msg}"
   msgprompt "Press any key to continue...${break}"
   read -n 1 -s -r
@@ -1775,22 +1858,32 @@ __menu_logs() {
     local _pkg_menu=""
     local _keys=(linux nvidia wine proton)
     local _icons=("🐧" "💻" "🍷" "🎮")
-    local _labels=("Linux-TkG  " "Nvidia-all " "Wine-TkG   " "Proton-TkG ")
-    local i=0
-    for _key in "${_keys[@]}"; do
-      local _subdir
-      _subdir=$(printf '%s\n' "${_log_subdirs_json}" | grep "^${_key}=" | cut -d= -f2-)
-      local _full_dir="${tkg_tmp_dir}/${_subdir}"
-      local _status_str
+    local _labels=("Linux-TkG" "Nvidia-all" "Wine-TkG" "Proton-TkG")
+    local i _key _subdir _full_dir _status_str _cnt
+
+    # First pass: collect paths and find max column widths
+    local -a _full_dirs=()
+    local _max_label=0 _max_path=0 _len
+    for i in "${!_keys[@]}"; do
+      _subdir=$(printf '%s\n' "${_log_subdirs_json}" | grep "^${_keys[$i]}=" | cut -d= -f2-)
+      _full_dirs[i]="${tkg_tmp_dir}/${_subdir}"
+      _len=${#_labels[$i]}
+      ((_len > _max_label)) && _max_label=$_len
+      _len=${#_full_dirs[$i]}
+      ((_len > _max_path)) && _max_path=$_len
+    done
+
+    # Second pass: build aligned menu entries
+    for i in "${!_keys[@]}"; do
+      _key="${_keys[$i]}"
+      _full_dir="${_full_dirs[$i]}"
       if [[ -d "${_full_dir}" ]] && [[ -n "$(ls -A "${_full_dir}" 2>/dev/null)" ]]; then
-        local _cnt
         _cnt=$(find "${_full_dir}" -maxdepth 1 -type f 2>/dev/null | wc -l)
         _status_str="${neon}${_cnt} log file(s)${reset}"
       else
         _status_str="${orange}no logs${reset}"
       fi
-      _pkg_menu+="${_key}|${_icons[$i]} ${neon}${_labels[$i]}${gray} ${_full_dir} ${reset}${_status_str}"$'\n'
-      ((i++))
+      _pkg_menu+="${_key}|${_icons[$i]} ${neon}$(printf "%-${_max_label}s" "${_labels[$i]}")${gray}  $(printf "%-${_max_path}s" "${_full_dir}")  ${reset}${_status_str}"$'\n'
     done
     _pkg_menu+="return|⏪ ${neon}Return"
 
@@ -1803,10 +1896,17 @@ __menu_logs() {
       _dir="'"${tkg_tmp_dir}"'/${_subdir}"
       if [[ -d "${_dir}" ]] && ls "${_dir}"/* >/dev/null 2>&1; then
         printf "%b\n" "'"${light}"'Log files in '"${gray}"'${_dir}'"${reset}"':\n"
-        find "${_dir}" -maxdepth 1 -type f | sort | while IFS= read -r _f; do
-          _sz=$(du -sh "${_f}" 2>/dev/null | cut -f1)
-          _mt=$(date -r "${_f}" "+%Y-%m-%d %H:%M" 2>/dev/null || stat -c "%y" "${_f}" 2>/dev/null | cut -d. -f1)
-          printf "%b\n" "  '"${neon}"'→'"${reset}"' '"${gray}"'$(basename "${_f}")'"${reset}"'  '"${orange}"'${_sz}'"${reset}"'  '"${light}"'${_mt}'"${reset}"'"
+        _fnames=(); _fsizes=(); _fdates=(); _max_n=0; _max_s=0
+        while IFS= read -r _f; do
+          _n=$(basename "${_f}")
+          _s=$(du -sh "${_f}" 2>/dev/null | cut -f1)
+          _t=$(date -r "${_f}" "+%Y-%m-%d %H:%M" 2>/dev/null || stat -c "%y" "${_f}" 2>/dev/null | cut -d. -f1)
+          _fnames+=("${_n}"); _fsizes+=("${_s}"); _fdates+=("${_t}")
+          (( ${#_n} > _max_n )) && _max_n=${#_n}
+          (( ${#_s} > _max_s )) && _max_s=${#_s}
+        done < <(find "${_dir}" -maxdepth 1 -type f | sort)
+        for _i in "${!_fnames[@]}"; do
+          printf "%b\n" "  '"${neon}"'→'"${reset}"' '"${gray}"'$(printf "%-${_max_n}s" "${_fnames[$_i]}")'"${reset}"'  '"${orange}"'$(printf "%${_max_s}s" "${_fsizes[$_i]}")'"${reset}"'  '"${light}"'${_fdates[$_i]}'"${reset}"'"
         done
       else
         printf "%b\n" "'"${orange}"'No log files found.'"${reset}"'\n'"${gray}"'Expected: '"${reset}"'${_dir}"
@@ -1949,7 +2049,7 @@ __menu_config() {
 
       local _old_trap_int=""
       _old_trap_int=$(trap -p INT 2>/dev/null)
-      trap 'echo;echo; msgplain "${_red}Aborted by user.${reset}";sleep 1.5; clear; return 0' INT
+      trap 'echo;echo; msgplain "${red}Aborted by user.${reset}";sleep 1.5; clear; return 0' INT
       __prompt_answer "n"
       if [[ -n "${_old_trap_int}" ]]; then eval "${_old_trap_int}"; else trap - INT; fi
 
@@ -2045,7 +2145,7 @@ __menu_config() {
 
     # bat/wdiff diff preview commands
     local _bat_cmd="bat --style=plain --language=cfg --wrap character --terminal-width ${cols} --force-colorization --theme='Visual Studio Dark+'"
-    local _diff_cmd="wdiff --terminal --statistics --start-delete='${_red}' --end-delete='${reset}' --start-insert='${light}' --end-insert='${reset}'"
+    local _diff_cmd="wdiff --terminal --statistics --start-delete='${red}' --end-delete='${reset}' --start-insert='${light}' --end-insert='${reset}'"
 
     # Preview command
     # shellcheck disable=SC2016 # Need to use single quotes for fzf preview
@@ -2221,7 +2321,7 @@ __check_config() {
     if [[ -n "${_deprecated_vars}" ]]; then
       msgwarning "Deprecated variables (no longer used upstream):${break}"
       while IFS= read -r _var; do
-        [[ -n "${_var}" ]] && msgplain " ${_red}✗${reset} ${gray}${_var}${reset}"
+        [[ -n "${_var}" ]] && msgplain " ${red}✗${reset} ${gray}${_var}${reset}"
       done <<<"${_deprecated_vars}"
       echo
     fi
@@ -2554,7 +2654,7 @@ __main_interactive_mode() {
   __prepare true
   clear
   __menu || {
-    __banner "${_red}"
+    __banner "${red}"
     msgerror "Failed to initialize fzf menu!"
     msgplain " Exiting..."
     trap - INT TERM EXIT HUP
