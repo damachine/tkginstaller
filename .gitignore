@@ -23,6 +23,7 @@ pkg/
 .*.sw?
 *.kate-swp
 gnupg/
+tkginstaller_beta
 .github/copilot-instructions.md
 .github/instructions/*
 .github/agents/*
