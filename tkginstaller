@@ -13,7 +13,7 @@ if [ ! -x "$(command -v sudo)" ]; then
 fi
 
 # TkG-Installer VERSION definition
-readonly tkg_installer_version="v0.53.6"
+readonly tkg_installer_version="v0.53.7"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _tkg_start_args=("$@")
@@ -34,7 +34,7 @@ damachine_nvidia_all_repo=https://github.com/damachine/nvidia-all.git
 
 # nvidia-open version map — keep in sync with damachine/nvidia-all PKGBUILD
 declare -gA _nvidia_versions=(
-  [latest]="595.71.05"
+  [latest]="610.43.02"
   [vulkan]="595.44.09"
   [legacy]="580.159.04"
 )
@@ -81,7 +81,7 @@ declare -gA _frog_pkg_workdir=(
 )
 
 # Default build command
-readonly _frog_pkg_cmd_default="makepkg -si"
+readonly _frog_pkg_cmd_default="makepkg -Ccfsi"
 declare -gA _frog_pkg_cmd=(
   # Example override:
   # [wine]="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
@@ -433,7 +433,7 @@ __git_clone_retry() {
 # Usage: __build_menu "Package Name" "opt1_label" "opt1_desc" ["opt2_label" "opt2_desc" "opt9_label" "opt9_desc"]
 __build_menu() {
   local _pkg_name="$1"
-  local _opt1_label="${2:-makepkg -si}"
+  local _opt1_label="${2:-makepkg -Ccfsi}"
   local _opt1_desc="${3:-recommended for Arch}"
   local _opt2_label="${4:-}"
   local _opt2_desc="${5:-custom build script}"
@@ -1171,7 +1171,7 @@ __linux_install() {
 
   if [[ "${_is_arch_based}" == "true" ]]; then
     __build_menu "Linux-TkG" \
-      "makepkg -si" "recommended for Arch" \
+      "makepkg -Ccfsi" "recommended for Arch" \
       "install.sh install" "(generic script)" \
       "install.sh uninstall" "(show uninstall help)"
 
@@ -1182,7 +1182,7 @@ __linux_install() {
         ;;
       2) _build_command="chmod +x install.sh && ./install.sh install" ;;
       9) _build_command="chmod +x install.sh && ./install.sh uninstall-help" ;;
-      *) _build_command="makepkg -si" ;;
+      *) _build_command="makepkg -Ccfsi" ;;
     esac
   else
     local _pkg_type=""
@@ -1269,7 +1269,7 @@ AUTOFDO_PRESET_CFG
     printf '_autofdo_profile_path="%s"\n' "${_afdo_profile}" >>"${_autofdo_preset}"
   fi
 
-  local _build_command="rm -f BIG_UGLY_FROGMINER && _EXT_CONFIG_PATH=\"${_autofdo_preset}\" makepkg -si"
+  local _build_command="rm -f BIG_UGLY_FROGMINER && _EXT_CONFIG_PATH=\"${_autofdo_preset}\" makepkg -Ccfsi"
   __install_package "${_linux_repo}" "linux-tkg" "${_build_command}" "" "" "${_linux_branch}"
   local _status=$?
 
@@ -1296,30 +1296,16 @@ AUTOFDO_PRESET_CFG
 __nvidia_install() {
   msgpkg "Nvidia-all" "${frog_repo_url}/nvidia-all/blob/master/customization.cfg"
 
-  # Repository source selection
+  # Repository defaults
   local _nvidia_repo="${_frog_pkg_repo[nvidia]}"
   local _nvidia_branch="master"
-  msginfo "${break}${neon}${uline_on}SOURCE${uline_off}:${reset} ${light}Which nvidia-all repository do you want to use?${reset}${break}"
-  msgplain " ${neon}${uline_on}0${uline_off}${reset} │ Upstream       ${gray}${frog_repo_url}/nvidia-all${reset}"
-  msgplain " ${orange}1${reset} │ Staging fork   ${gray}https://github.com/damachine/nvidia-all${reset} ${orange}(branch: staging)${reset}${break}"
-  __prompt_timer "[${neon}${uline_on}0${uline_off}${reset}/${orange}1${reset}]" 60 0
-  case "${_user_answer}" in
-    1)
-      _nvidia_repo="${damachine_nvidia_all_repo}"
-      _nvidia_branch="staging"
-      ;;
-    *)
-      _nvidia_repo="${_frog_pkg_repo[nvidia]}"
-      _nvidia_branch="master"
-      ;;
-  esac
 
   local _build_command="${_frog_pkg_cmd_default}"
 
-  # install.sh is only available in the damachine staging fork
-  if [[ "${_nvidia_branch}" == "staging" ]]; then
+  # nvidia-all now ships install.sh for multi-distro support.
+  if [[ "${_is_arch_based}" == "true" ]]; then
     __build_menu "Nvidia-all" \
-      "makepkg -si" "Arch-based (recommended)" \
+      "makepkg -Ccfsi" "Arch-based (recommended)" \
       "bash install.sh" "all distributions (Debian, Ubuntu, Fedora, SUSE, Arch)"
 
     case "${_menu_choice}" in
@@ -1328,7 +1314,20 @@ __nvidia_install() {
         __exit 1
         ;;
       2) _build_command="bash install.sh" ;;
-      *) _build_command="makepkg -si" ;;
+      *) _build_command="makepkg -Ccfsi" ;;
+    esac
+  else
+    __build_menu "Nvidia-all" \
+      "bash install.sh" "all distributions (recommended for ${_distro_name})" \
+      "makepkg -Ccfsi" "Arch package build workflow"
+
+    case "${_menu_choice}" in
+      0)
+        msginfo "${break}${orange}Cancelled by user${reset}${break}"
+        __exit 1
+        ;;
+      2) _build_command="makepkg -Ccfsi" ;;
+      *) _build_command="bash install.sh" ;;
     esac
   fi
 
@@ -1521,7 +1520,7 @@ _blacklist_nouveau="true"
 _modprobe="true"
 _modprobe_mobile="true"
 _nvidia_patch_enc_fbc="true"
-_module_signing="false"
+_module_signing="true"
 _kerneloverride=""
 _target_kernel=""
 _local_package_storing="false"
@@ -1533,6 +1532,7 @@ _gcc15_fix="false"
 _gcc14_fix="false"
 _54_prime_fixing_attempt="false"
 _62142_fix="false"
+_user_patches="false"
 _md5sum="SKIP"
 NVIDIA_CUSTOMIZATION_CFG
 
@@ -1615,7 +1615,7 @@ __wine_install() {
 
   if [[ "${_is_arch_based}" == "true" ]]; then
     __build_menu "Wine-TkG" \
-      "makepkg -si" "recommended for Arch" \
+      "makepkg -Ccfsi" "recommended for Arch" \
       "non-makepkg-build.sh" "(custom build script)"
 
     case "${_menu_choice}" in
@@ -1624,7 +1624,7 @@ __wine_install() {
         __exit 1
         ;;
       2) _build_command="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh" ;;
-      *) _build_command="makepkg -si" ;;
+      *) _build_command="makepkg -Ccfsi" ;;
     esac
   else
     _build_command="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
