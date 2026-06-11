@@ -13,26 +13,25 @@ if [ ! -x "$(command -v sudo)" ]; then
 fi
 
 # TkG-Installer VERSION definition
-readonly tkg_installer_version="v0.54.0"
+readonly pkgver="v0.54.1"
 
 # Keep original CLI args for one-shot auto-restart recovery
-declare -ga _tkg_start_args=("$@")
+declare -ga _runargs=("$@")
 
 # =============================================================================
 # ENVIRONMENT SETUP
 # =============================================================================
 
 # Global variables, paths, and configurations
-tkg_tmp_dir=${HOME}/.tkginstaller/.cache
-tkg_choice_file=${tkg_tmp_dir}/.choice.tmp
-local_config_dir=${HOME}/.config/frogminer
-tkg_raw_url=https://raw.githubusercontent.com/damachine/tkginstaller/refs/heads/master/docs
-frog_repo_url=https://github.com/Frogging-Family
-frog_raw_url=https://raw.githubusercontent.com/Frogging-Family
-damachine_linux_tkg_repo=https://github.com/damachine/linux-tkg.git
-damachine_nvidia_all_repo=https://github.com/damachine/nvidia-all.git
+_tmpdir=${HOME}/.tkginstaller/.cache
+_choicetmp=${_tmpdir}/.choice.tmp
+_localcfg=${HOME}/.config/frogminer
+_reposrc=https://github.com/Frogging-Family
+_reposrc_raw=https://raw.githubusercontent.com/Frogging-Family
+_reposrc_damachine=https://github.com/damachine/linux-tkg.git
+_reposrc_raw_damachine=https://raw.githubusercontent.com/damachine/tkginstaller/refs/heads/master/docs
 
-# nvidia-open version map — keep in sync with damachine/nvidia-all PKGBUILD
+# nvidia-open version map
 declare -gA _nvidia_versions=(
   [latest]="610.43.02"
   [vulkan]="595.44.09"
@@ -43,24 +42,24 @@ declare -gA _nvidia_versions=(
 _curl_opts="--max-time 10 --connect-timeout 5 -fsSL"
 
 # Export only variables used in fzf preview commands
-export tkg_tmp_dir local_config_dir tkg_raw_url frog_raw_url _curl_opts
+export _tmpdir _localcfg _reposrc_raw_damachine _reposrc_raw _curl_opts
 
 # Package repo URLs
-declare -gA _frog_pkg_repo=(
-  [linux]="${frog_repo_url}/linux-tkg.git"
-  [nvidia]="${frog_repo_url}/nvidia-all.git"
-  [mesa]="${frog_repo_url}/mesa-git.git"
-  [amdgpu]="${frog_repo_url}/amdgpu-pro-vulkan-only.git"
-  [amdvlk]="${frog_repo_url}/amdvlk-opt.git"
-  [wine]="${frog_repo_url}/wine-tkg-git.git"
-  [proton]="${frog_repo_url}/wine-tkg-git.git"
-  [dxvk]="${frog_repo_url}/dxvk-tools.git"
-  [gamescope]="${frog_repo_url}/gamescope-git.git"
-  [glibc]="${frog_repo_url}/glibc-eac.git"
+declare -gA _pkgrepo=(
+  [linux]="${_reposrc}/linux-tkg.git"
+  [nvidia]="${_reposrc}/nvidia-all.git"
+  [mesa]="${_reposrc}/mesa-git.git"
+  [amdgpu]="${_reposrc}/amdgpu-pro-vulkan-only.git"
+  [amdvlk]="${_reposrc}/amdvlk-opt.git"
+  [wine]="${_reposrc}/wine-tkg-git.git"
+  [proton]="${_reposrc}/wine-tkg-git.git"
+  [dxvk]="${_reposrc}/dxvk-tools.git"
+  [gamescope]="${_reposrc}/gamescope-git.git"
+  [glibc]="${_reposrc}/glibc-eac.git"
 )
 
 # Configuration file paths
-declare -gA _frog_pkg_config=(
+declare -gA _pkgconfig=(
   [linux]="linux-tkg/master/customization.cfg"
   [nvidia]="nvidia-all/master/customization.cfg"
   [mesa]="mesa-git/master/customization.cfg"
@@ -74,21 +73,21 @@ declare -gA _frog_pkg_config=(
 )
 
 # Subdir to enter after clone
-declare -gA _frog_pkg_workdir=(
+declare -gA _pkgdir=(
   [amdvlk]="amdvlk-buildfromsource"
   [wine]="wine-tkg-git"
   [proton]="proton-tkg"
 )
 
 # Default build command
-readonly _frog_pkg_cmd_default="makepkg -Ccfsi"
-declare -gA _frog_pkg_cmd=(
+readonly _pkgcmd_default="makepkg -Ccfsi"
+declare -gA _pkgcmd=(
   # Example override:
   # [wine]="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
 )
 
 # Local config filenames
-declare -gA _frog_pkg_local_config=(
+declare -gA _pkglocalcfg=(
   [linux]="linux-tkg.cfg"
   [nvidia]="nvidia-all.cfg"
   [mesa]="mesa-git.cfg"
@@ -125,7 +124,7 @@ __is_config_arg() {
 # Get full config URL for a package
 __get_config_url() {
   local _pkg="$1"
-  [[ -n "${_frog_pkg_config[${_pkg}]:-}" ]] && echo "${frog_raw_url}/${_frog_pkg_config[${_pkg}]}"
+  [[ -n "${_pkgconfig[${_pkg}]:-}" ]] && echo "${_reposrc_raw}/${_pkgconfig[${_pkg}]}"
 }
 
 # Initialize color and formatting
@@ -202,7 +201,7 @@ __banner() {
 ░▀█▀░█░█░█▀▀░░░░░▀█▀░█▀█░█▀▀░▀█▀░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░█░░█▀▄░█░█░▄▄▄░░█░░█░█░▀▀█░░█░░█▀█░█░░░█░░░█▀▀░█▀▄
 ░░▀░░▀░▀░▀▀▀░░░░░▀▀▀░▀░▀░▀▀▀░░▀░░▀░▀░▀▀▀░▀▀▀░▀▀▀░▀░▀
-──  ${tkg_installer_version}  ──
+──  ${pkgver}  ──
 EOF
   printf "%b\n" "${reset}"
 }
@@ -284,7 +283,7 @@ msgplain() { __msg 'plain' "$@"; }
 # Display package information
 msgpkg() {
   local _pkg_name="${1:-TkG package}"
-  local _config_url="${2:-${frog_repo_url}}"
+  local _config_url="${2:-${_reposrc}}"
 
   msginfo "${break}${neon}${uline_on}INFO${uline_off}:${reset} ${light}Configuration Options for ${_pkg_name}${reset}${break}"
   msgplain " A wide range of options are available!"
@@ -339,6 +338,16 @@ if [[ "${_distro_id,,}" =~ ^(arch|cachyos|manjaro|endeavouros)$ || "${_distro_li
 else
   _is_arch_based="false"
 fi
+
+# nvidia-all install.sh expects one of: Arch, Debian, Ubuntu, Fedora, Suse.
+case "${_distro_id,,} ${_distro_like,,}" in
+  *arch* | *manjaro* | *endeavouros* | *cachyos*) _nvidia_all_distro="Arch" ;;
+  *ubuntu* | *linuxmint* | *pop* | *elementary* | *zorin*) _nvidia_all_distro="Ubuntu" ;;
+  *debian*) _nvidia_all_distro="Debian" ;;
+  *fedora* | *rhel* | *centos* | *rocky* | *alma*) _nvidia_all_distro="Fedora" ;;
+  *suse*) _nvidia_all_distro="Suse" ;;
+  *) _nvidia_all_distro="" ;;
+esac
 
 # Help information display
 __help() {
@@ -421,7 +430,7 @@ __git_clone_retry() {
     msgwarning "Clone failed ${_max_attempts} times. Running 'tkginstaller clean' and restarting once..."
     __clean_temp_dir
     msginfo "Restarting installer once with previous arguments...${break}"
-    exec env _TKG_AUTO_RESTARTED=1 "$0" "${_tkg_start_args[@]}"
+    exec env _TKG_AUTO_RESTARTED=1 "$0" "${_runargs[@]}"
   fi
 
   msgerror "Clone failed again after automatic clean+restart.${break}"
@@ -429,8 +438,6 @@ __git_clone_retry() {
 }
 
 # Build menu for installation method selection
-# Sets _menu_choice global variable (not returned via echo due to subshell stdin issues)
-# Usage: __build_menu "Package Name" "opt1_label" "opt1_desc" ["opt2_label" "opt2_desc" "opt9_label" "opt9_desc"]
 __build_menu() {
   local _pkg_name="$1"
   local _opt1_label="${2:-makepkg -Ccfsi}"
@@ -488,7 +495,7 @@ __check_update() {
     if ((_age < _cache_ttl)); then
       local _cached_version
       _cached_version=$(grep -m1 '^remote=' "${_cache_file}" 2>/dev/null | cut -d= -f2-)
-      if [[ -n "${_cached_version}" && "${_cached_version}" != "${tkg_installer_version}" ]]; then
+      if [[ -n "${_cached_version}" && "${_cached_version}" != "${pkgver}" ]]; then
         _found_version="${_cached_version}"
       else
         return 0
@@ -503,14 +510,14 @@ __check_update() {
     _remote_version=$(curl ${_curl_opts} --max-time 4 \
       "https://raw.githubusercontent.com/damachine/tkginstaller/refs/heads/master/tkginstaller" \
       2>/dev/null |
-      grep -m1 '^readonly tkg_installer_version=' |
+      grep -m1 '^readonly pkgver=' |
       sed 's/.*"\(.*\)".*/\1/')
 
     # Persist result to cache
     mkdir -p "${_cache_dir}"
     printf 'remote=%s\n' "${_remote_version:-}" >"${_cache_file}"
 
-    if [[ -n "${_remote_version}" && "${_remote_version}" != "${tkg_installer_version}" ]]; then
+    if [[ -n "${_remote_version}" && "${_remote_version}" != "${pkgver}" ]]; then
       _found_version="${_remote_version}"
     fi
   fi
@@ -519,7 +526,7 @@ __check_update() {
   [[ -z "${_found_version}" ]] && return 0
 
   # Show notification
-  msgplain "${neon}${uline_on}UPDATE AVAILABLE${uline_off}:${reset} ${light}${_found_version}${reset} — ${orange}current: ${tkg_installer_version}${reset}"
+  msgplain "${neon}${uline_on}UPDATE AVAILABLE${uline_off}:${reset} ${light}${_found_version}${reset} — ${orange}current: ${pkgver}${reset}"
   msgplain " ${gray}https://github.com/damachine/tkginstaller${reset}${break}"
 
   # countdown with skip option
@@ -639,14 +646,14 @@ __prepare() {
   fi
 
   # Setup temporary directory
-  rm -f "${tkg_choice_file}"
+  rm -f "${_choicetmp}"
   # Preserve cache for git pull reuse
-  mkdir -p "${tkg_tmp_dir}" || {
+  mkdir -p "${_tmpdir}" || {
     for i in {1..7}; do
       __clear_line 120 ""
     done
     __banner "${red}"
-    msgerror "Creating temporary directory failed: ${tkg_tmp_dir}${break}"
+    msgerror "Creating temporary directory failed: ${_tmpdir}${break}"
     msgplain " Please check your permissions and try again.${break}"
     exit 1 >/dev/null 2>&1
   }
@@ -723,10 +730,10 @@ trap '__exit $?' EXIT
 # Cleanup handler
 __clean() {
   # Remove choice tmpfile only
-  rm -f "${tkg_choice_file}"
+  rm -f "${_choicetmp}"
 
   # Unset all variables
-  unset tkg_tmp_dir local_config_dir tkg_raw_url frog_raw_url _curl_opts
+  unset _tmpdir _localcfg _reposrc_raw_damachine _reposrc_raw _curl_opts
   unset break reset light neon mint dark orange gray uline_on uline_off cols line
 }
 
@@ -734,7 +741,7 @@ __clean() {
 __clean_temp_dir() {
   __banner
   msginfo "Cleaning all temporary files...${break}"
-  msgplain " Location:${reset}${gray} ${tkg_tmp_dir}${reset}${break}"
+  msgplain " Location:${reset}${gray} ${_tmpdir}${reset}${break}"
   local _cache_count=0
   local _cache_size_bytes=0
   local _cache_size_human=""
@@ -751,7 +758,7 @@ __clean_temp_dir() {
 
   # Measure all target directories before deletion
   local -a _measure_dirs=()
-  [[ -d "${tkg_tmp_dir}" ]] && _measure_dirs+=("${tkg_tmp_dir}")
+  [[ -d "${_tmpdir}" ]] && _measure_dirs+=("${_tmpdir}")
   [[ -d "/tmp/makepkg/nvidia-all" ]] && _measure_dirs+=("/tmp/makepkg/nvidia-all")
   [[ -n "${_kwf}" && -d "${_kwf}/linux-tkg" ]] && _measure_dirs+=("${_kwf}/linux-tkg")
   [[ -n "${_ksf}" && -d "${_ksf}/linux-tkg" ]] && _measure_dirs+=("${_ksf}/linux-tkg")
@@ -775,16 +782,16 @@ __clean_temp_dir() {
     _cache_size_human="${_cache_size_bytes}B"
   fi
 
-  rm -f "${tkg_choice_file}"
+  rm -f "${_choicetmp}"
 
   # Detect chattr +i immutable patch files; inform user and suppress rm -rf errors
   local -a _immutable_files=()
-  if [[ -d "${tkg_tmp_dir}" ]] && command -v lsattr >/dev/null 2>&1; then
+  if [[ -d "${_tmpdir}" ]] && command -v lsattr >/dev/null 2>&1; then
     while IFS= read -r -d '' _f; do
       if lsattr "${_f}" 2>/dev/null | cut -d' ' -f1 | grep -qF 'i'; then
-        _immutable_files+=("${_f#"${tkg_tmp_dir}/"}")
+        _immutable_files+=("${_f#"${_tmpdir}/"}")
       fi
-    done < <(find "${tkg_tmp_dir}" -type f \( -name '*.myfrag' -o -name '*.mypatch' \) -print0 2>/dev/null)
+    done < <(find "${_tmpdir}" -type f \( -name '*.myfrag' -o -name '*.mypatch' \) -print0 2>/dev/null)
   fi
 
   if [[ ${#_immutable_files[@]} -gt 0 ]]; then
@@ -796,8 +803,8 @@ __clean_temp_dir() {
   fi
 
   # Immutable files survive rm -rf; suppress non-zero exit
-  msgplain " ${neon}Removing:${reset} ${gray}${tkg_tmp_dir}${reset}"
-  rm -rf "${tkg_tmp_dir}" 2>/dev/null || true
+  msgplain " ${neon}Removing:${reset} ${gray}${_tmpdir}${reset}"
+  rm -rf "${_tmpdir}" 2>/dev/null || true
 
   # Also clean /tmp/makepkg subdirs for linux-tkg and nvidia-* builds
   local _makepkg_dir
@@ -834,7 +841,7 @@ __fzf_menu() {
   local _preview_command="$2"
   local _header_text="$3"
   local _footer_text="$4"
-  local _border_label_text="${5:-${tkg_installer_version}}"
+  local _border_label_text="${5:-${pkgver}}"
   local _preview_window_settings="${6:-right:wrap:55%}"
   local _fzf_bind="${7:-ctrl-p:toggle-preview}"
 
@@ -885,7 +892,7 @@ __install_package() {
   local _post_build_hook="${5:-}"
   local _repo_branch="${6:-}"
 
-  __cd_safe "${tkg_tmp_dir}" || return 1
+  __cd_safe "${_tmpdir}" || return 1
 
   local _repo_dir
   _repo_dir=$(basename "${_repo_url}" .git)
@@ -908,13 +915,13 @@ __install_package() {
 
     if [[ "${_normalized_origin}" != "${_normalized_repo}" || (-n "${_repo_branch}" && "${_current_branch}" != "${_repo_branch}") ]]; then
       msginfo "${break}${neon}${uline_on}CACHE${uline_off}:${reset} ${light}Selected source changed, cleaning cached ${gray}${_package_name}${reset}${light} checkout...${reset}${break}"
-      __cd_safe "${tkg_tmp_dir}" || return 1
+      __cd_safe "${_tmpdir}" || return 1
       rm -rf "${_repo_dir}"
       __git_clone_retry "${_repo_url}" "" 3 "${_repo_branch}" || {
         msgerror "Cloning failed for: ${_package_name}${break}"
         return 1
       }
-      __cd_safe "${tkg_tmp_dir}" || return 1
+      __cd_safe "${_tmpdir}" || return 1
     else
       if [[ -n "${_repo_branch}" ]]; then
         if ! git pull --ff-only --no-rebase origin "${_repo_branch}"; then
@@ -923,7 +930,7 @@ __install_package() {
             msginfo "${break}${neon}${uline_on}PROGRESS${uline_off}:${reset} ${light}Reset to ${gray}origin/${_repo_branch}${reset} ${light}successful.${reset}${break}"
           else
             msginfo "${break}${neon}${uline_on}PROGRESS${uline_off}:${reset} ${light}Fetch+reset failed, trying fresh clone...${reset}${break}"
-            __cd_safe "${tkg_tmp_dir}" || return 1
+            __cd_safe "${_tmpdir}" || return 1
             rm -rf "${_repo_dir}"
             __git_clone_retry "${_repo_url}" "" 3 "${_repo_branch}" || {
               msgerror "Cloning failed for: ${_package_name}${break}"
@@ -939,7 +946,7 @@ __install_package() {
           msginfo "${break}${neon}${uline_on}PROGRESS${uline_off}:${reset} ${light}Reset to ${gray}origin/${_default_branch:-HEAD}${reset} ${light}successful.${reset}${break}"
         else
           msginfo "${break}${neon}${uline_on}PROGRESS${uline_off}:${reset} ${light}Fetch+reset failed, trying fresh clone...${reset}${break}"
-          __cd_safe "${tkg_tmp_dir}" || return 1
+          __cd_safe "${_tmpdir}" || return 1
           rm -rf "${_repo_dir}"
           __git_clone_retry "${_repo_url}" || {
             msgerror "Cloning failed for: ${_package_name}${break}"
@@ -947,7 +954,7 @@ __install_package() {
           }
         fi
       fi
-      __cd_safe "${tkg_tmp_dir}" || return 1
+      __cd_safe "${_tmpdir}" || return 1
     fi
   else
     msginfo "${break}${neon}${uline_on}PROGRESS${uline_off}:${reset} ${light}Cloning ${gray}${_package_name}${reset} ${light}from Frogging-Family repository...${reset}${break}"
@@ -1059,11 +1066,11 @@ __resolve_nvidia_value() {
 # Generic package installation via registry
 __install_pkg_key() {
   local _key="$1"
-  local _repo="${_frog_pkg_repo[${_key}]}"
+  local _repo="${_pkgrepo[${_key}]}"
   local _name="${_key}"
-  local _cmd="${_frog_pkg_cmd[${_key}]:-${_frog_pkg_cmd_default}}"
-  local _workdir="${_frog_pkg_workdir[${_key}]:-}"
-  local _config_url="${_frog_pkg_config[${_key}]:-}"
+  local _cmd="${_pkgcmd[${_key}]:-${_pkgcmd_default}}"
+  local _workdir="${_pkgdir[${_key}]:-}"
+  local _config_url="${_pkgconfig[${_key}]:-}"
 
   # Show config URL if set
   if [[ -n "${_config_url}" ]]; then
@@ -1096,7 +1103,7 @@ __prompt_timer() {
       "${_prompt_options}" "${_seconds_left}"
 
     if read -r -t 1 -n 1 _key </dev/tty; then
-      # Enter = accept default
+      # Accept default
       if [[ -z "${_key}" ]]; then
         _user_answer="${_default}"
         __clear_line 120 ""
@@ -1147,22 +1154,22 @@ __prompt_answer() {
 
 # Linux-TkG installation
 __linux_install() {
-  msgpkg "Linux-TkG" "${frog_repo_url}/linux-tkg/blob/master/customization.cfg"
+  msgpkg "Linux-TkG" "${_reposrc}/linux-tkg/blob/master/customization.cfg"
 
   # Repository source selection
-  local _linux_repo="${_frog_pkg_repo[linux]}"
+  local _linux_repo="${_pkgrepo[linux]}"
   local _linux_branch="master"
   msginfo "${break}${neon}${uline_on}SOURCE${uline_off}:${reset} ${light}Which Linux-TkG repository do you want to use?${reset}${break}"
-  msgplain " ${neon}${uline_on}0${uline_off}${reset} │ Upstream       ${gray}${frog_repo_url}/linux-tkg${reset}"
+  msgplain " ${neon}${uline_on}0${uline_off}${reset} │ Upstream       ${gray}${_reposrc}/linux-tkg${reset}"
   msgplain " ${orange}1${reset} │ Staging fork   ${gray}https://github.com/damachine/linux-tkg${reset} ${orange}(branch: staging)${reset}${break}"
   __prompt_timer "[${neon}${uline_on}0${uline_off}${reset}/${orange}1${reset}]" 60 0
   case "${_user_answer}" in
     1)
-      _linux_repo="${damachine_linux_tkg_repo}"
+      _linux_repo="${_reposrc_damachine}"
       _linux_branch="staging"
       ;;
     *)
-      _linux_repo="${_frog_pkg_repo[linux]}"
+      _linux_repo="${_pkgrepo[linux]}"
       _linux_branch="master"
       ;;
   esac
@@ -1203,90 +1210,7 @@ __linux_install() {
     msginfo "${break}${neon}${uline_on}TIP${uline_off}:${reset}${light} Uninstalling custom kernels has to be done manually.${break}"
     msgprompt "Show uninstall info now? [y/N]: "
     read -r _show_info
-    [[ "${_show_info,,}" =~ ^(y|yes)$ ]] && { cd "${tkg_tmp_dir}/linux-tkg" && ./install.sh uninstall-help; }
-  fi
-
-  return "${_status:-0}"
-}
-
-# Linux-TkG AutoFDO installation (Pass 1: profilable build / Pass 2: optimized rebuild)
-__linux_autofdo_install() {
-  local _autofdo_pass="${1:-pass1}"
-  local _afdo_profile="${HOME}/.config/frogminer/tkg.afdo"
-
-  msgpkg "Linux-TkG AutoFDO ${_autofdo_pass^^}" "${frog_repo_url}/linux-tkg/blob/master/customization.cfg"
-
-  # Pass 2: verify profile exists before proceeding
-  if [[ "${_autofdo_pass}" == "pass2" ]]; then
-    if [[ ! -f "${_afdo_profile}" ]]; then
-      msgerror "AutoFDO Pass 2 requires a profile at: ${gray}${_afdo_profile}${reset}${break}"
-      msgplain " Run ${orange}$0 linux pass1${reset} first, collect perf data and generate the .afdo profile.${break}"
-      return 1
-    fi
-    msginfo "${break}${neon}${uline_on}AUTOFDO PASS 2${uline_off}:${reset} ${light}Optimized rebuild using profile:${reset} ${gray}${_afdo_profile}${reset}${break}"
-  else
-    msginfo "${break}${neon}${uline_on}AUTOFDO PASS 1${uline_off}:${reset} ${light}Profilable kernel build${reset} ${gray}(LLVM, _STRIP=false — required for AutoFDO)${reset}${break}"
-  fi
-
-  # Repository source selection
-  local _linux_repo="${_frog_pkg_repo[linux]}"
-  local _linux_branch="master"
-  msginfo "${break}${neon}${uline_on}SOURCE${uline_off}:${reset} ${light}Which Linux-TkG repository do you want to use?${reset}${break}"
-  msgplain " ${neon}${uline_on}0${uline_off}${reset} │ Upstream       ${gray}${frog_repo_url}/linux-tkg${reset}"
-  msgplain " ${orange}1${reset} │ Staging fork   ${gray}https://github.com/damachine/linux-tkg${reset} ${orange}(branch: staging)${reset}${break}"
-  __prompt_timer "[${neon}${uline_on}0${uline_off}${reset}/${orange}1${reset}]" 60 0
-  case "${_user_answer}" in
-    1)
-      _linux_repo="${damachine_linux_tkg_repo}"
-      _linux_branch="staging"
-      ;;
-    *)
-      _linux_repo="${_frog_pkg_repo[linux]}"
-      _linux_branch="master"
-      ;;
-  esac
-
-  # Build preset config — user config as base, AutoFDO overrides on top
-  local _autofdo_preset="${tkg_tmp_dir}/linux_autofdo_${_autofdo_pass}_preset.cfg"
-  mkdir -p "${tkg_tmp_dir}"
-  local _ltkg_cfg="${HOME}/.config/frogminer/linux-tkg.cfg"
-  if [[ -f "${_ltkg_cfg}" ]]; then
-    cat "${_ltkg_cfg}" >"${_autofdo_preset}"
-    echo >>"${_autofdo_preset}"
-  else
-    : >"${_autofdo_preset}"
-  fi
-
-  # AutoFDO overrides (Pass 1 cannot run with module stripping)
-  cat >>"${_autofdo_preset}" <<AUTOFDO_PRESET_CFG
-# AutoFDO ${_autofdo_pass^^} overrides — generated by tkginstaller
-_compiler="llvm"
-_autofdo="true"
-_STRIP="false"
-AUTOFDO_PRESET_CFG
-
-  if [[ "${_autofdo_pass}" == "pass2" ]]; then
-    printf '_autofdo_profile_path="%s"\n' "${_afdo_profile}" >>"${_autofdo_preset}"
-  fi
-
-  local _build_command="rm -f BIG_UGLY_FROGMINER && _EXT_CONFIG_PATH=\"${_autofdo_preset}\" makepkg -Ccfsi"
-  __install_package "${_linux_repo}" "linux-tkg" "${_build_command}" "" "" "${_linux_branch}"
-  local _status=$?
-
-  # After Pass 1: show next-steps guide
-  if [[ "${_autofdo_pass}" == "pass1" && ${_status} -eq 0 ]]; then
-    msginfo "${break}${neon}${uline_on}NEXT STEPS${uline_off}:${reset} ${light}After booting the new kernel:${reset}${break}"
-    msgplain " ${gray}1. Unlock kernel pointers (run as root):${reset}"
-    msgplain "    ${orange}sysctl -w kernel.kptr_restrict=0 kernel.perf_event_paranoid=0${reset}${break}"
-    msgplain " ${gray}2. Collect perf data — Intel LBR:${reset}"
-    msgplain "    ${orange}perf record -e BR_INST_RETIRED.NEAR_TAKEN:k -a -N -b -c 500009 -o kernel.data -- <workload>${reset}"
-    msgplain " ${gray}   AMD Zen4:${reset}"
-    msgplain "    ${orange}perf record --pfm-events RETIRED_TAKEN_BRANCH_INSTRUCTIONS:k -a -N -b -c 500009 -o kernel.data -- <workload>${reset}${break}"
-    msgplain " ${gray}3. Convert to .afdo profile:${reset}"
-    msgplain "    ${orange}mkdir -p ~/.config/frogminer${reset}"
-    msgplain "    ${orange}llvm-profgen --kernel --binary=/usr/lib/modules/\$(uname -r)/build/vmlinux \\${reset}"
-    msgplain "    ${orange}  --perfdata=kernel.data -o ~/.config/frogminer/tkg.afdo${reset}${break}"
-    msgplain " ${gray}4. Rebuild optimized kernel:${reset} ${neon}$0 linux pass2${reset}${break}"
+    [[ "${_show_info,,}" =~ ^(y|yes)$ ]] && { cd "${_tmpdir}/linux-tkg" && ./install.sh uninstall-help; }
   fi
 
   return "${_status:-0}"
@@ -1294,13 +1218,13 @@ AUTOFDO_PRESET_CFG
 
 # Nvidia-all installation
 __nvidia_install() {
-  msgpkg "Nvidia-all" "${frog_repo_url}/nvidia-all/blob/master/customization.cfg"
+  msgpkg "Nvidia-all" "${_reposrc}/nvidia-all/blob/master/customization.cfg"
 
   # Repository defaults
-  local _nvidia_repo="${_frog_pkg_repo[nvidia]}"
+  local _nvidia_repo="${_pkgrepo[nvidia]}"
   local _nvidia_branch="master"
 
-  local _build_command="${_frog_pkg_cmd_default}"
+  local _build_command="${_pkgcmd_default}"
 
   # nvidia-all now ships install.sh for multi-distro support.
   if [[ "${_is_arch_based}" == "true" ]]; then
@@ -1352,8 +1276,11 @@ __ensure_packages() {
 __linux_nvidia_install() {
   local _combined_epoch
   _combined_epoch=$(date +%s)
-  msgpkg "Linux-TkG + Nvidia-all" "https://github.com/damachine/linux-tkg/blob/staging/customization.cfg"
-  msginfo "${break}${neon}${uline_on}COMBINED${uline_off}:${reset} ${light}Both packages will be ${gray}built first${reset}${light}, then installed together via ${gray}pacman -U${reset}${light} from the damachine staging fork.${reset}${break}"
+  msgpkg "Linux-TkG + Nvidia-all" "${_reposrc}/nvidia-all/blob/master/customization.cfg"
+  msginfo "${break}${neon}${uline_on}COMBINED${uline_off}:${reset} ${light}Both packages will be ${gray}built first${reset}${light}, then installed together via ${gray}pacman -U${reset}${light}.${reset}${break}"
+
+  local _nvidia_repo="${_pkgrepo[nvidia]}"
+  local _nvidia_branch="master"
 
   local _pf_version="" _pf_nvidia="" _pf_nvidia_variant="" _pf_compiler=""
   local _pf_cfg_ext="${HOME}/.config/frogminer/linux-tkg.cfg"
@@ -1370,7 +1297,7 @@ __linux_nvidia_install() {
   fi
 
   # override with repo customization.cfg if already cloned
-  local _linux_tkg_dir="${tkg_tmp_dir}/linux-tkg"
+  local _linux_tkg_dir="${_tmpdir}/linux-tkg"
   local _pf_cfg_main="${_linux_tkg_dir}/customization.cfg"
   if [[ -f "${_pf_cfg_main}" ]]; then
     local _cv _cno _cc
@@ -1459,21 +1386,21 @@ __linux_nvidia_install() {
   __ensure_packages "${_ltkg_makedeps[@]}" || return 1
 
   # build linux-tkg
-  local _linux_tkg_preset="${tkg_tmp_dir}/linux_tkg_preset.cfg"
-  mkdir -p "${tkg_tmp_dir}"
+  local _linux_tkg_preset="${_tmpdir}/linux_tkg_preset.cfg"
+  mkdir -p "${_tmpdir}"
   if [[ -f "${_pf_cfg_ext}" ]]; then
-    cat "${_pf_cfg_ext}" >"${_linux_tkg_preset}"
+    sed '/^[[:space:]]*_nvidia_pkg=/d' "${_pf_cfg_ext}" >"${_linux_tkg_preset}"
     echo >>"${_linux_tkg_preset}"
   else
     : >"${_linux_tkg_preset}"
   fi
-  # append chosen values to preset
+  # append chosen values to preset; _nvidia_pkg intentionally overrides external false
   [[ -n "${_pf_version}" ]] && printf '_version=%q\n' "${_pf_version}" >>"${_linux_tkg_preset}"
   [[ -n "${_pf_nvidia}" ]] && printf '_nvidia_pkg=%q\n' "${_pf_nvidia}" >>"${_linux_tkg_preset}"
 
   local _build_command="rm -f BIG_UGLY_FROGMINER && _EXT_CONFIG_PATH=\"${_linux_tkg_preset}\" makepkg -d"
   _tkg_skip_status="1"
-  __install_package "${damachine_linux_tkg_repo}" "linux-tkg" "${_build_command}" "" "" "staging"
+  __install_package "${_reposrc_damachine}" "linux-tkg" "${_build_command}" "" "" "staging"
   local _status=$?
   local _linux_duration="${SECONDS}"
 
@@ -1489,8 +1416,8 @@ __linux_nvidia_install() {
   __ensure_packages "${_nv_makedeps[@]}" || return 1
 
   # build nvidia-all
-  local _preset_cfg="${tkg_tmp_dir}/nvidia_all/pre-customization.cfg"
-  mkdir -p "${tkg_tmp_dir}/nvidia_all"
+  local _preset_cfg="${_tmpdir}/nvidia_all/pre-customization.cfg"
+  mkdir -p "${_tmpdir}/nvidia_all"
 
   cat >"${_preset_cfg}" <<NVIDIA_CUSTOMIZATION_CFG
 # nvidia-all preset config — generated by tkginstaller (linux-nvidia combined install)
@@ -1499,7 +1426,7 @@ __linux_nvidia_install() {
 # _EXT_CONFIG_PATH is explicitly cleared so ~/.config/frogminer/nvidia-all.cfg does NOT
 # override this file. Remove this line only if you want your personal nvidia-all.cfg applied.
 _EXT_CONFIG_PATH="~/.tkg_installer_ignored_config_path/nvidia-all.cfg"
-_distro="Arch"
+_distro="${_nvidia_all_distro}"
 _driver_version="${_driver_version_val}"
 _driver_branch="${_driver_branch_val}"
 _open_source_modules="true"
@@ -1539,11 +1466,11 @@ NVIDIA_CUSTOMIZATION_CFG
   _build_command="rm -f options && mv \"${_preset_cfg}\" customization.cfg && makepkg -d"
   _tkg_skip_status="1"
   # shellcheck disable=SC2218
-  __install_package "${damachine_nvidia_all_repo}" "nvidia-all" "${_build_command}" "" "" "staging"
+  __install_package "${_nvidia_repo}" "nvidia-all" "${_build_command}" "" "" "${_nvidia_branch}"
   _status=$?
   local _nvidia_duration="${SECONDS}"
 
-  rm -rf "${tkg_tmp_dir}/nvidia_all"
+  rm -rf "${_tmpdir}/nvidia_all"
 
   if [[ ${_status} -ne 0 ]]; then
     msgerror "Nvidia-all build failed — aborting combined install.${break}"
@@ -1554,10 +1481,10 @@ NVIDIA_CUSTOMIZATION_CFG
   local _all_pkgs=()
   while IFS= read -r -d '' _pkg; do
     _all_pkgs+=("${_pkg}")
-  done < <(find "${tkg_tmp_dir}/nvidia-all" -maxdepth 1 -name '*.pkg.tar*' -print0 2>/dev/null)
+  done < <(find "${_tmpdir}/nvidia-all" -maxdepth 1 -name '*.pkg.tar*' -print0 2>/dev/null)
   while IFS= read -r -d '' _pkg; do
     _all_pkgs+=("${_pkg}")
-  done < <(find "${tkg_tmp_dir}/linux-tkg" -maxdepth 1 -name '*.pkg.tar*' -print0 2>/dev/null)
+  done < <(find "${_tmpdir}/linux-tkg" -maxdepth 1 -name '*.pkg.tar*' -print0 2>/dev/null)
 
   if [[ ${#_all_pkgs[@]} -eq 0 ]]; then
     msgerror "No built packages found to install.${break}"
@@ -1576,8 +1503,8 @@ NVIDIA_CUSTOMIZATION_CFG
   # remove built packages after installation
   if [[ ${_status} -eq 0 ]]; then
     msgplain "${break}${neon}Cleaning up built packages...${reset}"
-    find "${tkg_tmp_dir}/linux-tkg" -maxdepth 1 -name '*.pkg.tar*' -delete 2>/dev/null || true
-    find "${tkg_tmp_dir}/nvidia-all" -maxdepth 1 -name '*.pkg.tar*' -delete 2>/dev/null || true
+    find "${_tmpdir}/linux-tkg" -maxdepth 1 -name '*.pkg.tar*' -delete 2>/dev/null || true
+    find "${_tmpdir}/nvidia-all" -maxdepth 1 -name '*.pkg.tar*' -delete 2>/dev/null || true
   fi
 
   # summary
@@ -1608,7 +1535,7 @@ __gamescope_install() { __install_pkg_key "gamescope"; }
 
 # Wine-TkG installation
 __wine_install() {
-  msgpkg "Wine-TkG" "${frog_repo_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
+  msgpkg "Wine-TkG" "${_reposrc}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
 
   local _build_command
 
@@ -1629,7 +1556,7 @@ __wine_install() {
     _build_command="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
   fi
 
-  __install_package "${_frog_pkg_repo[wine]}" "wine-tkg-git" "${_build_command}" "${_frog_pkg_workdir[wine]}"
+  __install_package "${_pkgrepo[wine]}" "wine-tkg-git" "${_build_command}" "${_pkgdir[wine]}"
 }
 
 # glibc-eac installation
@@ -1648,7 +1575,7 @@ __glibc_install() {
     *) _build_command="chmod +x glibc_eac.sh && ./glibc_eac.sh" ;;
   esac
 
-  __install_package "${_frog_pkg_repo[glibc]}" "glibc-eac" "${_build_command}"
+  __install_package "${_pkgrepo[glibc]}" "glibc-eac" "${_build_command}"
 }
 
 # DXVK-Tools pre-build for Proton-TkG
@@ -1693,10 +1620,10 @@ __dxvk_tools_prepare() {
   [[ "${_build_dxvk}" != "true" && "${_build_vkd3d}" != "true" ]] && return 0
 
   # Clone/prepare dxvk-tools
-  local _dxvk_dir="${tkg_tmp_dir}/dxvk-tools"
+  local _dxvk_dir="${_tmpdir}/dxvk-tools"
   if [[ ! -d "${_dxvk_dir}" ]]; then
     msginfo "${break}${neon}${uline_on}PROGRESS${uline_off}:${reset} ${light}Cloning dxvk-tools...${reset}${break}"
-    __git_clone_retry "${_frog_pkg_repo[dxvk]}" "${_dxvk_dir}" || {
+    __git_clone_retry "${_pkgrepo[dxvk]}" "${_dxvk_dir}" || {
       msgwarning "Clone failed, skipping dxvk-tools${break}"
       return 0
     }
@@ -1731,21 +1658,21 @@ __dxvk_tools_prepare() {
     [[ "${_user_answer,,}" =~ ^(y|yes)$ ]] && ./updxvk proton-tkg
   fi
 
-  __cd_safe "${tkg_tmp_dir}" || return 0
+  __cd_safe "${_tmpdir}" || return 0
 }
 
 # Proton-TkG installation
 __proton_install() {
-  msgpkg "Proton-TkG" "${frog_repo_url}/wine-tkg-git"
+  msgpkg "Proton-TkG" "${_reposrc}/wine-tkg-git"
 
   # Prepare Proton repo first
-  __install_package "${_frog_pkg_repo[proton]}" "Proton-TkG (prepare)" "" "${_frog_pkg_workdir[proton]}" >/dev/null 2>&1
+  __install_package "${_pkgrepo[proton]}" "Proton-TkG (prepare)" "" "${_pkgdir[proton]}" >/dev/null 2>&1
 
   # Optional DXVK/vkd3d preparation
   __dxvk_tools_prepare || msgwarning "dxvk-tools skipped${break}"
 
   # Build Proton
-  __install_package "${_frog_pkg_repo[proton]}" "Proton-TkG" "./proton-tkg.sh" "${_frog_pkg_workdir[proton]}"
+  __install_package "${_pkgrepo[proton]}" "Proton-TkG" "./proton-tkg.sh" "${_pkgdir[proton]}"
   local _status=$?
 
   # Offer cleanup after successful build
@@ -1753,7 +1680,7 @@ __proton_install() {
     msgprompt "Run './proton-tkg.sh clean'? [y/N]: "
     read -r _user_answer
     [[ "${_user_answer,,}" =~ ^(y|yes)$ ]] &&
-      __install_package "${_frog_pkg_repo[proton]}" "Proton-TkG" "./proton-tkg.sh clean" "${_frog_pkg_workdir[proton]}"
+      __install_package "${_pkgrepo[proton]}" "Proton-TkG" "./proton-tkg.sh clean" "${_pkgdir[proton]}"
   fi
 }
 
@@ -1817,13 +1744,13 @@ AMDVLK-OPT=amdvlk-opt/master"
   local _preview='key=$(echo {} | cut -d"|" -f1 | xargs)
 [[ "$key" == "return" ]] && { echo "Back to main menu..."; exit 0; }
 repo=$(echo "${_amd_repos_json}" | grep "^${key}=" | cut -d= -f2-)
-[[ -n "$repo" ]] && glow --width 80 --style "'"${_glow_style:-dark}"'" "'"${frog_raw_url}"'/${repo}/README.md"'
+[[ -n "$repo" ]] && glow --width 80 --style "'"${_glow_style:-dark}"'" "'"${_reposrc_raw}"'/${repo}/README.md"'
 
   local _header="🐸 ${neon}${uline_on}TkG-Installer ─ AMD Drivers${uline_off}${reset}${break}${break}${light}   Select AMD driver:"
   local _footer="  ${light}[Enter] select, [Ctrl+P] preview, [ESC] exit"
 
   local _choice
-  _choice=$(__fzf_menu "${_amd_menu_content}" "${_preview}" "${_header}" "${_footer}" "${tkg_installer_version}" 'right:wrap:60%')
+  _choice=$(__fzf_menu "${_amd_menu_content}" "${_preview}" "${_header}" "${_footer}" "${pkgver}" 'right:wrap:60%')
   unset _amd_repos_json
 
   [[ -z "${_choice}" ]] && return 0
@@ -1844,7 +1771,7 @@ repo=$(echo "${_amd_repos_json}" | grep "^${key}=" | cut -d= -f2-)
 # Log file browser: package selection → file selection → pager view
 # shellcheck disable=SC2218
 __menu_logs() {
-  # Map package key → log directory (relative to tkg_tmp_dir)
+  # Map package key → log directory (relative to _tmpdir)
   local _log_subdirs_json
   _log_subdirs_json=$(printf '%s\n' \
     "linux=linux-tkg/logs" \
@@ -1853,7 +1780,7 @@ __menu_logs() {
     "proton=wine-tkg-git/logs")
   export _log_subdirs_json
 
-  # ── Level 1: package selection ────────────────────────────────────────────
+  # package selection
   while true; do
     # Build menu with live availability status
     local _pkg_menu=""
@@ -1862,19 +1789,19 @@ __menu_logs() {
     local _labels=("Linux-TkG" "Nvidia-all" "Wine-TkG" "Proton-TkG")
     local i _key _subdir _full_dir _status_str _cnt
 
-    # First pass: collect paths and find max column widths
+    # collect paths and find max column widths
     local -a _full_dirs=()
     local _max_label=0 _max_path=0 _len
     for i in "${!_keys[@]}"; do
       _subdir=$(printf '%s\n' "${_log_subdirs_json}" | grep "^${_keys[$i]}=" | cut -d= -f2-)
-      _full_dirs[i]="${tkg_tmp_dir}/${_subdir}"
+      _full_dirs[i]="${_tmpdir}/${_subdir}"
       _len=${#_labels[$i]}
       ((_len > _max_label)) && _max_label=$_len
       _len=${#_full_dirs[$i]}
       ((_len > _max_path)) && _max_path=$_len
     done
 
-    # Second pass: build aligned menu entries
+    # build aligned menu entries
     for i in "${!_keys[@]}"; do
       _key="${_keys[$i]}"
       _full_dir="${_full_dirs[$i]}"
@@ -1888,13 +1815,13 @@ __menu_logs() {
     done
     _pkg_menu+="return|⏪ ${neon}Return"
 
-    # Preview: list files in the selected package log directory
+    # list files in the selected package log directory
     # shellcheck disable=SC2016
     local _preview_pkg='
       key=$(echo {} | cut -d"|" -f1 | xargs)
       [[ "$key" == "return" ]] && { printf "%b\n" "'"${light}"'Return to config menu.'"${reset}"'"; exit 0; }
       _subdir=$(printf "%s\n" "${_log_subdirs_json}" | grep "^${key}=" | cut -d= -f2-)
-      _dir="'"${tkg_tmp_dir}"'/${_subdir}"
+      _dir="'"${_tmpdir}"'/${_subdir}"
       if [[ -d "${_dir}" ]] && ls "${_dir}"/* >/dev/null 2>&1; then
         printf "%b\n" "'"${light}"'Log files in '"${gray}"'${_dir}'"${reset}"':\n"
         _fnames=(); _fsizes=(); _fdates=(); _max_n=0; _max_s=0
@@ -1916,7 +1843,7 @@ __menu_logs() {
 
     local _header_logs="🐸 ${neon}${uline_on}TkG-Installer ─ Logs${uline_off}${reset}${break}${break}\
 ${light}    Browse build and system logs stored in:${break}\
-${gray}    ${tkg_tmp_dir}/<package>/logs/${reset}${break}${break}\
+${gray}    ${_tmpdir}/<package>/logs/${reset}${break}${break}\
 ${light}   Select a package to view its logs:"
 
     local _footer_logs="  ${light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${break}\
@@ -1929,7 +1856,7 @@ ${light}   Select a package to view its logs:"
       "${_preview_pkg}" \
       "${_header_logs}" \
       "${_footer_logs}" \
-      "${tkg_installer_version}" \
+      "${pkgver}" \
       "right:wrap:55%" \
       "ctrl-p:toggle-preview")
 
@@ -1949,7 +1876,7 @@ ${light}   Select a package to view its logs:"
     # Resolve log directory for selected package
     local _selected_subdir
     _selected_subdir=$(printf '%s\n' "${_log_subdirs_json}" | grep "^${_pkg_key}=" | cut -d= -f2-)
-    local _selected_log_dir="${tkg_tmp_dir}/${_selected_subdir}"
+    local _selected_log_dir="${_tmpdir}/${_selected_subdir}"
 
     if [[ ! -d "${_selected_log_dir}" ]] ||
       [[ -z "$(ls -A "${_selected_log_dir}" 2>/dev/null)" ]]; then
@@ -1962,7 +1889,7 @@ ${light}   Select a package to view its logs:"
       continue
     fi
 
-    # ── Level 2: log file selection ─────────────────────────────────────────
+    # log file selection
     local _file_menu=""
     while IFS= read -r _logfile; do
       local _fname
@@ -1971,7 +1898,7 @@ ${light}   Select a package to view its logs:"
     done < <(find "${_selected_log_dir}" -maxdepth 1 -type f | sort)
     _file_menu+="return|⏪ ${neon}Return"
 
-    # Preview: show file content with bat (or cat fallback)
+    # show file content with bat (or cat fallback)
     local _bat_log_cmd="bat --style=plain --language=log --wrap character --terminal-width ${cols} --force-colorization --theme='Visual Studio Dark+'"
     # shellcheck disable=SC2016
     local _preview_file='
@@ -2000,7 +1927,7 @@ ${light}   Select a log file to view:"
         "${_preview_file}" \
         "${_header_files}" \
         "${_footer_files}" \
-        "${tkg_installer_version}" \
+        "${pkgver}" \
         "right:wrap:65%" \
         "ctrl-p:toggle-preview")
 
@@ -2042,10 +1969,10 @@ __menu_config() {
     local _config_choice
 
     # Ensure configuration directory exists
-    if [[ ! -d "${local_config_dir}" ]]; then
+    if [[ ! -d "${_localcfg}" ]]; then
       __banner "${orange}"
       msgwarning "Configuration directory not found.${break}"
-      msgplain " Creating directory:${reset}${gray} ${local_config_dir}${reset}${break}"
+      msgplain " Creating directory:${reset}${gray} ${_localcfg}${reset}${break}"
       msgprompt "Do you want to create the configuration directory? [y/N]: "
 
       local _old_trap_int=""
@@ -2056,13 +1983,13 @@ __menu_config() {
 
       case "${_user_answer,,}" in
         y | yes)
-          if ! mkdir -p "${local_config_dir}" 2>/dev/null; then
-            __error_config "Creating configuration directory failed: ${local_config_dir}${break} Please check the path and your permissions then try again.${break}"
+          if ! mkdir -p "${_localcfg}" 2>/dev/null; then
+            __error_config "Creating configuration directory failed: ${_localcfg}${break} Please check the path and your permissions then try again.${break}"
             return 1
           fi
           clear
           __banner
-          msginfo "Configuration directory created:${reset}${gray} ${local_config_dir}${reset}${break}"
+          msginfo "Configuration directory created:${reset}${gray} ${_localcfg}${reset}${break}"
           msgplain " You can now manage your${reset}${gray} customization.cfg${reset} files.${break}"
           msgprompt "Press any key to continue...${break}"
           read -n 1 -s -r
@@ -2112,14 +2039,14 @@ __menu_config() {
     local _pkg_urls_json
     _pkg_urls_json=$(
       printf '%s\n' \
-        "linux=${frog_raw_url}/${_frog_pkg_config[linux]}" \
-        "nvidia=${frog_raw_url}/${_frog_pkg_config[nvidia]}" \
-        "mesa=${frog_raw_url}/${_frog_pkg_config[mesa]}" \
-        "wine=${frog_raw_url}/${_frog_pkg_config[wine]}" \
-        "proton=${frog_raw_url}/${_frog_pkg_config[proton]}" \
-        "dxvk=${frog_raw_url}/${_frog_pkg_config[dxvk]}" \
-        "vkd3d=${frog_raw_url}/${_frog_pkg_config[vkd3d]}" \
-        "gamescope=${frog_raw_url}/${_frog_pkg_config[gamescope]}"
+        "linux=${_reposrc_raw}/${_pkgconfig[linux]}" \
+        "nvidia=${_reposrc_raw}/${_pkgconfig[nvidia]}" \
+        "mesa=${_reposrc_raw}/${_pkgconfig[mesa]}" \
+        "wine=${_reposrc_raw}/${_pkgconfig[wine]}" \
+        "proton=${_reposrc_raw}/${_pkgconfig[proton]}" \
+        "dxvk=${_reposrc_raw}/${_pkgconfig[dxvk]}" \
+        "vkd3d=${_reposrc_raw}/${_pkgconfig[vkd3d]}" \
+        "gamescope=${_reposrc_raw}/${_pkgconfig[gamescope]}"
     )
     export _pkg_urls_json
 
@@ -2127,14 +2054,14 @@ __menu_config() {
     local _pkg_local_cfg_json
     _pkg_local_cfg_json=$(
       printf '%s\n' \
-        "linux=${_frog_pkg_local_config[linux]}" \
-        "nvidia=${_frog_pkg_local_config[nvidia]}" \
-        "mesa=${_frog_pkg_local_config[mesa]}" \
-        "wine=${_frog_pkg_local_config[wine]}" \
-        "proton=${_frog_pkg_local_config[proton]}" \
-        "dxvk=${_frog_pkg_local_config[dxvk]}" \
-        "vkd3d=${_frog_pkg_local_config[vkd3d]}" \
-        "gamescope=${_frog_pkg_local_config[gamescope]}"
+        "linux=${_pkglocalcfg[linux]}" \
+        "nvidia=${_pkglocalcfg[nvidia]}" \
+        "mesa=${_pkglocalcfg[mesa]}" \
+        "wine=${_pkglocalcfg[wine]}" \
+        "proton=${_pkglocalcfg[proton]}" \
+        "dxvk=${_pkglocalcfg[dxvk]}" \
+        "vkd3d=${_pkglocalcfg[vkd3d]}" \
+        "gamescope=${_pkglocalcfg[gamescope]}"
     )
     export _pkg_local_cfg_json
 
@@ -2153,14 +2080,14 @@ __menu_config() {
     local _preview_command='
             key=$(echo {} | cut -d"|" -f1 | xargs)
 
-            [[ "$key" == "return" ]] && { glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${tkg_raw_url}"'/return.md"; exit 0; }
+            [[ "$key" == "return" ]] && { glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_reposrc_raw_damachine}"'/return.md"; exit 0; }
 
             _local_cfg_name=$(echo "${_pkg_local_cfg_json}" | grep "^${key}=" | cut -d= -f2-)
-            _config_file_path="'"${local_config_dir}"'/${_local_cfg_name}"
+            _config_file_path="'"${_localcfg}"'/${_local_cfg_name}"
             _remote_url=$(echo "${_pkg_urls_json}" | grep "^${key}=" | cut -d= -f2-)
 
             if [[ -f "${_config_file_path}" && -n "${_remote_url}" ]]; then
-                _remote_tmp="'"${tkg_tmp_dir}"'/${key}-remote.cfg"
+                _remote_tmp="'"${_tmpdir}"'/${key}-remote.cfg"
                 if curl '"${_curl_opts}"' "${_remote_url}" -o "${_remote_tmp}" 2>/dev/null; then
                     printf "%b\n" "'"${_info_config}"'"
                     '"${_diff_cmd}"' "${_remote_tmp}" "${_config_file_path}" 2>/dev/null | '"${_bat_cmd}"' || printf "%b\n" "${orange}Diff failed${reset}"
@@ -2188,7 +2115,7 @@ ${light}   Select an option below:"
   ${light}Website:${reset} ${gray}https://github.com/damachine/tkginstaller${reset} | ${gray}https://github.com/Frogging-Family"
 
     # Border label
-    local _border_label_text="${tkg_installer_version}"
+    local _border_label_text="${pkgver}"
     local _preview_window_settings='right:wrap:75%'
     local _fzf_bind='ctrl-p:toggle-preview'
 
@@ -2222,10 +2149,10 @@ ${light}   Select an option below:"
     fi
 
     # Edit selected config
-    if [[ -n "${_frog_pkg_config[${_config_file}]:-}" ]]; then
+    if [[ -n "${_pkgconfig[${_config_file}]:-}" ]]; then
       __handle_config \
         "${_config_file}" \
-        "${local_config_dir}/${_frog_pkg_local_config[${_config_file}]}" \
+        "${_localcfg}/${_pkglocalcfg[${_config_file}]}" \
         "$(__get_config_url "${_config_file}")"
     fi
   done
@@ -2254,7 +2181,7 @@ __check_config() {
   local _extra_urls=()
   case "${_package_name}" in
     Linux-TkG)
-      local _prepare_url="${frog_raw_url}/linux-tkg/master/linux-tkg-config/prepare"
+      local _prepare_url="${_reposrc_raw}/linux-tkg/master/linux-tkg-config/prepare"
       local _tmp_prepare="/tmp/linux-tkg-prepare"
       if curl -fsSL "${_prepare_url}" -o "${_tmp_prepare}" 2>/dev/null; then
         # Extract officially deprecated vars (only for deprecated check)
@@ -2271,14 +2198,14 @@ __check_config() {
       ;;
     Wine-TkG)
       _extra_urls=(
-        "${frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/advanced-customization.cfg"
-        "${frog_raw_url}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/sample-external-config.cfg"
+        "${_reposrc_raw}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/advanced-customization.cfg"
+        "${_reposrc_raw}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/sample-external-config.cfg"
       )
       ;;
     Proton-TkG)
       _extra_urls=(
-        "${frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/advanced-customization.cfg"
-        "${frog_raw_url}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/sample-external-config.cfg"
+        "${_reposrc_raw}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/advanced-customization.cfg"
+        "${_reposrc_raw}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/sample-external-config.cfg"
       )
       ;;
   esac
@@ -2481,11 +2408,11 @@ __menu() {
         doc=$(echo "${_preview_docs_json}" | grep "^${key}=" | cut -d= -f2-)
 
         # Show local doc
-        [[ -n "$doc" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${tkg_raw_url}"'/${doc}.md"
+        [[ -n "$doc" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_reposrc_raw_damachine}"'/${doc}.md"
 
         # Show remote README
         repo=$(echo "${_preview_repos_json}" | grep "^${key}=" | cut -d= -f2-)
-        [[ -n "$repo" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${frog_raw_url}"'/${repo}/README.md"
+        [[ -n "$repo" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_reposrc_raw}"'/${repo}/README.md"
     '
   # Header
   local _header_text="🐸 ${neon}${uline_on}TkG-Installer ─ Main${uline_off}${reset}${break}${break}\
@@ -2499,7 +2426,7 @@ ${light}   Select an option below:"
   ${light}Website:${reset} ${gray}https://github.com/damachine/tkginstaller${reset} | ${gray}https://github.com/Frogging-Family${reset}"
 
   # Border label
-  local _border_label_text="${tkg_installer_version}"
+  local _border_label_text="${pkgver}"
   local _preview_window_settings='right:wrap:55%:hidden'
   local _fzf_bind='ctrl-p:toggle-preview'
 
@@ -2517,7 +2444,7 @@ ${light}   Select an option below:"
   fi
 
   # Write user choice to file
-  echo "${_main_choice}" | cut -d"|" -f1 | xargs >"${tkg_choice_file}"
+  echo "${_main_choice}" | cut -d"|" -f1 | xargs >"${_choicetmp}"
 }
 
 # =============================================================================
@@ -2546,7 +2473,7 @@ __main_direct_mode() {
 
   # Reject unsupported second args
   if [[ "${_arg1}" =~ ^(linux|l|nvidia|n|linux-nvidia|ln|mesa|m|wine|w|proton|p)$ ]] && [[ -n "${_arg2}" ]] &&
-    ! [[ "${_arg2}" =~ ^(config|c|edit|e|customize|cu|pass1|pass2)$ ]]; then
+    ! [[ "${_arg2}" =~ ^(config|c|edit|e|customize|cu)$ ]]; then
     __banner "${orange}"
     msgwarning "Invalid argument:${reset}${gray} ${_arg1:-} ${_arg2:-}${reset}${break}"
     msgplain " The argument is either invalid or incomplete."
@@ -2555,23 +2482,6 @@ __main_direct_mode() {
     trap - INT TERM EXIT HUP
     __clean
     exit 1
-  fi
-
-  # Reject pass1/pass2 for non-linux packages
-  if [[ ! "${_arg1}" =~ ^(linux|l)$ ]] && [[ "${_arg2}" =~ ^(pass1|pass2)$ ]]; then
-    __banner "${orange}"
-    msgwarning "pass1/pass2 is only valid for the linux package.${reset}${break}"
-    msgplain " Usage: ${orange}$0 linux pass1${reset} or ${orange}$0 linux pass2${reset}${break}"
-    trap - INT TERM EXIT HUP
-    __clean
-    exit 1
-  fi
-
-  # Dispatch AutoFDO pass1/pass2 for linux
-  if [[ "${_arg1}" =~ ^(linux|l)$ ]] && [[ "${_arg2}" =~ ^(pass1|pass2)$ ]]; then
-    __prepare
-    __linux_autofdo_install "${_arg2}"
-    return
   fi
 
   # "config" alone opens interactive config menu
@@ -2586,7 +2496,7 @@ __main_direct_mode() {
 
   # Edit config for given package
   if [[ -n "${_package}" && -n "${_config_arg}" ]]; then
-    local _config_path="${local_config_dir}/${_package}.cfg"
+    local _config_path="${_localcfg}/${_package}.cfg"
     local _config_url
     _config_url=$(__get_config_url "${_package}")
     local _config_name="${_package}"
@@ -2607,9 +2517,9 @@ __main_direct_mode() {
 
   # Install command lookup
   declare -A _install_funcs=(
+    [linux - nvidia]=__linux_nvidia_install [ln]=__linux_nvidia_install
     [linux]=__linux_install [l]=__linux_install
     [nvidia]=__nvidia_install [n]=__nvidia_install
-    [linux - nvidia]=__linux_nvidia_install [ln]=__linux_nvidia_install
     [mesa]=__mesa_install [m]=__mesa_install
     [amdgpu]=__amdgpu_pro_install [ag]=__amdgpu_pro_install
     [amdvlk]=__amdvlk_opt_install [av]=__amdvlk_opt_install
@@ -2665,18 +2575,18 @@ __main_interactive_mode() {
 
   # Read user selection
   local _user_choice=""
-  if [[ -f "${tkg_choice_file}" ]]; then
-    _user_choice=$(<"${tkg_choice_file}")
+  if [[ -f "${_choicetmp}" ]]; then
+    _user_choice=$(<"${_choicetmp}")
   fi
 
-  # Empty = ESC/Ctrl-C
+  # ESC/Ctrl-C
   if [[ -z "${_user_choice:-}" ]]; then
     clear
     __exit 0
   fi
 
   # Remove temporary choice file
-  rm -f "${tkg_choice_file}"
+  rm -f "${_choicetmp}"
 
   # Define install handlers
   declare -A _menu_handlers=(
