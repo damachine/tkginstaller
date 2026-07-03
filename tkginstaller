@@ -13,7 +13,7 @@ if [ ! -x "$(command -v sudo)" ]; then
 fi
 
 # TkG-Installer VERSION definition
-readonly pkgver="v0.54.1"
+readonly pkgver="v0.54.2"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _runargs=("$@")
@@ -35,7 +35,7 @@ _reposrc_raw_damachine=https://raw.githubusercontent.com/damachine/tkginstaller/
 declare -gA _nvidia_versions=(
   [latest]="610.43.02"
   [vulkan]="595.44.09"
-  [legacy]="580.159.04"
+  [legacy]="580.173.02"
 )
 
 # curl options for config fetching and other web requests
@@ -103,13 +103,15 @@ declare -gA _pkglocalcfg=(
 # Normalize package argument to internal key
 __normalize_package() {
   case "${1,,}" in
-    linux | l) echo "linux" ;;
-    nvidia | n) echo "nvidia" ;;
-    mesa | m) echo "mesa" ;;
+    linux | linux-tkg | l) echo "linux" ;;
+    nvidia | nvidia-all | n) echo "nvidia" ;;
+    mesa | mesa-git | m) echo "mesa" ;;
     amdgpu | ag) echo "amdgpu" ;;
-    amdvlk | av) echo "amdvlk" ;;
-    wine | w) echo "wine" ;;
-    proton | p) echo "proton" ;;
+    amdvlk | amdvlk-opt | av) echo "amdvlk" ;;
+    wine | wine-tkg | w) echo "wine" ;;
+    proton | proton-tkg | p) echo "proton" ;;
+    dxvk | updxvk | d) echo "dxvk" ;;
+    vkd3d | upvkd3d | v) echo "vkd3d" ;;
     gamescope | g) echo "gamescope" ;;
     glibc | ge) echo "glibc" ;;
     *) echo "" ;;
@@ -565,10 +567,10 @@ __prepare() {
   if [[ "${_load_preview}" == "true" ]]; then
     case "${_distro_id,,}" in
       debian | ubuntu | linuxmint | pop | elementary | mx | raspbian)
-        _dep+=(curl glow fzf wdiff)
+        _dep+=(curl fzf wdiff)
         ;;
       *)
-        _dep+=(bat curl glow fzf wdiff)
+        _dep+=(curl fzf wdiff)
         ;;
     esac
   fi
@@ -599,10 +601,10 @@ __prepare() {
       # Gentoo uses category/package format
       declare -A _gentoo_categories=(
         [git]=dev-vcs
-        [bat]=app-misc
+        [bat]=sys-apps
         [curl]=net-misc
         [glow]=app-text
-        [fzf]=app-misc
+        [fzf]=app-shells
         [onefetch]=app-misc
         [wdiff]=app-text
       )
@@ -1176,6 +1178,16 @@ __linux_install() {
 
   local _build_command
 
+  if [[ "${_is_arch_based}" != "true" ]]; then
+    local _pkg_type=""
+    case "${_distro_id,,}" in
+      debian | ubuntu | linuxmint | pop | elementary | mx | raspbian) _pkg_type="DEB" ;;
+      fedora | rhel | centos | rocky | alma | opensuse* | suse*) _pkg_type="RPM" ;;
+    esac
+
+    [[ -n "${_pkg_type}" ]] && msginfo "${break}${neon}${uline_on}INFO${uline_off}:${reset}${light} ${_pkg_type}-based distribution detected: ${gray}${_distro_name}${reset}${break}"
+  fi
+
   if [[ "${_is_arch_based}" == "true" ]]; then
     __build_menu "Linux-TkG" \
       "makepkg -Ccfsi" "recommended for Arch" \
@@ -1192,14 +1204,20 @@ __linux_install() {
       *) _build_command="makepkg -Ccfsi" ;;
     esac
   else
-    local _pkg_type=""
-    case "${_distro_id,,}" in
-      debian | ubuntu | linuxmint | pop | elementary | mx | raspbian) _pkg_type="DEB" ;;
-      fedora | rhel | centos | rocky | alma | opensuse* | suse*) _pkg_type="RPM" ;;
-    esac
+    __build_menu "Linux-TkG" \
+      "install.sh install" "recommended for ${_distro_name}" \
+      "makepkg -Ccfsi" "Arch package build workflow" \
+      "install.sh uninstall" "(show uninstall help)"
 
-    [[ -n "${_pkg_type}" ]] && msginfo "${break}${neon}${uline_on}INFO${uline_off}:${reset}${light} ${_pkg_type}-based distribution detected: ${gray}${_distro_name}${reset}${break}"
-    _build_command="chmod +x install.sh && ./install.sh install"
+    case "${_menu_choice}" in
+      0)
+        msginfo "${break}${orange}Cancelled by user${reset}${break}"
+        __exit 1
+        ;;
+      2) _build_command="makepkg -Ccfsi" ;;
+      9) _build_command="chmod +x install.sh && ./install.sh uninstall-help" ;;
+      *) _build_command="chmod +x install.sh && ./install.sh install" ;;
+    esac
   fi
 
   __install_package "${_linux_repo}" "linux-tkg" "${_build_command}" "" "" "${_linux_branch}"
@@ -1744,7 +1762,14 @@ AMDVLK-OPT=amdvlk-opt/master"
   local _preview='key=$(echo {} | cut -d"|" -f1 | xargs)
 [[ "$key" == "return" ]] && { echo "Back to main menu..."; exit 0; }
 repo=$(echo "${_amd_repos_json}" | grep "^${key}=" | cut -d= -f2-)
-[[ -n "$repo" ]] && glow --width 80 --style "'"${_glow_style:-dark}"'" "'"${_reposrc_raw}"'/${repo}/README.md"'
+if [[ -n "$repo" ]]; then
+  _readme_url="'"${_reposrc_raw}"'/${repo}/README.md"
+  if command -v glow >/dev/null 2>&1; then
+    glow --width 80 --style "'"${_glow_style:-dark}"'" "${_readme_url}"
+  else
+    curl '"${_curl_opts}"' "${_readme_url}" 2>/dev/null || printf "%b\n" "'"${orange}"'Preview unavailable'"${reset}"'"
+  fi
+fi'
 
   local _header="🐸 ${neon}${uline_on}TkG-Installer ─ AMD Drivers${uline_off}${reset}${break}${break}${light}   Select AMD driver:"
   local _footer="  ${light}[Enter] select, [Ctrl+P] preview, [ESC] exit"
@@ -2069,7 +2094,7 @@ __menu_config() {
     local _info_config="${neon}Comparing remote and local ${reset}${gray}customization.cfg${reset}${neon}, press [Enter] to open and edit ${reset}${break}${break}${light} Remote:${reset}${gray} \${_remote_url} ${reset}${break}${orange}≠${reset}${light} Local:${reset}${gray} file://\${_config_file_path} ${reset}${break}${dark}${line}${break}"
 
     # Missing config error message
-    local _error_config_not_exist="${orange}No external configuration file found.${reset}${break}${break}${light} This configuration file is required for customizing the -TkG- package.${break}${light} Press [Enter] to download the missing${reset}${gray} customization.cfg${reset}${light} file, according to -TkG- package standards.${reset}${break}${dark}${line}${break}"
+    local _error_config_not_exist="${orange}No external configuration preview available.${reset}${break}${break}${light} Local:${reset}${gray} file://\${_config_file_path}${reset}${break}${light} Remote:${reset}${gray} \${_remote_url}${reset}${break}${break}${light} Press [Enter] to download or open the missing${reset}${gray} customization.cfg${reset}${light} file, according to -TkG- package standards.${reset}${break}${dark}${line}${break}"
 
     # bat/wdiff diff preview commands
     local _bat_cmd="bat --style=plain --language=cfg --wrap character --terminal-width ${cols} --force-colorization --theme='Visual Studio Dark+'"
@@ -2080,7 +2105,14 @@ __menu_config() {
     local _preview_command='
             key=$(echo {} | cut -d"|" -f1 | xargs)
 
-            [[ "$key" == "return" ]] && { glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_reposrc_raw_damachine}"'/return.md"; exit 0; }
+            [[ "$key" == "return" ]] && {
+                if command -v glow >/dev/null 2>&1; then
+                    glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_reposrc_raw_damachine}"'/return.md"
+                else
+                    printf "%b\n" "'"${light}"'Return to the previous menu.'"${reset}"'"
+                fi
+                exit 0
+            }
 
             _local_cfg_name=$(echo "${_pkg_local_cfg_json}" | grep "^${key}=" | cut -d= -f2-)
             _config_file_path="'"${_localcfg}"'/${_local_cfg_name}"
@@ -2090,7 +2122,21 @@ __menu_config() {
                 _remote_tmp="'"${_tmpdir}"'/${key}-remote.cfg"
                 if curl '"${_curl_opts}"' "${_remote_url}" -o "${_remote_tmp}" 2>/dev/null; then
                     printf "%b\n" "'"${_info_config}"'"
-                    '"${_diff_cmd}"' "${_remote_tmp}" "${_config_file_path}" 2>/dev/null | '"${_bat_cmd}"' || printf "%b\n" "${orange}Diff failed${reset}"
+                    if command -v wdiff >/dev/null 2>&1; then
+                        _diff_output=$('"${_diff_cmd}"' "${_remote_tmp}" "${_config_file_path}" 2>/dev/null)
+                    else
+                        _diff_output=$(diff -u --color=always "${_remote_tmp}" "${_config_file_path}" 2>/dev/null)
+                    fi
+                    _diff_status=$?
+                    if [[ ${_diff_status} -le 1 ]]; then
+                        if command -v bat >/dev/null 2>&1; then
+                            printf "%b\n" "${_diff_output}" | '"${_bat_cmd}"'
+                        else
+                            printf "%b\n" "${_diff_output}"
+                        fi
+                    else
+                        printf "%b\n" "'"${orange}"'Diff failed'"${reset}"'"
+                    fi
                     rm -f "${_remote_tmp}"
                 else
                     printf "%b\n" "'"${_error_config_not_exist}"'"
@@ -2408,11 +2454,25 @@ __menu() {
         doc=$(echo "${_preview_docs_json}" | grep "^${key}=" | cut -d= -f2-)
 
         # Show local doc
-        [[ -n "$doc" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_reposrc_raw_damachine}"'/${doc}.md"
+        if [[ -n "$doc" ]]; then
+          _doc_url="'"${_reposrc_raw_damachine}"'/${doc}.md"
+          if command -v glow >/dev/null 2>&1; then
+            glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "${_doc_url}"
+          else
+            curl '"${_curl_opts}"' "${_doc_url}" 2>/dev/null || printf "%b\n" "'"${orange}"'Preview unavailable'"${reset}"'"
+          fi
+        fi
 
         # Show remote README
         repo=$(echo "${_preview_repos_json}" | grep "^${key}=" | cut -d= -f2-)
-        [[ -n "$repo" ]] && glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_reposrc_raw}"'/${repo}/README.md"
+        if [[ -n "$repo" ]]; then
+          _readme_url="'"${_reposrc_raw}"'/${repo}/README.md"
+          if command -v glow >/dev/null 2>&1; then
+            glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "${_readme_url}"
+          else
+            curl '"${_curl_opts}"' "${_readme_url}" 2>/dev/null || printf "%b\n" "'"${orange}"'Preview unavailable'"${reset}"'"
+          fi
+        fi
     '
   # Header
   local _header_text="🐸 ${neon}${uline_on}TkG-Installer ─ Main${uline_off}${reset}${break}${break}\
@@ -2496,7 +2556,8 @@ __main_direct_mode() {
 
   # Edit config for given package
   if [[ -n "${_package}" && -n "${_config_arg}" ]]; then
-    local _config_path="${_localcfg}/${_package}.cfg"
+    local _config_file_name="${_pkglocalcfg[${_package}]:-${_package}.cfg}"
+    local _config_path="${_localcfg}/${_config_file_name}"
     local _config_url
     _config_url=$(__get_config_url "${_package}")
     local _config_name="${_package}"
