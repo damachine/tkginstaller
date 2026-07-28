@@ -13,7 +13,7 @@ if [ ! -x "$(command -v sudo)" ]; then
 fi
 
 # TkG-Installer VERSION definition
-readonly pkgver="v0.54.2"
+readonly pkgver="v0.54.3"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _runargs=("$@")
@@ -33,7 +33,7 @@ _reposrc_raw_damachine=https://raw.githubusercontent.com/damachine/tkginstaller/
 
 # nvidia-open version map
 declare -gA _nvidia_versions=(
-  [latest]="610.43.02"
+  [latest]="610.43.03"
   [vulkan]="595.44.09"
   [legacy]="580.173.02"
 )
@@ -884,6 +884,26 @@ __fzf_menu() {
 # INSTALLATION FUNCTIONS
 # =============================================================================
 
+__linux_tkg_gentoo_install_completed() {
+  local _package_name="${1:-}"
+  local _build_command="${2:-}"
+
+  [[ "${_distro_id,,}" == "gentoo" ]] || return 1
+  [[ "${_package_name}" == "linux-tkg" ]] || return 1
+  [[ "${_build_command}" == *"install.sh install"* ]] || return 1
+
+  local _src_target _kernel_version
+  _src_target="$(readlink -f /usr/src/linux 2>/dev/null)" || return 1
+  [[ "${_src_target}" == /usr/src/linux-* ]] || return 1
+
+  _kernel_version="${_src_target#/usr/src/linux-}"
+  [[ -n "${_kernel_version}" ]] || return 1
+  [[ -d "/lib/modules/${_kernel_version}" ]] || return 1
+  [[ -f "/lib/modules/${_kernel_version}/vmlinuz" ]] || return 1
+
+  return 0
+}
+
 # Generic package installation helper function
 __install_package() {
   SECONDS=0
@@ -1023,6 +1043,12 @@ __install_package() {
   # Run post-build hook in repo dir (e.g. capture values before PKGBUILD cleanup)
   if [[ -n "${_post_build_hook}" ]]; then
     eval "${_post_build_hook}"
+  fi
+
+  if [[ ${_status} -ne 0 ]] && __linux_tkg_gentoo_install_completed "${_package_name}" "${_build_command}"; then
+    msgwarning "linux-tkg returned ${_status} after Gentoo kernel installation completed."
+    msgplain " ${gray}Kernel source and /lib/modules entry are present; treating the optional final step as non-fatal.${reset}${break}"
+    _status=0
   fi
 
   if [[ "${_tkg_skip_status:-}" != "1" ]]; then
@@ -1300,39 +1326,45 @@ __linux_nvidia_install() {
   local _nvidia_repo="${_pkgrepo[nvidia]}"
   local _nvidia_branch="master"
 
-  local _pf_version="" _pf_nvidia="" _pf_nvidia_variant="" _pf_compiler=""
+  local _pf_version="" _pf_nvidia="" _pf_nvidia_variant="" _pf_compiler="" _pf_docs_pkg="false"
   local _pf_cfg_ext="${HOME}/.config/frogminer/linux-tkg.cfg"
 
   # read user ext config
   if [[ -f "${_pf_cfg_ext}" ]]; then
-    local _ev _eno _ec
+    local _ev _eno _ec _ed
     _ev=$(__cfg_val '_version' "${_pf_cfg_ext}")
     _eno=$(__cfg_val '_nvidia_pkg' "${_pf_cfg_ext}")
     _ec=$(__cfg_val '_compiler' "${_pf_cfg_ext}")
+    _ed=$(__cfg_val '_docs_pkg' "${_pf_cfg_ext}")
     [[ -n "${_ev}" ]] && _pf_version="${_ev}"
     [[ -n "${_eno}" ]] && _pf_nvidia="${_eno}"
     [[ -n "${_ec}" ]] && _pf_compiler="${_ec}"
+    [[ -n "${_ed}" ]] && _pf_docs_pkg="${_ed}"
   fi
 
   # override with repo customization.cfg if already cloned
   local _linux_tkg_dir="${_tmpdir}/linux-tkg"
   local _pf_cfg_main="${_linux_tkg_dir}/customization.cfg"
   if [[ -f "${_pf_cfg_main}" ]]; then
-    local _cv _cno _cc
+    local _cv _cno _cc _cd
     _cv=$(__cfg_val '_version' "${_pf_cfg_main}")
     _cno=$(__cfg_val '_nvidia_pkg' "${_pf_cfg_main}")
     _cc=$(__cfg_val '_compiler' "${_pf_cfg_main}")
+    _cd=$(__cfg_val '_docs_pkg' "${_pf_cfg_main}")
     [[ -n "${_cv}" ]] && _pf_version="${_cv}"
     [[ -n "${_cno}" ]] && _pf_nvidia="${_cno}"
     [[ -n "${_cc}" ]] && _pf_compiler="${_cc}"
+    [[ -n "${_cd}" ]] && _pf_docs_pkg="${_cd}"
     # ext config wins
     if [[ -f "${_pf_cfg_ext}" ]]; then
       _ev=$(__cfg_val '_version' "${_pf_cfg_ext}")
       _eno=$(__cfg_val '_nvidia_pkg' "${_pf_cfg_ext}")
       _ec=$(__cfg_val '_compiler' "${_pf_cfg_ext}")
+      _ed=$(__cfg_val '_docs_pkg' "${_pf_cfg_ext}")
       [[ -n "${_ev}" ]] && _pf_version="${_ev}"
       [[ -n "${_eno}" ]] && _pf_nvidia="${_eno}"
       [[ -n "${_ec}" ]] && _pf_compiler="${_ec}"
+      [[ -n "${_ed}" ]] && _pf_docs_pkg="${_ed}"
     fi
   fi
 
@@ -1394,9 +1426,12 @@ __linux_nvidia_install() {
   local _ltkg_makedeps=(
     'bc' 'bison' 'cpio' 'docbook-xsl' 'flex' 'git' 'graphviz'
     'gettext' 'imagemagick' 'inetutils' 'libelf' 'pahole'
-    'patchutils' 'perl' 'python' 'python-sphinx' 'python-sphinx_rtd_theme'
+    'patchutils' 'perl' 'python'
     'rust' 'rust-bindgen' 'rust-src' 'tar' 'wget' 'xmlto' 'xz' 'zstd'
   )
+  if [[ "${_pf_docs_pkg}" == "true" ]]; then
+    _ltkg_makedeps+=('python-sphinx' 'python-sphinx_rtd_theme')
+  fi
   if [[ "${_pf_compiler}" == "llvm" ]]; then
     _ltkg_makedeps+=('clang' 'llvm' 'lld')
   fi
