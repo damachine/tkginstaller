@@ -13,7 +13,7 @@ if [ ! -x "$(command -v sudo)" ]; then
 fi
 
 # TkG-Installer VERSION definition
-readonly pkgver="v0.54.3"
+readonly pkgver="v0.54.4"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _runargs=("$@")
@@ -286,15 +286,14 @@ msgplain() { __msg 'plain' "$@"; }
 msgpkg() {
   local _pkg_name="${1:-TkG package}"
   local _config_url="${2:-${_reposrc}}"
+  local _config_url_extra="${3:-}"
 
   msginfo "${break}${neon}${uline_on}INFO${uline_off}:${reset} ${light}Configuration Options for ${_pkg_name}${reset}${break}"
   msgplain " A wide range of options are available!"
   msgplain " TkG packages can be precisely tailored to your system.${reset}${break}"
-  msgplain " Set up ${gray}customization.cfg${reset} using one of the following options:${reset}${break}"
-  msgplain " ${orange}A${reset} │ tkginstaller -> Config -> ${_pkg_name,,}${reset}  ${gray}(interactive)${reset}"
-  msgplain " ${orange}B${reset} │ tkginstaller ${_pkg_name,,} config        ${gray}(direct)${reset}${break}"
   msgplain " You will find detailed instructions at:${reset}"
   msgplain " ${gray}${_config_url}${reset}"
+  [[ -n "${_config_url_extra}" ]] && msgplain " ${gray}${_config_url_extra}${reset}"
 }
 
 # Check for root
@@ -448,10 +447,12 @@ __build_menu() {
   local _opt2_desc="${5:-custom build script}"
   local _opt9_label="${6:-}"
   local _opt9_desc="${7:-}"
+  local _opt3_label="${8:-}"
+  local _opt3_desc="${9:-}"
 
   # Align option labels
   local _max_label_length=0
-  for _label in "${_opt1_label}" "${_opt2_label}" "${_opt9_label}"; do
+  for _label in "${_opt1_label}" "${_opt2_label}" "${_opt3_label}" "${_opt9_label}"; do
     [[ -n "${_label}" ]] && ((${#_label} > _max_label_length)) && _max_label_length=${#_label}
   done
 
@@ -460,12 +461,14 @@ __build_menu() {
   msgplain " ${neon}${uline_on}1${uline_off}${reset} │ $(printf "%-${_max_label_length}s" "${_opt1_label}")  ${light}${_opt1_desc}${reset}"
 
   [[ -n "${_opt2_label}" ]] && msgplain " ${orange}2${reset} │ $(printf "%-${_max_label_length}s" "${_opt2_label}")  ${gray}${_opt2_desc}${reset}"
-  [[ -n "${_opt9_label}" ]] && msgplain " ${gray}9${reset} │ $(printf "%-${_max_label_length}s" "${_opt9_label}")  ${gray}${_opt9_desc}${reset}"
+  [[ -n "${_opt3_label}" ]] && msgplain " ${gray}3${reset} │ $(printf "%-${_max_label_length}s" "${_opt3_label}")  ${gray}${_opt3_desc}${reset}"
+  [[ -n "${_opt9_label}" ]] && msgplain " ${red}9${reset} │ $(printf "%-${_max_label_length}s" "${_opt9_label}")  ${gray}${_opt9_desc}${reset}"
   msgplain " ${red}0${reset} │ Cancel${break}"
 
   local _choices="[${neon}${uline_on}1${uline_off}${reset}"
   [[ -n "${_opt2_label}" ]] && _choices+="/${orange}2${reset}"
-  [[ -n "${_opt9_label}" ]] && _choices+="/${gray}9${reset}"
+  [[ -n "${_opt3_label}" ]] && _choices+="/${gray}3${reset}"
+  [[ -n "${_opt9_label}" ]] && _choices+="/${red}9${reset}"
   _choices+="/${red}0${reset}]"
 
   __prompt_timer "${_choices}" 60 1
@@ -884,26 +887,6 @@ __fzf_menu() {
 # INSTALLATION FUNCTIONS
 # =============================================================================
 
-__linux_tkg_gentoo_install_completed() {
-  local _package_name="${1:-}"
-  local _build_command="${2:-}"
-
-  [[ "${_distro_id,,}" == "gentoo" ]] || return 1
-  [[ "${_package_name}" == "linux-tkg" ]] || return 1
-  [[ "${_build_command}" == *"install.sh install"* ]] || return 1
-
-  local _src_target _kernel_version
-  _src_target="$(readlink -f /usr/src/linux 2>/dev/null)" || return 1
-  [[ "${_src_target}" == /usr/src/linux-* ]] || return 1
-
-  _kernel_version="${_src_target#/usr/src/linux-}"
-  [[ -n "${_kernel_version}" ]] || return 1
-  [[ -d "/lib/modules/${_kernel_version}" ]] || return 1
-  [[ -f "/lib/modules/${_kernel_version}/vmlinuz" ]] || return 1
-
-  return 0
-}
-
 # Generic package installation helper function
 __install_package() {
   SECONDS=0
@@ -1043,12 +1026,6 @@ __install_package() {
   # Run post-build hook in repo dir (e.g. capture values before PKGBUILD cleanup)
   if [[ -n "${_post_build_hook}" ]]; then
     eval "${_post_build_hook}"
-  fi
-
-  if [[ ${_status} -ne 0 ]] && __linux_tkg_gentoo_install_completed "${_package_name}" "${_build_command}"; then
-    msgwarning "linux-tkg returned ${_status} after Gentoo kernel installation completed."
-    msgplain " ${gray}Kernel source and /lib/modules entry are present; treating the optional final step as non-fatal.${reset}${break}"
-    _status=0
   fi
 
   if [[ "${_tkg_skip_status:-}" != "1" ]]; then
@@ -1203,6 +1180,13 @@ __linux_install() {
   esac
 
   local _build_command
+  local _uninstall_menu_args=("" "" "install.sh uninstall-help" "(show uninstall help)")
+  if [[ "${_linux_branch}" == "staging" ]]; then
+    _uninstall_menu_args=(
+      "install.sh uninstall" "(interactive kernel uninstall)"
+      "install.sh uninstall-help" "(show uninstall help)"
+    )
+  fi
 
   if [[ "${_is_arch_based}" != "true" ]]; then
     local _pkg_type=""
@@ -1218,7 +1202,7 @@ __linux_install() {
     __build_menu "Linux-TkG" \
       "makepkg -Ccfsi" "recommended for Arch" \
       "install.sh install" "(generic script)" \
-      "install.sh uninstall" "(show uninstall help)"
+      "${_uninstall_menu_args[@]}"
 
     case "${_menu_choice}" in
       0)
@@ -1226,14 +1210,21 @@ __linux_install() {
         __exit 1
         ;;
       2) _build_command="chmod +x install.sh && ./install.sh install" ;;
-      9) _build_command="chmod +x install.sh && ./install.sh uninstall-help" ;;
+      3) _build_command="chmod +x install.sh && ./install.sh uninstall-help" ;;
+      9)
+        if [[ "${_linux_branch}" == "staging" ]]; then
+          _build_command="chmod +x install.sh && ./install.sh uninstall"
+        else
+          _build_command="chmod +x install.sh && ./install.sh uninstall-help"
+        fi
+        ;;
       *) _build_command="makepkg -Ccfsi" ;;
     esac
   else
     __build_menu "Linux-TkG" \
       "install.sh install" "recommended for ${_distro_name}" \
       "makepkg -Ccfsi" "Arch package build workflow" \
-      "install.sh uninstall" "(show uninstall help)"
+      "${_uninstall_menu_args[@]}"
 
     case "${_menu_choice}" in
       0)
@@ -1241,7 +1232,14 @@ __linux_install() {
         __exit 1
         ;;
       2) _build_command="makepkg -Ccfsi" ;;
-      9) _build_command="chmod +x install.sh && ./install.sh uninstall-help" ;;
+      3) _build_command="chmod +x install.sh && ./install.sh uninstall-help" ;;
+      9)
+        if [[ "${_linux_branch}" == "staging" ]]; then
+          _build_command="chmod +x install.sh && ./install.sh uninstall"
+        else
+          _build_command="chmod +x install.sh && ./install.sh uninstall-help"
+        fi
+        ;;
       *) _build_command="chmod +x install.sh && ./install.sh install" ;;
     esac
   fi
@@ -1250,7 +1248,7 @@ __linux_install() {
   local _status=$?
 
   # Offer uninstall help for non-Arch
-  if [[ "${_is_arch_based}" != "true" && ${_status} -eq 0 ]]; then
+  if [[ "${_is_arch_based}" != "true" && ${_status} -eq 0 && "${_menu_choice}" != "3" && "${_menu_choice}" != "9" ]]; then
     msginfo "${break}${neon}${uline_on}TIP${uline_off}:${reset}${light} Uninstalling custom kernels has to be done manually.${break}"
     msgprompt "Show uninstall info now? [y/N]: "
     read -r _show_info
@@ -1320,7 +1318,9 @@ __ensure_packages() {
 __linux_nvidia_install() {
   local _combined_epoch
   _combined_epoch=$(date +%s)
-  msgpkg "Linux-TkG + Nvidia-all" "${_reposrc}/nvidia-all/blob/master/customization.cfg"
+  msgpkg "Linux-TkG + Nvidia-all" \
+    "${_reposrc_damachine%.git}/blob/staging/customization.cfg" \
+    "${_reposrc}/nvidia-all/blob/master/customization.cfg"
   msginfo "${break}${neon}${uline_on}COMBINED${uline_off}:${reset} ${light}Both packages will be ${gray}built first${reset}${light}, then installed together via ${gray}pacman -U${reset}${light}.${reset}${break}"
 
   local _nvidia_repo="${_pkgrepo[nvidia]}"
@@ -1381,7 +1381,7 @@ __linux_nvidia_install() {
 
   if [[ -z "${_pf_nvidia}" ]]; then
     msginfo "${break}${neon}${uline_on}NVIDIA OPEN MODULE${uline_off}:${reset} ${light}Which NVIDIA open driver version for the combined install?${reset}${break}"
-    msgplain " Supported kernels: ${gray}6.18  7.0  7.1${reset}  │  Requires Turing+ GPU (GTX 16+ or RTX 20xx or newer)${reset}${break}"
+    msgplain " Supported kernels: ${gray}6.18  7.1  7.2${reset}  │  Requires Turing+ GPU (GTX 16+ or RTX 20xx or newer)${reset}${break}"
     msgplain " ${neon}${uline_on}0${uline_off}${reset} │ ${_nvidia_versions[latest]}   ${gray}— default branch, selected${reset} ${neon}(default)${reset}"
     msgplain " ${orange}1${reset} │ ${_nvidia_versions[vulkan]}   ${gray}— Vulkan developer beta${reset}"
     msgplain " ${gray}2${reset} │ ${_nvidia_versions[legacy]}  ${gray}— legacy/LTS branch${reset}"
@@ -2133,7 +2133,7 @@ __menu_config() {
 
     # bat/wdiff diff preview commands
     local _bat_cmd="bat --style=plain --language=cfg --wrap character --terminal-width ${cols} --force-colorization --theme='Visual Studio Dark+'"
-    local _diff_cmd="wdiff --terminal --statistics --start-delete='${red}' --end-delete='${reset}' --start-insert='${light}' --end-insert='${reset}'"
+    local _diff_cmd="wdiff --statistics --start-delete='${red}' --end-delete='${reset}' --start-insert='${light}' --end-insert='${reset}'"
 
     # Preview command
     # shellcheck disable=SC2016 # Need to use single quotes for fzf preview
@@ -2260,8 +2260,12 @@ __check_config() {
 
   # Fetch extra configs for extended var detection
   local _extra_urls=()
+  local _accepted_var_urls=()
+  local _deprecated_scope="upstream"
+  local _can_check_deprecated=true
   case "${_package_name}" in
-    Linux-TkG)
+    linux | Linux-TkG)
+      _deprecated_scope="upstream or staging"
       local _prepare_url="${_reposrc_raw}/linux-tkg/master/linux-tkg-config/prepare"
       local _tmp_prepare="/tmp/linux-tkg-prepare"
       if curl -fsSL "${_prepare_url}" -o "${_tmp_prepare}" 2>/dev/null; then
@@ -2276,14 +2280,18 @@ __check_config() {
         [[ -n "${_prepare_vars}" ]] && _upstream_vars_for_deprecated+=$'\n'"${_prepare_vars}"
         rm -f "${_tmp_prepare}"
       fi
+      _accepted_var_urls=(
+        "https://raw.githubusercontent.com/damachine/linux-tkg/staging/customization.cfg"
+        "https://raw.githubusercontent.com/damachine/linux-tkg/staging/linux-tkg-config/prepare"
+      )
       ;;
-    Wine-TkG)
+    wine | Wine-TkG)
       _extra_urls=(
         "${_reposrc_raw}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/advanced-customization.cfg"
         "${_reposrc_raw}/wine-tkg-git/refs/heads/master/wine-tkg-git/wine-tkg-profiles/sample-external-config.cfg"
       )
       ;;
-    Proton-TkG)
+    proton | Proton-TkG)
       _extra_urls=(
         "${_reposrc_raw}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/advanced-customization.cfg"
         "${_reposrc_raw}/wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg-profiles/sample-external-config.cfg"
@@ -2305,13 +2313,30 @@ __check_config() {
     fi
   done
 
+  # Accept variables provided by additional active sources without suggesting them as upstream defaults
+  for _url in "${_accepted_var_urls[@]}"; do
+    local _tmp_accepted="/tmp/accepted_cfg_$$.cfg"
+    if curl -fsSL "${_url}" -o "${_tmp_accepted}" 2>/dev/null; then
+      local _accepted_vars
+      _accepted_vars=$(grep -oP '^#?\s*\K[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_tmp_accepted}" 2>/dev/null)
+      [[ -n "${_accepted_vars}" ]] && _upstream_vars_for_deprecated+=$'\n'"${_accepted_vars}"
+    else
+      _can_check_deprecated=false
+    fi
+    rm -f "${_tmp_accepted}"
+  done
+
   # Sort and deduplicate
   _upstream_vars=$(echo "${_upstream_vars}" | sort -u)
   _upstream_vars_for_deprecated=$(echo "${_upstream_vars_for_deprecated}" | sort -u)
 
   # Find deprecated variables
-  local _deprecated_vars
-  _deprecated_vars=$(comm -23 <(echo "${_local_vars}") <(echo "${_upstream_vars_for_deprecated}") 2>/dev/null)
+  local _deprecated_vars=""
+  if [[ "${_can_check_deprecated}" == "true" ]]; then
+    _deprecated_vars=$(comm -23 <(echo "${_local_vars}") <(echo "${_upstream_vars_for_deprecated}") 2>/dev/null)
+  else
+    msgwarning "Could not verify staging variables; skipping deprecated-variable check.${break}"
+  fi
 
   # Find new variables
   local _new_vars
@@ -2328,7 +2353,7 @@ __check_config() {
 
     # Show deprecated variables
     if [[ -n "${_deprecated_vars}" ]]; then
-      msgwarning "Deprecated variables (no longer used upstream):${break}"
+      msgwarning "Deprecated variables (not found in ${_deprecated_scope}):${break}"
       while IFS= read -r _var; do
         [[ -n "${_var}" ]] && msgplain " ${red}✗${reset} ${gray}${_var}${reset}"
       done <<<"${_deprecated_vars}"
@@ -2349,6 +2374,9 @@ __check_config() {
 
     # Show extra config URLs
     for _url in "${_extra_urls[@]}"; do
+      msgplain " ${gray}${_url}${reset}"
+    done
+    for _url in "${_accepted_var_urls[@]}"; do
       msgplain " ${gray}${_url}${reset}"
     done
     echo
