@@ -13,7 +13,7 @@ if [ ! -x "$(command -v sudo)" ]; then
 fi
 
 # TkG-Installer VERSION definition
-readonly pkgver="v0.54.4"
+readonly pkgver="v0.55.0"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _runargs=("$@")
@@ -728,12 +728,23 @@ __exit() {
   exit "${_exit_code}"
 }
 
+# Remove only combined package directories created below _tmpdir
+__cleanup_combined_pkgdir() {
+  local _combined_cleanup_target="${1:-}"
+  local _combined_cleanup_prefix="${_tmpdir}/combined-packages."
+  [[ -n "${_combined_cleanup_target}" && "${_combined_cleanup_target}" == "${_combined_cleanup_prefix}"* && "${_combined_cleanup_target}" != "${_combined_cleanup_prefix}" ]] || return 0
+  rm -rf -- "${_combined_cleanup_target}"
+}
+
 # Route signals through __exit
 trap 'trap - INT TERM EXIT HUP; __exit 130' INT TERM HUP
 trap '__exit $?' EXIT
 
 # Cleanup handler
 __clean() {
+  # Remove an active combined build output directory on interruption/exit.
+  __cleanup_combined_pkgdir "${_combined_pkgdir:-}"
+
   # Remove choice tmpfile only
   rm -f "${_choicetmp}"
 
@@ -896,14 +907,15 @@ __install_package() {
   local _work_directory="${4:-}"
   local _post_build_hook="${5:-}"
   local _repo_branch="${6:-}"
+  local _repo_action="${7:-sync}"
 
   __cd_safe "${_tmpdir}" || return 1
 
   local _repo_dir
   _repo_dir=$(basename "${_repo_url}" .git)
 
-  # Clone or update repository
-  if [[ -d "${_repo_dir}/.git" ]]; then
+  # Clone or update repository unless the caller already synchronized it
+  if [[ "${_repo_action}" != "reuse" && -d "${_repo_dir}/.git" ]]; then
     msginfo "${break}${neon}${uline_on}PROGRESS${uline_off}:${reset} ${light}Updating ${gray}${_package_name}${reset} ${light}(git pull)...${reset}${break}"
     __cd_safe "${_repo_dir}" || return 1
 
@@ -961,7 +973,7 @@ __install_package() {
       fi
       __cd_safe "${_tmpdir}" || return 1
     fi
-  else
+  elif [[ "${_repo_action}" != "reuse" ]]; then
     msginfo "${break}${neon}${uline_on}PROGRESS${uline_off}:${reset} ${light}Cloning ${gray}${_package_name}${reset} ${light}from Frogging-Family repository...${reset}${break}"
 
     # Handle existing directory without git metadata
@@ -1011,6 +1023,9 @@ __install_package() {
 
   __cd_safe "${_repo_dir}" || return 1
   [[ -n "${_work_directory}" ]] && { __cd_safe "${_work_directory}" || return 1; }
+
+  # Allow callers to inspect the freshly synchronized checkout before building
+  [[ "${_repo_action}" == "sync-only" ]] && return 0
 
   # Display onefetch info
   if command -v onefetch >/dev/null 2>&1; then
@@ -1300,19 +1315,6 @@ __nvidia_install() {
   __install_package "${_nvidia_repo}" "nvidia-all" "${_build_command}" "" "" "${_nvidia_branch}"
 }
 
-# Check if packages are installed; install any missing ones via pacman --needed.
-__ensure_packages() {
-  local _missing=()
-  local _pkg
-  for _pkg in "$@"; do
-    pacman -Qq "${_pkg}" &>/dev/null || _missing+=("${_pkg}")
-  done
-  if [[ ${#_missing[@]} -gt 0 ]]; then
-    msginfo "Installing missing build dependencies: ${_missing[*]}${break}"
-    sudo pacman -S --needed --asdeps --noconfirm "${_missing[@]}" || return 1
-  fi
-}
-
 # Linux-TkG + Nvidia-all combined installation (damachine fork)
 # shellcheck disable=SC2218
 __linux_nvidia_install() {
@@ -1326,47 +1328,25 @@ __linux_nvidia_install() {
   local _nvidia_repo="${_pkgrepo[nvidia]}"
   local _nvidia_branch="master"
 
-  local _pf_version="" _pf_nvidia="" _pf_nvidia_variant="" _pf_compiler="" _pf_docs_pkg="false"
+  # Synchronize linux-tkg before reading values from its repository config
+  local _status
+  __install_package "${_reposrc_damachine}" "linux-tkg" "" "" "" "staging" "sync-only"
+  _status=$?
+  if [[ ${_status} -ne 0 ]]; then
+    msgerror "Linux-TkG repository update failed.${break}"
+    return "${_status}"
+  fi
+
+  local _pf_nvidia="" _pf_nvidia_variant=""
   local _pf_cfg_ext="${HOME}/.config/frogminer/linux-tkg.cfg"
+  local _cfg_path _cfg_nvidia
 
-  # read user ext config
-  if [[ -f "${_pf_cfg_ext}" ]]; then
-    local _ev _eno _ec _ed
-    _ev=$(__cfg_val '_version' "${_pf_cfg_ext}")
-    _eno=$(__cfg_val '_nvidia_pkg' "${_pf_cfg_ext}")
-    _ec=$(__cfg_val '_compiler' "${_pf_cfg_ext}")
-    _ed=$(__cfg_val '_docs_pkg' "${_pf_cfg_ext}")
-    [[ -n "${_ev}" ]] && _pf_version="${_ev}"
-    [[ -n "${_eno}" ]] && _pf_nvidia="${_eno}"
-    [[ -n "${_ec}" ]] && _pf_compiler="${_ec}"
-    [[ -n "${_ed}" ]] && _pf_docs_pkg="${_ed}"
-  fi
-
-  # override with repo customization.cfg if already cloned
-  local _linux_tkg_dir="${_tmpdir}/linux-tkg"
-  local _pf_cfg_main="${_linux_tkg_dir}/customization.cfg"
-  if [[ -f "${_pf_cfg_main}" ]]; then
-    local _cv _cno _cc _cd
-    _cv=$(__cfg_val '_version' "${_pf_cfg_main}")
-    _cno=$(__cfg_val '_nvidia_pkg' "${_pf_cfg_main}")
-    _cc=$(__cfg_val '_compiler' "${_pf_cfg_main}")
-    _cd=$(__cfg_val '_docs_pkg' "${_pf_cfg_main}")
-    [[ -n "${_cv}" ]] && _pf_version="${_cv}"
-    [[ -n "${_cno}" ]] && _pf_nvidia="${_cno}"
-    [[ -n "${_cc}" ]] && _pf_compiler="${_cc}"
-    [[ -n "${_cd}" ]] && _pf_docs_pkg="${_cd}"
-    # ext config wins
-    if [[ -f "${_pf_cfg_ext}" ]]; then
-      _ev=$(__cfg_val '_version' "${_pf_cfg_ext}")
-      _eno=$(__cfg_val '_nvidia_pkg' "${_pf_cfg_ext}")
-      _ec=$(__cfg_val '_compiler' "${_pf_cfg_ext}")
-      _ed=$(__cfg_val '_docs_pkg' "${_pf_cfg_ext}")
-      [[ -n "${_ev}" ]] && _pf_version="${_ev}"
-      [[ -n "${_eno}" ]] && _pf_nvidia="${_eno}"
-      [[ -n "${_ec}" ]] && _pf_compiler="${_ec}"
-      [[ -n "${_ed}" ]] && _pf_docs_pkg="${_ed}"
-    fi
-  fi
+  # Later files win: repository config, then external Frogminer config
+  for _cfg_path in "${_tmpdir}/linux-tkg/customization.cfg" "${_pf_cfg_ext}"; do
+    [[ -f "${_cfg_path}" ]] || continue
+    _cfg_nvidia=$(__cfg_val '_nvidia_pkg' "${_cfg_path}")
+    [[ -n "${_cfg_nvidia}" ]] && _pf_nvidia="${_cfg_nvidia}"
+  done
 
   # prompt for _nvidia_pkg if not set in config
   if [[ -n "${_pf_nvidia}" ]]; then
@@ -1408,39 +1388,15 @@ __linux_nvidia_install() {
     msgplain "${break} Selected: ${gray}${_pf_nvidia}${reset}"
   fi
 
-  # resolve driver version and branch from version map
-  local _driver_version_val="${_pf_nvidia}"
-  if [[ -z "${_pf_nvidia_variant}" ]]; then
-    __resolve_nvidia_value "${_pf_nvidia}"
-    _pf_nvidia="${_resolved_nvidia}"
-    _pf_nvidia_variant="${_resolved_nvidia_variant}"
-    _driver_version_val="${_resolved_nvidia}"
-  fi
-  local _driver_branch_val=""
-  case "${_pf_nvidia_variant}" in
-    vulkan) _driver_branch_val="vulkandev" ;;
-    *) _driver_branch_val="regular" ;;
-  esac
-
-  # linux-tkg makedeps (kernel ≥ 6.12, rust always included)
-  local _ltkg_makedeps=(
-    'bc' 'bison' 'cpio' 'docbook-xsl' 'flex' 'git' 'graphviz'
-    'gettext' 'imagemagick' 'inetutils' 'libelf' 'pahole'
-    'patchutils' 'perl' 'python'
-    'rust' 'rust-bindgen' 'rust-src' 'tar' 'wget' 'xmlto' 'xz' 'zstd'
-  )
-  if [[ "${_pf_docs_pkg}" == "true" ]]; then
-    _ltkg_makedeps+=('python-sphinx' 'python-sphinx_rtd_theme')
-  fi
-  if [[ "${_pf_compiler}" == "llvm" ]]; then
-    _ltkg_makedeps+=('clang' 'llvm' 'lld')
-  fi
-  msginfo "${break}${neon}${uline_on}MAKEDEPS${uline_off}:${reset} ${light}Checking linux-tkg build dependencies…${reset}"
-  __ensure_packages "${_ltkg_makedeps[@]}" || return 1
+  # Map the resolved NVIDIA variant to the nvidia-all branch
+  local _driver_branch_val="regular"
+  [[ "${_pf_nvidia_variant}" == "vulkan" ]] && _driver_branch_val="vulkandev"
 
   # build linux-tkg
   local _linux_tkg_preset="${_tmpdir}/linux_tkg_preset.cfg"
   mkdir -p "${_tmpdir}"
+  local _combined_pkgdir
+  _combined_pkgdir=$(mktemp -d "${_tmpdir}/combined-packages.XXXXXX") || return 1
   if [[ -f "${_pf_cfg_ext}" ]]; then
     sed '/^[[:space:]]*_nvidia_pkg=/d' "${_pf_cfg_ext}" >"${_linux_tkg_preset}"
     echo >>"${_linux_tkg_preset}"
@@ -1448,25 +1404,19 @@ __linux_nvidia_install() {
     : >"${_linux_tkg_preset}"
   fi
   # append chosen values to preset; _nvidia_pkg intentionally overrides external false
-  [[ -n "${_pf_version}" ]] && printf '_version=%q\n' "${_pf_version}" >>"${_linux_tkg_preset}"
-  [[ -n "${_pf_nvidia}" ]] && printf '_nvidia_pkg=%q\n' "${_pf_nvidia}" >>"${_linux_tkg_preset}"
+  printf '_nvidia_pkg=%q\n' "${_pf_nvidia}" >>"${_linux_tkg_preset}"
 
-  local _build_command="rm -f BIG_UGLY_FROGMINER && _EXT_CONFIG_PATH=\"${_linux_tkg_preset}\" makepkg -d"
+  local _build_command="rm -f BIG_UGLY_FROGMINER && PKGDEST=\"${_combined_pkgdir}\" _EXT_CONFIG_PATH=\"${_linux_tkg_preset}\" makepkg -s --noconfirm"
   _tkg_skip_status="1"
-  __install_package "${_reposrc_damachine}" "linux-tkg" "${_build_command}" "" "" "staging"
-  local _status=$?
+  __install_package "${_reposrc_damachine}" "linux-tkg" "${_build_command}" "" "" "staging" "reuse"
+  _status=$?
   local _linux_duration="${SECONDS}"
 
   if [[ ${_status} -ne 0 ]]; then
     msgerror "Linux-TkG build failed — skipping Nvidia-all build.${break}"
+    __cleanup_combined_pkgdir "${_combined_pkgdir}"
     return "${_status}"
   fi
-
-  # nvidia-all makedeps (nvsettings always enabled)
-  local _nv_makedeps=('linux-headers' 'patchelf'
-    'jansson' 'gtk3' 'libxv' 'libvdpau' 'libxext' 'vulkan-headers')
-  msginfo "${break}${neon}${uline_on}MAKEDEPS${uline_off}:${reset} ${light}Checking nvidia-all build dependencies…${reset}"
-  __ensure_packages "${_nv_makedeps[@]}" || return 1
 
   # build nvidia-all
   local _preset_cfg="${_tmpdir}/nvidia_all/pre-customization.cfg"
@@ -1474,13 +1424,9 @@ __linux_nvidia_install() {
 
   cat >"${_preset_cfg}" <<NVIDIA_CUSTOMIZATION_CFG
 # nvidia-all preset config — generated by tkginstaller (linux-nvidia combined install)
-# Edit values in the __write_nvidia_preset_cfg() heredoc inside tkginstaller to customize.
-#
-# _EXT_CONFIG_PATH is explicitly cleared so ~/.config/frogminer/nvidia-all.cfg does NOT
-# override this file. Remove this line only if you want your personal nvidia-all.cfg applied.
-_EXT_CONFIG_PATH="~/.tkg_installer_ignored_config_path/nvidia-all.cfg"
+# This file is passed directly through _EXT_CONFIG_PATH and does not modify the repository config.
 _distro="${_nvidia_all_distro}"
-_driver_version="${_driver_version_val}"
+_driver_version="${_pf_nvidia}"
 _driver_branch="${_driver_branch_val}"
 _open_source_modules="true"
 _dkms="false"
@@ -1516,7 +1462,7 @@ _md5sum="SKIP"
 NVIDIA_CUSTOMIZATION_CFG
 
   # build only
-  _build_command="rm -f options && mv \"${_preset_cfg}\" customization.cfg && makepkg -d"
+  _build_command="if grep -qxF '# nvidia-all preset config — generated by tkginstaller (linux-nvidia combined install)' customization.cfg; then git restore --source=HEAD -- customization.cfg; fi && rm -f options BIG_UGLY_FROGMINER && PKGDEST=\"${_combined_pkgdir}\" _EXT_CONFIG_PATH=\"${_preset_cfg}\" makepkg -s --noconfirm"
   _tkg_skip_status="1"
   # shellcheck disable=SC2218
   __install_package "${_nvidia_repo}" "nvidia-all" "${_build_command}" "" "" "${_nvidia_branch}"
@@ -1527,20 +1473,19 @@ NVIDIA_CUSTOMIZATION_CFG
 
   if [[ ${_status} -ne 0 ]]; then
     msgerror "Nvidia-all build failed — aborting combined install.${break}"
+    __cleanup_combined_pkgdir "${_combined_pkgdir}"
     return "${_status}"
   fi
 
   # collect all built packages and install at once
-  local _all_pkgs=()
-  while IFS= read -r -d '' _pkg; do
-    _all_pkgs+=("${_pkg}")
-  done < <(find "${_tmpdir}/nvidia-all" -maxdepth 1 -name '*.pkg.tar*' -print0 2>/dev/null)
-  while IFS= read -r -d '' _pkg; do
-    _all_pkgs+=("${_pkg}")
-  done < <(find "${_tmpdir}/linux-tkg" -maxdepth 1 -name '*.pkg.tar*' -print0 2>/dev/null)
+  local -a _all_pkgs=()
+  mapfile -d '' -t _all_pkgs < <(
+    find "${_combined_pkgdir}" -maxdepth 1 -type f -name '*.pkg.tar*' ! -name '*.sig' -print0 2>/dev/null
+  )
 
   if [[ ${#_all_pkgs[@]} -eq 0 ]]; then
     msgerror "No built packages found to install.${break}"
+    __cleanup_combined_pkgdir "${_combined_pkgdir}"
     return 1
   fi
 
@@ -1553,12 +1498,9 @@ NVIDIA_CUSTOMIZATION_CFG
   sudo pacman -U "${_all_pkgs[@]}"
   _status=$?
 
-  # remove built packages after installation
-  if [[ ${_status} -eq 0 ]]; then
-    msgplain "${break}${neon}Cleaning up built packages...${reset}"
-    find "${_tmpdir}/linux-tkg" -maxdepth 1 -name '*.pkg.tar*' -delete 2>/dev/null || true
-    find "${_tmpdir}/nvidia-all" -maxdepth 1 -name '*.pkg.tar*' -delete 2>/dev/null || true
-  fi
+  # remove built packages after every installation attempt
+  msgplain "${break}${neon}Cleaning up built packages...${reset}"
+  __cleanup_combined_pkgdir "${_combined_pkgdir}"
 
   # summary
   local _combined_total=$(($(date +%s) - _combined_epoch))
