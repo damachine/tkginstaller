@@ -16,7 +16,7 @@
  - optional spicy staging fork for <strong><a href="https://github.com/damachine/linux-tkg"><mark>linux-tkg</mark></a></strong>
  - <strong><mark>Linux++</mark></strong> — builds Linux-TkG and Nvidia-all, then installs both in one clean transaction
  - <strong><mark>logs</mark></strong> — browse, compare and find the gremlins fast
- - cleanup, checksums and distro-aware helper flows — batteries included, bloat declined 🐸
+ - cleanup, checksums and distro-aware helper flows
 </pre>
 
 <details>
