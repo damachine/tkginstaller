@@ -13,7 +13,7 @@ if [ ! -x "$(command -v sudo)" ]; then
 fi
 
 # TkG-Installer VERSION definition
-readonly pkgver="v0.55.0"
+readonly pkgver="v0.55.1"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _runargs=("$@")
@@ -33,7 +33,7 @@ _reposrc_raw_damachine=https://raw.githubusercontent.com/damachine/tkginstaller/
 
 # nvidia-open version map
 declare -gA _nvidia_versions=(
-  [latest]="610.43.03"
+  [latest]="610.57.04"
   [vulkan]="595.44.09"
   [legacy]="580.173.02"
 )
