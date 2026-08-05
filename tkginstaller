@@ -4,7 +4,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly pkgver="v0.55.3"
+readonly pkgver="v0.55.4"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _runargs=("$@")
@@ -638,7 +638,7 @@ __exit() {
     msgorange "Duration: ${_minutes} min ${_seconds} sec${break}"
 
     msgplain "${red} Exiting due to errors. Please check the messages above for details.${break}"
-  else
+  elif [[ "${_suppress_exit_banner:-false}" != "true" ]]; then
     __banner
     msgplain "${neon}Closed... Finish${break}"
   fi
@@ -2519,6 +2519,7 @@ __main_direct_mode() {
   # Handle special commands
   case "${_arg1}" in
     clean | --clean)
+      _suppress_exit_banner=true
       __clean_temp_dir
       exit 0
       ;;
@@ -2609,6 +2610,7 @@ __main_interactive_mode() {
       exit 0
       ;;
     Clean)
+      _suppress_exit_banner=true
       __clean_temp_dir
       exit 0
       ;;
