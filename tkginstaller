@@ -1,19 +1,10 @@
 #!/usr/bin/env bash
 
-# Maintainer: damachin3 (damachine3 at proton dot me)
+# Maintainer: Christian Kühn (damachin3 at proton dot me)
 # website: https://github.com/damachine/tkginstaller
 
-# Command used for superuser privileges (sudo, doas, su)
-if [ ! -x "$(command -v sudo)" ]; then
-  if [ -x "$(command -v doas)" ]; then
-    sudo() { doas "$@"; }
-  elif [ -x "$(command -v su)" ] && [ -x "$(command -v xargs)" ]; then
-    sudo() { echo "$@" | xargs -I {} su -c '{}'; }
-  fi
-fi
-
 # TkG-Installer VERSION definition
-readonly pkgver="v0.55.2"
+readonly pkgver="v0.55.3"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _runargs=("$@")
@@ -217,15 +208,9 @@ __init_style
 
 # Unified message function
 __msg() {
-  local _msg_first="${1:-}" _msg_level _msg
-  if [[ "${_msg_first,,}" =~ ^(info_(green|orange|neon|mint|blue)|warning|error|prompt|plain)$ ]]; then
-    _msg_level="${_msg_first,,}"
-    shift
-    _msg="$*"
-  else
-    _msg_level="plain"
-    _msg="$*"
-  fi
+  local _msg_level="$1"
+  shift
+  local _msg="$*"
 
   # Ensure colors exist
   : "${reset:=''}" "${red:=''}" "${light:=''}" "${neon:=''}" "${mint:=''}" "${dark:=''}" "${orange:=''}" "${gray:=''}" "${uline_on:=''}" "${uline_off:=''}"
@@ -244,10 +229,6 @@ __msg() {
       ;;
     info_neon)
       __color="${neon}"
-      _prefix=""
-      ;;
-    info_mint)
-      __color="${mint}"
       _prefix=""
       ;;
     info_orange)
@@ -275,12 +256,25 @@ __msg() {
 # Message functions
 msginfo() { __msg 'info_green' "$@"; }
 msgneon() { __msg 'info_neon' "$@"; }
-msgmint() { __msg 'info_mint' "$@"; }
 msgorange() { __msg 'info_orange' "$@"; }
 msgwarning() { __msg 'warning' "$@"; }
 msgerror() { __msg 'error' "$@"; }
 msgprompt() { __msg 'prompt' "$@"; }
 msgplain() { __msg 'plain' "$@"; }
+
+# Run one command with root privileges
+__run_as_root() {
+  if ((EUID == 0)); then
+    "$@"
+  elif command -v sudo >/dev/null 2>&1; then
+    sudo "$@"
+  elif command -v doas >/dev/null 2>&1; then
+    doas "$@"
+  else
+    msgerror "Root privileges required, but neither sudo nor doas is available.${break}"
+    return 1
+  fi
+}
 
 # Display package information
 msgpkg() {
@@ -297,7 +291,7 @@ msgpkg() {
 }
 
 # Check for root
-if [[ "$(id -u)" -eq 0 ]]; then
+if ((EUID == 0)); then
   __banner "${orange}"
   msgwarning "You are running as root!${break}"
   msgplain " Running this script as root is not recommended.${break}"
@@ -362,7 +356,7 @@ ${neon}1) Interactive mode${reset}
 
 ${neon}2) Direct mode${reset}
    Use direct CLI mode (skip TUI), run with arguments:
-   ${gray}tkginstaller [linux|l|nvidia|n|linux-nvidia|ln|mesa|m|wine|w|proton|p|amdgpu|ag|amdvlk|av|gamescope|g|glibc|ge]${reset}
+   ${gray}tkginstaller [linux|l|nvidia|n|linux-nvidia|ln|mesa|m|wine|w|proton|p|dxvk-tools|dxvk|d|amdgpu|ag|amdvlk|av|gamescope|g|glibc|ge]${reset}
 
 ${neon}3) Config editing${reset}
    Enter fzf-based TUI mode to edit a package's configuration:
@@ -374,7 +368,7 @@ ${neon}4) Clean temporary files${reset}
    Remove all temporary files created during installations:
    ${gray}tkginstaller clean${reset}
 
-${orange}Shortcuts:${reset} ${orange}l${reset}=linux, ${orange}n${reset}=nvidia, ${orange}ln${reset}=linux-nvidia, ${orange}m${reset}=mesa, ${orange}ag${reset}=amdgpu, ${orange}av${reset}=amdvlk, ${orange}w${reset}=wine, ${orange}p${reset}=proton, ${orange}g${reset}=gamescope, ${orange}ge${reset}=glibc-eac, ${orange}c${reset}=config, ${orange}e${reset}=edit
+${orange}Shortcuts:${reset} ${orange}l${reset}=linux, ${orange}n${reset}=nvidia, ${orange}ln${reset}=linux-nvidia, ${orange}m${reset}=mesa, ${orange}w${reset}=wine, ${orange}p${reset}=proton, ${orange}d${reset}=dxvk-tools, ${orange}ag${reset}=amdgpu, ${orange}av${reset}=amdvlk, ${orange}g${reset}=gamescope, ${orange}ge${reset}=glibc-eac, ${orange}c${reset}=config, ${orange}e${reset}=edit
 
 EOF
 }
@@ -440,15 +434,14 @@ __git_clone_retry() {
 
 # Build menu for installation method selection
 __build_menu() {
-  local _pkg_name="$1"
-  local _opt1_label="${2:-makepkg -Ccfsi}"
-  local _opt1_desc="${3:-recommended for Arch}"
-  local _opt2_label="${4:-}"
-  local _opt2_desc="${5:-custom build script}"
-  local _opt9_label="${6:-}"
-  local _opt9_desc="${7:-}"
-  local _opt3_label="${8:-}"
-  local _opt3_desc="${9:-}"
+  local _opt1_label="${1:-makepkg -Ccfsi}"
+  local _opt1_desc="${2:-recommended for Arch}"
+  local _opt2_label="${3:-}"
+  local _opt2_desc="${4:-custom build script}"
+  local _opt9_label="${5:-}"
+  local _opt9_desc="${6:-}"
+  local _opt3_label="${7:-}"
+  local _opt3_desc="${8:-}"
 
   # Align option labels
   local _max_label_length=0
@@ -484,76 +477,12 @@ __export_map() {
   done
 }
 
-# Check for a newer version
-__check_update() {
-  local _cache_dir="${HOME}/.tkginstaller"
-  local _cache_file="${_cache_dir}/.version_cache"
-  local _cache_ttl=86400 # 24 hours in seconds
-  local _found_version=""
-
-  # Read cached remote version
-  if [[ -f "${_cache_file}" ]]; then
-    local _now _mtime _age
-    _now=$(date +%s)
-    _mtime=$(stat -c %Y "${_cache_file}" 2>/dev/null || echo 0)
-    _age=$((_now - _mtime))
-    if ((_age < _cache_ttl)); then
-      local _cached_version
-      _cached_version=$(grep -m1 '^remote=' "${_cache_file}" 2>/dev/null | cut -d= -f2-)
-      if [[ -n "${_cached_version}" && "${_cached_version}" != "${pkgver}" ]]; then
-        _found_version="${_cached_version}"
-      else
-        return 0
-      fi
-    fi
-  fi
-
-  # Fetch remote version when cache is cold
-  if [[ -z "${_found_version}" ]]; then
-    local _remote_version
-    # shellcheck disable=SC2086
-    _remote_version=$(curl ${_curl_opts} --max-time 4 \
-      "https://raw.githubusercontent.com/damachine/tkginstaller/refs/heads/master/tkginstaller" \
-      2>/dev/null |
-      grep -m1 '^readonly pkgver=' |
-      sed 's/.*"\(.*\)".*/\1/')
-
-    # Persist result to cache
-    mkdir -p "${_cache_dir}"
-    printf 'remote=%s\n' "${_remote_version:-}" >"${_cache_file}"
-
-    if [[ -n "${_remote_version}" && "${_remote_version}" != "${pkgver}" ]]; then
-      _found_version="${_remote_version}"
-    fi
-  fi
-
-  # No update
-  [[ -z "${_found_version}" ]] && return 0
-
-  # Show notification
-  msgplain "${neon}${uline_on}UPDATE AVAILABLE${uline_off}:${reset} ${light}${_found_version}${reset} — ${orange}current: ${pkgver}${reset}"
-  msgplain " ${gray}https://github.com/damachine/tkginstaller${reset}${break}"
-
-  # countdown with skip option
-  local _i _k
-  for ((_i = 10; _i > 0; _i--)); do
-    printf "\r${gray}Continuing in ${orange}%02d${gray}s${reset}  ${gray}[Enter] to skip...${reset}" "${_i}"
-    if read -r -t 1 -n 1 _k </dev/tty 2>/dev/null; then
-      __clear_line 120 ""
-      break
-    fi
-  done
-  __clear_line 120 ""
-  printf "%b\n" "${reset}"
-}
-
 # Pre-installation checks
 __prepare() {
-  _load_preview="${1:-false}"
+  local _load_preview="${1:-false}"
 
   # Welcome message
   __banner
-  # __check_update  # TODO: temporarily disabled
   printf "%s" "${neon}Starting"
   for _ in {1..3}; do
     printf " ."
@@ -567,24 +496,15 @@ __prepare() {
     debian | ubuntu | linuxmint | pop | elementary | mx | raspbian) ;;
     *) _dep+=(onefetch) ;;
   esac
-  if [[ "${_load_preview}" == "true" ]]; then
-    case "${_distro_id,,}" in
-      debian | ubuntu | linuxmint | pop | elementary | mx | raspbian)
-        _dep+=(curl fzf wdiff)
-        ;;
-      *)
-        _dep+=(curl fzf wdiff)
-        ;;
-    esac
-  fi
+  [[ "${_load_preview}" == "true" ]] && _dep+=(bat curl fzf glow wdiff)
 
   # Define package names per distro
   declare -A _pkg_map_dep=(
     [git]=git
     [bat]=bat
     [curl]=curl
-    [glow]=glow
     [fzf]=fzf
+    [glow]=glow
     [onefetch]=onefetch
     [wdiff]=wdiff
   )
@@ -606,8 +526,8 @@ __prepare() {
         [git]=dev-vcs
         [bat]=sys-apps
         [curl]=net-misc
-        [glow]=app-text
         [fzf]=app-shells
+        [glow]=app-text
         [onefetch]=app-misc
         [wdiff]=app-text
       )
@@ -647,7 +567,7 @@ __prepare() {
 
     msgplain "${_install_cmd_dep} ${_pkg_name_dep[*]}${break}"
 
-    exit 1 >/dev/null 2>&1
+    exit 1
   fi
 
   # Setup temporary directory
@@ -660,7 +580,7 @@ __prepare() {
     __banner "${red}"
     msgerror "Creating temporary directory failed: ${_tmpdir}${break}"
     msgplain " Please check your permissions and try again.${break}"
-    exit 1 >/dev/null 2>&1
+    exit 1
   }
 
   # Entering TkG-Installer
@@ -1214,8 +1134,7 @@ __linux_install() {
   fi
 
   if [[ "${_is_arch_based}" == "true" ]]; then
-    __build_menu "Linux-TkG" \
-      "makepkg -Ccfsi" "recommended for Arch" \
+    __build_menu "makepkg -Ccfsi" "recommended for Arch" \
       "install.sh install" "(generic script)" \
       "${_uninstall_menu_args[@]}"
 
@@ -1236,8 +1155,7 @@ __linux_install() {
       *) _build_command="makepkg -Ccfsi" ;;
     esac
   else
-    __build_menu "Linux-TkG" \
-      "install.sh install" "recommended for ${_distro_name}" \
+    __build_menu "install.sh install" "recommended for ${_distro_name}" \
       "makepkg -Ccfsi" "Arch package build workflow" \
       "${_uninstall_menu_args[@]}"
 
@@ -1285,8 +1203,7 @@ __nvidia_install() {
 
   # nvidia-all now ships install.sh for multi-distro support.
   if [[ "${_is_arch_based}" == "true" ]]; then
-    __build_menu "Nvidia-all" \
-      "makepkg -Ccfsi" "Arch-based (recommended)" \
+    __build_menu "makepkg -Ccfsi" "Arch-based (recommended)" \
       "bash install.sh" "all distributions (Debian, Ubuntu, Fedora, SUSE, Arch)"
 
     case "${_menu_choice}" in
@@ -1298,8 +1215,7 @@ __nvidia_install() {
       *) _build_command="makepkg -Ccfsi" ;;
     esac
   else
-    __build_menu "Nvidia-all" \
-      "bash install.sh" "all distributions (recommended for ${_distro_name})" \
+    __build_menu "bash install.sh" "all distributions (recommended for ${_distro_name})" \
       "makepkg -Ccfsi" "Arch package build workflow"
 
     case "${_menu_choice}" in
@@ -1495,7 +1411,7 @@ NVIDIA_CUSTOMIZATION_CFG
   done
   msgplain "${break}"
 
-  sudo pacman -U "${_all_pkgs[@]}"
+  __run_as_root pacman -U "${_all_pkgs[@]}"
   _status=$?
 
   # remove built packages after every installation attempt
@@ -1535,8 +1451,7 @@ __wine_install() {
   local _build_command
 
   if [[ "${_is_arch_based}" == "true" ]]; then
-    __build_menu "Wine-TkG" \
-      "makepkg -Ccfsi" "recommended for Arch" \
+    __build_menu "makepkg -Ccfsi" "recommended for Arch" \
       "non-makepkg-build.sh" "(custom build script)"
 
     case "${_menu_choice}" in
@@ -1556,8 +1471,7 @@ __wine_install() {
 
 # glibc-eac installation
 __glibc_install() {
-  __build_menu "Glibc-eac" \
-    "glibc_eac.sh" "recommended (Build & Install)" \
+  __build_menu "glibc_eac.sh" "recommended (Build & Install)" \
     "glibc_eac.sh build" "(Build only, no install)"
 
   local _build_command
@@ -2536,9 +2450,8 @@ __main_direct_mode() {
     _package=$(__normalize_package "${_arg1}")
   fi
 
-  # Reject unsupported second args
-  if [[ "${_arg1}" =~ ^(linux|l|nvidia|n|linux-nvidia|ln|mesa|m|wine|w|proton|p)$ ]] && [[ -n "${_arg2}" ]] &&
-    ! [[ "${_arg2}" =~ ^(config|c|edit|e|customize|cu)$ ]]; then
+  # Reject extra arguments and unknown package/config combinations
+  if (($# > 2)) || { (($# == 2)) && [[ -z "${_config_arg}" || -z "${_package}" ]]; }; then
     __banner "${orange}"
     msgwarning "Invalid argument:${reset}${gray} ${_arg1:-} ${_arg2:-}${reset}${break}"
     msgplain " The argument is either invalid or incomplete."
@@ -2591,7 +2504,7 @@ __main_direct_mode() {
     [amdvlk]=__amdvlk_opt_install [av]=__amdvlk_opt_install
     [wine]=__wine_install [w]=__wine_install
     [proton]=__proton_install [p]=__proton_install
-    [dxvk]=__dxvk_tools_prepare [d]=__dxvk_tools_prepare
+    [dxvk - tools]=__dxvk_tools_prepare [dxvk]=__dxvk_tools_prepare [d]=__dxvk_tools_prepare
     [gamescope]=__gamescope_install [g]=__gamescope_install
     [glibc]=__glibc_install [ge]=__glibc_install
   )
@@ -2607,7 +2520,7 @@ __main_direct_mode() {
   case "${_arg1}" in
     clean | --clean)
       __clean_temp_dir
-      exit 0 >/dev/null 2>&1
+      exit 0
       ;;
     help | h | --help | -h)
       # Handle help command
@@ -2697,7 +2610,7 @@ __main_interactive_mode() {
       ;;
     Clean)
       __clean_temp_dir
-      exit 0 >/dev/null 2>&1
+      exit 0
       ;;
     Close)
       exit 0

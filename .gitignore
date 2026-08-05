@@ -23,9 +23,6 @@ pkg/
 .*.sw?
 *.kate-swp
 gnupg/
-.github/copilot-instructions.md
-.github/instructions/*
-.github/agents/*
 !.github
 !.gitignore
 !.gitattributes
