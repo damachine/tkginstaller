@@ -4,7 +4,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly pkgver="v0.55.4"
+readonly pkgver="v0.55.5"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _runargs=("$@")
@@ -432,40 +432,9 @@ __git_clone_retry() {
   return 1
 }
 
-# Build menu for installation method selection
-__build_menu() {
-  local _opt1_label="${1:-makepkg -Ccfsi}"
-  local _opt1_desc="${2:-recommended for Arch}"
-  local _opt2_label="${3:-}"
-  local _opt2_desc="${4:-custom build script}"
-  local _opt9_label="${5:-}"
-  local _opt9_desc="${6:-}"
-  local _opt3_label="${7:-}"
-  local _opt3_desc="${8:-}"
-
-  # Align option labels
-  local _max_label_length=0
-  for _label in "${_opt1_label}" "${_opt2_label}" "${_opt3_label}" "${_opt9_label}"; do
-    [[ -n "${_label}" ]] && ((${#_label} > _max_label_length)) && _max_label_length=${#_label}
-  done
-
-  msginfo "${break}${neon}${uline_on}CHOICE${uline_off}:${reset} ${light}Which build method do you want to use?${reset}${break}"
-  msgplain " Detected distro: ${gray}${_distro_name}${reset}${break}"
-  msgplain " ${neon}${uline_on}1${uline_off}${reset} │ $(printf "%-${_max_label_length}s" "${_opt1_label}")  ${light}${_opt1_desc}${reset}"
-
-  [[ -n "${_opt2_label}" ]] && msgplain " ${orange}2${reset} │ $(printf "%-${_max_label_length}s" "${_opt2_label}")  ${gray}${_opt2_desc}${reset}"
-  [[ -n "${_opt3_label}" ]] && msgplain " ${gray}3${reset} │ $(printf "%-${_max_label_length}s" "${_opt3_label}")  ${gray}${_opt3_desc}${reset}"
-  [[ -n "${_opt9_label}" ]] && msgplain " ${red}9${reset} │ $(printf "%-${_max_label_length}s" "${_opt9_label}")  ${gray}${_opt9_desc}${reset}"
-  msgplain " ${red}0${reset} │ Cancel${break}"
-
-  local _choices="[${neon}${uline_on}1${uline_off}${reset}"
-  [[ -n "${_opt2_label}" ]] && _choices+="/${orange}2${reset}"
-  [[ -n "${_opt3_label}" ]] && _choices+="/${gray}3${reset}"
-  [[ -n "${_opt9_label}" ]] && _choices+="/${red}9${reset}"
-  _choices+="/${red}0${reset}]"
-
-  __prompt_timer "${_choices}" 60 1
-  _menu_choice="${_user_answer}"
+# Show the distro used for automatic build-method selection
+__show_detected_distro() {
+  msgplain "${break} Detected distro: ${gray}${_distro_name}${reset}"
 }
 
 # Dump assoc array as key=value for fzf preview
@@ -1115,73 +1084,19 @@ __linux_install() {
   esac
 
   local _build_command
-  local _uninstall_menu_args=("" "" "install.sh uninstall-help" "(show uninstall help)")
-  if [[ "${_linux_branch}" == "staging" ]]; then
-    _uninstall_menu_args=(
-      "install.sh uninstall" "(interactive kernel uninstall)"
-      "install.sh uninstall-help" "(show uninstall help)"
-    )
-  fi
 
-  if [[ "${_is_arch_based}" != "true" ]]; then
-    local _pkg_type=""
-    case "${_distro_id,,}" in
-      debian | ubuntu | linuxmint | pop | elementary | mx | raspbian) _pkg_type="DEB" ;;
-      fedora | rhel | centos | rocky | alma | opensuse* | suse*) _pkg_type="RPM" ;;
-    esac
-
-    [[ -n "${_pkg_type}" ]] && msginfo "${break}${neon}${uline_on}INFO${uline_off}:${reset}${light} ${_pkg_type}-based distribution detected: ${gray}${_distro_name}${reset}${break}"
-  fi
-
+  __show_detected_distro
   if [[ "${_is_arch_based}" == "true" ]]; then
-    __build_menu "makepkg -Ccfsi" "recommended for Arch" \
-      "install.sh install" "(generic script)" \
-      "${_uninstall_menu_args[@]}"
-
-    case "${_menu_choice}" in
-      0)
-        msginfo "${break}${orange}Cancelled by user${reset}${break}"
-        __exit 1
-        ;;
-      2) _build_command="chmod +x install.sh && ./install.sh install" ;;
-      3) _build_command="chmod +x install.sh && ./install.sh uninstall-help" ;;
-      9)
-        if [[ "${_linux_branch}" == "staging" ]]; then
-          _build_command="chmod +x install.sh && ./install.sh uninstall"
-        else
-          _build_command="chmod +x install.sh && ./install.sh uninstall-help"
-        fi
-        ;;
-      *) _build_command="makepkg -Ccfsi" ;;
-    esac
+    _build_command="makepkg -Ccfsi"
   else
-    __build_menu "install.sh install" "recommended for ${_distro_name}" \
-      "makepkg -Ccfsi" "Arch package build workflow" \
-      "${_uninstall_menu_args[@]}"
-
-    case "${_menu_choice}" in
-      0)
-        msginfo "${break}${orange}Cancelled by user${reset}${break}"
-        __exit 1
-        ;;
-      2) _build_command="makepkg -Ccfsi" ;;
-      3) _build_command="chmod +x install.sh && ./install.sh uninstall-help" ;;
-      9)
-        if [[ "${_linux_branch}" == "staging" ]]; then
-          _build_command="chmod +x install.sh && ./install.sh uninstall"
-        else
-          _build_command="chmod +x install.sh && ./install.sh uninstall-help"
-        fi
-        ;;
-      *) _build_command="chmod +x install.sh && ./install.sh install" ;;
-    esac
+    _build_command="chmod +x install.sh && ./install.sh install"
   fi
 
   __install_package "${_linux_repo}" "linux-tkg" "${_build_command}" "" "" "${_linux_branch}"
   local _status=$?
 
   # Offer uninstall help for non-Arch
-  if [[ "${_is_arch_based}" != "true" && ${_status} -eq 0 && "${_menu_choice}" != "3" && "${_menu_choice}" != "9" ]]; then
+  if [[ "${_is_arch_based}" != "true" && ${_status} -eq 0 ]]; then
     msginfo "${break}${neon}${uline_on}TIP${uline_off}:${reset}${light} Uninstalling custom kernels has to be done manually.${break}"
     msgprompt "Show uninstall info now? [y/N]: "
     read -r _show_info
@@ -1199,33 +1114,15 @@ __nvidia_install() {
   local _nvidia_repo="${_pkgrepo[nvidia]}"
   local _nvidia_branch="master"
 
-  local _build_command="${_pkgcmd_default}"
+  local _build_command
+
+  __show_detected_distro
 
   # nvidia-all now ships install.sh for multi-distro support.
   if [[ "${_is_arch_based}" == "true" ]]; then
-    __build_menu "makepkg -Ccfsi" "Arch-based (recommended)" \
-      "bash install.sh" "all distributions (Debian, Ubuntu, Fedora, SUSE, Arch)"
-
-    case "${_menu_choice}" in
-      0)
-        msginfo "${break}${orange}Cancelled by user${reset}${break}"
-        __exit 1
-        ;;
-      2) _build_command="bash install.sh" ;;
-      *) _build_command="makepkg -Ccfsi" ;;
-    esac
+    _build_command="makepkg -Ccfsi"
   else
-    __build_menu "bash install.sh" "all distributions (recommended for ${_distro_name})" \
-      "makepkg -Ccfsi" "Arch package build workflow"
-
-    case "${_menu_choice}" in
-      0)
-        msginfo "${break}${orange}Cancelled by user${reset}${break}"
-        __exit 1
-        ;;
-      2) _build_command="makepkg -Ccfsi" ;;
-      *) _build_command="bash install.sh" ;;
-    esac
+    _build_command="bash install.sh"
   fi
 
   __install_package "${_nvidia_repo}" "nvidia-all" "${_build_command}" "" "" "${_nvidia_branch}"
@@ -1239,7 +1136,7 @@ __linux_nvidia_install() {
   msgpkg "Linux-TkG + Nvidia-all" \
     "${_reposrc_damachine%.git}/blob/staging/customization.cfg" \
     "${_reposrc}/nvidia-all/blob/master/customization.cfg"
-  msginfo "${break}${neon}${uline_on}COMBINED${uline_off}:${reset} ${light}Both packages will be ${gray}built first${reset}${light}, then installed together via ${gray}pacman -U${reset}${light}.${reset}${break}"
+  msginfo "${break}${neon}${uline_on}COMBINED${uline_off}:${reset} ${light}Both packages will be ${gray}built first${reset}${light}, then installed together via ${gray}pacman -U${reset}${light}.${reset}"
 
   local _nvidia_repo="${_pkgrepo[nvidia]}"
   local _nvidia_branch="master"
@@ -1450,18 +1347,9 @@ __wine_install() {
 
   local _build_command
 
+  __show_detected_distro
   if [[ "${_is_arch_based}" == "true" ]]; then
-    __build_menu "makepkg -Ccfsi" "recommended for Arch" \
-      "non-makepkg-build.sh" "(custom build script)"
-
-    case "${_menu_choice}" in
-      0)
-        msginfo "${break}${orange}Cancelled by user${reset}${break}"
-        __exit 1
-        ;;
-      2) _build_command="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh" ;;
-      *) _build_command="makepkg -Ccfsi" ;;
-    esac
+    _build_command="makepkg -Ccfsi"
   else
     _build_command="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
   fi
@@ -1471,18 +1359,8 @@ __wine_install() {
 
 # glibc-eac installation
 __glibc_install() {
-  __build_menu "glibc_eac.sh" "recommended (Build & Install)" \
-    "glibc_eac.sh build" "(Build only, no install)"
-
-  local _build_command
-  case "${_menu_choice}" in
-    0)
-      msginfo "${break}${orange}Cancelled by user${reset}${break}"
-      __exit 1
-      ;;
-    2) _build_command="chmod +x glibc_eac.sh && ./glibc_eac.sh build" ;;
-    *) _build_command="chmod +x glibc_eac.sh && ./glibc_eac.sh" ;;
-  esac
+  __show_detected_distro
+  local _build_command="chmod +x glibc_eac.sh && ./glibc_eac.sh"
 
   __install_package "${_pkgrepo[glibc]}" "glibc-eac" "${_build_command}"
 }
