@@ -4,7 +4,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly pkgver="v0.55.9"
+readonly pkgver="v0.60.0"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _runargs=("$@")
@@ -2106,8 +2106,8 @@ __handle_config() {
 __menu() {
   # Glow style detection
   if [[ -z "${_glow_style:-}" ]]; then
-    case "${COLORTERM:-}${TERM:-}" in
-      *light* | *xterm* | *rxvt* | *konsole*)
+    case "${COLORFGBG##*;}" in
+      7 | 9 | 10 | 11 | 12 | 13 | 14 | 15)
         _glow_style="light"
         ;;
       *)
