@@ -4,10 +4,11 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly pkgver="v0.55.8"
+readonly pkgver="v0.55.9"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _runargs=("$@")
+declare -ga _runtime_tmpfiles=()
 
 # =============================================================================
 # ENVIRONMENT SETUP
@@ -15,7 +16,7 @@ declare -ga _runargs=("$@")
 
 # Global variables, paths, and configurations
 _tmpdir=${HOME}/.tkginstaller/.cache
-_choicetmp=${_tmpdir}/.choice.tmp
+_choicetmp=${_tmpdir}/.choice.$$.tmp
 _localcfg=${HOME}/.config/frogminer
 _reposrc=https://github.com/Frogging-Family
 _reposrc_raw=https://raw.githubusercontent.com/Frogging-Family
@@ -25,7 +26,7 @@ _reposrc_raw_damachine=https://raw.githubusercontent.com/damachine/tkginstaller/
 # nvidia-open version map
 declare -gA _nvidia_versions=(
   [latest]="610.57.04"
-  [vulkan]="595.44.14"
+  [vulkan]="595.44.15"
   [legacy]="580.178.04"
 )
 
@@ -70,13 +71,6 @@ declare -gA _pkgdir=(
   [proton]="proton-tkg"
 )
 
-# Default build command
-readonly _pkgcmd_default="makepkg -Ccfsi"
-declare -gA _pkgcmd=(
-  # Example override:
-  # [wine]="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
-)
-
 # Local config filenames
 declare -gA _pkglocalcfg=(
   [linux]="linux-tkg.cfg"
@@ -104,7 +98,6 @@ __normalize_package() {
     dxvk | updxvk | d) echo "dxvk" ;;
     vkd3d | upvkd3d | v) echo "vkd3d" ;;
     gamescope | g) echo "gamescope" ;;
-    glibc | ge) echo "glibc" ;;
     *) echo "" ;;
   esac
 }
@@ -352,7 +345,7 @@ ${neon}3) Config editing${reset}
    Enter fzf-based TUI mode to edit a package's configuration:
    ${gray}tkginstaller config${reset}
    Edit a package's configuration file directly:
-   ${gray}tkginstaller [config|c|edit|e] [linux|l|nvidia|n|mesa|m|wine|w|proton|p|amdgpu|ag|amdvlk|av|gamescope|g|glibc|ge]${reset}
+   ${gray}tkginstaller [config|c|edit|e] [linux|l|nvidia|n|mesa|m|wine|w|proton|p|dxvk|d|vkd3d|v|amdgpu|ag|amdvlk|av|gamescope|g]${reset}
 
 ${neon}4) Clean temporary files${reset}
    Remove all temporary files created during installations:
@@ -381,6 +374,16 @@ __cd_safe() {
     msgerror "${_error_msg}${break}"
     return 1
   }
+}
+
+# Create a unique runtime file that is also removed on interruption.
+__make_temp_file() {
+  local -n _target_ref="$1"
+  local _name="$2"
+
+  mkdir -p "${_tmpdir}" || return 1
+  _target_ref=$(mktemp "${_tmpdir}/${_name}.XXXXXX") || return 1
+  _runtime_tmpfiles+=("${_target_ref}")
 }
 
 # Git clone with retry logic
@@ -412,7 +415,7 @@ __git_clone_retry() {
   # One-shot self-heal: clean cache and restart once with same args
   if [[ "${_TKG_AUTO_RESTARTED:-0}" != "1" ]]; then
     msgwarning "Clone failed ${_max_attempts} times. Running 'tkginstaller clean' and restarting once..."
-    __clean_temp_dir
+    __clean_temp_dir || return 1
     msginfo "Restarting installer once with previous arguments...${break}"
     exec env _TKG_AUTO_RESTARTED=1 "$0" "${_runargs[@]}"
   fi
@@ -438,17 +441,13 @@ __export_map() {
 # Pre-installation checks
 __prepare() {
   # Check required dependencies
-  local _dep=(git bat curl fzf glow onefetch wdiff)
+  local _dep=(git curl fzf)
 
   # Define package names per distro
   declare -A _pkg_map_dep=(
     [git]=git
-    [bat]=bat
     [curl]=curl
     [fzf]=fzf
-    [glow]=glow
-    [onefetch]=onefetch
-    [wdiff]=wdiff
   )
 
   # Set install command based on distro
@@ -466,12 +465,8 @@ __prepare() {
       # Gentoo uses category/package format
       declare -A _gentoo_categories=(
         [git]=dev-vcs
-        [bat]=sys-apps
         [curl]=net-misc
         [fzf]=app-shells
-        [glow]=app-text
-        [onefetch]=app-misc
-        [wdiff]=app-text
       )
       for pkg in "${!_pkg_map_dep[@]}"; do
         _pkg_map_dep[$pkg]="${_gentoo_categories[$pkg]}/${pkg}"
@@ -576,7 +571,6 @@ __exit() {
   fi
 
   __clean
-  wait
   exit "${_exit_code}"
 }
 
@@ -597,12 +591,12 @@ __clean() {
   # Remove an active combined build output directory on interruption/exit.
   __cleanup_combined_pkgdir "${_combined_pkgdir:-}"
 
-  # Remove choice tmpfile only
+  # Remove runtime files only; preserve the reusable repository cache.
   rm -f "${_choicetmp}"
+  if ((${#_runtime_tmpfiles[@]})); then
+    rm -f -- "${_runtime_tmpfiles[@]}"
+  fi
 
-  # Unset all variables
-  unset _tmpdir _localcfg _reposrc_raw_damachine _reposrc_raw _curl_opts
-  unset break reset light neon mint dark orange gray uline_on uline_off cols line
 }
 
 # Clean temporary files and cache
@@ -612,9 +606,8 @@ __clean_temp_dir() {
   msgplain " Location:${reset}${gray} ${_tmpdir}${reset}${break}"
   local _cache_count=0
   local _cache_size_bytes=0
-  local _cache_size_human=""
 
-  # Read _kernel_work_folder / _kernel_source_folder early so we can measure them
+  # Read additional linux-tkg work directories.
   local _ltkg_cfg="${HOME}/.config/frogminer/linux-tkg.cfg"
   local _kwf="" _ksf=""
   if [[ -f "${_ltkg_cfg}" ]]; then
@@ -624,35 +617,36 @@ __clean_temp_dir() {
     _ksf="${_ksf/#\~/${HOME}}"
   fi
 
-  # Measure all target directories before deletion
-  local -a _measure_dirs=()
-  [[ -d "${_tmpdir}" ]] && _measure_dirs+=("${_tmpdir}")
-  [[ -d "/tmp/makepkg/nvidia-all" ]] && _measure_dirs+=("/tmp/makepkg/nvidia-all")
-  [[ -n "${_kwf}" && -d "${_kwf}/linux-tkg" ]] && _measure_dirs+=("${_kwf}/linux-tkg")
-  [[ -n "${_ksf}" && -d "${_ksf}/linux-tkg" ]] && _measure_dirs+=("${_ksf}/linux-tkg")
+  # Collect existing targets once so size reporting and deletion use the same set.
+  local -a _cleanup_candidates=(
+    "${_tmpdir}"
+    /tmp/makepkg/linux-tkg
+    /tmp/makepkg/nvidia-all
+    /tmp/makepkg/nvidia-*-tkg
+  )
+  [[ -n "${_kwf}" ]] && _cleanup_candidates+=("${_kwf}/linux-tkg")
+  [[ -n "${_ksf}" ]] && _cleanup_candidates+=("${_ksf}/linux-tkg")
 
-  for _d in "${_measure_dirs[@]}"; do
-    local _cnt _sz
-    _cnt=$(find "${_d}" -type f 2>/dev/null | wc -l || echo 0)
-    _sz=$(du -sb "${_d}" 2>/dev/null | cut -f1 || echo 0)
+  local -a _cleanup_dirs=()
+  local _candidate _known
+  for _candidate in "${_cleanup_candidates[@]}"; do
+    [[ -d "${_candidate}" ]] || continue
+    _known=false
+    for _d in "${_cleanup_dirs[@]}"; do
+      [[ "${_d}" == "${_candidate}" ]] && _known=true && break
+    done
+    [[ "${_known}" == "false" ]] && _cleanup_dirs+=("${_candidate}")
+  done
+
+  local _d _cnt _sz
+  for _d in "${_cleanup_dirs[@]}"; do
+    _cnt=$(find "${_d}" -type f 2>/dev/null | wc -l)
+    _sz=$(du -sb "${_d}" 2>/dev/null | cut -f1)
     ((_cache_count += _cnt))
     ((_cache_size_bytes += _sz))
   done
 
-  # Convert total bytes to human-readable
-  if ((_cache_size_bytes >= 1073741824)); then
-    _cache_size_human="$(awk "BEGIN{printf \"%.1fG\", ${_cache_size_bytes}/1073741824}")"
-  elif ((_cache_size_bytes >= 1048576)); then
-    _cache_size_human="$(awk "BEGIN{printf \"%.1fM\", ${_cache_size_bytes}/1048576}")"
-  elif ((_cache_size_bytes >= 1024)); then
-    _cache_size_human="$(awk "BEGIN{printf \"%.1fK\", ${_cache_size_bytes}/1024}")"
-  else
-    _cache_size_human="${_cache_size_bytes}B"
-  fi
-
-  rm -f "${_choicetmp}"
-
-  # Detect chattr +i immutable patch files; inform user and suppress rm -rf errors
+  # Detect chattr +i patch files before removal so an incomplete cleanup is clear.
   local -a _immutable_files=()
   if [[ -d "${_tmpdir}" ]] && command -v lsattr >/dev/null 2>&1; then
     while IFS= read -r -d '' _f; do
@@ -670,34 +664,55 @@ __clean_temp_dir() {
     msgplain "${orange}  These files are protected by the kernel${reset} ${gray}(revert: chattr -i file(s)).${reset}${break}"
   fi
 
-  # Immutable files survive rm -rf; suppress non-zero exit
-  msgplain " ${neon}Removing:${reset} ${gray}${_tmpdir}${reset}"
-  rm -rf "${_tmpdir}" 2>/dev/null || true
-
-  # Also clean /tmp/makepkg subdirs for linux-tkg and nvidia-* builds
-  local _makepkg_dir
-  for _makepkg_dir in /tmp/makepkg/linux-tkg /tmp/makepkg/nvidia-all /tmp/makepkg/nvidia-*-tkg; do
-    [[ -d "${_makepkg_dir}" ]] || continue
-    msgplain " ${neon}Removing:${reset} ${gray}${_makepkg_dir}${reset}"
-    rm -rf "${_makepkg_dir}" 2>/dev/null || true
+  local _cleanup_failed=false
+  for _d in "${_cleanup_dirs[@]}"; do
+    msgplain " ${neon}Removing:${reset} ${gray}${_d}${reset}"
+    if [[ "${_d}" == "${_tmpdir}" && ${#_immutable_files[@]} -gt 0 ]]; then
+      # Protected patches intentionally survive the cache cleanup.
+      if ! rm -rf -- "${_d}" 2>/dev/null; then
+        continue
+      fi
+    elif ! rm -rf -- "${_d}"; then
+      msgwarning "Could not fully remove: ${_d}"
+      _cleanup_failed=true
+    fi
   done
 
-  # Also clean _kernel_work_folder and _kernel_source_folder if set in linux-tkg.cfg
-  if [[ -n "${_kwf}" && -d "${_kwf}/linux-tkg" ]]; then
-    msgplain " ${neon}Removing:${reset} ${gray}${_kwf}/linux-tkg${reset} ${gray}(_kernel_work_folder)${reset}"
-    rm -rf "${_kwf}/linux-tkg" 2>/dev/null || true
-  fi
-  if [[ -n "${_ksf}" && -d "${_ksf}/linux-tkg" ]]; then
-    msgplain " ${neon}Removing:${reset} ${gray}${_ksf}/linux-tkg${reset} ${gray}(_kernel_source_folder)${reset}"
-    rm -rf "${_ksf}/linux-tkg" 2>/dev/null || true
+  # Report what was actually removed, including partial cleanup failures.
+  local _remaining_count=0 _remaining_size=0
+  for _d in "${_cleanup_dirs[@]}"; do
+    [[ -d "${_d}" ]] || continue
+    _cnt=$(find "${_d}" -type f 2>/dev/null | wc -l)
+    _sz=$(du -sb "${_d}" 2>/dev/null | cut -f1)
+    ((_remaining_count += _cnt))
+    ((_remaining_size += _sz))
+  done
+
+  local _removed=$((_cache_count - _remaining_count))
+  local _freed_bytes=$((_cache_size_bytes - _remaining_size))
+  ((_removed < 0)) && _removed=0
+  ((_freed_bytes < 0)) && _freed_bytes=0
+
+  local _cache_size_human
+  if ((_freed_bytes >= 1073741824)); then
+    _cache_size_human="$(awk "BEGIN{printf \"%.1fG\", ${_freed_bytes}/1073741824}")"
+  elif ((_freed_bytes >= 1048576)); then
+    _cache_size_human="$(awk "BEGIN{printf \"%.1fM\", ${_freed_bytes}/1048576}")"
+  elif ((_freed_bytes >= 1024)); then
+    _cache_size_human="$(awk "BEGIN{printf \"%.1fK\", ${_freed_bytes}/1024}")"
+  else
+    _cache_size_human="${_freed_bytes}B"
   fi
 
-  local _removed=$((_cache_count - ${#_immutable_files[@]}))
-  if [[ "${_removed}" -le 0 ]]; then
+  if [[ "${_cleanup_failed}" == "true" ]]; then
+    msgwarning "Cleanup incomplete (${_removed} cached files removed, ${_cache_size_human} freed).${break}"
+  elif [[ "${_removed}" -eq 0 ]]; then
     msgplain "${break}${neon}Cleanup complete ${gray}(nothing to remove, cache already clean)${reset}${break}"
   else
     msgplain "${break}${neon}Cleanup complete ${gray}(${orange}${_removed}${reset} ${gray}cached files removed, ${orange}${_cache_size_human}${reset}${gray} freed)${reset}${break}"
   fi
+
+  return 0
 }
 
 # Fuzzy finder menu wrapper function
@@ -755,9 +770,8 @@ __install_package() {
   local _package_name="$2"
   local _build_command="$3"
   local _work_directory="${4:-}"
-  local _post_build_hook="${5:-}"
-  local _repo_branch="${6:-}"
-  local _repo_action="${7:-sync}"
+  local _repo_branch="${5:-}"
+  local _repo_action="${6:-sync}"
 
   __cd_safe "${_tmpdir}" || return 1
 
@@ -887,11 +901,6 @@ __install_package() {
   eval "${_build_command}"
   local _status=$?
 
-  # Run post-build hook in repo dir (e.g. capture values before PKGBUILD cleanup)
-  if [[ -n "${_post_build_hook}" ]]; then
-    eval "${_post_build_hook}"
-  fi
-
   if [[ "${_tkg_skip_status:-}" != "1" ]]; then
     __status "${_status}" "${_package_name}"
   fi
@@ -903,17 +912,15 @@ __install_package() {
 __install_pkg_key() {
   local _key="$1"
   local _repo="${_pkgrepo[${_key}]}"
-  local _name="${_key}"
-  local _cmd="${_pkgcmd[${_key}]:-${_pkgcmd_default}}"
   local _workdir="${_pkgdir[${_key}]:-}"
   local _config_url="${_pkgconfig[${_key}]:-}"
 
   # Show config URL if set
   if [[ -n "${_config_url}" ]]; then
-    msgpkg "${_name}" "${_config_url}"
+    msgpkg "${_key}" "${_config_url}"
   fi
 
-  __install_package "${_repo}" "${_key}" "${_cmd}" "${_workdir}"
+  __install_package "${_repo}" "${_key}" "makepkg -Ccfsi" "${_workdir}"
 }
 
 # Countdown prompt with timeout
@@ -1018,7 +1025,7 @@ __linux_install() {
     _build_command="chmod +x install.sh && ./install.sh install"
   fi
 
-  __install_package "${_linux_repo}" "linux-tkg" "${_build_command}" "" "" "${_linux_branch}"
+  __install_package "${_linux_repo}" "linux-tkg" "${_build_command}" "" "${_linux_branch}"
   local _status=$?
 
   # Offer uninstall help for non-Arch
@@ -1051,7 +1058,7 @@ __nvidia_install() {
     _build_command="bash install.sh"
   fi
 
-  __install_package "${_nvidia_repo}" "nvidia-all" "${_build_command}" "" "" "${_nvidia_branch}"
+  __install_package "${_nvidia_repo}" "nvidia-all" "${_build_command}" "" "${_nvidia_branch}"
 }
 
 # Linux-TkG + Nvidia-all combined installation (damachine fork)
@@ -1069,7 +1076,7 @@ __linux_nvidia_install() {
 
   # Synchronize linux-tkg before reading values from its repository config
   local _status
-  __install_package "${_reposrc_damachine}" "linux-tkg" "" "" "" "staging" "sync-only"
+  __install_package "${_reposrc_damachine}" "linux-tkg" "" "" "staging" "sync-only"
   _status=$?
   if [[ ${_status} -ne 0 ]]; then
     msgerror "Linux-TkG repository update failed.${break}"
@@ -1144,10 +1151,10 @@ __linux_nvidia_install() {
   [[ "${_pf_nvidia_variant}" == "vulkan" ]] && _driver_branch_val="vulkandev"
 
   # build linux-tkg
-  local _linux_tkg_preset="${_tmpdir}/linux_tkg_preset.cfg"
   mkdir -p "${_tmpdir}"
   local _combined_pkgdir
   _combined_pkgdir=$(mktemp -d "${_tmpdir}/combined-packages.XXXXXX") || return 1
+  local _linux_tkg_preset="${_combined_pkgdir}/linux-tkg-preset.cfg"
   if [[ -f "${_pf_cfg_ext}" ]]; then
     sed '/^[[:space:]]*_nvidia_pkg=/d' "${_pf_cfg_ext}" >"${_linux_tkg_preset}"
     echo >>"${_linux_tkg_preset}"
@@ -1159,7 +1166,7 @@ __linux_nvidia_install() {
 
   local _build_command="rm -f BIG_UGLY_FROGMINER && PKGDEST=\"${_combined_pkgdir}\" _EXT_CONFIG_PATH=\"${_linux_tkg_preset}\" makepkg -s --noconfirm"
   _tkg_skip_status="1"
-  __install_package "${_reposrc_damachine}" "linux-tkg" "${_build_command}" "" "" "staging" "reuse"
+  __install_package "${_reposrc_damachine}" "linux-tkg" "${_build_command}" "" "staging" "reuse"
   _status=$?
   local _linux_duration="${SECONDS}"
 
@@ -1170,8 +1177,7 @@ __linux_nvidia_install() {
   fi
 
   # build nvidia-all
-  local _preset_cfg="${_tmpdir}/nvidia_all/pre-customization.cfg"
-  mkdir -p "${_tmpdir}/nvidia_all"
+  local _preset_cfg="${_combined_pkgdir}/nvidia-all-preset.cfg"
 
   cat >"${_preset_cfg}" <<NVIDIA_CUSTOMIZATION_CFG
 # nvidia-all preset config — generated by tkginstaller (linux-nvidia combined install)
@@ -1216,11 +1222,9 @@ NVIDIA_CUSTOMIZATION_CFG
   _build_command="if grep -qxF '# nvidia-all preset config — generated by tkginstaller (linux-nvidia combined install)' customization.cfg; then git restore --source=HEAD -- customization.cfg; fi && rm -f options BIG_UGLY_FROGMINER && PKGDEST=\"${_combined_pkgdir}\" _EXT_CONFIG_PATH=\"${_preset_cfg}\" makepkg -s --noconfirm"
   _tkg_skip_status="1"
   # shellcheck disable=SC2218
-  __install_package "${_nvidia_repo}" "nvidia-all" "${_build_command}" "" "" "${_nvidia_branch}"
+  __install_package "${_nvidia_repo}" "nvidia-all" "${_build_command}" "" "${_nvidia_branch}"
   _status=$?
   local _nvidia_duration="${SECONDS}"
-
-  rm -rf "${_tmpdir}/nvidia_all"
 
   if [[ ${_status} -ne 0 ]]; then
     msgerror "Nvidia-all build failed — aborting combined install.${break}"
@@ -1389,23 +1393,27 @@ __dxvk_tools_prepare() {
 __proton_install() {
   msgpkg "Proton-TkG" "${_reposrc}/wine-tkg-git"
 
-  # Prepare Proton repo first
-  __install_package "${_pkgrepo[proton]}" "Proton-TkG (prepare)" "" "${_pkgdir[proton]}" >/dev/null 2>&1
+  # Synchronize once before optional DXVK/vkd3d preparation.
+  __install_package "${_pkgrepo[proton]}" "Proton-TkG" "" "${_pkgdir[proton]}" "" "sync-only" || return
 
   # Optional DXVK/vkd3d preparation
   __dxvk_tools_prepare || msgwarning "dxvk-tools skipped${break}"
 
   # Build Proton
-  __install_package "${_pkgrepo[proton]}" "Proton-TkG" "./proton-tkg.sh" "${_pkgdir[proton]}"
+  __install_package "${_pkgrepo[proton]}" "Proton-TkG" "./proton-tkg.sh" "${_pkgdir[proton]}" "" "reuse"
   local _status=$?
 
   # Offer cleanup after successful build
   if [[ ${_status} -eq 0 ]]; then
     msgprompt "Run './proton-tkg.sh clean'? [y/N]: "
     read -r _user_answer
-    [[ "${_user_answer,,}" =~ ^(y|yes)$ ]] &&
-      __install_package "${_pkgrepo[proton]}" "Proton-TkG" "./proton-tkg.sh clean" "${_pkgdir[proton]}"
+    if [[ "${_user_answer,,}" =~ ^(y|yes)$ ]]; then
+      __install_package "${_pkgrepo[proton]}" "Proton-TkG" "./proton-tkg.sh clean" "${_pkgdir[proton]}" "" "reuse"
+      _status=$?
+    fi
   fi
+
+  return "${_status}"
 }
 
 # =============================================================================
@@ -1478,7 +1486,7 @@ if [[ -n "$repo" ]]; then
 fi'
 
   local _header="🐸 ${neon}${uline_on}TkG-Installer ─ AMD Drivers${uline_off}${reset}${break}${break}${light}   Select AMD driver:"
-  local _footer="  ${light}[Enter] select, [Ctrl+P] preview, [ESC] exit"
+  local _footer="  ${light}[Enter] select, [Ctrl+P] preview, [ESC] back"
 
   local _choice
   _choice=$(__fzf_menu "${_amd_menu_content}" "${_preview}" "${_header}" "${_footer}" "${pkgver}" 'right:wrap:60%')
@@ -1578,7 +1586,7 @@ ${gray}    ${_tmpdir}/<package>/logs/${reset}${break}${break}\
 ${light}   Select a package to view its logs:"
 
     local _footer_logs="  ${light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${break}\
-  Press [Enter] to select, [Ctrl+P] ${light}to toggle the preview window, [ESC] to exit${break}${break}\
+  Press [Enter] to select, [Ctrl+P] ${light}to toggle the preview window, [ESC] to go back${break}${break}\
   ${light}Website:${reset} ${gray}https://github.com/damachine/tkginstaller${reset}"
 
     local _pkg_choice
@@ -1750,6 +1758,8 @@ __menu_config() {
       _menu_options+=(
         "nvidia   |💻 ${neon}Nvidia     ${gray} customization.cfg ${reset}->${orange} 'nvidia-all.cfg'"
         "mesa     |🧩 ${neon}Mesa       ${gray} customization.cfg ${reset}->${orange} 'mesa-git.cfg'"
+        "amdgpu   |💎 ${neon}AMDGPU-PRO ${gray} customization.cfg ${reset}->${orange} 'amdgpu-pro.cfg'"
+        "amdvlk   |🔷 ${neon}AMDVLK-OPT ${gray} customization.cfg ${reset}->${orange} 'amdvlk-opt.cfg'"
       )
     fi
 
@@ -1766,34 +1776,17 @@ __menu_config() {
     local _menu_content
     _menu_content=$(printf '%s\n' "${_menu_options[@]}")
 
-    # Export config URLs for preview
-    local _pkg_urls_json
+    # Export config maps for preview
+    local _pkg_urls_json _key
     _pkg_urls_json=$(
-      printf '%s\n' \
-        "linux=${_reposrc_raw}/${_pkgconfig[linux]}" \
-        "nvidia=${_reposrc_raw}/${_pkgconfig[nvidia]}" \
-        "mesa=${_reposrc_raw}/${_pkgconfig[mesa]}" \
-        "wine=${_reposrc_raw}/${_pkgconfig[wine]}" \
-        "proton=${_reposrc_raw}/${_pkgconfig[proton]}" \
-        "dxvk=${_reposrc_raw}/${_pkgconfig[dxvk]}" \
-        "vkd3d=${_reposrc_raw}/${_pkgconfig[vkd3d]}" \
-        "gamescope=${_reposrc_raw}/${_pkgconfig[gamescope]}"
+      for _key in "${!_pkgconfig[@]}"; do
+        printf '%s=%s/%s\n' "${_key}" "${_reposrc_raw}" "${_pkgconfig[${_key}]}"
+      done
     )
     export _pkg_urls_json
 
-    # Export local config filenames for preview
     local _pkg_local_cfg_json
-    _pkg_local_cfg_json=$(
-      printf '%s\n' \
-        "linux=${_pkglocalcfg[linux]}" \
-        "nvidia=${_pkglocalcfg[nvidia]}" \
-        "mesa=${_pkglocalcfg[mesa]}" \
-        "wine=${_pkglocalcfg[wine]}" \
-        "proton=${_pkglocalcfg[proton]}" \
-        "dxvk=${_pkglocalcfg[dxvk]}" \
-        "vkd3d=${_pkglocalcfg[vkd3d]}" \
-        "gamescope=${_pkglocalcfg[gamescope]}"
-    )
+    _pkg_local_cfg_json=$(__export_map _pkglocalcfg)
     export _pkg_local_cfg_json
 
     # Preview command components
@@ -1825,7 +1818,9 @@ __menu_config() {
             _remote_url=$(echo "${_pkg_urls_json}" | grep "^${key}=" | cut -d= -f2-)
 
             if [[ -f "${_config_file_path}" && -n "${_remote_url}" ]]; then
-                _remote_tmp="'"${_tmpdir}"'/${key}-remote.cfg"
+                _remote_tmp=$(mktemp "'"${_tmpdir}"'/${key}-remote.XXXXXX.cfg") || exit 1
+                _cleanup_preview_tmp() { rm -f -- "${_remote_tmp}"; }
+                trap _cleanup_preview_tmp EXIT
                 if curl '"${_curl_opts}"' "${_remote_url}" -o "${_remote_tmp}" 2>/dev/null; then
                     printf "%b\n" "'"${_info_config}"'"
                     if command -v wdiff >/dev/null 2>&1; then
@@ -1863,7 +1858,7 @@ ${light}   Select an option below:"
 
     # Footer
     local _footer_text="  ${light}Use arrow keys ⌨️ or mouse 🖱️ to navigate${break}\
-  Press [Enter] to select, [Ctrl+P] ${light}to toggle the preview window, [ESC] to exit${break}${break}\
+  Press [Enter] to select, [Ctrl+P] ${light}to toggle the preview window, [ESC] to go back${break}${break}\
   ${light}Website:${reset} ${gray}https://github.com/damachine/tkginstaller${reset} | ${gray}https://github.com/Frogging-Family"
 
     # Border label
@@ -1876,13 +1871,10 @@ ${light}   Select an option below:"
     _config_choice=$(__fzf_menu "${_menu_content}" "${_preview_command}" "${_header_text}" "${_footer_text}" "${_border_label_text}" "${_preview_window_settings}" "${_fzf_bind}")
 
     # Unset exported vars
-    unset _pkg_urls_json
+    unset _pkg_urls_json _pkg_local_cfg_json
 
     # Handle empty choice (ESC pressed)
     if [[ -z "${_config_choice}" ]]; then
-      __banner
-      msginfo "${neon}${uline_on}APPLY${uline_off}:${reset}${gray} customization.cfg${reset}${light} changes...${break}"
-      clear
       return 0
     fi
 
@@ -1892,9 +1884,6 @@ ${light}   Select an option below:"
 
     # Handle return option
     if [[ "${_config_file}" == "return" ]]; then
-      __banner
-      msginfo "${neon}${uline_on}APPLY${uline_off}:${reset}${gray} customization.cfg${reset}${light} changes...${break}"
-      clear
       return 0
     fi
 
@@ -1915,8 +1904,13 @@ __check_config() {
   [[ ! -f "${_config_file}" ]] && return 0
 
   # Download upstream config
-  local _tmp_upstream="/tmp/upstream_customization.cfg"
+  local _tmp_upstream
+  __make_temp_file _tmp_upstream "upstream-customization.cfg" || {
+    msgwarning "Could not create a temporary config file"
+    return 1
+  }
   curl -fsSL "${_upstream_url}" -o "${_tmp_upstream}" 2>/dev/null || {
+    rm -f "${_tmp_upstream}"
     msgwarning "Could not download upstream config for comparison"
     return 1
   }
@@ -1936,8 +1930,9 @@ __check_config() {
     linux | Linux-TkG)
       _deprecated_scope="upstream or staging"
       local _prepare_url="${_reposrc_raw}/linux-tkg/master/linux-tkg-config/prepare"
-      local _tmp_prepare="/tmp/linux-tkg-prepare"
-      if curl -fsSL "${_prepare_url}" -o "${_tmp_prepare}" 2>/dev/null; then
+      local _tmp_prepare
+      if __make_temp_file _tmp_prepare "linux-tkg-prepare" &&
+        curl -fsSL "${_prepare_url}" -o "${_tmp_prepare}" 2>/dev/null; then
         # Extract officially deprecated vars (only for deprecated check)
         local _officially_deprecated
         _officially_deprecated=$(sed -n '/_deprecated_config_vars=($/,/^)$/p' "${_tmp_prepare}" | grep -oP '^\s*"_\K[^"]+' | sed 's/^/_/')
@@ -1947,8 +1942,8 @@ __check_config() {
         local _prepare_vars
         _prepare_vars=$(grep -oP '^#?\s*\K[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_tmp_prepare}" 2>/dev/null)
         [[ -n "${_prepare_vars}" ]] && _upstream_vars_for_deprecated+=$'\n'"${_prepare_vars}"
-        rm -f "${_tmp_prepare}"
       fi
+      [[ -n "${_tmp_prepare:-}" ]] && rm -f "${_tmp_prepare}"
       _accepted_var_urls=(
         "https://raw.githubusercontent.com/damachine/linux-tkg/staging/customization.cfg"
         "https://raw.githubusercontent.com/damachine/linux-tkg/staging/linux-tkg-config/prepare"
@@ -1970,22 +1965,24 @@ __check_config() {
 
   # Merge extra config vars
   for _url in "${_extra_urls[@]}"; do
-    local _tmp_extra="/tmp/extra_cfg_$$.cfg"
-    if curl -fsSL "${_url}" -o "${_tmp_extra}" 2>/dev/null; then
+    local _tmp_extra
+    if __make_temp_file _tmp_extra "extra-config" &&
+      curl -fsSL "${_url}" -o "${_tmp_extra}" 2>/dev/null; then
       local _extra_vars
       _extra_vars=$(grep -oP '^#?\s*\K[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_tmp_extra}" 2>/dev/null)
       [[ -n "${_extra_vars}" ]] && {
         _upstream_vars+=$'\n'"${_extra_vars}"
         _upstream_vars_for_deprecated+=$'\n'"${_extra_vars}"
       }
-      rm -f "${_tmp_extra}"
     fi
+    [[ -n "${_tmp_extra:-}" ]] && rm -f "${_tmp_extra}"
   done
 
   # Accept variables provided by additional active sources without suggesting them as upstream defaults
   for _url in "${_accepted_var_urls[@]}"; do
-    local _tmp_accepted="/tmp/accepted_cfg_$$.cfg"
-    if curl -fsSL "${_url}" -o "${_tmp_accepted}" 2>/dev/null; then
+    local _tmp_accepted
+    if __make_temp_file _tmp_accepted "accepted-config" &&
+      curl -fsSL "${_url}" -o "${_tmp_accepted}" 2>/dev/null; then
       local _accepted_vars
       _accepted_vars=$(grep -oP '^#?\s*\K[_a-zA-Z][_a-zA-Z0-9]*(?==)' "${_tmp_accepted}" 2>/dev/null)
       [[ -n "${_accepted_vars}" ]] && _upstream_vars_for_deprecated+=$'\n'"${_accepted_vars}"
@@ -2066,10 +2063,6 @@ __handle_config() {
     clear
   }
 
-  __banner
-  msginfo "${neon}${uline_on}OPEN${uline_off}:${reset}${gray} ${_config_name}${reset}${light} configuration file${break}"
-  clear
-
   if [[ -f "${_config_path}" ]]; then
     __editor "${_config_path}" || return 1
   else
@@ -2089,9 +2082,6 @@ __handle_config() {
       # shellcheck disable=SC2086
       if curl ${_curl_opts} "${_config_url}" -o "${_config_path}" 2>/dev/null; then
         clear
-        __banner
-        msginfo "Configuration downloaded: ${gray}${_config_path}${reset}"
-        clear
         __editor "${_config_path}" || return 1
       else
         __error_config "Download failed from ${_config_url}"
@@ -2106,10 +2096,6 @@ __handle_config() {
       return 1
     fi
   fi
-
-  __banner
-  msginfo "${neon}${uline_on}CLOSE${uline_off}:${reset}${gray} ${_config_name}${reset}${light} configuration file${break}"
-  clear
 }
 
 # =============================================================================
@@ -2294,6 +2280,7 @@ __main_direct_mode() {
     trap - INT TERM EXIT HUP
 
     __handle_config "${_config_name}" "${_config_path}" "${_config_url}"
+    local _status=$?
 
     # Exit messages
     __banner
@@ -2301,7 +2288,7 @@ __main_direct_mode() {
 
     # Clean exit
     __clean
-    exit 0
+    exit "${_status}"
   fi
 
   # Install command lookup
@@ -2332,7 +2319,7 @@ __main_direct_mode() {
     clean | --clean)
       _suppress_exit_banner=true
       __clean_temp_dir
-      exit 0
+      exit $?
       ;;
     *)
       __banner "${orange}"
@@ -2420,7 +2407,7 @@ __main_interactive_mode() {
     Clean)
       _suppress_exit_banner=true
       __clean_temp_dir
-      exit 0
+      exit $?
       ;;
     Close)
       exit 0
