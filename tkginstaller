@@ -4,7 +4,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly pkgver="v0.60.0"
+readonly pkgver="v0.60.1"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _runargs=("$@")
@@ -1119,7 +1119,7 @@ __linux_nvidia_install() {
 
   if [[ -z "${_pf_nvidia}" ]]; then
     msginfo "${break}${neon}${uline_on}NVIDIA OPEN MODULE${uline_off}:${reset} ${light}Which NVIDIA open driver version for the combined install?${reset}${break}"
-    msgplain " Supported kernels: ${gray}6.18  7.1  7.2${reset}  │  Requires Turing+ GPU (GTX 16+ or RTX 20xx or newer)${reset}${break}"
+    msgplain " Supported kernels: ${gray}6.18  7.1  7.2  7.3${reset}  │  Requires Turing+ GPU (GTX 16+ or RTX 20xx or newer)${reset}${break}"
     msgplain " ${neon}${uline_on}0${uline_off}${reset} │ ${_nvidia_versions[latest]}   ${gray}— default branch, selected${reset} ${neon}(default)${reset}"
     msgplain " ${orange}1${reset} │ ${_nvidia_versions[vulkan]}   ${gray}— Vulkan developer beta${reset}"
     msgplain " ${gray}2${reset} │ ${_nvidia_versions[legacy]}  ${gray}— legacy/LTS branch${reset}"
@@ -1199,8 +1199,7 @@ _eglwayland="external"
 _eglgbm="external"
 _eglx11="external"
 _blacklist_nouveau="true"
-_modprobe="true"
-_modprobe_mobile="true"
+_modprobe="NVreg_InitializeSystemMemoryAllocations=0"
 _nvidia_patch_enc_fbc="true"
 _module_signing="true"
 _kerneloverride=""
@@ -1209,13 +1208,11 @@ _local_package_storing="false"
 _series_in_pkgname=""
 _build_utils_package_only="true"
 _disable_libalpm_hook=""
-_logging_use_script="false"
 _gcc15_fix="false"
 _gcc14_fix="false"
 _54_prime_fixing_attempt="false"
 _62142_fix="false"
 _user_patches="false"
-_md5sum="SKIP"
 NVIDIA_CUSTOMIZATION_CFG
 
   # build only
@@ -2118,8 +2115,8 @@ __menu() {
 
   # Define menu options
   local _menu_options=(
-    "Linux++      |🐧 ${neon}Linux++       ${gray} Linux-TkG + Nvidia-all combined (kmod, damachine fork)"
-    "Linux     |🐧 ${neon}Linux         ${gray} Linux custom kernels for better desktop and gaming experience"
+    "Linux++       |🐧 ${neon}Linux++       ${gray} Linux-TkG + Nvidia-all combined (kmod, damachine fork)"
+    "Linux         |🐧 ${neon}Linux         ${gray} Linux custom kernels for better desktop and gaming experience"
     "Nvidia        |💻 ${neon}Nvidia        ${gray} Nvidia open-source or proprietary graphics drivers"
     "Mesa          |🧩 ${neon}Mesa          ${gray} AMD and Intel open-source graphics driver"
     "AMD           |💎 ${neon}AMD           ${gray} AMDGPU-PRO and Vulkan drivers (Pro & OPT)"
