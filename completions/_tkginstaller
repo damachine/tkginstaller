@@ -1,0 +1,105 @@
+#compdef tkginstaller
+
+local context state state_descr line
+typeset -A opt_args
+
+_arguments -C \
+  '(- 1 *)'{-h,--help}'[show help]' \
+  '(- 1 *)--clean[remove temporary files]' \
+  '1:command:->command' \
+  '2:argument:->argument'
+
+case "${state}" in
+  command)
+    local -a commands=(
+      'linux:build and install Linux-TkG'
+      'linux-nvidia:build and install Linux-TkG with NVIDIA'
+      'nvidia:build and install NVIDIA drivers'
+      'mesa:build and install Mesa'
+      'wine:build and install Wine-TkG'
+      'proton:build and install Proton-TkG'
+      'dxvk-tools:prepare DXVK and vkd3d-proton'
+      'dxvk:alias for dxvk-tools'
+      'amdgpu:build and install AMDGPU-PRO'
+      'amdvlk:build and install AMDVLK'
+      'gamescope:build and install Gamescope'
+      'glibc:build and install glibc-eac'
+      'config:open or edit package configuration'
+      'edit:edit package configuration'
+      'clean:remove temporary files'
+      'help:show help'
+      'vkd3d:configuration target'
+      'linux-tkg:configuration alias for linux'
+      'nvidia-all:configuration alias for nvidia'
+      'mesa-git:configuration alias for mesa'
+      'amdvlk-opt:configuration alias for amdvlk'
+      'wine-tkg:configuration alias for wine'
+      'proton-tkg:configuration alias for proton'
+      'updxvk:configuration alias for dxvk'
+      'upvkd3d:configuration alias for vkd3d'
+      'l:alias for linux'
+      'ln:alias for linux-nvidia'
+      'n:alias for nvidia'
+      'm:alias for mesa'
+      'w:alias for wine'
+      'p:alias for proton'
+      'd:alias for dxvk-tools'
+      'ag:alias for amdgpu'
+      'av:alias for amdvlk'
+      'g:alias for gamescope'
+      'ge:alias for glibc'
+      'c:alias for config'
+      'e:alias for edit'
+      'h:alias for help'
+    )
+    _describe -t commands 'command' commands
+    ;;
+  argument)
+    case "${words[2]}" in
+      config | edit | c | e)
+        local -a packages=(
+          'linux:Linux-TkG'
+          'nvidia:NVIDIA drivers'
+          'mesa:Mesa'
+          'wine:Wine-TkG'
+          'proton:Proton-TkG'
+          'dxvk:DXVK'
+          'vkd3d:vkd3d-proton'
+          'amdgpu:AMDGPU-PRO'
+          'amdvlk:AMDVLK'
+          'gamescope:Gamescope'
+          'linux-tkg:alias for linux'
+          'nvidia-all:alias for nvidia'
+          'mesa-git:alias for mesa'
+          'amdvlk-opt:alias for amdvlk'
+          'wine-tkg:alias for wine'
+          'proton-tkg:alias for proton'
+          'updxvk:alias for dxvk'
+          'upvkd3d:alias for vkd3d'
+          'l:alias for linux'
+          'n:alias for nvidia'
+          'm:alias for mesa'
+          'w:alias for wine'
+          'p:alias for proton'
+          'd:alias for dxvk'
+          'v:alias for vkd3d'
+          'ag:alias for amdgpu'
+          'av:alias for amdvlk'
+          'g:alias for gamescope'
+        )
+        _describe -t packages 'package' packages
+        ;;
+      linux | nvidia | mesa | wine | proton | dxvk | vkd3d | amdgpu | amdvlk | gamescope | \
+        linux-tkg | nvidia-all | mesa-git | amdvlk-opt | wine-tkg | proton-tkg | updxvk | upvkd3d | \
+        l | n | m | w | p | d | v | ag | av | g)
+        local -a actions=(
+          'config:edit package configuration'
+          'edit:edit package configuration'
+          'c:alias for config'
+          'e:alias for edit'
+        )
+        _describe -t actions 'action' actions
+        ;;
+    esac
+    ;;
+esac
