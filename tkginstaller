@@ -2290,7 +2290,7 @@ __main_direct_mode() {
 
   # Install command lookup
   declare -A _install_funcs=(
-    [linux - nvidia]=__linux_nvidia_install [ln]=__linux_nvidia_install
+    ["linux-nvidia"]=__linux_nvidia_install [ln]=__linux_nvidia_install
     [linux]=__linux_install [l]=__linux_install
     [nvidia]=__nvidia_install [n]=__nvidia_install
     [mesa]=__mesa_install [m]=__mesa_install
@@ -2298,7 +2298,7 @@ __main_direct_mode() {
     [amdvlk]=__amdvlk_opt_install [av]=__amdvlk_opt_install
     [wine]=__wine_install [w]=__wine_install
     [proton]=__proton_install [p]=__proton_install
-    [dxvk - tools]=__dxvk_tools_prepare [dxvk]=__dxvk_tools_prepare [d]=__dxvk_tools_prepare
+    ["dxvk-tools"]=__dxvk_tools_prepare [dxvk]=__dxvk_tools_prepare [d]=__dxvk_tools_prepare
     [gamescope]=__gamescope_install [g]=__gamescope_install
     [glibc]=__glibc_install [ge]=__glibc_install
   )
