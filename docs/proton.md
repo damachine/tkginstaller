@@ -58,8 +58,6 @@ Before building Proton-TKG, you can optionally prepare custom DXVK and vkd3d-pro
   Edit `updxvk.cfg` and `upvkd3d-proton.cfg` via Config menu or:
   - `tkginstaller config dxvk`
   - `tkginstaller config vkd3d`
-- **Standalone Installation:**  
-  `tkginstaller dxvk-tools` or `tkginstaller dxvk`
 - **Error Handling:**  
   If dxvk-tools build fails, Proton-TKG build continues anyway.
 - **Requirements:**  

@@ -4,7 +4,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly pkgver="v0.60.3"
+readonly pkgver="v0.60.4"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _runargs=("$@")
@@ -41,13 +41,9 @@ declare -gA _pkgrepo=(
   [linux]="${_reposrc}/linux-tkg.git"
   [nvidia]="${_reposrc}/nvidia-all.git"
   [mesa]="${_reposrc}/mesa-git.git"
-  [amdgpu]="${_reposrc}/amdgpu-pro-vulkan-only.git"
-  [amdvlk]="${_reposrc}/amdvlk-opt.git"
   [wine]="${_reposrc}/wine-tkg-git.git"
   [proton]="${_reposrc}/wine-tkg-git.git"
   [dxvk]="${_reposrc}/dxvk-tools.git"
-  [gamescope]="${_reposrc}/gamescope-git.git"
-  [glibc]="${_reposrc}/glibc-eac.git"
 )
 
 # Configuration file paths
@@ -55,18 +51,14 @@ declare -gA _pkgconfig=(
   [linux]="linux-tkg/master/customization.cfg"
   [nvidia]="nvidia-all/master/customization.cfg"
   [mesa]="mesa-git/master/customization.cfg"
-  [amdgpu]="amdgpu-pro-vulkan-only/master/customization.cfg"
-  [amdvlk]="amdvlk-opt/master/amdvlk-buildfromsource/customization.cfg"
   [wine]="wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
   [proton]="wine-tkg-git/refs/heads/master/proton-tkg/proton-tkg.cfg"
   [dxvk]="dxvk-tools/master/updxvk.cfg"
   [vkd3d]="dxvk-tools/master/upvkd3d-proton.cfg"
-  [gamescope]="gamescope-git/master/customization.cfg"
 )
 
 # Subdir to enter after clone
 declare -gA _pkgdir=(
-  [amdvlk]="amdvlk-buildfromsource"
   [wine]="wine-tkg-git"
   [proton]="proton-tkg"
 )
@@ -76,13 +68,10 @@ declare -gA _pkglocalcfg=(
   [linux]="linux-tkg.cfg"
   [nvidia]="nvidia-all.cfg"
   [mesa]="mesa-git.cfg"
-  [amdgpu]="amdgpu-pro.cfg"
-  [amdvlk]="amdvlk-opt.cfg"
   [wine]="wine-tkg.cfg"
   [proton]="proton-tkg.cfg"
   [dxvk]="updxvk.cfg"
   [vkd3d]="upvkd3d-proton.cfg"
-  [gamescope]="gamescope.cfg"
 )
 
 # Normalize package argument to internal key
@@ -91,13 +80,10 @@ __normalize_package() {
     linux | linux-tkg | l) echo "linux" ;;
     nvidia | nvidia-all | n) echo "nvidia" ;;
     mesa | mesa-git | m) echo "mesa" ;;
-    amdgpu | ag) echo "amdgpu" ;;
-    amdvlk | amdvlk-opt | av) echo "amdvlk" ;;
     wine | wine-tkg | w) echo "wine" ;;
     proton | proton-tkg | p) echo "proton" ;;
     dxvk | updxvk | d) echo "dxvk" ;;
     vkd3d | upvkd3d | v) echo "vkd3d" ;;
-    gamescope | g) echo "gamescope" ;;
     *) echo "" ;;
   esac
 }
@@ -113,70 +99,68 @@ __get_config_url() {
   [[ -n "${_pkgconfig[${_pkg}]:-}" ]] && echo "${_reposrc_raw}/${_pkgconfig[${_pkg}]}"
 }
 
-# Initialize color and formatting
+# Refresh dimensions for prompts and pagers; fzf handles its own redraws.
+__terminal_size() {
+  local _rows=24 _cols=80
+  if [[ "${_terminal_output:-false}" == true ]]; then
+    read -r _rows _cols < <(stty size 2>/dev/null </dev/tty) || :
+  fi
+  [[ "${_rows}" =~ ^[1-9][0-9]*$ ]] || _rows=24
+  [[ "${_cols}" =~ ^[1-9][0-9]*$ ]] || _cols=80
+  rows=${_rows}
+  cols=${_cols}
+  local _line_len=$((cols / 2))
+  ((_line_len > 80)) && _line_len=80
+  printf -v line '%*s' "${_line_len}" ''
+  line=${line// /─}
+  export rows cols line
+}
+
+__clear_screen() {
+  [[ "${_terminal_output:-false}" == true ]] || return 0
+  tput clear 2>/dev/null || printf '\033[2J\033[H'
+}
+
+__clear_line() {
+  [[ "${_terminal_output:-false}" == true ]] || return 0
+  printf '\r\033[2K\033[A'
+}
+
+# Initialize color and formatting once, before menu command substitutions.
 __init_style() {
-  __clear_line() { printf '\r%*s\r\033[A' "$@"; }
+  _terminal_output=false
+  [[ -t 1 && -n "${TERM:-}" && "${TERM}" != dumb ]] && _terminal_output=true
   break=$'\n'
-  reset=$'\033[0m'
+  reset='' red='' light='' neon='' mint='' dark='' orange='' gray=''
+  uline_on='' uline_off=''
+  _output_color=never
 
-  # Helper to return TrueColor escape if supported
   __color() {
-    # $1 = r, $2 = g, $3 = b, $4 = fallback tput color index (0-7)
-    local r=${1:-255} g=${2:-255} b=${3:-255} idx=${4:-7}
-
-    # Detect basic TrueColor support
-    if [[ "${COLORTERM,,}" == *truecolor* || "${COLORTERM,,}" == *24bit* ]]; then
+    local r=$1 g=$2 b=$3 idx=$4 _seq
+    if [[ "${TERM}" != linux && ("${COLORTERM,,}" == *truecolor* || "${COLORTERM,,}" == *24bit*) ]]; then
       printf '\033[38;2;%d;%d;%dm' "$r" "$g" "$b"
-      return 0
+    elif _seq=$(tput setaf "$idx" 2>/dev/null) && [[ -n "${_seq}" ]]; then
+      printf '%s' "${_seq}"
+    else
+      printf '\033[3%dm' "$idx"
     fi
-
-    # Fallback to tput
-    if command -v tput >/dev/null 2>&1; then
-      local _tput_seq
-      _tput_seq=$(
-        tput sgr0
-        tput setaf "$idx"
-      )
-      printf '%s' "${_tput_seq}"
-      return 0
-    fi
-
-    # Fallback to 256-color approx idx: 1=red, 2=green, 3=yellow, 4=blue
-    local _idx256
-    case "$idx" in
-      1) _idx256=196 ;; # bright red
-      2) _idx256=118 ;; # light/bright green
-      3) _idx256=214 ;; # orange/yellow
-      4) _idx256=39 ;;  # bright blue/cyan-ish
-      *) _idx256=15 ;;  # white
-    esac
-    printf '\033[38;5;%dm' "${_idx256}"
   }
 
-  # Define TrueColor values, fallback to tput
-  red="$(__color 220 60 60 1)"     # warm red
-  light="$(__color 80 255 140 2)"  # light green
-  neon="$(__color 120 255 100 2)"  # neon green
-  mint="$(__color 152 255 200 6)"  # mint green
-  dark="$(__color 34 68 34 2)"     # dark green (#224422)
-  orange="$(__color 255 190 60 3)" # orange/yellow
-  gray="$(__color 200 250 200 7)"  # gray
-
-  # Draw underline
-  uline_on=$(tput smul 2>/dev/null || printf '\033[4m')
-  uline_off=$(tput rmul 2>/dev/null || printf '\033[24m')
-
-  # Calculate terminal width
-  cols="$(tput cols 2>/dev/null || echo 80)"
-  local line_len=$((cols / 2))
-  if [[ "${line_len}" -lt 80 ]]; then
-    line_len=80
+  if [[ "${_terminal_output}" == true && -z "${NO_COLOR:-}" ]]; then
+    _output_color=always
+    reset=$'\033[0m'
+    red="$(__color 220 60 60 1)"
+    light="$(__color 80 255 140 2)"
+    neon="$(__color 120 255 100 2)"
+    mint="$(__color 152 255 200 6)"
+    dark="$(__color 34 68 34 2)"
+    orange="$(__color 255 190 60 3)"
+    gray="$(__color 200 250 200 7)"
+    uline_on=$(tput smul 2>/dev/null || printf '\033[4m')
+    uline_off=$(tput rmul 2>/dev/null || printf '\033[24m')
   fi
-  line=""
-  for ((i = 0; i < "${line_len}"; i++)); do line+="─"; done
-
-  # Export vars needed in fzf preview subshells
-  export break reset light neon mint dark orange gray uline_on uline_off cols line
+  __terminal_size
+  export _output_color break reset red light neon mint dark orange gray uline_on uline_off
 }
 
 # Display banner
@@ -339,19 +323,19 @@ ${neon}1) Interactive mode${reset}
 
 ${neon}2) Direct mode${reset}
    Use direct CLI mode (skip TUI), run with arguments:
-   ${gray}tkginstaller [linux|l|nvidia|n|linux-nvidia|ln|mesa|m|wine|w|proton|p|dxvk-tools|dxvk|d|amdgpu|ag|amdvlk|av|gamescope|g|glibc|ge]${reset}
+   ${gray}tkginstaller [linux|l|nvidia|n|linux-nvidia|ln|mesa|m|wine|w|proton|p]${reset}
 
 ${neon}3) Config editing${reset}
    Enter fzf-based TUI mode to edit a package's configuration:
    ${gray}tkginstaller config${reset}
    Edit a package's configuration file directly:
-   ${gray}tkginstaller [config|c|edit|e] [linux|l|nvidia|n|mesa|m|wine|w|proton|p|dxvk|d|vkd3d|v|amdgpu|ag|amdvlk|av|gamescope|g]${reset}
+   ${gray}tkginstaller [config|c|edit|e] [linux|l|nvidia|n|mesa|m|wine|w|proton|p|dxvk|d|vkd3d|v]${reset}
 
 ${neon}4) Clean temporary files${reset}
    Remove all temporary files created during installations:
    ${gray}tkginstaller clean${reset}
 
-${orange}Shortcuts:${reset} ${orange}l${reset}=linux, ${orange}n${reset}=nvidia, ${orange}ln${reset}=linux-nvidia, ${orange}m${reset}=mesa, ${orange}w${reset}=wine, ${orange}p${reset}=proton, ${orange}d${reset}=dxvk-tools, ${orange}ag${reset}=amdgpu, ${orange}av${reset}=amdvlk, ${orange}g${reset}=gamescope, ${orange}ge${reset}=glibc-eac, ${orange}c${reset}=config, ${orange}e${reset}=edit
+${orange}Shortcuts:${reset} ${orange}l${reset}=linux, ${orange}n${reset}=nvidia, ${orange}ln${reset}=linux-nvidia, ${orange}m${reset}=mesa, ${orange}w${reset}=wine, ${orange}p${reset}=proton, ${orange}c${reset}=config, ${orange}e${reset}=edit
 
 EOF
 }
@@ -550,7 +534,7 @@ __status() {
 # Trap for clean exit
 __exit() {
   local _exit_code=${1:-$?}
-  trap - INT TERM EXIT HUP
+  trap - INT TERM EXIT HUP WINCH
 
   # Show banner and status on error
   if [[ ${_exit_code} -ne 0 ]]; then
@@ -583,7 +567,10 @@ __cleanup_combined_pkgdir() {
 }
 
 # Route signals through __exit
-trap 'trap - INT TERM EXIT HUP; __exit 130' INT TERM HUP
+trap '__exit 130' INT
+trap '__exit 143' TERM
+trap '__exit 129' HUP
+trap '__terminal_size' WINCH
 trap '__exit $?' EXIT
 
 # Cleanup handler
@@ -726,10 +713,32 @@ __fzf_menu() {
   local _preview_window_settings="${6:-right:wrap:55%}"
   local _fzf_bind="${7:-ctrl-p:toggle-preview}"
 
+  if [[ "${_terminal_output}" != true || ! -r /dev/tty ]]; then
+    printf '%s\n' 'Interactive mode requires a usable terminal. Use tkginstaller help for CLI commands.' >&2
+    return 2
+  fi
+  __terminal_size
+  local -a _color_options=(--color='current-fg:#78FF64,current-bg:#224422,gutter:#224422,pointer:#224422,border:#224422,scrollbar:#224422:bold')
+  [[ -n "${NO_COLOR:-}" ]] && _color_options=(--no-color)
+  # fzf changes the preview layout automatically when its width is too small.
+  # Apply initial visibility once; keep user toggles across layout changes.
+  local -a _start_options=()
+  if [[ "${_preview_window_settings}" == *:hidden* ]]; then
+    _preview_window_settings=${_preview_window_settings/:hidden/}
+    _start_options=(--bind='start:hide-preview')
+  fi
+  local _alternative='down:45%:wrap'
+  _preview_window_settings+=":<50(${_alternative})"
+  if ((cols < 100 || rows < 30)); then
+    _header_text=${_header_text%%$'\n'*}
+    _footer_text='  [Enter] select  [Ctrl+P] preview  [Esc] back/exit'
+  fi
+  local _status=0
+
   fzf \
     --with-shell='bash -c' \
     --style default \
-    --color='current-fg:#78FF64,current-bg:#224422,gutter:#224422,pointer:#224422,border:#224422,scrollbar:#224422:bold' \
+    "${_color_options[@]}" \
     --border=sharp \
     --layout=reverse \
     --highlight-line \
@@ -753,10 +762,18 @@ __fzf_menu() {
     --preview-window="${_preview_window_settings}" \
     --preview="${_preview_command}" \
     --preview-border=line \
-    --bind='esc:abort,ctrl-c:abort' \
+    --bind='esc:abort,ctrl-c:abort,resize:refresh-preview' \
     --bind="${_fzf_bind}" \
+    "${_start_options[@]}" \
     --disabled \
-    <<<"${_menu_content}"
+    <<<"${_menu_content}" || _status=$?
+  case ${_status} in
+    0 | 130) return 0 ;;
+    *)
+      printf 'Menu failed (fzf exit code: %s).\n' "${_status}" >&2
+      return "${_status}"
+      ;;
+  esac
 }
 
 # =============================================================================
@@ -855,7 +872,8 @@ __install_package() {
 
       if [[ "${_has_immutable}" == "true" ]]; then
         # Graft .git from sibling clone; immutable files stay in place
-        printf '\033[A          %b\n' "${light}immutable patch files detected — grafting .git...${reset}${break}"
+        __clear_line
+        printf '          %b\n' "${light}immutable patch files detected — grafting .git...${reset}${break}"
         local _tmp_clone="${_repo_dir}.tkg_clone_$$"
         __git_clone_retry "${_repo_url}" "${_tmp_clone}" 3 "${_repo_branch}" || {
           msgerror "Cloning failed for: ${_package_name}${break}"
@@ -964,11 +982,6 @@ __prompt_timer() {
     ((_seconds_left--))
   done
 
-  # Handle abort
-  if [[ ${_abort_flag} == true ]]; then
-    exit 130
-  fi
-
   # Default if no answer
   : "${_user_answer:=${_default}}"
 
@@ -985,6 +998,8 @@ __prompt_timer() {
   else
     trap - INT
   fi
+  [[ "${_abort_flag}" == true ]] && __exit 130
+  return 0
 }
 
 # Prompt user with default value
@@ -1276,9 +1291,6 @@ NVIDIA_CUSTOMIZATION_CFG
 }
 
 __mesa_install() { __install_pkg_key "mesa"; }
-__amdgpu_pro_install() { __install_pkg_key "amdgpu"; }
-__amdvlk_opt_install() { __install_pkg_key "amdvlk"; }
-__gamescope_install() { __install_pkg_key "gamescope"; }
 
 # Wine-TkG installation
 __wine_install() {
@@ -1294,14 +1306,6 @@ __wine_install() {
   fi
 
   __install_package "${_pkgrepo[wine]}" "wine-tkg-git" "${_build_command}" "${_pkgdir[wine]}"
-}
-
-# glibc-eac installation
-__glibc_install() {
-  __show_detected_distro
-  local _build_command="chmod +x glibc_eac.sh && ./glibc_eac.sh"
-
-  __install_package "${_pkgrepo[glibc]}" "glibc-eac" "${_build_command}"
 }
 
 # DXVK-Tools pre-build for Proton-TkG
@@ -1420,12 +1424,12 @@ __proton_install() {
 # Config error display helper
 __error_config() {
   local _msg="$1"
-  clear
+  __clear_screen
   __banner "${red}"
   msgerror "${_msg}"
   msgprompt "Press any key to continue...${break}"
   read -n 1 -s -r
-  clear
+  __clear_screen
 }
 
 # Text editor launcher
@@ -1457,51 +1461,6 @@ __editor() {
 
   # Launch editor
   "${_editor_parts[@]}" "${_target_file}"
-}
-
-# AMD Graphics Driver submenu
-__menu_amd() {
-  clear
-  local _amd_menu_content="AMDGPU-PRO |💎 ${neon}AMDGPU-PRO   ${gray} AMD Vulkan-only (Pro)
-AMDVLK-OPT |🔷 ${neon}AMDVLK-OPT   ${gray} AMD Vulkan (buildfromsource)
-return     |⏪ ${neon}Return"
-
-  export _amd_repos_json="AMDGPU-PRO=amdgpu-pro-vulkan-only/master
-AMDVLK-OPT=amdvlk-opt/master"
-
-  # shellcheck disable=SC2016
-  local _preview='key=$(echo {} | cut -d"|" -f1 | xargs)
-[[ "$key" == "return" ]] && { echo "Back to main menu..."; exit 0; }
-repo=$(echo "${_amd_repos_json}" | grep "^${key}=" | cut -d= -f2-)
-if [[ -n "$repo" ]]; then
-  _readme_url="'"${_reposrc_raw}"'/${repo}/README.md"
-  if command -v glow >/dev/null 2>&1; then
-    glow --width 80 --style "'"${_glow_style:-dark}"'" "${_readme_url}"
-  else
-    curl '"${_curl_opts}"' "${_readme_url}" 2>/dev/null || printf "%b\n" "'"${orange}"'Preview unavailable'"${reset}"'"
-  fi
-fi'
-
-  local _header="🐸 ${neon}${uline_on}TkG-Installer ─ AMD Drivers${uline_off}${reset}${break}${break}${light}   Select AMD driver:"
-  local _footer="  ${light}[Enter] select, [Ctrl+P] preview, [ESC] back"
-
-  local _choice
-  _choice=$(__fzf_menu "${_amd_menu_content}" "${_preview}" "${_header}" "${_footer}" "${pkgver}" 'right:wrap:60%')
-  unset _amd_repos_json
-
-  [[ -z "${_choice}" ]] && return 0
-  _choice=$(echo "${_choice}" | cut -d"|" -f1 | xargs)
-
-  case ${_choice} in
-    AMDGPU-PRO)
-      __banner
-      __amdgpu_pro_install
-      ;;
-    AMDVLK-OPT)
-      __banner
-      __amdvlk_opt_install
-      ;;
-  esac
 }
 
 # Log file browser: package selection → file selection → pager view
@@ -1594,7 +1553,11 @@ ${light}   Select a package to view its logs:"
       "${_footer_logs}" \
       "${pkgver}" \
       "right:wrap:55%" \
-      "ctrl-p:toggle-preview")
+      "ctrl-p:toggle-preview") || {
+      local _menu_status=$?
+      unset _log_subdirs_json
+      return "${_menu_status}"
+    }
 
     if [[ -z "${_pkg_choice}" ]]; then
       unset _log_subdirs_json
@@ -1621,7 +1584,7 @@ ${light}   Select a package to view its logs:"
       msgplain " ${gray}${_selected_log_dir}${reset}${break}"
       msgprompt "Press any key to continue..."
       read -n 1 -s -r
-      clear
+      __clear_screen
       continue
     fi
 
@@ -1635,7 +1598,7 @@ ${light}   Select a package to view its logs:"
     _file_menu+="return|⏪ ${neon}Return"
 
     # show file content with bat (or cat fallback)
-    local _bat_log_cmd="bat --style=plain --language=log --wrap character --terminal-width ${cols} --force-colorization --theme='Visual Studio Dark+'"
+    local _bat_log_cmd="bat --style=plain --language=log --wrap character --terminal-width \"\${FZF_PREVIEW_COLUMNS:-80}\" --color=${_output_color} --theme='Visual Studio Dark+'"
     # shellcheck disable=SC2016
     local _preview_file='
       key=$(echo {} | cut -d"|" -f1 | xargs)
@@ -1665,7 +1628,11 @@ ${light}   Select a log file to view:"
         "${_footer_files}" \
         "${pkgver}" \
         "right:wrap:65%" \
-        "ctrl-p:toggle-preview")
+        "ctrl-p:toggle-preview") || {
+        local _menu_status=$?
+        unset _log_subdirs_json
+        return "${_menu_status}"
+      }
 
       if [[ -z "${_file_choice}" ]]; then
         _file_loop=false
@@ -1681,13 +1648,14 @@ ${light}   Select a log file to view:"
       fi
 
       # Open file with bat pager or less
+      __terminal_size
       if command -v bat >/dev/null 2>&1; then
         bat \
           --style=full \
           --language=log \
           --wrap=character \
           --terminal-width="${cols}" \
-          --force-colorization \
+          --color=${_output_color} \
           --theme='Visual Studio Dark+' \
           --paging=always \
           "${_file_path}" 2>/dev/null
@@ -1713,9 +1681,15 @@ __menu_config() {
 
       local _old_trap_int=""
       _old_trap_int=$(trap -p INT 2>/dev/null)
-      trap 'echo;echo; msgplain "${red}Aborted by user.${reset}"; clear; return 0' INT
+      local _prompt_aborted=false
+      # Return from __prompt_answer, then restore the handler below.
+      trap '_prompt_aborted=true; return 130' INT
       __prompt_answer "n"
       if [[ -n "${_old_trap_int}" ]]; then eval "${_old_trap_int}"; else trap - INT; fi
+      if [[ "${_prompt_aborted}" == true ]]; then
+        msgplain "${break}Aborted by user."
+        return 0
+      fi
 
       case "${_user_answer,,}" in
         y | yes)
@@ -1723,23 +1697,23 @@ __menu_config() {
             __error_config "Creating configuration directory failed: ${_localcfg}${break} Please check the path and your permissions then try again.${break}"
             return 1
           fi
-          clear
+          __clear_screen
           __banner
           msginfo "Configuration directory created:${reset}${gray} ${_localcfg}${reset}${break}"
           msgplain " You can now manage your${reset}${gray} customization.cfg${reset} files.${break}"
           msgprompt "Press any key to continue...${break}"
           read -n 1 -s -r
-          clear
+          __clear_screen
           continue
           ;;
         *)
-          clear
+          __clear_screen
           __banner "${orange}"
           msgorange "Directory creation cancelled.${break}"
           msgplain " No changes were made.${break}"
           msgprompt "Press any key to continue...${break}"
           read -n 1 -s -r
-          clear
+          __clear_screen
           return 0
           ;;
       esac
@@ -1755,8 +1729,6 @@ __menu_config() {
       _menu_options+=(
         "nvidia   |💻 ${neon}Nvidia     ${gray} customization.cfg ${reset}->${orange} 'nvidia-all.cfg'"
         "mesa     |🧩 ${neon}Mesa       ${gray} customization.cfg ${reset}->${orange} 'mesa-git.cfg'"
-        "amdgpu   |💎 ${neon}AMDGPU-PRO ${gray} customization.cfg ${reset}->${orange} 'amdgpu-pro.cfg'"
-        "amdvlk   |🔷 ${neon}AMDVLK-OPT ${gray} customization.cfg ${reset}->${orange} 'amdvlk-opt.cfg'"
       )
     fi
 
@@ -1765,7 +1737,6 @@ __menu_config() {
       "proton    |🎮 ${neon}Proton     ${gray} customization.cfg ${reset}->${orange} 'proton-tkg.cfg'"
       "dxvk      |🎮 ${neon}Dxvk       ${gray} customization.cfg ${reset}->${orange} 'updxvk.cfg'"
       "vkd3d     |🎮 ${neon}Vkd3d      ${gray} customization.cfg ${reset}->${orange} 'upvkd3d-proton.cfg'"
-      "gamescope |🕹️ ${neon}Gamescope  ${gray} customization.cfg ${reset}->${orange} 'gamescope.cfg'"
       "return    |⏪ ${neon}Return"
     )
 
@@ -1793,7 +1764,7 @@ __menu_config() {
     local _error_config_not_exist="${orange}No external configuration preview available.${reset}${break}${break}${light} Local:${reset}${gray} file://\${_config_file_path}${reset}${break}${light} Remote:${reset}${gray} \${_remote_url}${reset}${break}${break}${light} Press [Enter] to download or open the missing${reset}${gray} customization.cfg${reset}${light} file, according to -TkG- package standards.${reset}${break}${dark}${line}${break}"
 
     # bat/wdiff diff preview commands
-    local _bat_cmd="bat --style=plain --language=cfg --wrap character --terminal-width ${cols} --force-colorization --theme='Visual Studio Dark+'"
+    local _bat_cmd="bat --style=plain --language=cfg --wrap character --terminal-width \"\${FZF_PREVIEW_COLUMNS:-80}\" --color=${_output_color} --theme='Visual Studio Dark+'"
     local _diff_cmd="wdiff --statistics --start-delete='${red}' --end-delete='${reset}' --start-insert='${light}' --end-insert='${reset}'"
 
     # Preview command
@@ -1803,7 +1774,7 @@ __menu_config() {
 
             [[ "$key" == "return" ]] && {
                 if command -v glow >/dev/null 2>&1; then
-                    glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "'"${_reposrc_raw_damachine}"'/return.md"
+                    glow --pager --width "${FZF_PREVIEW_COLUMNS:-80}" --style "'"${_glow_style:-dark}"'" "'"${_reposrc_raw_damachine}"'/return.md"
                 else
                     printf "%b\n" "'"${light}"'Return to the previous menu.'"${reset}"'"
                 fi
@@ -1823,7 +1794,7 @@ __menu_config() {
                     if command -v wdiff >/dev/null 2>&1; then
                         _diff_output=$('"${_diff_cmd}"' "${_remote_tmp}" "${_config_file_path}" 2>/dev/null)
                     else
-                        _diff_output=$(diff -u --color=always "${_remote_tmp}" "${_config_file_path}" 2>/dev/null)
+                        _diff_output=$(diff -u --color=${_output_color} "${_remote_tmp}" "${_config_file_path}" 2>/dev/null)
                     fi
                     _diff_status=$?
                     if [[ ${_diff_status} -le 1 ]]; then
@@ -1865,7 +1836,11 @@ ${light}   Select an option below:"
 
     # Run fzf menu
     local _config_choice
-    _config_choice=$(__fzf_menu "${_menu_content}" "${_preview_command}" "${_header_text}" "${_footer_text}" "${_border_label_text}" "${_preview_window_settings}" "${_fzf_bind}")
+    _config_choice=$(__fzf_menu "${_menu_content}" "${_preview_command}" "${_header_text}" "${_footer_text}" "${_border_label_text}" "${_preview_window_settings}" "${_fzf_bind}") || {
+      local _menu_status=$?
+      unset _pkg_urls_json _pkg_local_cfg_json
+      return "${_menu_status}"
+    }
 
     # Unset exported vars
     unset _pkg_urls_json _pkg_local_cfg_json
@@ -2057,7 +2032,7 @@ __handle_config() {
   # Check for deprecated and new variables
   [[ -f "${_config_path}" ]] && {
     __check_config "${_config_path}" "${_config_url}" "${_config_name}"
-    clear
+    __clear_screen
   }
 
   if [[ -f "${_config_path}" ]]; then
@@ -2078,18 +2053,18 @@ __handle_config() {
       }
       # shellcheck disable=SC2086
       if curl ${_curl_opts} "${_config_url}" -o "${_config_path}" 2>/dev/null; then
-        clear
+        __clear_screen
         __editor "${_config_path}" || return 1
       else
         __error_config "Download failed from ${_config_url}"
         return 1
       fi
     else
-      clear
+      __clear_screen
       msgorange "Download cancelled.${break}"
       msgprompt "Press any key..."
       read -n 1 -s -r
-      clear
+      __clear_screen
       return 1
     fi
   fi
@@ -2119,14 +2094,11 @@ __menu() {
     "Linux         |🐧 ${neon}Linux         ${gray} Linux custom kernels for better desktop and gaming experience"
     "Nvidia        |💻 ${neon}Nvidia        ${gray} Nvidia open-source or proprietary graphics drivers"
     "Mesa          |🧩 ${neon}Mesa          ${gray} AMD and Intel open-source graphics driver"
-    "AMD           |💎 ${neon}AMD           ${gray} AMDGPU-PRO and Vulkan drivers (Pro & OPT)"
   )
 
   _menu_options+=(
     "Wine      |🍷 ${neon}Wine          ${gray} Windows compatibility layer to run Windows apps on Linux"
     "Proton    |🎮 ${neon}Proton        ${gray} Run Windows games on the Linux system via Steam"
-    "Gamescope |🕹️ ${neon}Gamescope     ${gray} Build and install Gamescope from Frogging-Family"
-    "Glibc     |🔗 ${neon}Glibc-eac     ${gray} Install EAC compatible version of glibc"
     "Config    |🔧 ${neon}Config        ${gray} Enter external configuration files menu (Expert)"
     "Logs      |📋 ${neon}Logs          ${gray} Browse build and system logs per package"
     "Clean     |🧹 ${neon}Clean         ${gray} Removes all temporary files for a clean installation"
@@ -2139,15 +2111,14 @@ __menu() {
 
   # Preview doc/repo mappings
   declare -A _preview_docs=(
-    [Linux++]=linux-nvidia [Linux]=linux [Nvidia]=nvidia [Mesa]=mesa [AMD]=amd [Wine]=wine
-    [Proton]=proton [Gamescope]=gamescope [Glibc]=glibc
+    [Linux++]=linux-nvidia [Linux]=linux [Nvidia]=nvidia [Mesa]=mesa [Wine]=wine
+    [Proton]=proton
     [Config]=config [Clean]=clean [Help]=help [Close]=close [Logs]=logs
   )
   declare -A _preview_repos=(
     [Linux++]="linux-tkg/master" [Linux]="linux-tkg/master" [Nvidia]="nvidia-all/master"
     [Mesa]="mesa-git/master"
     [Wine]="wine-tkg-git/master/wine-tkg-git" [Proton]="wine-tkg-git/master/proton-tkg"
-    [Gamescope]="gamescope-git/master" [Glibc]="glibc-eac/main"
   )
 
   # Export for fzf subshell
@@ -2169,7 +2140,7 @@ __menu() {
         if [[ -n "$doc" ]]; then
           _doc_url="'"${_reposrc_raw_damachine}"'/${doc}.md"
           if command -v glow >/dev/null 2>&1; then
-            glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "${_doc_url}"
+            glow --pager --width "${FZF_PREVIEW_COLUMNS:-80}" --style "'"${_glow_style:-dark}"'" "${_doc_url}"
           else
             curl '"${_curl_opts}"' "${_doc_url}" 2>/dev/null || printf "%b\n" "'"${orange}"'Preview unavailable'"${reset}"'"
           fi
@@ -2180,7 +2151,7 @@ __menu() {
         if [[ -n "$repo" ]]; then
           _readme_url="'"${_reposrc_raw}"'/${repo}/README.md"
           if command -v glow >/dev/null 2>&1; then
-            glow --pager --width 80 --style "'"${_glow_style:-dark}"'" "${_readme_url}"
+            glow --pager --width "${FZF_PREVIEW_COLUMNS:-80}" --style "'"${_glow_style:-dark}"'" "${_readme_url}"
           else
             curl '"${_curl_opts}"' "${_readme_url}" 2>/dev/null || printf "%b\n" "'"${orange}"'Preview unavailable'"${reset}"'"
           fi
@@ -2204,14 +2175,18 @@ ${light}   Select an option below:"
 
   # Run fzf menu
   local _main_choice
-  _main_choice=$(__fzf_menu "${_menu_content}" "${_preview_command}" "${_header_text}" "${_footer_text}" "${_border_label_text}" "${_preview_window_settings}" "${_fzf_bind}")
+  _main_choice=$(__fzf_menu "${_menu_content}" "${_preview_command}" "${_header_text}" "${_footer_text}" "${_border_label_text}" "${_preview_window_settings}" "${_fzf_bind}") || {
+    local _menu_status=$?
+    unset _preview_docs_json _preview_repos_json
+    return "${_menu_status}"
+  }
 
   # Cleanup exports
   unset _preview_docs_json _preview_repos_json
 
   # Handle user choice
   if [[ -z "${_main_choice:-}" ]]; then
-    clear
+    __clear_screen
     __exit 0
   fi
 
@@ -2250,18 +2225,17 @@ __main_direct_mode() {
     msgplain " The argument is either invalid or incomplete."
     msgplain " All available arguments run:${break}"
     msgplain "$0 help${break}"
-    trap - INT TERM EXIT HUP
+    trap - INT TERM EXIT HUP WINCH
     __clean
     exit 1
   fi
 
   # "config" alone opens interactive config menu
   if [[ -n "${_config_arg}" && -z "${_package}" ]]; then
-    trap - INT TERM EXIT HUP
     __prepare
-    clear
-    __menu_config
-    __clean
+    __clear_screen
+    __menu_config || return $?
+    _suppress_exit_banner=true
     exit 0
   fi
 
@@ -2274,7 +2248,7 @@ __main_direct_mode() {
     local _config_name="${_package}"
 
     # Disable exit trap before editing config
-    trap - INT TERM EXIT HUP
+    trap - INT TERM EXIT HUP WINCH
 
     __handle_config "${_config_name}" "${_config_path}" "${_config_url}"
     local _status=$?
@@ -2294,13 +2268,8 @@ __main_direct_mode() {
     [linux]=__linux_install [l]=__linux_install
     [nvidia]=__nvidia_install [n]=__nvidia_install
     [mesa]=__mesa_install [m]=__mesa_install
-    [amdgpu]=__amdgpu_pro_install [ag]=__amdgpu_pro_install
-    [amdvlk]=__amdvlk_opt_install [av]=__amdvlk_opt_install
     [wine]=__wine_install [w]=__wine_install
     [proton]=__proton_install [p]=__proton_install
-    ["dxvk-tools"]=__dxvk_tools_prepare [dxvk]=__dxvk_tools_prepare [d]=__dxvk_tools_prepare
-    [gamescope]=__gamescope_install [g]=__gamescope_install
-    [glibc]=__glibc_install [ge]=__glibc_install
   )
 
   # Dispatch to install function
@@ -2324,7 +2293,7 @@ __main_direct_mode() {
       msgplain " The argument is either invalid or incomplete."
       msgplain " All available arguments run:${break}"
       msgplain "$0 help${break}"
-      trap - INT TERM EXIT HUP
+      trap - INT TERM EXIT HUP WINCH
       __clean
       exit 1
       ;;
@@ -2335,14 +2304,13 @@ __main_direct_mode() {
 __main_interactive_mode() {
   # Init and display fzf menu
   __prepare
-  clear
+  __clear_screen
   __menu || {
+    local _menu_status=$?
     __banner "${red}"
     msgerror "Failed to initialize fzf menu!"
     msgplain " Exiting..."
-    trap - INT TERM EXIT HUP
-    __clean
-    exit 1
+    __exit "${_menu_status}"
   }
 
   # Read user selection
@@ -2353,7 +2321,7 @@ __main_interactive_mode() {
 
   # ESC/Ctrl-C
   if [[ -z "${_user_choice:-}" ]]; then
-    clear
+    __clear_screen
     __exit 0
   fi
 
@@ -2365,7 +2333,6 @@ __main_interactive_mode() {
     [Linux++]=__linux_nvidia_install [Linux]=__linux_install [Nvidia]=__nvidia_install
     [Mesa]=__mesa_install
     [Wine]=__wine_install [Proton]=__proton_install
-    [Gamescope]=__gamescope_install [Glibc]=__glibc_install
   )
 
   # Handle standard installations
@@ -2378,25 +2345,18 @@ __main_interactive_mode() {
 
   # Handle special menu options
   case ${_user_choice} in
-    AMD)
-      __banner
-      __clear_line 120
-      __menu_amd
-      clear
-      exec "$0"
-      ;;
     Config)
-      __menu_config
-      clear
+      __menu_config || return $?
+      __clear_screen
       exec "$0"
       ;;
     Logs)
-      __menu_logs
-      clear
+      __menu_logs || return $?
+      __clear_screen
       exec "$0"
       ;;
     Help)
-      trap - INT TERM EXIT HUP
+      trap - INT TERM EXIT HUP WINCH
       __help
       __clean
       exit 0

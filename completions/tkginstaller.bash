@@ -1,8 +1,8 @@
 _tkginstaller() {
   local cur prev
-  local -r commands='linux linux-nvidia nvidia mesa wine proton dxvk-tools dxvk amdgpu amdvlk gamescope glibc config edit clean help vkd3d linux-tkg nvidia-all mesa-git amdvlk-opt wine-tkg proton-tkg updxvk upvkd3d l ln n m w p d ag av g ge c e h --help -h --clean'
+  local -r commands='linux linux-nvidia nvidia mesa wine proton config edit clean help dxvk vkd3d linux-tkg nvidia-all mesa-git wine-tkg proton-tkg updxvk upvkd3d l ln n m w p d c e h --help -h --clean'
   local -r config_commands='config edit c e'
-  local -r config_packages='linux nvidia mesa wine proton dxvk vkd3d amdgpu amdvlk gamescope linux-tkg nvidia-all mesa-git amdvlk-opt wine-tkg proton-tkg updxvk upvkd3d l n m w p d v ag av g'
+  local -r config_packages='linux nvidia mesa wine proton dxvk vkd3d linux-tkg nvidia-all mesa-git wine-tkg proton-tkg updxvk upvkd3d l n m w p d v'
 
   COMPREPLY=()
   cur=${COMP_WORDS[COMP_CWORD]}
@@ -21,9 +21,9 @@ _tkginstaller() {
     config | edit | c | e)
       mapfile -t COMPREPLY < <(compgen -W "${config_packages}" -- "${cur}")
       ;;
-    linux | nvidia | mesa | wine | proton | dxvk | vkd3d | amdgpu | amdvlk | gamescope | \
-      linux-tkg | nvidia-all | mesa-git | amdvlk-opt | wine-tkg | proton-tkg | updxvk | upvkd3d | \
-      l | n | m | w | p | d | v | ag | av | g)
+    linux | nvidia | mesa | wine | proton | dxvk | vkd3d | \
+      linux-tkg | nvidia-all | mesa-git | wine-tkg | proton-tkg | updxvk | upvkd3d | \
+      l | n | m | w | p | d | v | g)
       mapfile -t COMPREPLY < <(compgen -W "${config_commands}" -- "${cur}")
       ;;
   esac

@@ -18,21 +18,15 @@ case "${state}" in
       'mesa:build and install Mesa'
       'wine:build and install Wine-TkG'
       'proton:build and install Proton-TkG'
-      'dxvk-tools:prepare DXVK and vkd3d-proton'
-      'dxvk:alias for dxvk-tools'
-      'amdgpu:build and install AMDGPU-PRO'
-      'amdvlk:build and install AMDVLK'
-      'gamescope:build and install Gamescope'
-      'glibc:build and install glibc-eac'
       'config:open or edit package configuration'
       'edit:edit package configuration'
       'clean:remove temporary files'
       'help:show help'
+      'dxvk:configuration target'
       'vkd3d:configuration target'
       'linux-tkg:configuration alias for linux'
       'nvidia-all:configuration alias for nvidia'
       'mesa-git:configuration alias for mesa'
-      'amdvlk-opt:configuration alias for amdvlk'
       'wine-tkg:configuration alias for wine'
       'proton-tkg:configuration alias for proton'
       'updxvk:configuration alias for dxvk'
@@ -43,11 +37,7 @@ case "${state}" in
       'm:alias for mesa'
       'w:alias for wine'
       'p:alias for proton'
-      'd:alias for dxvk-tools'
-      'ag:alias for amdgpu'
-      'av:alias for amdvlk'
-      'g:alias for gamescope'
-      'ge:alias for glibc'
+      'd:configuration alias for dxvk'
       'c:alias for config'
       'e:alias for edit'
       'h:alias for help'
@@ -65,13 +55,9 @@ case "${state}" in
           'proton:Proton-TkG'
           'dxvk:DXVK'
           'vkd3d:vkd3d-proton'
-          'amdgpu:AMDGPU-PRO'
-          'amdvlk:AMDVLK'
-          'gamescope:Gamescope'
           'linux-tkg:alias for linux'
           'nvidia-all:alias for nvidia'
           'mesa-git:alias for mesa'
-          'amdvlk-opt:alias for amdvlk'
           'wine-tkg:alias for wine'
           'proton-tkg:alias for proton'
           'updxvk:alias for dxvk'
@@ -81,17 +67,15 @@ case "${state}" in
           'm:alias for mesa'
           'w:alias for wine'
           'p:alias for proton'
+      'd:configuration alias for dxvk'
           'd:alias for dxvk'
           'v:alias for vkd3d'
-          'ag:alias for amdgpu'
-          'av:alias for amdvlk'
-          'g:alias for gamescope'
         )
         _describe -t packages 'package' packages
         ;;
-      linux | nvidia | mesa | wine | proton | dxvk | vkd3d | amdgpu | amdvlk | gamescope | \
-        linux-tkg | nvidia-all | mesa-git | amdvlk-opt | wine-tkg | proton-tkg | updxvk | upvkd3d | \
-        l | n | m | w | p | d | v | ag | av | g)
+      linux | nvidia | mesa | wine | proton | dxvk | vkd3d | \
+        linux-tkg | nvidia-all | mesa-git | wine-tkg | proton-tkg | updxvk | upvkd3d | \
+        l | n | m | w | p | d | v | g)
         local -a actions=(
           'config:edit package configuration'
           'edit:edit package configuration'
