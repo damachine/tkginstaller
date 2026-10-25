@@ -4,7 +4,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly pkgver="v0.60.5"
+readonly pkgver="v0.60.6"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _runargs=("$@")
@@ -16,7 +16,6 @@ declare -ga _runtime_tmpfiles=()
 
 # Global variables, paths, and configurations
 _tmpdir=${HOME}/.tkginstaller/.cache
-_choicetmp=${_tmpdir}/.choice.$$.tmp
 _localcfg=${HOME}/.config/frogminer
 _reposrc=https://github.com/Frogging-Family
 _reposrc_raw=https://raw.githubusercontent.com/Frogging-Family
@@ -26,7 +25,7 @@ _reposrc_raw_damachine=https://raw.githubusercontent.com/damachine/tkginstaller/
 # nvidia-open version map
 declare -gA _nvidia_versions=(
   [latest]="615.78.08"
-  [vulkan]="595.44.15"
+  [vulkan]="595.44.16"
   [legacy]="580.178.04"
 )
 
@@ -85,6 +84,19 @@ __normalize_package() {
     dxvk | updxvk | d) echo "dxvk" ;;
     vkd3d | upvkd3d | v) echo "vkd3d" ;;
     *) echo "" ;;
+  esac
+}
+
+# Shared install lookup for CLI commands and menu keys.
+__get_install_function() {
+  case "$1" in
+    linux-nvidia | ln | Linux++) printf '%s\n' __linux_nvidia_install ;;
+    linux | l | Linux) printf '%s\n' __linux_install ;;
+    nvidia | n | Nvidia) printf '%s\n' __nvidia_install ;;
+    mesa | m | Mesa) printf '%s\n' __mesa_install ;;
+    wine | w | Wine) printf '%s\n' __wine_install ;;
+    proton | p | Proton) printf '%s\n' __proton_install ;;
+    *) return 1 ;;
   esac
 }
 
@@ -378,20 +390,16 @@ __git_clone_retry() {
   local _branch="${4:-}"
   local _attempt=0
 
+  set -- "${_repo_url}"
+  if [ -n "${_branch}" ]; then
+    set -- --branch "${_branch}" --single-branch "$@"
+  fi
+  if [ -n "${_target_dir}" ]; then
+    set -- "$@" "${_target_dir}"
+  fi
+
   while ((_attempt < _max_attempts)); do
-    if [[ -n "${_target_dir}" ]]; then
-      if [[ -n "${_branch}" ]]; then
-        git clone --branch "${_branch}" --single-branch "${_repo_url}" "${_target_dir}" >/dev/null 2>&1 && return 0
-      else
-        git clone "${_repo_url}" "${_target_dir}" >/dev/null 2>&1 && return 0
-      fi
-    else
-      if [[ -n "${_branch}" ]]; then
-        git clone --branch "${_branch}" --single-branch "${_repo_url}" >/dev/null 2>&1 && return 0
-      else
-        git clone "${_repo_url}" >/dev/null 2>&1 && return 0
-      fi
-    fi
+    git clone "$@" && return 0
     _attempt=$((_attempt + 1))
     msgwarning "Clone failed (attempt ${_attempt}/${_max_attempts}). Retrying..."
   done
@@ -424,15 +432,7 @@ __export_map() {
 
 # Pre-installation checks
 __prepare() {
-  # Check required dependencies
-  local _dep=(git curl fzf)
-
-  # Define package names per distro
-  declare -A _pkg_map_dep=(
-    [git]=git
-    [curl]=curl
-    [fzf]=fzf
-  )
+  local _required_dep _dependency _missing_dep="" _install_cmd_dep
 
   # Set install command based on distro
   case "${_distro_id,,}" in
@@ -446,15 +446,6 @@ __prepare() {
       _install_cmd_dep="zypper install"
       ;;
     gentoo)
-      # Gentoo uses category/package format
-      declare -A _gentoo_categories=(
-        [git]=dev-vcs
-        [curl]=net-misc
-        [fzf]=app-shells
-      )
-      for pkg in "${!_pkg_map_dep[@]}"; do
-        _pkg_map_dep[$pkg]="${_gentoo_categories[$pkg]}/${pkg}"
-      done
       _install_cmd_dep="emerge"
       ;;
     debian | ubuntu | linuxmint | pop | elementary | mx | raspbian)
@@ -465,15 +456,22 @@ __prepare() {
       ;;
   esac
 
-  # Check for missing dependencies
-  local _missing_dep=()
-  for _required_dep in "${_dep[@]}"; do
+  # Callers add fzf when opening a menu.
+  for _required_dep in git curl "$@"; do
     if ! command -v "${_required_dep}" >/dev/null 2>&1; then
-      _missing_dep+=("${_required_dep}")
+      _dependency=${_required_dep}
+      if [ "${_distro_id,,}" = gentoo ]; then
+        case "${_required_dep}" in
+          git) _dependency=dev-vcs/git ;;
+          curl) _dependency=net-misc/curl ;;
+          fzf) _dependency=app-shells/fzf ;;
+        esac
+      fi
+      _missing_dep="${_missing_dep} ${_dependency}"
     fi
   done
 
-  if [[ ${#_missing_dep[@]} -gt 0 ]]; then
+  if [ -n "${_missing_dep}" ]; then
     for i in {1..7}; do
       __clear_line 120 ""
     done
@@ -481,18 +479,11 @@ __prepare() {
     msgerror "Missing dependencies detected.${break}"
     msgplain " Please install the following dependencies first:${break}"
 
-    local _pkg_name_dep=()
-    for _dependency in "${_missing_dep[@]}"; do
-      _pkg_name_dep+=("${_pkg_map_dep[${_dependency}]:-${_dependency}}")
-    done
-
-    msgplain "${_install_cmd_dep} ${_pkg_name_dep[*]}${break}"
+    msgplain "${_install_cmd_dep}${_missing_dep}${break}"
 
     exit 1
   fi
 
-  # Setup temporary directory
-  rm -f "${_choicetmp}"
   # Preserve cache for git pull reuse
   mkdir -p "${_tmpdir}" || {
     for i in {1..7}; do
@@ -579,7 +570,6 @@ __clean() {
   __cleanup_combined_pkgdir "${_combined_pkgdir:-}"
 
   # Remove runtime files only; preserve the reusable repository cache.
-  rm -f "${_choicetmp}"
   if ((${#_runtime_tmpfiles[@]})); then
     rm -f -- "${_runtime_tmpfiles[@]}"
   fi
@@ -699,7 +689,7 @@ __clean_temp_dir() {
     msgplain "${break}${neon}Cleanup complete ${gray}(${orange}${_removed}${reset} ${gray}cached files removed, ${orange}${_cache_size_human}${reset}${gray} freed)${reset}${break}"
   fi
 
-  return 0
+  [ "${_cleanup_failed}" = false ]
 }
 
 # Fuzzy finder menu wrapper function
@@ -780,15 +770,37 @@ __fzf_menu() {
 # INSTALLATION FUNCTIONS
 # =============================================================================
 
+__build_linux() {
+  chmod +x install.sh && ./install.sh install
+}
+
+__build_wine() {
+  chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh
+}
+
+__build_combined_linux() {
+  rm -f BIG_UGLY_FROGMINER &&
+    PKGDEST="$1" _EXT_CONFIG_PATH="$2" makepkg -s --noconfirm
+}
+
+__build_combined_nvidia() {
+  if grep -qxF '# nvidia-all preset config — generated by tkginstaller (linux-nvidia combined install)' customization.cfg; then
+    git restore --source=HEAD -- customization.cfg || return
+  fi
+  rm -f options BIG_UGLY_FROGMINER &&
+    PKGDEST="$1" _EXT_CONFIG_PATH="$2" makepkg -s --noconfirm
+}
+
 # Generic package installation helper function
+# $1=repo $2=package $3=workdir $4=branch $5=action; remaining args are the build command.
 __install_package() {
   SECONDS=0
   local _repo_url="$1"
   local _package_name="$2"
-  local _build_command="$3"
-  local _work_directory="${4:-}"
-  local _repo_branch="${5:-}"
-  local _repo_action="${6:-sync}"
+  local _work_directory="$3"
+  local _repo_branch="$4"
+  local _repo_action="$5"
+  shift 5
 
   __cd_safe "${_tmpdir}" || return 1
 
@@ -911,12 +923,13 @@ __install_package() {
 
   # Display onefetch info
   if command -v onefetch >/dev/null 2>&1; then
+    printf '\n'
     onefetch --no-bold --no-title --no-art --no-color-palette --http-url --email --nerd-fonts --text-colors 15 15 15 15 15 8 2>/dev/null | sed -u 's/^/ /'
   fi
 
   # Build and install
   msginfo "${break}${neon}${uline_on}PROGRESS${uline_off}:${reset} ${light}Building ${gray}${_package_name}${reset} ${light}for ${gray}${_distro_name}${reset}${orange}, this may take a while...${reset}${break}"
-  eval "${_build_command}"
+  "$@"
   local _status=$?
 
   if [[ "${_tkg_skip_status:-}" != "1" ]]; then
@@ -924,82 +937,6 @@ __install_package() {
   fi
   _tkg_skip_status=""
   return "${_status}"
-}
-
-# Generic package installation via registry
-__install_pkg_key() {
-  local _key="$1"
-  local _repo="${_pkgrepo[${_key}]}"
-  local _workdir="${_pkgdir[${_key}]:-}"
-  local _config_url="${_pkgconfig[${_key}]:-}"
-
-  # Show config URL if set
-  if [[ -n "${_config_url}" ]]; then
-    msgpkg "${_key}" "${_config_url}"
-  fi
-
-  __install_package "${_repo}" "${_key}" "makepkg -Ccfsi" "${_workdir}"
-}
-
-# Countdown prompt with timeout
-__prompt_timer() {
-  local _prompt_options="${1:-[1/2]}"
-  local _timeout="${2:-60}"
-  local _default="${3:-1}"
-  local _old_trap_int=""
-
-  _old_trap_int=$(trap -p INT 2>/dev/null)
-
-  _seconds_left="${_timeout}"
-  _user_answer=""
-  local _abort_flag=false
-
-  # Simple progress display
-  while [[ ${_seconds_left} -gt 0 && ${_abort_flag} == false ]]; do
-    # Set trap inside loop so break works correctly
-    trap '__clear_line 120 ""; echo; echo; msgplain "${red}Aborted by user!${break}"; _abort_flag=true; break' INT
-
-    # Display prompt
-    printf "\r${gray}%s ${reset}  ${orange}%02d${gray}s ${reset}  %s" \
-      "${_prompt_options}" "${_seconds_left}"
-
-    if read -r -t 1 -n 1 _key </dev/tty; then
-      # Accept default
-      if [[ -z "${_key}" ]]; then
-        _user_answer="${_default}"
-        __clear_line 120 ""
-        break
-      fi
-      # Accept only digit keys
-      if [[ "${_key}" =~ ^[0-9]$ ]]; then
-        _user_answer="${_key}"
-        break
-      else
-        # Non-digit pressed
-        continue
-      fi
-    fi
-    ((_seconds_left--))
-  done
-
-  # Default if no answer
-  : "${_user_answer:=${_default}}"
-
-  # Sanitize input
-  _user_answer="${_user_answer//[[:space:]]/}"
-  _user_answer="${_user_answer//[^0-9]/}"
-  _user_answer="${_user_answer:0:1}"
-
-  __clear_line 120 ""
-
-  # Restore previous INT trap
-  if [[ -n "${_old_trap_int}" ]]; then
-    eval "${_old_trap_int}"
-  else
-    trap - INT
-  fi
-  [[ "${_abort_flag}" == true ]] && __exit 130
-  return 0
 }
 
 # Prompt user with default value
@@ -1019,7 +956,8 @@ __linux_install() {
   msginfo "${break}${neon}${uline_on}SOURCE${uline_off}:${reset} ${light}Which Linux-TkG repository do you want to use?${reset}${break}"
   msgplain " ${neon}${uline_on}0${uline_off}${reset} │ Upstream       ${gray}${_reposrc}/linux-tkg${reset}"
   msgplain " ${orange}1${reset} │ Staging fork   ${gray}https://github.com/damachine/linux-tkg${reset} ${orange}(branch: staging)${reset}${break}"
-  __prompt_timer "[${neon}${uline_on}0${uline_off}${reset}/${orange}1${reset}]" 60 0
+  msgprompt "[${neon}${uline_on}0${uline_off}${reset}/${orange}1${reset}] (Enter = 0): "
+  __prompt_answer 0
   case "${_user_answer}" in
     1)
       _linux_repo="${_reposrc_damachine}"
@@ -1031,16 +969,14 @@ __linux_install() {
       ;;
   esac
 
-  local _build_command
-
   __show_detected_distro
   if [[ "${_is_arch_based}" == "true" ]]; then
-    _build_command="makepkg -Ccfsi"
+    set -- makepkg -Ccfsi
   else
-    _build_command="chmod +x install.sh && ./install.sh install"
+    set -- __build_linux
   fi
 
-  __install_package "${_linux_repo}" "linux-tkg" "${_build_command}" "" "${_linux_branch}"
+  __install_package "${_linux_repo}" "linux-tkg" "" "${_linux_branch}" sync "$@"
   local _status=$?
 
   # Offer uninstall help for non-Arch
@@ -1062,18 +998,16 @@ __nvidia_install() {
   local _nvidia_repo="${_pkgrepo[nvidia]}"
   local _nvidia_branch="master"
 
-  local _build_command
-
   __show_detected_distro
 
   # nvidia-all now ships install.sh for multi-distro support.
   if [[ "${_is_arch_based}" == "true" ]]; then
-    _build_command="makepkg -Ccfsi"
+    set -- makepkg -Ccfsi
   else
-    _build_command="bash install.sh"
+    set -- bash install.sh
   fi
 
-  __install_package "${_nvidia_repo}" "nvidia-all" "${_build_command}" "" "${_nvidia_branch}"
+  __install_package "${_nvidia_repo}" "nvidia-all" "" "${_nvidia_branch}" sync "$@"
 }
 
 # Linux-TkG + Nvidia-all combined installation (damachine fork)
@@ -1091,7 +1025,7 @@ __linux_nvidia_install() {
 
   # Synchronize linux-tkg before reading values from its repository config
   local _status
-  __install_package "${_reposrc_damachine}" "linux-tkg" "" "" "staging" "sync-only"
+  __install_package "${_reposrc_damachine}" "linux-tkg" "" "staging" "sync-only"
   _status=$?
   if [[ ${_status} -ne 0 ]]; then
     msgerror "Linux-TkG repository update failed.${break}"
@@ -1139,7 +1073,8 @@ __linux_nvidia_install() {
     msgplain " ${orange}1${reset} │ ${_nvidia_versions[vulkan]}   ${gray}— Vulkan developer beta${reset}"
     msgplain " ${gray}2${reset} │ ${_nvidia_versions[legacy]}  ${gray}— legacy/LTS branch${reset}"
     msgplain " ${red}9${reset} │ Cancel${break}"
-    __prompt_timer "[${neon}${uline_on}0${uline_off}${reset}/${orange}1${reset}/${gray}2${reset}/${red}9${reset}]" 60 0
+    msgprompt "[${neon}${uline_on}0${uline_off}${reset}/${orange}1${reset}/${gray}2${reset}/${red}9${reset}] (Enter = 0): "
+    __prompt_answer 0
     case "${_user_answer}" in
       1)
         _pf_nvidia="${_nvidia_versions[vulkan]}"
@@ -1179,9 +1114,8 @@ __linux_nvidia_install() {
   # append chosen values to preset; _nvidia_pkg intentionally overrides external false
   printf '_nvidia_pkg=%q\n' "${_pf_nvidia}" >>"${_linux_tkg_preset}"
 
-  local _build_command="rm -f BIG_UGLY_FROGMINER && PKGDEST=\"${_combined_pkgdir}\" _EXT_CONFIG_PATH=\"${_linux_tkg_preset}\" makepkg -s --noconfirm"
   _tkg_skip_status="1"
-  __install_package "${_reposrc_damachine}" "linux-tkg" "${_build_command}" "" "staging" "reuse"
+  __install_package "${_reposrc_damachine}" "linux-tkg" "" "staging" "reuse" __build_combined_linux "${_combined_pkgdir}" "${_linux_tkg_preset}"
   _status=$?
   local _linux_duration="${SECONDS}"
 
@@ -1231,10 +1165,9 @@ _user_patches="false"
 NVIDIA_CUSTOMIZATION_CFG
 
   # build only
-  _build_command="if grep -qxF '# nvidia-all preset config — generated by tkginstaller (linux-nvidia combined install)' customization.cfg; then git restore --source=HEAD -- customization.cfg; fi && rm -f options BIG_UGLY_FROGMINER && PKGDEST=\"${_combined_pkgdir}\" _EXT_CONFIG_PATH=\"${_preset_cfg}\" makepkg -s --noconfirm"
   _tkg_skip_status="1"
   # shellcheck disable=SC2218
-  __install_package "${_nvidia_repo}" "nvidia-all" "${_build_command}" "" "${_nvidia_branch}"
+  __install_package "${_nvidia_repo}" "nvidia-all" "" "${_nvidia_branch}" sync __build_combined_nvidia "${_combined_pkgdir}" "${_preset_cfg}"
   _status=$?
   local _nvidia_duration="${SECONDS}"
 
@@ -1290,22 +1223,23 @@ NVIDIA_CUSTOMIZATION_CFG
   return "${_status}"
 }
 
-__mesa_install() { __install_pkg_key "mesa"; }
+__mesa_install() {
+  msgpkg "mesa" "$(__get_config_url mesa)"
+  __install_package "${_pkgrepo[mesa]}" mesa "" "" sync makepkg -Ccfsi
+}
 
 # Wine-TkG installation
 __wine_install() {
   msgpkg "Wine-TkG" "${_reposrc}/wine-tkg-git/refs/heads/master/wine-tkg-git/customization.cfg"
 
-  local _build_command
-
   __show_detected_distro
   if [[ "${_is_arch_based}" == "true" ]]; then
-    _build_command="makepkg -Ccfsi"
+    set -- makepkg -Ccfsi
   else
-    _build_command="chmod +x non-makepkg-build.sh && ./non-makepkg-build.sh"
+    set -- __build_wine
   fi
 
-  __install_package "${_pkgrepo[wine]}" "wine-tkg-git" "${_build_command}" "${_pkgdir[wine]}"
+  __install_package "${_pkgrepo[wine]}" "wine-tkg-git" "${_pkgdir[wine]}" "" sync "$@"
 }
 
 # DXVK-Tools pre-build for Proton-TkG
@@ -1319,7 +1253,8 @@ __dxvk_tools_prepare() {
   msginfo "${neon}${uline_on}NOTE${uline_off}:${reset} ${light}Proton-TkG downloads official DXVK by default.${reset}${break}"
   msgplain " Set ${gray}_use_dxvk=\"prebuilt\"${reset} in ${gray}proton-tkg.cfg${reset} to use custom builds.${break}"
 
-  __prompt_timer "[${orange}${uline_on}0${uline_off}${reset}/${neon}1${reset}/${orange}2${reset}/${red}9${reset}]" 60 0
+  msgprompt "[${orange}${uline_on}0${uline_off}${reset}/${neon}1${reset}/${orange}2${reset}/${red}9${reset}] (Enter = 0): "
+  __prompt_answer 0
 
   local _build_dxvk=false _build_vkd3d=false _built_something=false
 
@@ -1327,10 +1262,6 @@ __dxvk_tools_prepare() {
     9)
       msginfo "${break}${orange}Cancelled${reset}${break}"
       __exit 1
-      ;;
-    0)
-      msginfo "${break}${orange}Skipping DXVK/vkd3d${reset}"
-      return 0
       ;;
     2)
       msgprompt "${break}Build DXVK? [y/N]: "
@@ -1340,9 +1271,13 @@ __dxvk_tools_prepare() {
       __prompt_answer "n"
       [[ "${_user_answer,,}" =~ ^(y|yes)$ ]] && _build_vkd3d=true
       ;;
-    *)
+    1)
       _build_dxvk=true
       _build_vkd3d=true
+      ;;
+    *)
+      msginfo "${break}${orange}Skipping DXVK/vkd3d${reset}"
+      return 0
       ;;
   esac
 
@@ -1395,13 +1330,13 @@ __proton_install() {
   msgpkg "Proton-TkG" "${_reposrc}/wine-tkg-git"
 
   # Synchronize once before optional DXVK/vkd3d preparation.
-  __install_package "${_pkgrepo[proton]}" "Proton-TkG" "" "${_pkgdir[proton]}" "" "sync-only" || return
+  __install_package "${_pkgrepo[proton]}" "Proton-TkG" "${_pkgdir[proton]}" "" "sync-only" || return
 
   # Optional DXVK/vkd3d preparation
   __dxvk_tools_prepare || msgwarning "dxvk-tools skipped${break}"
 
   # Build Proton
-  __install_package "${_pkgrepo[proton]}" "Proton-TkG" "./proton-tkg.sh" "${_pkgdir[proton]}" "" "reuse"
+  __install_package "${_pkgrepo[proton]}" "Proton-TkG" "${_pkgdir[proton]}" "" "reuse" ./proton-tkg.sh
   local _status=$?
 
   # Offer cleanup after successful build
@@ -1409,7 +1344,7 @@ __proton_install() {
     msgprompt "Run './proton-tkg.sh clean'? [y/N]: "
     read -r _user_answer
     if [[ "${_user_answer,,}" =~ ^(y|yes)$ ]]; then
-      __install_package "${_pkgrepo[proton]}" "Proton-TkG" "./proton-tkg.sh clean" "${_pkgdir[proton]}" "" "reuse"
+      __install_package "${_pkgrepo[proton]}" "Proton-TkG" "${_pkgdir[proton]}" "" "reuse" ./proton-tkg.sh clean
       _status=$?
     fi
   fi
@@ -1427,8 +1362,8 @@ __error_config() {
   __clear_screen
   __banner "${red}"
   msgerror "${_msg}"
-  msgprompt "Press any key to continue...${break}"
-  read -n 1 -s -r
+  msgprompt "Press Enter to continue...${break}"
+  read -r _user_answer
   __clear_screen
 }
 
@@ -1582,8 +1517,8 @@ ${light}   Select a package to view its logs:"
       __banner "${orange}"
       msgwarning "No log files found for ${_pkg_key}:${break}"
       msgplain " ${gray}${_selected_log_dir}${reset}${break}"
-      msgprompt "Press any key to continue..."
-      read -n 1 -s -r
+      msgprompt "Press Enter to continue..."
+      read -r _user_answer
       __clear_screen
       continue
     fi
@@ -1701,8 +1636,8 @@ __menu_config() {
           __banner
           msginfo "Configuration directory created:${reset}${gray} ${_localcfg}${reset}${break}"
           msgplain " You can now manage your${reset}${gray} customization.cfg${reset} files.${break}"
-          msgprompt "Press any key to continue...${break}"
-          read -n 1 -s -r
+          msgprompt "Press Enter to continue...${break}"
+          read -r _user_answer
           __clear_screen
           continue
           ;;
@@ -1711,8 +1646,8 @@ __menu_config() {
           __banner "${orange}"
           msgorange "Directory creation cancelled.${break}"
           msgplain " No changes were made.${break}"
-          msgprompt "Press any key to continue...${break}"
-          read -n 1 -s -r
+          msgprompt "Press Enter to continue...${break}"
+          read -r _user_answer
           __clear_screen
           return 0
           ;;
@@ -2018,8 +1953,8 @@ __check_config() {
       msgplain " ${gray}${_url}${reset}"
     done
     echo
-    msgprompt "Press any key to continue..."
-    read -n 1 -s -r
+    msgprompt "Press Enter to continue..."
+    read -r _user_answer
   fi
 
   rm -f "${_tmp_upstream}"
@@ -2062,8 +1997,8 @@ __handle_config() {
     else
       __clear_screen
       msgorange "Download cancelled.${break}"
-      msgprompt "Press any key..."
-      read -n 1 -s -r
+      msgprompt "Press Enter..."
+      read -r _user_answer
       __clear_screen
       return 1
     fi
@@ -2090,20 +2025,20 @@ __menu() {
 
   # Define menu options
   local _menu_options=(
-    "Linux++       |🐧 ${neon}Linux++       ${gray} Linux-TkG + Nvidia-all combined (kmod, damachine fork)"
-    "Linux         |🐧 ${neon}Linux         ${gray} Linux custom kernels for better desktop and gaming experience"
-    "Nvidia        |💻 ${neon}Nvidia        ${gray} Nvidia open-source or proprietary graphics drivers"
-    "Mesa          |🧩 ${neon}Mesa          ${gray} AMD and Intel open-source graphics driver"
+    "Linux++|🐧 ${neon}Linux++       ${gray} Linux-TkG + Nvidia-all combined (kmod, damachine fork)"
+    "Linux|🐧 ${neon}Linux         ${gray} Linux custom kernels for better desktop and gaming experience"
+    "Nvidia|💻 ${neon}Nvidia        ${gray} Nvidia open-source or proprietary graphics drivers"
+    "Mesa|🧩 ${neon}Mesa          ${gray} AMD and Intel open-source graphics driver"
   )
 
   _menu_options+=(
-    "Wine      |🍷 ${neon}Wine          ${gray} Windows compatibility layer to run Windows apps on Linux"
-    "Proton    |🎮 ${neon}Proton        ${gray} Run Windows games on the Linux system via Steam"
-    "Config    |🔧 ${neon}Config        ${gray} Enter external configuration files menu (Expert)"
-    "Logs      |📋 ${neon}Logs          ${gray} Browse build and system logs per package"
-    "Clean     |🧹 ${neon}Clean         ${gray} Removes all temporary files for a clean installation"
-    "Help      |❓ ${neon}Help          ${gray} Displays help and usage information about TkG-Installer"
-    "Close     |❎ ${neon}Close"
+    "Wine|🍷 ${neon}Wine          ${gray} Windows compatibility layer to run Windows apps on Linux"
+    "Proton|🎮 ${neon}Proton        ${gray} Run Windows games on the Linux system via Steam"
+    "Config|🔧 ${neon}Config        ${gray} Enter external configuration files menu (Expert)"
+    "Logs|📋 ${neon}Logs          ${gray} Browse build and system logs per package"
+    "Clean|🧹 ${neon}Clean         ${gray} Removes all temporary files for a clean installation"
+    "Help|❓ ${neon}Help          ${gray} Displays help and usage information about TkG-Installer"
+    "Close|❎ ${neon}Close"
   )
 
   local _menu_content
@@ -2184,14 +2119,7 @@ ${light}   Select an option below:"
   # Cleanup exports
   unset _preview_docs_json _preview_repos_json
 
-  # Handle user choice
-  if [[ -z "${_main_choice:-}" ]]; then
-    __clear_screen
-    __exit 0
-  fi
-
-  # Write user choice to file
-  echo "${_main_choice}" | cut -d"|" -f1 | xargs >"${_choicetmp}"
+  _user_choice=${_main_choice%%|*}
 }
 
 # =============================================================================
@@ -2232,7 +2160,7 @@ __main_direct_mode() {
 
   # "config" alone opens interactive config menu
   if [[ -n "${_config_arg}" && -z "${_package}" ]]; then
-    __prepare
+    __prepare fzf
     __clear_screen
     __menu_config || return $?
     _suppress_exit_banner=true
@@ -2262,21 +2190,12 @@ __main_direct_mode() {
     exit "${_status}"
   fi
 
-  # Install command lookup
-  declare -A _install_funcs=(
-    ["linux-nvidia"]=__linux_nvidia_install [ln]=__linux_nvidia_install
-    [linux]=__linux_install [l]=__linux_install
-    [nvidia]=__nvidia_install [n]=__nvidia_install
-    [mesa]=__mesa_install [m]=__mesa_install
-    [wine]=__wine_install [w]=__wine_install
-    [proton]=__proton_install [p]=__proton_install
-  )
-
   # Dispatch to install function
-  if [[ -n "${_install_funcs[${_arg1}]:-}" ]]; then
+  local _install_func
+  if _install_func=$(__get_install_function "${_arg1}"); then
     __prepare
     __banner
-    "${_install_funcs[${_arg1}]}"
+    "${_install_func}"
     return
   fi
 
@@ -2302,8 +2221,10 @@ __main_direct_mode() {
 
 # Main function for interactive mode
 __main_interactive_mode() {
+  local _user_choice=""
+
   # Init and display fzf menu
-  __prepare
+  __prepare fzf
   __clear_screen
   __menu || {
     local _menu_status=$?
@@ -2313,33 +2234,18 @@ __main_interactive_mode() {
     __exit "${_menu_status}"
   }
 
-  # Read user selection
-  local _user_choice=""
-  if [[ -f "${_choicetmp}" ]]; then
-    _user_choice=$(<"${_choicetmp}")
-  fi
-
   # ESC/Ctrl-C
   if [[ -z "${_user_choice:-}" ]]; then
     __clear_screen
     __exit 0
   fi
 
-  # Remove temporary choice file
-  rm -f "${_choicetmp}"
-
-  # Define install handlers
-  declare -A _menu_handlers=(
-    [Linux++]=__linux_nvidia_install [Linux]=__linux_install [Nvidia]=__nvidia_install
-    [Mesa]=__mesa_install
-    [Wine]=__wine_install [Proton]=__proton_install
-  )
-
   # Handle standard installations
-  if [[ -n "${_menu_handlers[${_user_choice}]:-}" ]]; then
+  local _install_func
+  if _install_func=$(__get_install_function "${_user_choice}"); then
     __banner
     __clear_line 120
-    "${_menu_handlers[${_user_choice}]}"
+    "${_install_func}"
     return
   fi
 
