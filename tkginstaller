@@ -4,7 +4,7 @@
 # website: https://github.com/damachine/tkginstaller
 
 # TkG-Installer VERSION definition
-readonly pkgver="v0.60.6"
+readonly pkgver="v0.60.7"
 
 # Keep original CLI args for one-shot auto-restart recovery
 declare -ga _runargs=("$@")
@@ -24,16 +24,13 @@ _reposrc_raw_damachine=https://raw.githubusercontent.com/damachine/tkginstaller/
 
 # nvidia-open version map
 declare -gA _nvidia_versions=(
-  [latest]="615.78.08"
+  [latest]="620.70.06"
   [vulkan]="595.44.16"
-  [legacy]="580.178.04"
+  [legacy]="580.196.07"
 )
 
-# curl options for config fetching and other web requests
-_curl_opts="--max-time 10 --connect-timeout 5 -fsSL"
-
 # Export only variables used in fzf preview commands
-export _tmpdir _localcfg _reposrc_raw_damachine _reposrc_raw _curl_opts
+export _tmpdir _localcfg _reposrc_raw_damachine _reposrc_raw
 
 # Package repo URLs
 declare -gA _pkgrepo=(
@@ -1140,6 +1137,7 @@ _only_update_if_newer=""
 CUSTOM_GCC_PATH=""
 CUSTOM_LLVM_PATH=""
 _set_default=""
+_abort_on_patch_error="false"
 _lib32="true"
 _opencl="true"
 _nvsettings="true"
@@ -1149,8 +1147,12 @@ _eglgbm="external"
 _eglx11="external"
 _blacklist_nouveau="true"
 _modprobe="NVreg_InitializeSystemMemoryAllocations=0"
+_limit_vram_usage="true"
+_cuda_no_stable_perf_limit="true"
+_cuda_disable_perf_boost="false"
 _nvidia_patch_enc_fbc="true"
-_module_signing="true"
+_dsc_dp_fix="true"
+_module_signing="autodetect"
 _kerneloverride=""
 _target_kernel=""
 _local_package_storing="false"
@@ -1162,6 +1164,7 @@ _gcc14_fix="false"
 _54_prime_fixing_attempt="false"
 _62142_fix="false"
 _user_patches="false"
+_user_patches_no_confirm="false"
 NVIDIA_CUSTOMIZATION_CFG
 
   # build only
@@ -1656,23 +1659,23 @@ __menu_config() {
 
     # Build menu options dynamically
     local _menu_options=(
-      "linux    |🐧 ${neon}Linux      ${gray} customization.cfg ${reset}->${orange} 'linux-tkg.cfg'  "
+      "linux|🐧 ${neon}Linux      ${gray} customization.cfg ${reset}->${orange} 'linux-tkg.cfg'  "
     )
 
     # Arch-only options
     if [[ "${_is_arch_based}" == "true" ]]; then
       _menu_options+=(
-        "nvidia   |💻 ${neon}Nvidia     ${gray} customization.cfg ${reset}->${orange} 'nvidia-all.cfg'"
-        "mesa     |🧩 ${neon}Mesa       ${gray} customization.cfg ${reset}->${orange} 'mesa-git.cfg'"
+        "nvidia|💻 ${neon}Nvidia     ${gray} customization.cfg ${reset}->${orange} 'nvidia-all.cfg'"
+        "mesa|🧩 ${neon}Mesa       ${gray} customization.cfg ${reset}->${orange} 'mesa-git.cfg'"
       )
     fi
 
     _menu_options+=(
-      "wine      |🍷 ${neon}Wine       ${gray} customization.cfg ${reset}->${orange} 'wine-tkg.cfg'"
-      "proton    |🎮 ${neon}Proton     ${gray} customization.cfg ${reset}->${orange} 'proton-tkg.cfg'"
-      "dxvk      |🎮 ${neon}Dxvk       ${gray} customization.cfg ${reset}->${orange} 'updxvk.cfg'"
-      "vkd3d     |🎮 ${neon}Vkd3d      ${gray} customization.cfg ${reset}->${orange} 'upvkd3d-proton.cfg'"
-      "return    |⏪ ${neon}Return"
+      "wine|🍷 ${neon}Wine       ${gray} customization.cfg ${reset}->${orange} 'wine-tkg.cfg'"
+      "proton|🎮 ${neon}Proton     ${gray} customization.cfg ${reset}->${orange} 'proton-tkg.cfg'"
+      "dxvk|🎮 ${neon}Dxvk       ${gray} customization.cfg ${reset}->${orange} 'updxvk.cfg'"
+      "vkd3d|🎮 ${neon}Vkd3d      ${gray} customization.cfg ${reset}->${orange} 'upvkd3d-proton.cfg'"
+      "return|⏪ ${neon}Return"
     )
 
     # Prepare menu content
@@ -1724,7 +1727,7 @@ __menu_config() {
                 _remote_tmp=$(mktemp "'"${_tmpdir}"'/${key}-remote.XXXXXX.cfg") || exit 1
                 _cleanup_preview_tmp() { rm -f -- "${_remote_tmp}"; }
                 trap _cleanup_preview_tmp EXIT
-                if curl '"${_curl_opts}"' "${_remote_url}" -o "${_remote_tmp}" 2>/dev/null; then
+                if curl --max-time 10 --connect-timeout 5 -fsSL "${_remote_url}" -o "${_remote_tmp}" 2>/dev/null; then
                     printf "%b\n" "'"${_info_config}"'"
                     if command -v wdiff >/dev/null 2>&1; then
                         _diff_output=$('"${_diff_cmd}"' "${_remote_tmp}" "${_config_file_path}" 2>/dev/null)
@@ -1986,8 +1989,7 @@ __handle_config() {
         __error_config "Failed to create directory"
         return 1
       }
-      # shellcheck disable=SC2086
-      if curl ${_curl_opts} "${_config_url}" -o "${_config_path}" 2>/dev/null; then
+      if curl --max-time 10 --connect-timeout 5 -fsSL "${_config_url}" -o "${_config_path}" 2>/dev/null; then
         __clear_screen
         __editor "${_config_path}" || return 1
       else
@@ -2077,7 +2079,7 @@ __menu() {
           if command -v glow >/dev/null 2>&1; then
             glow --pager --width "${FZF_PREVIEW_COLUMNS:-80}" --style "'"${_glow_style:-dark}"'" "${_doc_url}"
           else
-            curl '"${_curl_opts}"' "${_doc_url}" 2>/dev/null || printf "%b\n" "'"${orange}"'Preview unavailable'"${reset}"'"
+            curl --max-time 10 --connect-timeout 5 -fsSL "${_doc_url}" 2>/dev/null || printf "%b\n" "'"${orange}"'Preview unavailable'"${reset}"'"
           fi
         fi
 
@@ -2088,7 +2090,7 @@ __menu() {
           if command -v glow >/dev/null 2>&1; then
             glow --pager --width "${FZF_PREVIEW_COLUMNS:-80}" --style "'"${_glow_style:-dark}"'" "${_readme_url}"
           else
-            curl '"${_curl_opts}"' "${_readme_url}" 2>/dev/null || printf "%b\n" "'"${orange}"'Preview unavailable'"${reset}"'"
+            curl --max-time 10 --connect-timeout 5 -fsSL "${_readme_url}" 2>/dev/null || printf "%b\n" "'"${orange}"'Preview unavailable'"${reset}"'"
           fi
         fi
     '

@@ -46,6 +46,10 @@
   - `_open_source_modules` — open-source kernel modules
   - `_target_kernel` — target kernel (e.g. `"linux-tkg"`)
   - `_blacklist_nouveau` — blacklist nouveau driver
+  - `_limit_vram_usage="true"` — enable the additional VRAM reuse profile (580+)
+  - `_cuda_no_stable_perf_limit="true"` — enable the additional CUDA performance profile (590+)
+  - `_cuda_disable_perf_boost="false"` — keep CUDA performance boost enabled; disabling it can reduce power use but increase latency (580+)
+  - `_dsc_dp_fix="true"` — enable DSC fixes and the Bigscreen Beyond DisplayPort workaround (595+)
 
 ---
 
